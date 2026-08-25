@@ -1,0 +1,1101 @@
+<!doctype html>
+<html lang="th" data-lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zyra — Getting Started</title>
+    <meta
+      name="description"
+      content="คู่มือผู้ใช้ใหม่ของ Zyra — ออฟฟิศเสมือน 2D: สมัคร, เลือก avatar, เดินในแผนที่, ประชุมและแชร์หน้าจอ (ไทย / English)"
+    />
+    <meta name="theme-color" content="#2b3540" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Zyra" />
+    <meta property="og:title" content="Zyra — คู่มือผู้ใช้ใหม่ / New user guide" />
+    <meta
+      property="og:description"
+      content="เริ่มใช้ Zyra ใน 10 นาที: สมัครบัญชี, เลือก avatar, เดินในออฟฟิศ, ประชุม, แชร์หน้าจอ, wave/follow/knock — สลับไทย/English ได้ในหน้า"
+    />
+    <meta property="og:url" content="https://zyra-onboarding.vercel.app/user.html" />
+    <meta property="og:image" content="https://zyra-onboarding.vercel.app/og-user.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Zyra — new user guide" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://zyra-onboarding.vercel.app/og-user.png" />
+    <style>
+      :root {
+        --bg: #2b3540;
+        --bg-deep: #242b32;
+        --bg-ink: #1a1b1e;
+        --card: #242b32;
+        --card-2: rgba(255, 255, 255, 0.03);
+        --line: rgba(255, 255, 255, 0.1);
+        --line-strong: rgba(255, 255, 255, 0.2);
+        --green: #58d68d;
+        --green-dim: rgba(88, 214, 141, 0.12);
+        --green-deep: #3e9864;
+        --purple: #a77efc;
+        --blue: #2db6ff;
+        --yellow: #ffd400;
+        --orange: #ff8000;
+        --red: #f03a3a;
+        --text: #ffffff;
+        --text-2: #dbdfe3;
+        --muted: #8c99a6;
+        --muted-2: #636d76;
+        --r-sm: 8px;
+        --r-md: 12px;
+        --r-lg: 16px;
+        --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
+          "Noto Sans Thai", "Helvetica Neue", sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 15px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body[data-lang="th"] .lang.en,
+      body[data-lang="en"] .lang.th {
+        display: none;
+      }
+
+      /* ---------- top bar ---------- */
+      header.top {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        height: 64px;
+        padding: 0 24px;
+        background: rgba(26, 27, 30, 0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        font-size: 15px;
+      }
+      .brand .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 0 4px var(--green-dim);
+      }
+      .brand span.sub {
+        color: var(--muted);
+        font-weight: 500;
+        letter-spacing: 0;
+        font-size: 13px;
+        border-left: 1px solid var(--line-strong);
+        padding-left: 10px;
+        margin-left: 2px;
+      }
+      .spacer {
+        flex: 1;
+      }
+      a.home {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        flex: none;
+        height: 34px;
+        padding: 0 12px 0 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.15s;
+      }
+      a.home:hover {
+        color: var(--text);
+        border-color: var(--line-strong);
+        background: rgba(255, 255, 255, 0.07);
+      }
+      a.home svg {
+        flex: none;
+      }
+      .lang-switch {
+        display: flex;
+        padding: 3px;
+        gap: 2px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+      }
+      .lang-switch button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-family: var(--font);
+        font-size: 13px;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .lang-switch button:hover {
+        color: var(--text);
+      }
+      .lang-switch button[aria-selected="true"] {
+        background: var(--green);
+        color: #14432b;
+      }
+
+      /* ---------- layout ---------- */
+      .wrap {
+        display: grid;
+        grid-template-columns: 232px minmax(0, 1fr);
+        gap: 32px;
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 32px 24px 96px;
+      }
+      nav.toc {
+        position: sticky;
+        top: 96px;
+        align-self: start;
+        font-size: 13.5px;
+      }
+      nav.toc p {
+        margin: 0 0 10px;
+        color: var(--muted-2);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      nav.toc a {
+        display: block;
+        padding: 7px 10px;
+        color: var(--muted);
+        text-decoration: none;
+        border-radius: 6px;
+        border-left: 2px solid transparent;
+      }
+      nav.toc a:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.04);
+        border-left-color: var(--green);
+      }
+      main {
+        min-width: 0;
+      }
+
+      /* ---------- hero ---------- */
+      .hero {
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        background: radial-gradient(
+            120% 140% at 0% 0%,
+            rgba(88, 214, 141, 0.14) 0%,
+            rgba(88, 214, 141, 0) 55%
+          ),
+          var(--card);
+        padding: 32px;
+        margin-bottom: 32px;
+      }
+      .hero .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--green-dim);
+        border: 1px solid rgba(88, 214, 141, 0.3);
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 14px;
+      }
+      .hero h1 {
+        margin: 0 0 10px;
+        font-size: 30px;
+        line-height: 1.25;
+        letter-spacing: -0.01em;
+      }
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 62ch;
+      }
+
+      section {
+        margin-bottom: 40px;
+        scroll-margin-top: 88px;
+      }
+      h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 20px;
+        margin: 0 0 16px;
+      }
+      h2 .num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        width: 28px;
+        height: 28px;
+        border-radius: var(--r-sm);
+        background: var(--green-dim);
+        color: var(--green);
+        font-size: 13px;
+        font-weight: 700;
+      }
+      h3 {
+        font-size: 15px;
+        margin: 22px 0 8px;
+        color: var(--text);
+      }
+      p {
+        color: var(--text-2);
+      }
+      a {
+        color: var(--green);
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        padding: 20px 22px;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px;
+      }
+      .tile {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+        padding: 16px 18px;
+      }
+      .tile h4 {
+        margin: 0 0 6px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .tile p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13.5px;
+      }
+      .swatch {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex: none;
+      }
+
+      ol,
+      ul {
+        padding-left: 20px;
+        color: var(--text-2);
+      }
+      li {
+        margin: 5px 0;
+      }
+      ol.steps {
+        list-style: none;
+        padding: 0;
+        counter-reset: s;
+      }
+      ol.steps > li {
+        counter-increment: s;
+        position: relative;
+        padding-left: 34px;
+        margin: 10px 0;
+      }
+      ol.steps > li::before {
+        content: counter(s);
+        position: absolute;
+        left: 0;
+        top: 1px;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        background: var(--green-dim);
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      kbd {
+        display: inline-block;
+        min-width: 22px;
+        text-align: center;
+        padding: 2px 7px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--line-strong);
+        border-bottom-width: 2px;
+        border-radius: 6px;
+      }
+      code {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--green);
+        background: rgba(88, 214, 141, 0.08);
+        padding: 1px 6px;
+        border-radius: 5px;
+      }
+
+      .table-scroll {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 520px;
+        font-size: 13.5px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      td strong {
+        color: var(--text);
+      }
+
+      .note {
+        display: flex;
+        gap: 12px;
+        border: 1px solid rgba(88, 214, 141, 0.28);
+        background: var(--green-dim);
+        border-radius: var(--r-md);
+        padding: 14px 16px;
+        margin: 16px 0 0;
+        font-size: 13.5px;
+        color: var(--text-2);
+      }
+      .note.warn {
+        border-color: rgba(240, 58, 58, 0.3);
+        background: rgba(240, 58, 58, 0.07);
+      }
+      .note b {
+        color: var(--text);
+      }
+      .note .ic {
+        flex: none;
+        font-weight: 700;
+        color: var(--green);
+      }
+      .note.warn .ic {
+        color: var(--red);
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 24px;
+        text-align: center;
+        color: var(--muted-2);
+        font-size: 13px;
+      }
+
+      @media (max-width: 560px) {
+        header.top {
+          padding: 0 14px;
+          gap: 10px;
+        }
+        .brand span.sub {
+          display: none;
+        }
+      }
+
+      @media (max-width: 880px) {
+        .wrap {
+          grid-template-columns: 1fr;
+        }
+        nav.toc {
+          position: static;
+          display: none;
+        }
+        .hero {
+          padding: 24px;
+        }
+        .hero h1 {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body data-lang="th">
+    <header class="top">
+      <a class="home" href="./index.html">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M19 12H5" />
+          <path d="m12 19-7-7 7-7" />
+        </svg>
+        <span class="lang th">หน้าหลัก</span>
+        <span class="lang en">All guides</span>
+      </a>
+      <div class="brand">
+        <span class="dot"></span>ZYRA
+        <span class="sub lang th">คู่มือผู้ใช้ใหม่</span>
+        <span class="sub lang en">New user guide</span>
+      </div>
+      <div class="spacer"></div>
+      <div class="lang-switch" role="tablist" aria-label="Language">
+        <button role="tab" data-set-lang="th" aria-selected="true">ไทย</button>
+        <button role="tab" data-set-lang="en" aria-selected="false">EN</button>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <nav class="toc">
+        <p class="lang th">หัวข้อ</p>
+        <p class="lang en">Contents</p>
+        <a href="#what"><span class="lang th">1 · Zyra คืออะไร</span><span class="lang en">1 · What is Zyra</span></a>
+        <a href="#account"><span class="lang th">2 · สมัคร &amp; เข้าสู่ระบบ</span><span class="lang en">2 · Sign up &amp; sign in</span></a>
+        <a href="#lobby"><span class="lang th">3 · หน้า Space</span><span class="lang en">3 · Space lobby</span></a>
+        <a href="#enter"><span class="lang th">4 · ก่อนเข้าออฟฟิศ</span><span class="lang en">4 · Before you enter</span></a>
+        <a href="#move"><span class="lang th">5 · การเดินและมองรอบ</span><span class="lang en">5 · Moving around</span></a>
+        <a href="#talk"><span class="lang th">6 · คุย ประชุม แชร์จอ</span><span class="lang en">6 · Talk, meet, share</span></a>
+        <a href="#social"><span class="lang th">7 · Wave · Follow · Knock</span><span class="lang en">7 · Wave · Follow · Knock</span></a>
+        <a href="#chat"><span class="lang th">8 · Chat</span><span class="lang en">8 · Chat</span></a>
+        <a href="#status"><span class="lang th">9 · สถานะของคุณ</span><span class="lang en">9 · Your status</span></a>
+        <a href="#team"><span class="lang th">10 · ทีมและการเชิญ</span><span class="lang en">10 · Team &amp; invites</span></a>
+        <a href="#help"><span class="lang th">11 · ขอความช่วยเหลือ</span><span class="lang en">11 · Getting help</span></a>
+      </nav>
+
+      <main>
+        <div class="hero">
+          <span class="pill lang th">เริ่มที่นี่ · ใช้เวลาอ่าน ~10 นาที</span>
+          <span class="pill lang en">Start here · ~10 min read</span>
+          <div class="lang th">
+            <h1>ยินดีต้อนรับสู่ Zyra</h1>
+            <p>
+              Zyra คือออฟฟิศเสมือนแบบ 2D ที่คุณมีตัวละครของตัวเองเดินไปมาบนแผนที่
+              เดินเข้าใกล้เพื่อนร่วมทีมแล้วเสียงและวิดีโอจะเปิดขึ้นเอง —
+              เหมือนการเดินไปคุยกันที่โต๊ะจริง ๆ คู่มือนี้พาคุณจากการสมัครบัญชี
+              ไปจนถึงการประชุมและแชร์หน้าจอในออฟฟิศ
+            </p>
+          </div>
+          <div class="lang en">
+            <h1>Welcome to Zyra</h1>
+            <p>
+              Zyra is a 2D virtual office. You get an avatar that walks around a map, and when
+              you step close to a teammate, audio and video open by themselves — just like
+              walking over to someone's desk. This guide takes you from creating an account to
+              running meetings and sharing your screen.
+            </p>
+          </div>
+        </div>
+
+        <!-- 1 -->
+        <section id="what">
+          <h2><span class="num">1</span><span class="lang th">Zyra คืออะไร</span><span class="lang en">What is Zyra</span></h2>
+          <div class="grid-2">
+            <div class="tile">
+              <div class="lang th">
+                <h4><span class="swatch" style="background: var(--green)"></span>Space (Workspace)</h4>
+                <p>พื้นที่ทำงานหนึ่งชุดของทีมคุณ — มีแผนที่, สมาชิก และจำนวนคนสูงสุดที่รับได้ (capacity)</p>
+              </div>
+              <div class="lang en">
+                <h4><span class="swatch" style="background: var(--green)"></span>Space (workspace)</h4>
+                <p>One working area for your team — it holds a map, its members, and a capacity limit.</p>
+              </div>
+            </div>
+            <div class="tile">
+              <div class="lang th">
+                <h4><span class="swatch" style="background: var(--blue)"></span>Map</h4>
+                <p>แผนที่ 2D ใน Space มีพื้น กำแพง เฟอร์นิเจอร์ และโซนต่าง ๆ — Space หนึ่งมีได้หลายชั้น (floor)</p>
+              </div>
+              <div class="lang en">
+                <h4><span class="swatch" style="background: var(--blue)"></span>Map</h4>
+                <p>The 2D floor plan inside a Space — floors, walls, furniture and zones. A Space can have several floors.</p>
+              </div>
+            </div>
+            <div class="tile">
+              <div class="lang th">
+                <h4><span class="swatch" style="background: var(--purple)"></span>Zone</h4>
+                <p>พื้นที่ย่อยบนแผนที่ เช่น ห้องประชุม, โซนส่วนตัว, โซน Spotlight — เดินเข้าไปแล้วพฤติกรรมของเสียง/วิดีโอจะเปลี่ยนตามโซน</p>
+              </div>
+              <div class="lang en">
+                <h4><span class="swatch" style="background: var(--purple)"></span>Zone</h4>
+                <p>A sub-area of the map — meeting room, private zone, spotlight zone. Walking in changes how audio and video behave.</p>
+              </div>
+            </div>
+            <div class="tile">
+              <div class="lang th">
+                <h4><span class="swatch" style="background: var(--yellow)"></span>Avatar</h4>
+                <p>ตัวละคร pixel-art ที่แทนตัวคุณบนแผนที่ เลือกได้ตอนก่อนเข้าออฟฟิศ และเปลี่ยนได้ทีหลัง</p>
+              </div>
+              <div class="lang en">
+                <h4><span class="swatch" style="background: var(--yellow)"></span>Avatar</h4>
+                <p>The pixel-art character that represents you on the map. Pick one before entering; change it any time.</p>
+              </div>
+            </div>
+          </div>
+          <div class="note lang th">
+            <span class="ic">◆</span>
+            <div>
+              <b>หัวใจของ Zyra:</b> ระยะห่างมีความหมาย — ยิ่งตัวละครอยู่ใกล้กัน ยิ่งได้ยินและเห็นกัน
+              เดินออกห่างก็คือการออกจากบทสนทนา ไม่ต้องกดวางสาย
+            </div>
+          </div>
+          <div class="note lang en">
+            <span class="ic">◆</span>
+            <div>
+              <b>The core idea:</b> distance matters. The closer your avatars are, the more you see and
+              hear each other — walking away is how you leave a conversation. There is no call to hang up.
+            </div>
+          </div>
+        </section>
+
+        <!-- 2 -->
+        <section id="account">
+          <h2><span class="num">2</span><span class="lang th">สมัครและเข้าสู่ระบบ</span><span class="lang en">Sign up &amp; sign in</span></h2>
+          <div class="card">
+            <div class="lang th">
+              <h3>สมัครด้วยอีเมล</h3>
+              <ol class="steps">
+                <li>กรอกชื่อ นามสกุล อีเมล และรหัสผ่าน แล้วยอมรับ Terms of Services + Privacy Policy</li>
+                <li>รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร มีตัวพิมพ์ใหญ่ พิมพ์เล็ก ตัวเลข และอักขระพิเศษ</li>
+                <li>ระบบส่งรหัส OTP 6 หลักไปที่อีเมลของคุณ — กรอกในหน้า Verify (ขอรหัสใหม่ได้ถ้าหมดอายุ)</li>
+                <li>ยืนยันสำเร็จ ระบบจะพาไปหน้า Space อัตโนมัติ</li>
+              </ol>
+              <h3>หรือใช้ Continue with Google</h3>
+              <p>ล็อกอินด้วยบัญชี Google ได้เลย ไม่ต้องยืนยัน OTP</p>
+              <div class="note warn">
+                <span class="ic">!</span>
+                <div>
+                  ใส่รหัสผ่านผิดหลายครั้งติดกัน บัญชีจะถูกล็อกชั่วคราว (ครั้งแรก 15 นาที และนานขึ้นถ้าเกิดซ้ำ)
+                  ถ้าจำรหัสไม่ได้ให้ใช้ <b>Forget password</b> — ระบบส่งลิงก์ตั้งรหัสใหม่ไปที่อีเมล
+                </div>
+              </div>
+            </div>
+            <div class="lang en">
+              <h3>Sign up with email</h3>
+              <ol class="steps">
+                <li>Enter your name, last name, email and password, then accept the Terms of Services and Privacy Policy.</li>
+                <li>Passwords need at least 8 characters with upper- and lowercase letters, a number and a special character.</li>
+                <li>We email you a 6-digit OTP — enter it on the Verify screen. You can request a new one if it expires.</li>
+                <li>Once verified, you land in the Space lobby automatically.</li>
+              </ol>
+              <h3>Or use Continue with Google</h3>
+              <p>Sign in with your Google account — no OTP step needed.</p>
+              <div class="note warn">
+                <span class="ic">!</span>
+                <div>
+                  Too many wrong passwords in a row locks the account temporarily (15 minutes the first
+                  time, longer if it keeps happening). Forgot it? Use <b>Forget password</b> and we email
+                  you a reset link.
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3 -->
+        <section id="lobby">
+          <h2><span class="num">3</span><span class="lang th">หน้า Space — บ้านของคุณ</span><span class="lang en">The Space lobby</span></h2>
+          <div class="lang th">
+            <p>หลังล็อกอิน คุณจะเห็นรายการ Space ทั้งหมดที่มีสิทธิ์เข้า แบ่งเป็น 3 แท็บ</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>แท็บ</th><th>แสดงอะไร</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>All workspace</strong></td><td>ทุก Space ที่คุณเข้าได้</td></tr>
+                  <tr><td><strong>My workspace</strong></td><td>Space ที่คุณเป็นเจ้าของ (Owner)</td></tr>
+                  <tr><td><strong>Shared with me</strong></td><td>Space ที่คนอื่นเชิญคุณเข้ามา</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>บนการ์ดแต่ละใบ</h3>
+            <ul>
+              <li>ภาพ thumbnail, ชื่อ Space, บทบาทของคุณ และจำนวนคนออนไลน์ / capacity</li>
+              <li>คลิกการ์ดเพื่อเข้า Space</li>
+              <li>เมนู <strong>⋮</strong> มี Enter, Copy link, เปิด Editor (ถ้ามีสิทธิ์) และ Leave</li>
+            </ul>
+            <p>ปุ่ม <strong>Create workspace</strong> มุมขวาบนใช้สร้าง Space ใหม่จากเทมเพลต — ตั้งชื่อ เลือกแผนที่ แล้วเชิญทีมได้ทันที</p>
+            <div class="note">
+              <span class="ic">◆</span>
+              <div>ล็อกอินครั้งแรกจะมีหน้าต่าง onboarding เด้งขึ้นมาแนะนำการสร้าง Space, เชิญทีม และวิธีเล่น — กด Skip ได้ และเปิดอ่านย้อนหลังได้ใน Help Center</div>
+            </div>
+          </div>
+          <div class="lang en">
+            <p>After signing in you see every Space you can access, split into three tabs.</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Tab</th><th>Shows</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>All workspace</strong></td><td>Every Space you can enter</td></tr>
+                  <tr><td><strong>My workspace</strong></td><td>Spaces you own</td></tr>
+                  <tr><td><strong>Shared with me</strong></td><td>Spaces someone invited you to</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>On each card</h3>
+            <ul>
+              <li>Thumbnail, Space name, your role, and online count / capacity</li>
+              <li>Click the card to enter the Space</li>
+              <li>The <strong>⋮</strong> menu holds Enter, Copy link, open Editor (if you may), and Leave</li>
+            </ul>
+            <p>Use <strong>Create workspace</strong> in the top right to start a new Space from a template — name it, pick a map, and invite your team right away.</p>
+            <div class="note">
+              <span class="ic">◆</span>
+              <div>On your first sign-in an onboarding modal walks you through creating a Space, inviting your team and how to play. You can skip it and read it later in the Help Center.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4 -->
+        <section id="enter">
+          <h2><span class="num">4</span><span class="lang th">ก่อนเข้าออฟฟิศ</span><span class="lang en">Before you enter</span></h2>
+          <div class="card">
+            <div class="lang th">
+              <ol class="steps">
+                <li>เลือก <strong>ตัวละคร (avatar)</strong> จากรายการที่มี — ตัวเลือกของคุณจะถูกจำไว้ครั้งต่อไป</li>
+                <li>ตั้ง <strong>ชื่อในเกม (character name)</strong> ที่คนอื่นจะเห็นลอยอยู่เหนือหัวคุณ</li>
+                <li>เช็กไมค์และกล้อง — ถ้าเบราว์เซอร์ถามสิทธิ์ ให้กด <strong>Allow</strong> ทุกครั้ง</li>
+                <li>กดเข้า — หน้า loading จะเชื่อมต่อเซิร์ฟเวอร์ โหลดแผนที่ และโหลดรายชื่อสมาชิก</li>
+              </ol>
+              <p>เมื่อกลับเข้ามาใหม่ ตัวละครจะเกิดที่ตำแหน่งเดิมที่คุณออกไป (ถ้ามี) ไม่ใช่จุดเริ่มต้นเสมอ</p>
+            </div>
+            <div class="lang en">
+              <ol class="steps">
+                <li>Pick your <strong>avatar</strong> from the list — your choice is remembered next time.</li>
+                <li>Set the <strong>character name</strong> other people see floating above your head.</li>
+                <li>Check mic and camera — always press <strong>Allow</strong> when the browser asks for permission.</li>
+                <li>Enter. The loading screen connects to the server, loads the map, then loads the member list.</li>
+              </ol>
+              <p>When you come back, your avatar respawns where you left off rather than at the default spawn point.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5 -->
+        <section id="move">
+          <h2><span class="num">5</span><span class="lang th">การเดินและมองรอบ</span><span class="lang en">Moving &amp; looking around</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>ทำอะไร</th><th>วิธี</th></tr></thead>
+              <tbody>
+                <tr><td>เดิน</td><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> หรือปุ่มลูกศร</td></tr>
+                <tr><td>วิ่ง</td><td>กด <kbd>Shift</kbd> ค้างไว้ระหว่างเดิน</td></tr>
+                <tr><td>เดินไปจุดที่ต้องการ</td><td>คลิกบนแผนที่ — ตัวละครหาเส้นทางเลี่ยงสิ่งกีดขวางเอง</td></tr>
+                <tr><td>เลื่อนมุมกล้อง</td><td>ลากแผนที่ด้วยเมาส์</td></tr>
+                <tr><td>ซูมเข้า/ออก</td><td>เลื่อนลูกกลิ้งเมาส์</td></tr>
+                <tr><td>นั่งเก้าอี้ / โซฟา</td><td>เดินไปที่เก้าอี้ — ตัวละครนั่งเอง ลุกโดยเดินออก</td></tr>
+                <tr><td>ปิด/เปิดไมค์</td><td><kbd>M</kbd> หรือไอคอนไมค์ที่แถบล่าง</td></tr>
+                <tr><td>ปิด/เปิดกล้อง</td><td><kbd>V</kbd> หรือไอคอนกล้องที่แถบล่าง</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>To do this</th><th>Use</th></tr></thead>
+              <tbody>
+                <tr><td>Walk</td><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or the arrow keys</td></tr>
+                <tr><td>Run</td><td>Hold <kbd>Shift</kbd> while walking</td></tr>
+                <tr><td>Walk to a spot</td><td>Click the map — your avatar finds a path around obstacles</td></tr>
+                <tr><td>Pan the camera</td><td>Drag the map with your mouse</td></tr>
+                <tr><td>Zoom in / out</td><td>Mouse wheel</td></tr>
+                <tr><td>Sit on a chair or couch</td><td>Walk onto it — you sit automatically; walk away to stand</td></tr>
+                <tr><td>Mute / unmute</td><td><kbd>M</kbd> or the mic icon in the bottom toolbar</td></tr>
+                <tr><td>Camera on / off</td><td><kbd>V</kbd> or the camera icon in the bottom toolbar</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="lang th">
+            <h3>เครื่องมือช่วยหาทาง</h3>
+            <ul>
+              <li><strong>Minimap</strong> มุมล่างขวา — เห็นภาพรวมของชั้นและตำแหน่งสมาชิก</li>
+              <li><strong>Teleport / zone picker</strong> — เลือกโซนหรือชั้นแล้วย้ายตัวละครไปทันที ไม่ต้องเดิน</li>
+              <li><strong>Member panel</strong> ด้านซ้าย — รายชื่อคนในออฟฟิศ จัดกลุ่มตามโซน คลิกเพื่อดูว่าใครอยู่ไหน</li>
+            </ul>
+            <div class="note">
+              <span class="ic">◆</span>
+              <div>กำแพงและเฟอร์นิเจอร์ตั้งใจให้เดินผ่านไม่ได้ ถ้าตัวละครดูเหมือนติด ให้เดินอ้อม หรือรีเฟรชหน้า (<kbd>F5</kbd>) เพื่อเกิดใหม่ที่ตำแหน่งล่าสุด</div>
+            </div>
+          </div>
+          <div class="lang en">
+            <h3>Wayfinding tools</h3>
+            <ul>
+              <li><strong>Minimap</strong> (bottom right) — the whole floor plus where everyone is</li>
+              <li><strong>Teleport / zone picker</strong> — jump your avatar straight to a zone or another floor</li>
+              <li><strong>Member panel</strong> (left) — everyone in the office, grouped by zone, so you can see who is where</li>
+            </ul>
+            <div class="note">
+              <span class="ic">◆</span>
+              <div>Walls and furniture block movement on purpose. If your avatar really looks stuck, steer around it or refresh the page (<kbd>F5</kbd>) to respawn at your last spot.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6 -->
+        <section id="talk">
+          <h2><span class="num">6</span><span class="lang th">คุย ประชุม และแชร์หน้าจอ</span><span class="lang en">Talk, meet &amp; share</span></h2>
+          <div class="lang th">
+            <h3>คุยแบบเดินไปหา</h3>
+            <p>เดินเข้าใกล้เพื่อนร่วมทีม แล้ววงสนทนา (พร้อมเสียงและวิดีโอ) จะเปิดขึ้นเอง เดินห่างออกไปคือจบบทสนทนา</p>
+            <h3>โซนแต่ละแบบ</h3>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>โซน</th><th>เกิดอะไรขึ้นเมื่อเข้าไป</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Meeting zone</strong></td><td>เข้าโหมดประชุม เห็นวิดีโอทุกคนในโซนเป็นตาราง พร้อมแชทของโซนนั้น</td></tr>
+                  <tr><td><strong>Private zone</strong></td><td>พื้นที่ปิด — คนนอกต้อง <strong>Knock</strong> ขออนุญาตก่อนเข้า</td></tr>
+                  <tr><td><strong>Spotlight zone</strong></td><td>เสียงของคุณจะถูกกระจายไปทั้งชั้น ใช้ประกาศเรื่องสำคัญ</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>แชร์หน้าจอ</h3>
+            <ol class="steps">
+              <li>เดินเข้า meeting zone และเริ่มคุยกับทีม</li>
+              <li>กดไอคอนแชร์หน้าจอที่แถบล่าง เลือกหน้าต่างหรือแท็บ แล้วกด Share</li>
+              <li>กด <strong>Stop sharing</strong> เมื่อเสร็จ</li>
+            </ol>
+            <p>หนึ่งโซนแชร์ได้พร้อมกันสูงสุด <strong>2 คน</strong> ถ้าเต็มจะขอคิวรอได้ และระบบจะแจ้งเมื่อมีที่ว่าง</p>
+            <h3>อย่างอื่นที่แถบล่าง</h3>
+            <ul>
+              <li><strong>Emoji / reaction</strong> — ส่งอิโมจิลอยขึ้นเหนือหัว</li>
+              <li><strong>Raise hand</strong> — ขอพูดในที่ประชุม</li>
+              <li><strong>Background effects</strong> — เบลอหรือเปลี่ยนฉากหลังกล้อง</li>
+              <li><strong>Lock</strong> — ล็อกโซนที่คุณอยู่ คนอื่นต้อง knock ก่อนเข้า</li>
+            </ul>
+            <div class="note warn">
+              <span class="ic">!</span>
+              <div>
+                ถ้าไอคอนไมค์หรือกล้องเป็นสีแดงและกดไม่ติด แปลว่าเบราว์เซอร์บล็อกสิทธิ์อยู่ —
+                เปิดสิทธิ์ที่ site settings ของเบราว์เซอร์ (Zyra มีหน้าคำแนะนำทีละขั้นให้ตามเบราว์เซอร์ที่ใช้)
+                และตรวจว่าไม่มีแอปอื่นใช้กล้อง/ไมค์ค้างอยู่
+              </div>
+            </div>
+          </div>
+          <div class="lang en">
+            <h3>Walk-up conversations</h3>
+            <p>Step close to a teammate and a conversation circle — audio and video — opens by itself. Walk away and it ends.</p>
+            <h3>Zone types</h3>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Zone</th><th>What happens when you walk in</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Meeting zone</strong></td><td>You enter meeting mode: a video grid of everyone in the zone plus that zone's chat</td></tr>
+                  <tr><td><strong>Private zone</strong></td><td>A closed area — outsiders must <strong>knock</strong> and be let in</td></tr>
+                  <tr><td><strong>Spotlight zone</strong></td><td>Your voice is broadcast to the whole floor — for announcements</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Screen sharing</h3>
+            <ol class="steps">
+              <li>Walk into a meeting zone and start a call with your team.</li>
+              <li>Click the screen-share icon in the bottom toolbar, choose a window or tab, then Share.</li>
+              <li>Click <strong>Stop sharing</strong> when you are done.</li>
+            </ol>
+            <p>At most <strong>two people</strong> can present in one zone at a time. If both slots are taken you can request one and we notify you when it opens.</p>
+            <h3>Also in the bottom toolbar</h3>
+            <ul>
+              <li><strong>Emoji / reactions</strong> — float an emoji above your head</li>
+              <li><strong>Raise hand</strong> — ask to speak in a meeting</li>
+              <li><strong>Background effects</strong> — blur or replace your camera background</li>
+              <li><strong>Lock</strong> — lock the zone you are in so others have to knock</li>
+            </ul>
+            <div class="note warn">
+              <span class="ic">!</span>
+              <div>
+                If the mic or camera icon is red and won't turn on, your browser is blocking the
+                permission — enable it in the site settings (Zyra shows step-by-step instructions for
+                your browser) and make sure no other app is holding the device.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7 -->
+        <section id="social">
+          <h2><span class="num">7</span><span class="lang th">Wave · Follow · Knock</span><span class="lang en">Wave · Follow · Knock</span></h2>
+          <div class="lang th">
+            <p>คลิกที่ตัวละครของคนอื่นเพื่อเปิดเมนู แล้วเลือกได้ว่าจะทำอะไร</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>คำสั่ง</th><th>ทำอะไร</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Wave</strong></td><td>ทักทาย — อีกฝ่ายได้ notification และกด <em>Wave back</em> ตอบได้ ไม่ต้องอยู่ใกล้กัน (ทักคนเดิมซ้ำได้ทุก 10 วินาที)</td></tr>
+                  <tr><td><strong>Follow</strong></td><td>ให้ตัวละครของคุณเดินตามคนนั้นไปเรื่อย ๆ มีแถบด้านล่างบอกสถานะ กด <em>Stop following</em> เพื่อเลิกตาม — และถ้ามีคนตามคุณ คุณก็ให้เขาหยุดตามได้</td></tr>
+                  <tr><td><strong>Chat</strong></td><td>เปิดห้องแชทส่วนตัวกับคนนั้น</td></tr>
+                  <tr><td><strong>View profile</strong></td><td>ดูโปรไฟล์ ชื่อ และสถานะ</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Knock — ขอเข้าโซนส่วนตัว</h3>
+            <ol class="steps">
+              <li>เดินไปที่ขอบโซนส่วนตัวที่ล็อกอยู่ แล้วกด Knock</li>
+              <li>คนในโซนได้ notification พร้อมปุ่ม <strong>Allow</strong> / <strong>Deny</strong></li>
+              <li>ถ้าอนุญาต ประตูจะเปิดให้คุณเดินเข้าไปได้; ถ้าปฏิเสธ ต้องรอสักครู่ก่อนเคาะใหม่ (ปฏิเสธหลายครั้ง = รอนานขึ้น)</li>
+            </ol>
+          </div>
+          <div class="lang en">
+            <p>Click someone's avatar to open their menu.</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Action</th><th>What it does</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Wave</strong></td><td>Say hi — they get a notification and can <em>Wave back</em>. You don't need to be nearby (you can wave at the same person every 10 seconds).</td></tr>
+                  <tr><td><strong>Follow</strong></td><td>Your avatar tags along behind them; a bar at the bottom shows the state and <em>Stop following</em> ends it. If someone is following you, you can stop them too.</td></tr>
+                  <tr><td><strong>Chat</strong></td><td>Open a direct message with them</td></tr>
+                  <tr><td><strong>View profile</strong></td><td>See their profile, name and status</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Knock — asking into a private zone</h3>
+            <ol class="steps">
+              <li>Walk up to a locked private zone and knock.</li>
+              <li>The people inside get a notification with <strong>Allow</strong> and <strong>Deny</strong>.</li>
+              <li>Allowed, the door opens and you walk in. Denied, you have to wait a bit before knocking again — repeated denials make the wait longer.</li>
+            </ol>
+          </div>
+        </section>
+
+        <!-- 8 -->
+        <section id="chat">
+          <h2><span class="num">8</span><span class="lang th">Chat</span><span class="lang en">Chat</span></h2>
+          <div class="card">
+            <div class="lang th">
+              <ul>
+                <li><strong>ข้อความส่วนตัว (DM)</strong> — คลิกชื่อจาก member panel หรือเมนูบนตัวละคร แล้วพิมพ์ได้เลย</li>
+                <li><strong>แชทกลุ่ม</strong> — สร้างห้องกลุ่ม ตั้งชื่อ เพิ่ม/ลบสมาชิก ปิดเสียงแจ้งเตือน หรือออกจากกลุ่มได้จากเมนูหัวห้อง</li>
+                <li><strong>Reply</strong> ยกข้อความเดิมมาอ้างในสายเดิม ส่วน <strong>Thread</strong> แยกบทสนทนาย่อยออกไป</li>
+                <li>ข้อความในโซนประชุมจะอยู่กับโซนนั้น — คุยกันเฉพาะคนที่อยู่ในโซน</li>
+                <li>ถ้าคุณไม่ได้ออนไลน์ ระบบจะส่งอีเมลสรุปข้อความที่พลาดให้</li>
+              </ul>
+            </div>
+            <div class="lang en">
+              <ul>
+                <li><strong>Direct messages</strong> — click a name in the member panel or on an avatar and start typing.</li>
+                <li><strong>Group chats</strong> — create a group, rename it, add or remove members, mute it, or leave from the header menu.</li>
+                <li><strong>Reply</strong> quotes a message inline; <strong>Thread</strong> splits the discussion into its own sub-conversation.</li>
+                <li>Messages in a meeting zone stay with that zone — only the people inside see them.</li>
+                <li>If you are offline, we email you a digest of what you missed.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 9 -->
+        <section id="status">
+          <h2><span class="num">9</span><span class="lang th">สถานะของคุณ</span><span class="lang en">Your status</span></h2>
+          <div class="lang th">
+            <p>คลิกที่ตัวละครของตัวเอง หรือโปรไฟล์ในแถบซ้าย เพื่อเปลี่ยนสถานะ — คนอื่นเห็นเป็นจุดสีข้างชื่อคุณ</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>สถานะ</th><th>ความหมาย</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="swatch" style="background: var(--green); display: inline-block; margin-right: 8px"></span><strong>Active</strong></td><td>พร้อมคุย</td></tr>
+                  <tr><td><span class="swatch" style="background: var(--red); display: inline-block; margin-right: 8px"></span><strong>Busy</strong></td><td>ไม่ว่าง แต่ยังรับ Wave</td></tr>
+                  <tr><td><span class="swatch" style="background: var(--yellow); display: inline-block; margin-right: 8px"></span><strong>Away</strong></td><td>ไม่อยู่หน้าจอชั่วคราว (ตั้งเองหรือระบบตั้งให้เมื่อสลับไปแอปอื่นนาน)</td></tr>
+                  <tr><td><span class="swatch" style="background: var(--red); display: inline-block; margin-right: 8px"></span><strong>Do not disturb</strong></td><td>บล็อกการแจ้งเตือน Wave ทั้งหมด</td></tr>
+                  <tr><td><span class="swatch" style="background: var(--muted-2); display: inline-block; margin-right: 8px"></span><strong>Offline</strong></td><td>ออกจากออฟฟิศแล้ว — ระบบตั้งให้เอง</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>เพิ่มข้อความสั้น ๆ ต่อท้ายสถานะได้ เช่น “deep work ถึงบ่าย 3”</p>
+            <h3>โปรไฟล์</h3>
+            <p>ที่หน้า Profile เปลี่ยนชื่อที่แสดง, bio, และรูปโปรไฟล์ได้ (อัปโหลดแล้วครอปในหน้าเดียวกัน) รวมถึงเปลี่ยนรหัสผ่านและภาษาของอินเทอร์เฟซ (ไทย / English)</p>
+          </div>
+          <div class="lang en">
+            <p>Click your own avatar, or your profile in the left rail, to change status — others see it as a coloured dot next to your name.</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Status</th><th>Means</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="swatch" style="background: var(--green); display: inline-block; margin-right: 8px"></span><strong>Active</strong></td><td>Happy to talk</td></tr>
+                  <tr><td><span class="swatch" style="background: var(--red); display: inline-block; margin-right: 8px"></span><strong>Busy</strong></td><td>Heads down, but still receives waves</td></tr>
+                  <tr><td><span class="swatch" style="background: var(--yellow); display: inline-block; margin-right: 8px"></span><strong>Away</strong></td><td>Stepped away — you can set it, or it sets itself when you're in another app for a while</td></tr>
+                  <tr><td><span class="swatch" style="background: var(--red); display: inline-block; margin-right: 8px"></span><strong>Do not disturb</strong></td><td>Blocks wave notifications entirely</td></tr>
+                  <tr><td><span class="swatch" style="background: var(--muted-2); display: inline-block; margin-right: 8px"></span><strong>Offline</strong></td><td>You left the office — set automatically</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>You can add a short custom message too, like "deep work until 3pm".</p>
+            <h3>Profile</h3>
+            <p>On the Profile page you can change your display name, bio and picture (upload and crop in place), your password, and the interface language (Thai / English).</p>
+          </div>
+        </section>
+
+        <!-- 10 -->
+        <section id="team">
+          <h2><span class="num">10</span><span class="lang th">ทีมและการเชิญคน</span><span class="lang en">Team &amp; invites</span></h2>
+          <div class="lang th">
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>บทบาท</th><th>ทำอะไรได้</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Owner</strong></td><td>สิทธิ์สูงสุด เชิญได้ทุกบทบาท จัดการ Space ทั้งหมด — ออกจาก Space ไม่ได้จนกว่าจะโอนสิทธิ์ให้คนอื่น</td></tr>
+                  <tr><td><strong>Admin</strong></td><td>จัดการสมาชิกและแผนที่ได้ เชิญได้เฉพาะระดับ Member</td></tr>
+                  <tr><td><strong>Member</strong></td><td>ใช้งาน Space ได้เต็มที่ ออกได้ตลอดเวลา</td></tr>
+                  <tr><td><strong>Pending</strong></td><td>ถูกเชิญแล้วแต่ยังไม่ยืนยัน — แสดงเป็น “รอยืนยัน”</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>เชิญเพื่อนร่วมทีม</h3>
+            <ol class="steps">
+              <li>เปิด <strong>Invite member</strong> ในออฟฟิศ (หรือจากเมนูบนการ์ด Space)</li>
+              <li>พิมพ์อีเมลได้สูงสุด 10 คนต่อครั้ง เลือกบทบาท แล้วส่ง — ลิงก์ในอีเมลใช้ได้ 7 วัน</li>
+              <li>หรือ copy <strong>join link</strong> ของ Space ไปแปะในแชททีมก็ได้ (ลิงก์นี้ไม่หมดอายุ และสร้างใหม่ได้ถ้าอยากยกเลิกลิงก์เก่า)</li>
+            </ol>
+            <p>คนที่ขอเข้าผ่านลิงก์จะขึ้นเป็นคำขอให้ Owner/Admin กด <strong>Approve</strong> หรือ <strong>Reject</strong></p>
+            <h3>งานอื่นในหน้า Manage members</h3>
+            <ul>
+              <li>เปลี่ยนบทบาทสมาชิก, ยกเลิกหรือส่งคำเชิญซ้ำ, เอาคนออกจาก Space</li>
+              <li><strong>Transfer ownership</strong> — โอนสิทธิ์เจ้าของไปให้ Admin คนอื่น (คุณจะกลายเป็น Admin)</li>
+              <li><strong>Leave workspace</strong> — ต้องพิมพ์ชื่อ Space ให้ตรงเพื่อยืนยัน</li>
+            </ul>
+          </div>
+          <div class="lang en">
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Role</th><th>Can do</th></tr></thead>
+                <tbody>
+                  <tr><td><strong>Owner</strong></td><td>Everything: invite any role, manage the whole Space. Cannot leave until ownership is transferred.</td></tr>
+                  <tr><td><strong>Admin</strong></td><td>Manage members and maps; can only invite people as Member.</td></tr>
+                  <tr><td><strong>Member</strong></td><td>Full use of the Space; can leave at any time.</td></tr>
+                  <tr><td><strong>Pending</strong></td><td>Invited but hasn't accepted yet — shown as "awaiting confirmation".</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Inviting teammates</h3>
+            <ol class="steps">
+              <li>Open <strong>Invite member</strong> inside the office (or from the Space card menu).</li>
+              <li>Enter up to 10 email addresses at once, pick a role, and send — the emailed link is valid for 7 days.</li>
+              <li>Or copy the Space's <strong>join link</strong> into your team chat. It doesn't expire, and you can regenerate it to invalidate the old one.</li>
+            </ol>
+            <p>People who arrive via the link show up as a request for an Owner or Admin to <strong>Approve</strong> or <strong>Reject</strong>.</p>
+            <h3>Other things on Manage members</h3>
+            <ul>
+              <li>Change a member's role, cancel or resend an invite, remove someone from the Space</li>
+              <li><strong>Transfer ownership</strong> to another Admin — you become an Admin yourself</li>
+              <li><strong>Leave workspace</strong> — you must type the Space name exactly to confirm</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 11 -->
+        <section id="help">
+          <h2><span class="num">11</span><span class="lang th">ติดขัด? ขอความช่วยเหลือได้</span><span class="lang en">Stuck? Get help</span></h2>
+          <div class="card">
+            <div class="lang th">
+              <p>กดปุ่ม <strong>?</strong> ในแถบซ้ายของออฟฟิศเพื่อเปิด <strong>Help Center</strong> — ค้นหาบทความ หรือเลือกตามหมวด (Getting started, Virtual Office, Account, Chat, Billing) แต่ละบทความเป็นขั้นตอนสั้น ๆ พร้อมทิป และกดบอกได้ว่าช่วยได้หรือไม่</p>
+              <h3>ยังไม่หายติดขัด → Contact Support</h3>
+              <ul>
+                <li>เลือกประเภท: <strong>Report an issue</strong> (มีระดับผลกระทบ + แนบภาพได้), <strong>Suggest a feature</strong>, <strong>General feedback</strong> หรือ <strong>Contact support</strong></li>
+                <li>ระบบแนบ URL, เบราว์เซอร์ และ OS ให้อัตโนมัติ — ไม่ต้องพิมพ์เอง</li>
+                <li>แนบภาพ JPG/PNG ได้ไม่เกิน 5MB · คำอธิบายไม่เกิน 1,000 ตัวอักษร</li>
+                <li>ส่งแล้วได้เลข ticket (เช่น <code>ZYR-128</code>) และอีเมลยืนยัน ดูย้อนหลังได้ที่ <strong>My tickets</strong></li>
+              </ul>
+              <h3>เช็กเร็ว ๆ ก่อนแจ้งปัญหา</h3>
+              <ol class="steps">
+                <li>ไอคอนไมค์/กล้องแดงอยู่หรือเปล่า — กดเปิด และกด Allow ให้เบราว์เซอร์</li>
+                <li>รีเฟรชหน้าหนึ่งครั้ง (<kbd>F5</kbd>)</li>
+                <li>ถ้าภาพกระตุกหรือหลุดบ่อย ให้เช็กสัญญาณอินเทอร์เน็ต — ปิดวิดีโอไว้ก่อนช่วยได้เยอะ</li>
+                <li>ปิดแอปอื่นที่แย่งใช้กล้อง/ไมค์ (Zoom, Meet, OBS)</li>
+              </ol>
+            </div>
+            <div class="lang en">
+              <p>Hit the <strong>?</strong> button in the office's left rail to open the <strong>Help Center</strong> — search, or browse by category (Getting started, Virtual Office, Account, Chat, Billing). Each article is a short set of steps plus a tip, and you can tell us whether it helped.</p>
+              <h3>Still stuck → Contact Support</h3>
+              <ul>
+                <li>Pick a type: <strong>Report an issue</strong> (with impact level and an attachment), <strong>Suggest a feature</strong>, <strong>General feedback</strong>, or <strong>Contact support</strong></li>
+                <li>We attach your URL, browser and OS automatically — no need to type them</li>
+                <li>Attachments: JPG/PNG up to 5MB · description up to 1,000 characters</li>
+                <li>You get a ticket number (e.g. <code>ZYR-128</code>) and a confirmation email; find it again under <strong>My tickets</strong></li>
+              </ul>
+              <h3>Quick checks before you report</h3>
+              <ol class="steps">
+                <li>Are the mic/camera icons red? Turn them on and press Allow in the browser prompt.</li>
+                <li>Refresh the page once (<kbd>F5</kbd>).</li>
+                <li>Choppy video or frequent drops usually means the connection — turning your camera off helps a lot.</li>
+                <li>Close other apps holding the camera or mic (Zoom, Meet, OBS).</li>
+              </ol>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      <span class="lang th">Zyra · คู่มือผู้ใช้ใหม่ — อยู่ที่ <code>zyra-doc/doc/onboarding/user.html</code> · <a href="./index.html">กลับหน้าหลัก</a></span>
+      <span class="lang en">Zyra · new user guide — lives at <code>zyra-doc/doc/onboarding/user.html</code> · <a href="./index.html">back to all guides</a></span>
+    </footer>
+
+    <script>
+      const buttons = document.querySelectorAll("[data-set-lang]")
+      const setLang = (lang) => {
+        document.body.dataset.lang = lang
+        document.documentElement.lang = lang
+        document.documentElement.dataset.lang = lang
+        buttons.forEach((b) =>
+          b.setAttribute("aria-selected", String(b.dataset.setLang === lang)),
+        )
+        try {
+          localStorage.setItem("zyra_onboarding_lang", lang)
+        } catch (_e) {}
+      }
+      buttons.forEach((b) => b.addEventListener("click", () => setLang(b.dataset.setLang)))
+      try {
+        const saved = localStorage.getItem("zyra_onboarding_lang")
+        if (saved === "en" || saved === "th") setLang(saved)
+      } catch (_e) {}
+    </script>
+  </body>
+</html>

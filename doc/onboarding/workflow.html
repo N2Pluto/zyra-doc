@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="th" data-lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zyra — ClickUp &amp; Figma Workflow</title>
+    <meta
+      name="description"
+      content="วิธีทำงานกับ ClickUp และ Figma ในโปรเจกต์ Zyra — status ทั้ง 13 ตัวหมายถึงอะไร ใครเปลี่ยนได้ และขั้นตอนดึง spec จาก Figma (ไทย / English)"
+    />
+    <meta name="theme-color" content="#2b3540" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Zyra" />
+    <meta property="og:title" content="Zyra — ClickUp &amp; Figma workflow" />
+    <meta
+      property="og:description"
+      content="status ทั้ง 13 ตัวใน ClickUp หมายถึงอะไร ใครมีสิทธิ์เปลี่ยน แมปกับ git/env ยังไง และขั้นตอนดึง spec จาก Figma ให้ตรง 95-100%"
+    />
+    <meta property="og:url" content="https://zyra-onboarding.vercel.app/workflow.html" />
+    <meta property="og:image" content="https://zyra-onboarding.vercel.app/og-workflow.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Zyra — ClickUp and Figma workflow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://zyra-onboarding.vercel.app/og-workflow.png" />
+    <style>
+      :root {
+        --bg: #2b3540;
+        --bg-deep: #242b32;
+        --bg-ink: #1a1b1e;
+        --card: #242b32;
+        --line: rgba(255, 255, 255, 0.1);
+        --line-strong: rgba(255, 255, 255, 0.2);
+        --green: #58d68d;
+        --green-dim: rgba(88, 214, 141, 0.12);
+        --purple: #a77efc;
+        --purple-dim: rgba(167, 126, 252, 0.12);
+        --blue: #2db6ff;
+        --yellow: #ffd400;
+        --orange: #ff8000;
+        --red: #f03a3a;
+        --text: #ffffff;
+        --text-2: #dbdfe3;
+        --muted: #8c99a6;
+        --muted-2: #636d76;
+        --r-sm: 8px;
+        --r-md: 12px;
+        --r-lg: 16px;
+        --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
+          "Noto Sans Thai", "Helvetica Neue", sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 15px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+      body[data-lang="th"] .lang.en,
+      body[data-lang="en"] .lang.th {
+        display: none;
+      }
+
+      header.top {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        height: 64px;
+        padding: 0 24px;
+        background: rgba(26, 27, 30, 0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        font-size: 15px;
+      }
+      .brand .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--blue);
+        box-shadow: 0 0 0 4px rgba(45, 182, 255, 0.14);
+      }
+      .brand span.sub {
+        color: var(--muted);
+        font-weight: 500;
+        letter-spacing: 0;
+        font-size: 13px;
+        border-left: 1px solid var(--line-strong);
+        padding-left: 10px;
+        margin-left: 2px;
+      }
+      .spacer {
+        flex: 1;
+      }
+      a.home {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        flex: none;
+        height: 34px;
+        padding: 0 12px 0 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.15s;
+      }
+      a.home:hover {
+        color: var(--text);
+        border-color: var(--line-strong);
+        background: rgba(255, 255, 255, 0.07);
+      }
+      a.home svg {
+        flex: none;
+      }
+      .lang-switch {
+        display: flex;
+        padding: 3px;
+        gap: 2px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+      }
+      .lang-switch button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-family: var(--font);
+        font-size: 13px;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .lang-switch button:hover {
+        color: var(--text);
+      }
+      .lang-switch button[aria-selected="true"] {
+        background: var(--blue);
+        color: #06283a;
+      }
+
+      .wrap {
+        display: grid;
+        grid-template-columns: 236px minmax(0, 1fr);
+        gap: 32px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 24px 96px;
+      }
+      nav.toc {
+        position: sticky;
+        top: 96px;
+        align-self: start;
+        font-size: 13.5px;
+      }
+      nav.toc p {
+        margin: 0 0 10px;
+        color: var(--muted-2);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      nav.toc a {
+        display: block;
+        padding: 7px 10px;
+        color: var(--muted);
+        text-decoration: none;
+        border-radius: 6px;
+        border-left: 2px solid transparent;
+      }
+      nav.toc a:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.04);
+        border-left-color: var(--blue);
+      }
+      main {
+        min-width: 0;
+      }
+
+      .hero {
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        background: radial-gradient(
+            120% 140% at 0% 0%,
+            rgba(45, 182, 255, 0.14) 0%,
+            rgba(45, 182, 255, 0) 55%
+          ),
+          var(--card);
+        padding: 32px;
+        margin-bottom: 32px;
+      }
+      .hero .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(45, 182, 255, 0.12);
+        border: 1px solid rgba(45, 182, 255, 0.3);
+        color: var(--blue);
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 14px;
+      }
+      .hero h1 {
+        margin: 0 0 10px;
+        font-size: 30px;
+        line-height: 1.25;
+        letter-spacing: -0.01em;
+      }
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 66ch;
+      }
+
+      section {
+        margin-bottom: 40px;
+        scroll-margin-top: 88px;
+      }
+      h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 20px;
+        margin: 0 0 16px;
+      }
+      h2 .num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        width: 28px;
+        height: 28px;
+        border-radius: var(--r-sm);
+        background: rgba(45, 182, 255, 0.12);
+        color: var(--blue);
+        font-size: 13px;
+        font-weight: 700;
+      }
+      h3 {
+        font-size: 15px;
+        margin: 22px 0 8px;
+      }
+      h3:first-child {
+        margin-top: 0;
+      }
+      p {
+        color: var(--text-2);
+      }
+      a {
+        color: var(--blue);
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        padding: 20px 22px;
+      }
+      ol,
+      ul {
+        padding-left: 20px;
+        color: var(--text-2);
+      }
+      li {
+        margin: 5px 0;
+      }
+      ol.steps {
+        list-style: none;
+        padding: 0;
+        counter-reset: s;
+      }
+      ol.steps > li {
+        counter-increment: s;
+        position: relative;
+        padding-left: 34px;
+        margin: 10px 0;
+      }
+      ol.steps > li::before {
+        content: counter(s);
+        position: absolute;
+        left: 0;
+        top: 1px;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        background: rgba(45, 182, 255, 0.14);
+        color: var(--blue);
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      code {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--blue);
+        background: rgba(45, 182, 255, 0.08);
+        padding: 1px 6px;
+        border-radius: 5px;
+      }
+      pre {
+        margin: 12px 0 0;
+        padding: 14px 16px;
+        background: var(--bg-ink);
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.7;
+        color: var(--text-2);
+      }
+      pre code {
+        background: none;
+        color: inherit;
+        padding: 0;
+        font-size: inherit;
+      }
+      pre .c {
+        color: var(--muted-2);
+      }
+
+      .table-scroll {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 560px;
+        font-size: 13.5px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      td strong {
+        color: var(--text);
+      }
+      td code {
+        white-space: nowrap;
+      }
+
+      /* status chips */
+      .st {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+        font-weight: 700;
+        font-size: 12.5px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: var(--text);
+      }
+      .st i {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        flex: none;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+      }
+      .owner {
+        display: inline-block;
+        padding: 2px 9px;
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        border: 1px solid var(--line-strong);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .owner.dev {
+        color: var(--green);
+        border-color: rgba(88, 214, 141, 0.35);
+        background: var(--green-dim);
+      }
+      .owner.qa {
+        color: var(--orange);
+        border-color: rgba(255, 128, 0, 0.35);
+        background: rgba(255, 128, 0, 0.1);
+      }
+      .owner.pm {
+        color: var(--purple);
+        border-color: rgba(167, 126, 252, 0.35);
+        background: var(--purple-dim);
+      }
+
+      .flow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 18px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+        margin-top: 12px;
+      }
+      .flow .node {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 11px;
+        border-radius: var(--r-sm);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--line);
+        font-size: 12.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .flow .node i {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex: none;
+      }
+      .flow .arrow {
+        color: var(--muted-2);
+        font-size: 13px;
+      }
+
+      .note {
+        display: flex;
+        gap: 12px;
+        border: 1px solid rgba(45, 182, 255, 0.28);
+        background: rgba(45, 182, 255, 0.08);
+        border-radius: var(--r-md);
+        padding: 14px 16px;
+        margin: 16px 0 0;
+        font-size: 13.5px;
+        color: var(--text-2);
+      }
+      .note.warn {
+        border-color: rgba(240, 58, 58, 0.3);
+        background: rgba(240, 58, 58, 0.07);
+      }
+      .note b {
+        color: var(--text);
+      }
+      .note .ic {
+        flex: none;
+        font-weight: 700;
+        color: var(--blue);
+      }
+      .note.warn .ic {
+        color: var(--red);
+      }
+
+      .do-dont {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 14px;
+      }
+      .do-dont > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+        padding: 16px 18px;
+        background: var(--card);
+      }
+      .do-dont h4 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .do h4 {
+        color: var(--green);
+      }
+      .dont h4 {
+        color: var(--red);
+      }
+      .do-dont ul {
+        margin: 0;
+        padding-left: 18px;
+        font-size: 13.5px;
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 24px;
+        text-align: center;
+        color: var(--muted-2);
+        font-size: 13px;
+      }
+
+      @media (max-width: 560px) {
+        header.top {
+          padding: 0 14px;
+          gap: 10px;
+        }
+        .brand span.sub {
+          display: none;
+        }
+      }
+      @media (max-width: 880px) {
+        .wrap {
+          grid-template-columns: 1fr;
+        }
+        nav.toc {
+          display: none;
+        }
+        .hero {
+          padding: 24px;
+        }
+        .hero h1 {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body data-lang="th">
+    <header class="top">
+      <a class="home" href="./index.html">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M19 12H5" />
+          <path d="m12 19-7-7 7-7" />
+        </svg>
+        <span class="lang th">หน้าหลัก</span>
+        <span class="lang en">All guides</span>
+      </a>
+      <div class="brand">
+        <span class="dot"></span>ZYRA
+        <span class="sub lang th">ClickUp &amp; Figma</span>
+        <span class="sub lang en">ClickUp &amp; Figma</span>
+      </div>
+      <div class="spacer"></div>
+      <div class="lang-switch" role="tablist" aria-label="Language">
+        <button role="tab" data-set-lang="th" aria-selected="true">ไทย</button>
+        <button role="tab" data-set-lang="en" aria-selected="false">EN</button>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <nav class="toc">
+        <p class="lang th">หัวข้อ</p>
+        <p class="lang en">Contents</p>
+        <a href="#board"><span class="lang th">1 · โครงสร้าง board</span><span class="lang en">1 · Board structure</span></a>
+        <a href="#status"><span class="lang th">2 · Status ทั้ง 13 ตัว</span><span class="lang en">2 · All 13 statuses</span></a>
+        <a href="#flow"><span class="lang th">3 · ลำดับการทำงาน</span><span class="lang en">3 · The flow</span></a>
+        <a href="#owner"><span class="lang th">4 · ใครเปลี่ยน status</span><span class="lang en">4 · Who moves it</span></a>
+        <a href="#git"><span class="lang th">5 · แมปกับ git / env</span><span class="lang en">5 · Mapping to git / env</span></a>
+        <a href="#task"><span class="lang th">6 · เขียน task &amp; SC id</span><span class="lang en">6 · Task &amp; SC ids</span></a>
+        <a href="#figma"><span class="lang th">7 · Figma — ไฟล์และ node</span><span class="lang en">7 · Figma — file &amp; nodes</span></a>
+        <a href="#fidelity"><span class="lang th">8 · Figma fidelity 95–100%</span><span class="lang en">8 · Figma fidelity 95–100%</span></a>
+        <a href="#ask"><span class="lang th">9 · ถามก่อนลงมือ</span><span class="lang en">9 · Ask before you build</span></a>
+      </nav>
+
+      <main>
+        <div class="hero">
+          <span class="pill lang th">Process · ClickUp + Figma</span>
+          <span class="pill lang en">Process · ClickUp + Figma</span>
+          <div class="lang th">
+            <h1>ทำงานกับ ClickUp และ Figma</h1>
+            <p>
+              งานทุกชิ้นของ Zyra เริ่มจาก task ใน ClickUp และ design ใน Figma
+              หน้านี้บอกว่า status แต่ละตัวหมายถึงอะไร ใครมีสิทธิ์ขยับ
+              มันแมปกับ branch/environment ของเราอย่างไร และต้องดึง spec จาก Figma
+              ยังไงให้ UI ออกมาตรงแบบ
+            </p>
+          </div>
+          <div class="lang en">
+            <h1>Working with ClickUp &amp; Figma</h1>
+            <p>
+              Every piece of Zyra work starts as a ClickUp task and a Figma design. This page
+              covers what each status means, who is allowed to move it, how it lines up with our
+              branches and environments, and how to pull a spec out of Figma so the UI matches
+              the design.
+            </p>
+          </div>
+        </div>
+
+        <!-- 1 -->
+        <section id="board">
+          <h2><span class="num">1</span><span class="lang th">โครงสร้าง board</span><span class="lang en">Board structure</span></h2>
+          <div class="lang th">
+            <pre><code>Workspace  <span class="c">36898257</span>
+└─ Space   PM - Mos            <span class="c">90166731836</span>
+   └─ Folder  Zyra World       <span class="c">90169187867</span>  ← status set ผูกที่ระดับ folder นี้
+      └─ List                  <span class="c">901614367195</span>  ← task ของ Zyra อยู่ที่นี่</code></pre>
+            <p>Task ใช้ URL แบบ <code>https://app.clickup.com/t/&lt;task-id&gt;</code> เช่น <a href="https://app.clickup.com/t/86d2wefft">86d2wefft</a> = <code>[Module] Virtual Office</code> — เอกสารใน <code>zyra-doc/plan/</code> อ้าง task id ตรง ๆ แบบนี้ทั่วทั้งโปรเจกต์</p>
+            <div class="note">
+              <span class="ic">◆</span>
+              <div>status set ถูกกำหนดที่ <b>folder “Zyra World”</b> ไม่ใช่ที่ list — เพราะฉะนั้น list ใหม่ที่สร้างใน folder นี้จะได้ status ชุดเดียวกันอัตโนมัติ</div>
+            </div>
+          </div>
+          <div class="lang en">
+            <pre><code>Workspace  <span class="c">36898257</span>
+└─ Space   PM - Mos            <span class="c">90166731836</span>
+   └─ Folder  Zyra World       <span class="c">90169187867</span>  ← the status set is defined here
+      └─ List                  <span class="c">901614367195</span>  ← Zyra tasks live here</code></pre>
+            <p>Tasks use <code>https://app.clickup.com/t/&lt;task-id&gt;</code> — e.g. <a href="https://app.clickup.com/t/86d2wefft">86d2wefft</a> is <code>[Module] Virtual Office</code>. Docs under <code>zyra-doc/plan/</code> reference task ids exactly like that throughout.</p>
+            <div class="note">
+              <span class="ic">◆</span>
+              <div>The status set belongs to the <b>“Zyra World” folder</b>, not the list — so any new list created inside that folder inherits the same statuses automatically.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2 -->
+        <section id="status">
+          <h2><span class="num">2</span><span class="lang th">Status ทั้ง 13 ตัว</span><span class="lang en">All 13 statuses</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>#</th><th>Status</th><th>หมายถึง</th><th>เจ้าของ</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td><span class="st"><i style="background: #87909e"></i>Open</span></td><td>งานที่ได้รับมา ยังไม่ได้วางแผน</td><td><span class="owner pm">PM</span></td></tr>
+                <tr><td>2</td><td><span class="st"><i style="background: #f8ae00"></i>pending</span></td><td>วางแผนแล้ว รอ dev หยิบไปทำ</td><td><span class="owner pm">PM</span></td></tr>
+                <tr><td>3</td><td><span class="st"><i style="background: #ee5e99"></i>in progress</span></td><td>กำลังทำอยู่</td><td><span class="owner dev">Dev</span></td></tr>
+                <tr><td>4</td><td><span class="st"><i style="background: #3db88b"></i>waitdeploy-dev</span></td><td>dev เสร็จแล้วแต่ยังไม่ได้ deploy ขึ้น dev</td><td><span class="owner dev">Dev</span></td></tr>
+                <tr><td>5</td><td><span class="st"><i style="background: #000000"></i>completed</span></td><td>dev เสร็จและอยู่บน dev แล้ว รอ QA หยิบไป test</td><td><span class="owner dev">Dev</span></td></tr>
+                <tr><td>6</td><td><span class="st"><i style="background: #e16b16"></i>in review</span></td><td>tester กำลัง test</td><td><span class="owner qa">QA</span></td></tr>
+                <tr><td>7</td><td><span class="st"><i style="background: #d33d44"></i>accepted</span></td><td>test ผ่าน</td><td><span class="owner qa">QA</span></td></tr>
+                <tr><td>8</td><td><span class="st"><i style="background: #b660e0"></i>rejected</span></td><td>test ไม่ผ่าน — กลับไปหา dev</td><td><span class="owner qa">QA</span></td></tr>
+                <tr><td>9</td><td><span class="st"><i style="background: #5f55ee"></i>blocked</span></td><td>hold ไว้ก่อน เพราะติดรออย่างอื่น</td><td><span class="owner pm">PM</span> <span class="owner dev">Dev</span></td></tr>
+                <tr><td>10</td><td><span class="st"><i style="background: #3397dd"></i>staging</span></td><td>อยู่บน UAT แล้ว กำลัง verify</td><td><span class="owner qa">QA</span></td></tr>
+                <tr><td>11</td><td><span class="st"><i style="background: #a18072"></i>waitdeployed</span></td><td>UAT ผ่านแล้วแต่ยังไม่ได้ deploy prod</td><td><span class="owner pm">PM</span></td></tr>
+                <tr><td>12</td><td><span class="st"><i style="background: #ff7fab"></i>deployed</span></td><td>ขึ้น production เรียบร้อย</td><td><span class="owner pm">PM</span></td></tr>
+                <tr><td>13</td><td><span class="st"><i style="background: #008844"></i>Closed</span></td><td>อยู่บน production แล้วไม่มีปัญหา — ปิดงาน</td><td><span class="owner pm">PM</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>#</th><th>Status</th><th>Means</th><th>Owner</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td><span class="st"><i style="background: #87909e"></i>Open</span></td><td>Work received, not planned yet</td><td><span class="owner pm">PM</span></td></tr>
+                <tr><td>2</td><td><span class="st"><i style="background: #f8ae00"></i>pending</span></td><td>Planned, waiting for a dev to pick it up</td><td><span class="owner pm">PM</span></td></tr>
+                <tr><td>3</td><td><span class="st"><i style="background: #ee5e99"></i>in progress</span></td><td>Being worked on</td><td><span class="owner dev">Dev</span></td></tr>
+                <tr><td>4</td><td><span class="st"><i style="background: #3db88b"></i>waitdeploy-dev</span></td><td>Dev work finished but not deployed to dev yet</td><td><span class="owner dev">Dev</span></td></tr>
+                <tr><td>5</td><td><span class="st"><i style="background: #000000"></i>completed</span></td><td>Done and live on dev — waiting for QA to pick it up</td><td><span class="owner dev">Dev</span></td></tr>
+                <tr><td>6</td><td><span class="st"><i style="background: #e16b16"></i>in review</span></td><td>Tester is testing it</td><td><span class="owner qa">QA</span></td></tr>
+                <tr><td>7</td><td><span class="st"><i style="background: #d33d44"></i>accepted</span></td><td>Test passed</td><td><span class="owner qa">QA</span></td></tr>
+                <tr><td>8</td><td><span class="st"><i style="background: #b660e0"></i>rejected</span></td><td>Test failed — back to the developer</td><td><span class="owner qa">QA</span></td></tr>
+                <tr><td>9</td><td><span class="st"><i style="background: #5f55ee"></i>blocked</span></td><td>On hold, waiting on something else</td><td><span class="owner pm">PM</span> <span class="owner dev">Dev</span></td></tr>
+                <tr><td>10</td><td><span class="st"><i style="background: #3397dd"></i>staging</span></td><td>On UAT, being verified</td><td><span class="owner qa">QA</span></td></tr>
+                <tr><td>11</td><td><span class="st"><i style="background: #a18072"></i>waitdeployed</span></td><td>UAT passed but not deployed to prod yet</td><td><span class="owner pm">PM</span></td></tr>
+                <tr><td>12</td><td><span class="st"><i style="background: #ff7fab"></i>deployed</span></td><td>Live on production</td><td><span class="owner pm">PM</span></td></tr>
+                <tr><td>13</td><td><span class="st"><i style="background: #008844"></i>Closed</span></td><td>Live on production with no issues — work closed</td><td><span class="owner pm">PM</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note warn lang th">
+            <span class="ic">!</span>
+            <div>
+              <b>ชื่อ status ที่ใช้จริงคือ <code>waitdeployed</code></b> — บนบอร์ดวางแผนเรียกว่า “Waitdeploy-Prod”
+              แต่ค่าใน ClickUp คือ <code>waitdeployed</code> ตอนค้นหาหรือ filter ให้ใช้ชื่อนี้
+            </div>
+          </div>
+          <div class="note warn lang en">
+            <span class="ic">!</span>
+            <div>
+              <b>The real status name is <code>waitdeployed</code></b> — the planning board calls it
+              "Waitdeploy-Prod", but the value stored in ClickUp is <code>waitdeployed</code>. Use that
+              when searching or filtering.
+            </div>
+          </div>
+        </section>
+
+        <!-- 3 -->
+        <section id="flow">
+          <h2><span class="num">3</span><span class="lang th">ลำดับการทำงาน</span><span class="lang en">The flow</span></h2>
+          <div class="flow">
+            <span class="node"><i style="background: #87909e"></i>open</span><span class="arrow">→</span>
+            <span class="node"><i style="background: #f8ae00"></i>pending</span><span class="arrow">→</span>
+            <span class="node"><i style="background: #ee5e99"></i>in progress</span><span class="arrow">→</span>
+            <span class="node"><i style="background: #3db88b"></i>waitdeploy-dev</span><span class="arrow">→</span>
+            <span class="node"><i style="background: #000000"></i>completed</span><span class="arrow">→</span>
+            <span class="node"><i style="background: #e16b16"></i>in review</span><span class="arrow">→</span>
+            <span class="node"><i style="background: #d33d44"></i>accepted</span><span class="arrow">→</span>
+            <span class="node"><i style="background: #3397dd"></i>staging</span><span class="arrow">→</span>
+            <span class="node"><i style="background: #a18072"></i>waitdeployed</span><span class="arrow">→</span>
+            <span class="node"><i style="background: #ff7fab"></i>deployed</span><span class="arrow">→</span>
+            <span class="node"><i style="background: #008844"></i>closed</span>
+          </div>
+          <div class="lang th">
+            <h3>ทางแยกที่เจอบ่อย</h3>
+            <ul>
+              <li><b>rejected</b> — test ไม่ผ่าน งานเด้งกลับไป <code>in progress</code> แล้วเดินวนใหม่ตั้งแต่ dev</li>
+              <li><b>blocked</b> — แขวนไว้ได้จากทุก status ถ้าติดรอของอื่น (design, decision, service อื่น) พอปลดล็อกก็กลับไป status เดิม</li>
+              <li>งานที่ไม่แตะ production (เช่น doc, spike) อาจปิดจาก <code>accepted</code> ไป <code>closed</code> ตรง ๆ — ให้ PM เป็นคนตัดสิน</li>
+            </ul>
+          </div>
+          <div class="lang en">
+            <h3>Common branches off the happy path</h3>
+            <ul>
+              <li><b>rejected</b> — the test failed; it bounces back to <code>in progress</code> and runs the loop again from dev</li>
+              <li><b>blocked</b> — can be set from any status when something else is in the way (a design, a decision, another service); when unblocked it returns to where it was</li>
+              <li>Work that never reaches production (docs, spikes) may go from <code>accepted</code> straight to <code>closed</code> — PM's call</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- 4 -->
+        <section id="owner">
+          <h2><span class="num">4</span><span class="lang th">ใครเปลี่ยน status</span><span class="lang en">Who moves the status</span></h2>
+          <div class="lang th">
+            <p>Status คือ “ความจริงร่วม” ของทีม — คนที่เปลี่ยนต้องเป็นคนที่รู้จริงว่างานอยู่ขั้นไหน</p>
+            <ul>
+              <li><span class="owner dev">Dev</span> ขยับได้ในช่วงของตัวเอง: <code>in progress</code> → <code>waitdeploy-dev</code> → <code>completed</code> (และรับงานที่ <code>rejected</code> กลับมา)</li>
+              <li><span class="owner qa">QA</span> เป็นเจ้าของ <code>in review</code> / <code>accepted</code> / <code>rejected</code> / <code>staging</code></li>
+              <li><span class="owner pm">PM</span> เป็นเจ้าของช่วงต้น (<code>open</code> / <code>pending</code>) และช่วงปล่อยของ (<code>waitdeployed</code> / <code>deployed</code> / <code>closed</code>)</li>
+            </ul>
+            <div class="note warn">
+              <span class="ic">!</span>
+              <div>
+                <b>AI (Claude) ห้ามเปลี่ยน status ทุกกรณี</b> — ตาม <code>.claude/rules/13-clickup-status.md</code>
+                AI ใช้ ClickUp ได้แบบอ่านอย่างเดียว (get / list / filter / search) เพิ่ม comment ได้
+                แต่ห้ามเรียก update เพื่อแก้ status แม้จะสั่งตรง ๆ ว่า “mark as done” หรืองาน deploy เสร็จแล้วก็ตาม
+                เพราะ status เป็นสิทธิ์ของ PM/QA เท่านั้น
+              </div>
+            </div>
+          </div>
+          <div class="lang en">
+            <p>Status is the team's shared source of truth — whoever moves it must actually know where the work stands.</p>
+            <ul>
+              <li><span class="owner dev">Dev</span> owns their stretch: <code>in progress</code> → <code>waitdeploy-dev</code> → <code>completed</code> (and picks work back up from <code>rejected</code>)</li>
+              <li><span class="owner qa">QA</span> owns <code>in review</code> / <code>accepted</code> / <code>rejected</code> / <code>staging</code></li>
+              <li><span class="owner pm">PM</span> owns the front (<code>open</code> / <code>pending</code>) and the release end (<code>waitdeployed</code> / <code>deployed</code> / <code>closed</code>)</li>
+            </ul>
+            <div class="note warn">
+              <span class="ic">!</span>
+              <div>
+                <b>The AI (Claude) never changes a status — no exceptions.</b> Per
+                <code>.claude/rules/13-clickup-status.md</code> it uses ClickUp read-only (get / list /
+                filter / search) and may add comments, but must never call update to change a status,
+                even when told "mark as done" or when a deploy has just finished. Status belongs to
+                PM/QA only.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5 -->
+        <section id="git">
+          <h2><span class="num">5</span><span class="lang th">แมปกับ git และ environment</span><span class="lang en">Mapping to git &amp; environments</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>Status</th><th>โค้ดอยู่ไหน</th><th>Environment</th></tr></thead>
+              <tbody>
+                <tr><td><code>in progress</code></td><td>branch <code>feat/&lt;name&gt;</code> (แตกจาก <code>develop</code>)</td><td>เครื่อง dev เอง</td></tr>
+                <tr><td><code>waitdeploy-dev</code></td><td>PR เปิดแล้ว / รอ merge เข้า <code>develop</code></td><td>ยังไม่ขึ้น env ไหน</td></tr>
+                <tr><td><code>completed</code></td><td>merge เข้า <code>develop</code> แล้ว</td><td><b>dev</b> (deploy อัตโนมัติ)</td></tr>
+                <tr><td><code>in review</code> / <code>accepted</code></td><td>อยู่บน <code>develop</code></td><td><b>dev</b> — QA test ที่นี่</td></tr>
+                <tr><td><code>staging</code></td><td>merge <code>develop</code> → <code>main</code></td><td><b>uat</b> (deploy อัตโนมัติ)</td></tr>
+                <tr><td><code>waitdeployed</code></td><td>อยู่บน <code>main</code> ยังไม่ตัด tag</td><td>uat — รอปล่อย prod</td></tr>
+                <tr><td><code>deployed</code></td><td>tag <code>v&lt;x.y.z&gt;</code> บน <code>main</code></td><td><b>prod</b> (deploy อัตโนมัติ)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Status</th><th>Where the code is</th><th>Environment</th></tr></thead>
+              <tbody>
+                <tr><td><code>in progress</code></td><td>branch <code>feat/&lt;name&gt;</code> (off <code>develop</code>)</td><td>The developer's machine</td></tr>
+                <tr><td><code>waitdeploy-dev</code></td><td>PR open / waiting to merge into <code>develop</code></td><td>Not on any environment yet</td></tr>
+                <tr><td><code>completed</code></td><td>Merged into <code>develop</code></td><td><b>dev</b> (auto deploy)</td></tr>
+                <tr><td><code>in review</code> / <code>accepted</code></td><td>On <code>develop</code></td><td><b>dev</b> — QA tests here</td></tr>
+                <tr><td><code>staging</code></td><td><code>develop</code> merged into <code>main</code></td><td><b>uat</b> (auto deploy)</td></tr>
+                <tr><td><code>waitdeployed</code></td><td>On <code>main</code>, no tag cut yet</td><td>uat — waiting for the prod release</td></tr>
+                <tr><td><code>deployed</code></td><td>Tag <code>v&lt;x.y.z&gt;</code> on <code>main</code></td><td><b>prod</b> (auto deploy)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note lang th">
+            <span class="ic">◆</span>
+            <div>push เข้า <code>main</code> = deploy uat ทันที และ tag <code>v*</code> = deploy prod ทันที (ดู <code>.claude/rules/17-git-branch-workflow.md</code>) — ทั้งสองอย่างต้องขอ confirm จากผู้ใช้ก่อนทุกครั้ง</div>
+          </div>
+          <div class="note lang en">
+            <span class="ic">◆</span>
+            <div>Pushing to <code>main</code> deploys uat instantly and a <code>v*</code> tag deploys prod instantly (see <code>.claude/rules/17-git-branch-workflow.md</code>) — both need explicit confirmation from the user first.</div>
+          </div>
+        </section>
+
+        <!-- 6 -->
+        <section id="task">
+          <h2><span class="num">6</span><span class="lang th">รูปแบบ task และ SC id</span><span class="lang en">Task shape &amp; SC ids</span></h2>
+          <div class="lang th">
+            <p>Task ระดับโมดูลตั้งชื่อว่า <code>[Module] &lt;ชื่อ&gt;</code> ข้างในมีตาราง scenario ที่ทุก scenario มี id ของตัวเอง — id ชุดนี้ถูกอ้างต่อทั้งใน spec, test plan และชื่อ commit</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Prefix</th><th>หมายถึง</th></tr></thead>
+                <tbody>
+                  <tr><td><code>SC-VO-*</code></td><td>Scenario ของ Virtual Office</td></tr>
+                  <tr><td><code>SC-SB-*</code></td><td>Scenario ของ Space Builder</td></tr>
+                  <tr><td><code>SC-PROFILE-*</code></td><td>Scenario ของ Profile / Settings</td></tr>
+                  <tr><td><code>SC-UG-*</code></td><td>Scenario ของ User Guide / Help Center</td></tr>
+                  <tr><td><code>TC-*</code></td><td>Test case ที่คู่กับ scenario นั้น</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>แต่ละ scenario ระบุ type ไว้: <b>Happy Path</b> (flow ปกติ), <b>Alternate Path</b> (แยกออกไปแต่ยังสำเร็จ), <b>Error Path</b> (error หรือถูก block)</p>
+            <h3>เวลาหยิบงาน</h3>
+            <ol class="steps">
+              <li>อ่าน task ใน ClickUp ให้ครบ รวมตาราง scenario และ custom field</li>
+              <li>หาเอกสารที่คู่กันใน <code>zyra-doc/plan/&lt;Feature&gt;/</code> — spec, technical design, test plan, figma-nodes</li>
+              <li>แตก branch <code>feat/&lt;name&gt;</code> จาก <code>develop</code> แล้วทำตาม spec เท่านั้น</li>
+              <li>อัปเดตความคืบหน้าเป็น comment ใน task ได้ตลอด — แต่ status ให้ PM/QA ขยับ</li>
+            </ol>
+          </div>
+          <div class="lang en">
+            <p>Module-level tasks are named <code>[Module] &lt;name&gt;</code> and contain a scenario table where every scenario has its own id. Those ids are referenced again in specs, test plans and commits.</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Prefix</th><th>Means</th></tr></thead>
+                <tbody>
+                  <tr><td><code>SC-VO-*</code></td><td>Virtual Office scenarios</td></tr>
+                  <tr><td><code>SC-SB-*</code></td><td>Space Builder scenarios</td></tr>
+                  <tr><td><code>SC-PROFILE-*</code></td><td>Profile / Settings scenarios</td></tr>
+                  <tr><td><code>SC-UG-*</code></td><td>User Guide / Help Center scenarios</td></tr>
+                  <tr><td><code>TC-*</code></td><td>The test cases paired with a scenario</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>Each scenario declares a type: <b>Happy Path</b> (the normal flow), <b>Alternate Path</b> (diverges but still succeeds), <b>Error Path</b> (errors or gets blocked).</p>
+            <h3>When you pick up a task</h3>
+            <ol class="steps">
+              <li>Read the whole ClickUp task, including the scenario table and custom fields.</li>
+              <li>Find its companion docs in <code>zyra-doc/plan/&lt;Feature&gt;/</code> — spec, technical design, test plan, figma-nodes.</li>
+              <li>Branch <code>feat/&lt;name&gt;</code> off <code>develop</code> and build exactly what the spec says.</li>
+              <li>Post progress as comments on the task any time — but leave the status to PM/QA.</li>
+            </ol>
+          </div>
+        </section>
+
+        <!-- 7 -->
+        <section id="figma">
+          <h2><span class="num">7</span><span class="lang th">Figma — ไฟล์และ node</span><span class="lang en">Figma — file &amp; nodes</span></h2>
+          <div class="lang th">
+            <div class="card">
+              <p style="margin-top: 0">
+                <b>ไฟล์เดียวของโปรเจกต์:</b>
+                <a href="https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-">Zyra design (More Organised ver.)</a><br />
+                <b>file key:</b> <code>Map8gX0L2hk7HnkaFRfhtj</code>
+              </p>
+              <p>ทุกหน้าจอถูกอ้างด้วย <b>node id</b> ที่อยู่ท้าย URL:</p>
+              <pre><code>https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design...?node-id=1805-285771
+                                                                          ^^^^^^^^^^^^^^
+                                                       node id — ใน MCP ใช้เป็น 1805:285771</code></pre>
+              <p>node id ของแต่ละฟีเจอร์ถูกจดไว้ในเอกสาร เช่น <code>zyra-doc/plan/UserGuide/figma-nodes.md</code> ที่แมป <code>SC-UG-01 → 2286:623285</code> ไปจนถึงระดับ modal ทีละหน้า — ก่อนทำงานให้เช็กว่าฟีเจอร์นั้นมีไฟล์ figma-nodes อยู่แล้วหรือยัง</p>
+            </div>
+          </div>
+          <div class="lang en">
+            <div class="card">
+              <p style="margin-top: 0">
+                <b>One file for the whole project:</b>
+                <a href="https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-">Zyra design (More Organised ver.)</a><br />
+                <b>file key:</b> <code>Map8gX0L2hk7HnkaFRfhtj</code>
+              </p>
+              <p>Every screen is addressed by the <b>node id</b> at the end of the URL:</p>
+              <pre><code>https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design...?node-id=1805-285771
+                                                                          ^^^^^^^^^^^^^^
+                                                        node id — written 1805:285771 in MCP</code></pre>
+              <p>Per-feature node ids are recorded in docs such as <code>zyra-doc/plan/UserGuide/figma-nodes.md</code>, which maps <code>SC-UG-01 → 2286:623285</code> down to individual modals. Check whether your feature already has a figma-nodes file before you start.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8 -->
+        <section id="fidelity">
+          <h2><span class="num">8</span><span class="lang th">Figma fidelity 95–100%</span><span class="lang en">Figma fidelity 95–100%</span></h2>
+          <div class="lang th">
+            <p>ก่อนเขียนหรือแก้ UI ทุกครั้ง <b>ต้องดึง spec จาก Figma MCP ก่อน — ห้ามเดา</b> (<code>.claude/rules/10-figma-fidelity.md</code>)</p>
+            <pre><code>1. get_design_context(nodeId)   <span class="c">→ layout, spacing, สี, typography, padding, gap</span>
+2. get_screenshot(nodeId)       <span class="c">→ ภาพอ้างอิงยืนยันภาพรวม</span>
+3. get_variable_defs()          <span class="c">→ design token</span>
+4. get_metadata(nodeId)         <span class="c">→ child tree เพื่อแตก component</span></code></pre>
+            <p>ถ้า node เป็น instance ให้ขยาย main component ด้วย · spec ที่ต้องได้ครบ: layout (direction, gap, padding, align), size, สี (hex + alpha), typography (size, weight, line-height, letter-spacing), border-radius ทีละมุมถ้าไม่เท่ากัน, effect (shadow, opacity) และ state (hover / active / disabled)</p>
+            <h3>แปลง Figma → Tailwind</h3>
+            <pre><code>px      → arbitrary value:  p-[16px]  gap-[13px]  w-[368px]
+hex     → exact:            bg-[#242B32]  text-[#58D68D]
+opacity → rgba:             bg-[rgba(255,255,255,0.05)]
+border  → border border-[rgba(255,255,255,0.2)]
+font    → text-[14px] leading-[18px] font-bold
+radius  → rounded-[8px]  rounded-[16px]</code></pre>
+            <div class="do-dont" style="margin-top: 16px">
+              <div class="do">
+                <h4>ทำ</h4>
+                <ul>
+                  <li>ใช้ค่า exact จาก Figma ทุกตัว</li>
+                  <li>ดึง screenshot มาเทียบก่อนบอกว่าเสร็จ</li>
+                  <li>ทำ state ให้ครบตามที่ออกแบบไว้</li>
+                </ul>
+              </div>
+              <div class="dont">
+                <h4>ห้าม</h4>
+                <ul>
+                  <li>ใช้ Tailwind default (<code>p-4</code>, <code>text-sm</code>) แทนค่าจริง</li>
+                  <li>ใช้ <code>text-gray-500</code> แทน <code>text-[#8C99A6]</code></li>
+                  <li>เดา spacing จากสายตา</li>
+                  <li>ข้าม <code>get_design_context</code> เพราะ “น่าจะเดาได้”</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="lang en">
+            <p>Before writing or changing any UI you <b>must pull the spec from the Figma MCP — never guess</b> (<code>.claude/rules/10-figma-fidelity.md</code>).</p>
+            <pre><code>1. get_design_context(nodeId)   <span class="c">→ layout, spacing, colours, typography, padding, gap</span>
+2. get_screenshot(nodeId)       <span class="c">→ a visual reference to confirm the whole</span>
+3. get_variable_defs()          <span class="c">→ design tokens</span>
+4. get_metadata(nodeId)         <span class="c">→ the child tree, for breaking out components</span></code></pre>
+            <p>If the node is an instance, expand the main component too. You need the full spec: layout (direction, gap, padding, align), size, colours (hex + alpha), typography (size, weight, line-height, letter-spacing), per-corner border-radius when they differ, effects (shadow, opacity), and states (hover / active / disabled).</p>
+            <h3>Figma → Tailwind</h3>
+            <pre><code>px      → arbitrary value:  p-[16px]  gap-[13px]  w-[368px]
+hex     → exact:            bg-[#242B32]  text-[#58D68D]
+opacity → rgba:             bg-[rgba(255,255,255,0.05)]
+border  → border border-[rgba(255,255,255,0.2)]
+font    → text-[14px] leading-[18px] font-bold
+radius  → rounded-[8px]  rounded-[16px]</code></pre>
+            <div class="do-dont" style="margin-top: 16px">
+              <div class="do">
+                <h4>Do</h4>
+                <ul>
+                  <li>Use the exact values from Figma, every time</li>
+                  <li>Pull a screenshot and compare before calling it done</li>
+                  <li>Build every state the design specifies</li>
+                </ul>
+              </div>
+              <div class="dont">
+                <h4>Don't</h4>
+                <ul>
+                  <li>Substitute Tailwind defaults (<code>p-4</code>, <code>text-sm</code>) for real values</li>
+                  <li>Use <code>text-gray-500</code> instead of <code>text-[#8C99A6]</code></li>
+                  <li>Eyeball spacing</li>
+                  <li>Skip <code>get_design_context</code> because "it looks guessable"</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 9 -->
+        <section id="ask">
+          <h2><span class="num">9</span><span class="lang th">ถามก่อนลงมือ</span><span class="lang en">Ask before you build</span></h2>
+          <div class="card">
+            <div class="lang th">
+              <p>ได้ Figma URL / node ใหม่มาแต่ยังไม่ชัดว่ามันอยู่ตรงไหนของ flow — <b>ต้องถามก่อน</b> ห้ามตีความเองแล้วสร้าง flow ใหม่ (<code>.claude/rules/14-no-overreach.md</code>) คำถามที่ต้องได้คำตอบ:</p>
+              <ol class="steps">
+                <li>node นี้อยู่ใน flow ไหน — หน้าไหน / modal ไหน / step ไหน</li>
+                <li>ต่อจากอะไร — มาแทน component เดิม หรือเป็นของใหม่</li>
+                <li>ใช้แทน หรือ เพิ่มเติม (replace หรือ add)</li>
+              </ol>
+              <pre><code><span class="c">// ผิด</span>
+ดู node แล้วเดาว่าเป็น step ใหม่ → สร้างเลย
+
+<span class="c">// ถูก</span>
+"node 1554-286010 นี้ใช้แทน modal เดิมของ BuildWorkspace step 1 หรือเปล่า?"
+→ รอคำตอบ → implement ตาม spec เท่านั้น ไม่เพิ่ม field / step เอง</code></pre>
+              <p>คำสั่งที่ spec ครบและชัดแล้ว ให้ทำตรง ๆ ไม่ต้องถาม — และไม่ต้องเติมของที่ไม่ได้สั่ง</p>
+            </div>
+            <div class="lang en">
+              <p>Got a new Figma URL or node but it isn't clear where it sits in the flow? <b>Ask first</b> — never interpret it into a flow of your own invention (<code>.claude/rules/14-no-overreach.md</code>). The questions you need answered:</p>
+              <ol class="steps">
+                <li>Which flow does this node belong to — which page, which modal, which step?</li>
+                <li>What comes before it — does it replace an existing component or is it new?</li>
+                <li>Replace, or add?</li>
+              </ol>
+              <pre><code><span class="c">// wrong</span>
+look at a node, assume it's a new step, build it
+
+<span class="c">// right</span>
+"Does node 1554-286010 replace the existing BuildWorkspace step 1 modal?"
+→ wait for the answer → build exactly the spec, adding no fields or steps</code></pre>
+              <p>When the request is already complete and unambiguous, just build it — and don't add anything that wasn't asked for.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      <span class="lang th">Zyra · ClickUp &amp; Figma workflow — อยู่ที่ <code>zyra-doc/doc/onboarding/workflow.html</code> · <a href="./index.html">กลับหน้าหลัก</a></span>
+      <span class="lang en">Zyra · ClickUp &amp; Figma workflow — lives at <code>zyra-doc/doc/onboarding/workflow.html</code> · <a href="./index.html">back to all guides</a></span>
+    </footer>
+
+    <script>
+      const buttons = document.querySelectorAll("[data-set-lang]")
+      const setLang = (lang) => {
+        document.body.dataset.lang = lang
+        document.documentElement.lang = lang
+        document.documentElement.dataset.lang = lang
+        buttons.forEach((b) =>
+          b.setAttribute("aria-selected", String(b.dataset.setLang === lang)),
+        )
+        try {
+          localStorage.setItem("zyra_onboarding_lang", lang)
+        } catch (_e) {}
+      }
+      buttons.forEach((b) => b.addEventListener("click", () => setLang(b.dataset.setLang)))
+      try {
+        const saved = localStorage.getItem("zyra_onboarding_lang")
+        if (saved === "en" || saved === "th") setLang(saved)
+      } catch (_e) {}
+    </script>
+  </body>
+</html>

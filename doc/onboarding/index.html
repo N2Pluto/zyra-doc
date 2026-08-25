@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zyra — Onboarding</title>
+    <meta
+      name="description"
+      content="Onboarding ของ Zyra — คู่มือผู้ใช้ใหม่ และคู่มือ developer ใหม่ (ไทย / English)"
+    />
+    <meta name="theme-color" content="#2b3540" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Zyra" />
+    <meta property="og:title" content="Zyra — Onboarding" />
+    <meta
+      property="og:description"
+      content="สองคู่มือเริ่มต้น: สำหรับผู้ใช้ใหม่ และสำหรับ developer ใหม่ — สลับไทย/English ได้ในหน้า"
+    />
+    <meta property="og:url" content="https://zyra-onboarding.vercel.app/" />
+    <meta property="og:image" content="https://zyra-onboarding.vercel.app/og-index.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Zyra onboarding — user and developer guides" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://zyra-onboarding.vercel.app/og-index.png" />
+    <style>
+      :root {
+        --bg: #2b3540;
+        --card: #242b32;
+        --line: rgba(255, 255, 255, 0.1);
+        --line-strong: rgba(255, 255, 255, 0.2);
+        --green: #58d68d;
+        --green-dim: rgba(88, 214, 141, 0.12);
+        --purple: #a77efc;
+        --text: #ffffff;
+        --text-2: #dbdfe3;
+        --muted: #8c99a6;
+        --muted-2: #636d76;
+        --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
+          "Noto Sans Thai", "Helvetica Neue", sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 15px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 64px;
+        padding: 0 24px;
+        border-bottom: 1px solid var(--line);
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        font-size: 15px;
+      }
+      header .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 0 4px var(--green-dim);
+      }
+      main {
+        flex: 1;
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 56px 24px 80px;
+      }
+      .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--green-dim);
+        border: 1px solid rgba(88, 214, 141, 0.3);
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 14px;
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 30px;
+        line-height: 1.25;
+        letter-spacing: -0.01em;
+      }
+      .sub {
+        margin: 0 0 36px;
+        color: var(--muted);
+        max-width: 62ch;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+      }
+      a.card {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 22px;
+        transition: 0.15s;
+      }
+      a.card:hover {
+        border-color: var(--line-strong);
+        transform: translateY(-2px);
+      }
+      a.card .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--green);
+        margin-bottom: 10px;
+      }
+      a.card.dev .tag {
+        color: var(--purple);
+      }
+      a.card.flow .tag {
+        color: var(--blue);
+      }
+      a.card.gloss .tag {
+        color: var(--yellow);
+      }
+      a.card .swatch {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      a.card h2 {
+        margin: 0 0 6px;
+        font-size: 17px;
+      }
+      a.card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13.5px;
+      }
+      a.card .go {
+        display: block;
+        margin-top: 14px;
+        color: var(--green);
+        font-size: 13px;
+        font-weight: 600;
+      }
+      a.card.dev .go {
+        color: var(--purple);
+      }
+      a.card.flow .go {
+        color: var(--blue);
+      }
+      a.card.gloss .go {
+        color: var(--yellow);
+      }
+      .hint {
+        margin-top: 28px;
+        color: var(--muted-2);
+        font-size: 13px;
+      }
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 20px 24px;
+        text-align: center;
+        color: var(--muted-2);
+        font-size: 13px;
+      }
+      code {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--green);
+        background: rgba(88, 214, 141, 0.08);
+        padding: 1px 6px;
+        border-radius: 5px;
+      }
+      @media (max-width: 600px) {
+        main {
+          padding: 36px 20px 60px;
+        }
+        h1 {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header><span class="dot"></span>ZYRA</header>
+    <main>
+      <span class="pill">Onboarding</span>
+      <h1>เริ่มต้นกับ Zyra</h1>
+      <p class="sub">
+        สี่หน้าสำหรับคนที่เพิ่งเข้ามา — เลือกอันที่ตรงกับคุณ ทุกหน้าสลับ
+        ไทย / English ได้ที่มุมขวาบน
+      </p>
+      <div class="cards">
+        <a class="card" href="./user.html">
+          <span class="tag"><span class="swatch"></span>สำหรับผู้ใช้</span>
+          <h2>คู่มือผู้ใช้ใหม่</h2>
+          <p>
+            สมัครบัญชี, เลือก avatar, เดินในออฟฟิศ, ประชุมและแชร์หน้าจอ,
+            wave / follow / knock, chat, สถานะ, เชิญทีม และวิธีขอความช่วยเหลือ
+          </p>
+          <span class="go">อ่านคู่มือผู้ใช้ →</span>
+        </a>
+        <a class="card dev" href="./developer.html">
+          <span class="tag"><span class="swatch"></span>สำหรับ developer</span>
+          <h2>คู่มือ developer ใหม่</h2>
+          <p>
+            แผนที่ service ทั้งระบบ, วิธีรัน local, โครงสร้าง zyra-app / zyra-api /
+            zyra-ws, กฎของทีม, code style, git workflow และการ test
+          </p>
+          <span class="go">อ่านคู่มือ developer →</span>
+        </a>
+        <a class="card flow" href="./workflow.html">
+          <span class="tag"><span class="swatch"></span>Process</span>
+          <h2>ClickUp &amp; Figma</h2>
+          <p>
+            โครงสร้าง board, status ทั้ง 13 ตัวหมายถึงอะไร ใครมีสิทธิ์ขยับ,
+            แมปกับ git / environment และขั้นตอนดึง spec จาก Figma ให้ตรงแบบ
+          </p>
+          <span class="go">อ่านวิธีทำงาน →</span>
+        </a>
+        <a class="card gloss" href="./glossary.html">
+          <span class="tag"><span class="swatch"></span>Reference</span>
+          <h2>พจนานุกรมคำศัพท์</h2>
+          <p>
+            คำที่ทีมใช้ร่วมกัน — Workspace, Zone, Knock, Wave, Follow, HUD,
+            presence, WS event และกฎธุรกิจ พร้อมช่องค้นหา
+          </p>
+          <span class="go">เปิด glossary →</span>
+        </a>
+      </div>
+      <p class="hint">
+        ต้นฉบับของทั้งสองหน้าอยู่ในโปรเจกต์ที่ <code>zyra-doc/doc/</code>
+      </p>
+    </main>
+    <footer>Zyra · onboarding</footer>
+  </body>
+</html>

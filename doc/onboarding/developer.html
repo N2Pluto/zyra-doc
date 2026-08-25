@@ -1,0 +1,1183 @@
+<!doctype html>
+<html lang="th" data-lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zyra — Developer Onboarding</title>
+    <meta
+      name="description"
+      content="คู่มือ developer ใหม่ของ Zyra — แผนที่ 9 repo, วิธีรัน local, โครง zyra-app/zyra-api/zyra-ws, กฎของทีม, git workflow (ไทย / English)"
+    />
+    <meta name="theme-color" content="#2b3540" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Zyra" />
+    <meta property="og:title" content="Zyra — คู่มือ developer ใหม่ / New developer guide" />
+    <meta
+      property="og:description"
+      content="วันแรกในโปรเจกต์ Zyra: แผนที่ service, รัน local, โครงสร้าง zyra-app · zyra-api · zyra-ws, กฎที่ห้ามพลาด, git feat→develop→main→tag"
+    />
+    <meta property="og:url" content="https://zyra-onboarding.vercel.app/developer.html" />
+    <meta property="og:image" content="https://zyra-onboarding.vercel.app/og-developer.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Zyra — developer onboarding" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://zyra-onboarding.vercel.app/og-developer.png" />
+    <style>
+      :root {
+        --bg: #2b3540;
+        --bg-deep: #242b32;
+        --bg-ink: #1a1b1e;
+        --card: #242b32;
+        --line: rgba(255, 255, 255, 0.1);
+        --line-strong: rgba(255, 255, 255, 0.2);
+        --green: #58d68d;
+        --green-dim: rgba(88, 214, 141, 0.12);
+        --purple: #a77efc;
+        --blue: #2db6ff;
+        --yellow: #ffd400;
+        --orange: #ff8000;
+        --red: #f03a3a;
+        --text: #ffffff;
+        --text-2: #dbdfe3;
+        --muted: #8c99a6;
+        --muted-2: #636d76;
+        --r-sm: 8px;
+        --r-md: 12px;
+        --r-lg: 16px;
+        --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
+          "Noto Sans Thai", "Helvetica Neue", sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 15px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+      body[data-lang="th"] .lang.en,
+      body[data-lang="en"] .lang.th {
+        display: none;
+      }
+
+      header.top {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        height: 64px;
+        padding: 0 24px;
+        background: rgba(26, 27, 30, 0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        font-size: 15px;
+      }
+      .brand .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 0 4px var(--green-dim);
+      }
+      .brand span.sub {
+        color: var(--muted);
+        font-weight: 500;
+        letter-spacing: 0;
+        font-size: 13px;
+        border-left: 1px solid var(--line-strong);
+        padding-left: 10px;
+        margin-left: 2px;
+      }
+      .spacer {
+        flex: 1;
+      }
+      a.home {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        flex: none;
+        height: 34px;
+        padding: 0 12px 0 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.15s;
+      }
+      a.home:hover {
+        color: var(--text);
+        border-color: var(--line-strong);
+        background: rgba(255, 255, 255, 0.07);
+      }
+      a.home svg {
+        flex: none;
+      }
+      .lang-switch {
+        display: flex;
+        padding: 3px;
+        gap: 2px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+      }
+      .lang-switch button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-family: var(--font);
+        font-size: 13px;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .lang-switch button:hover {
+        color: var(--text);
+      }
+      .lang-switch button[aria-selected="true"] {
+        background: var(--green);
+        color: #14432b;
+      }
+
+      .wrap {
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr);
+        gap: 32px;
+        max-width: 1220px;
+        margin: 0 auto;
+        padding: 32px 24px 96px;
+      }
+      nav.toc {
+        position: sticky;
+        top: 96px;
+        align-self: start;
+        font-size: 13.5px;
+      }
+      nav.toc p {
+        margin: 0 0 10px;
+        color: var(--muted-2);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      nav.toc a {
+        display: block;
+        padding: 7px 10px;
+        color: var(--muted);
+        text-decoration: none;
+        border-radius: 6px;
+        border-left: 2px solid transparent;
+      }
+      nav.toc a:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.04);
+        border-left-color: var(--green);
+      }
+      main {
+        min-width: 0;
+      }
+
+      .hero {
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        background: radial-gradient(
+            120% 140% at 0% 0%,
+            rgba(88, 214, 141, 0.14) 0%,
+            rgba(88, 214, 141, 0) 55%
+          ),
+          var(--card);
+        padding: 32px;
+        margin-bottom: 32px;
+      }
+      .hero .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--green-dim);
+        border: 1px solid rgba(88, 214, 141, 0.3);
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 14px;
+      }
+      .hero h1 {
+        margin: 0 0 10px;
+        font-size: 30px;
+        line-height: 1.25;
+        letter-spacing: -0.01em;
+      }
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 68ch;
+      }
+
+      section {
+        margin-bottom: 40px;
+        scroll-margin-top: 88px;
+      }
+      h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 20px;
+        margin: 0 0 16px;
+      }
+      h2 .num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        width: 28px;
+        height: 28px;
+        border-radius: var(--r-sm);
+        background: var(--green-dim);
+        color: var(--green);
+        font-size: 13px;
+        font-weight: 700;
+      }
+      h3 {
+        font-size: 15px;
+        margin: 22px 0 8px;
+      }
+      h3:first-child {
+        margin-top: 0;
+      }
+      p {
+        color: var(--text-2);
+      }
+      a {
+        color: var(--green);
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        padding: 20px 22px;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+        gap: 14px;
+      }
+      .tile {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+        padding: 16px 18px;
+      }
+      .tile h4 {
+        margin: 0 0 6px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .tile p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13.5px;
+      }
+      .swatch {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex: none;
+      }
+
+      ol,
+      ul {
+        padding-left: 20px;
+        color: var(--text-2);
+      }
+      li {
+        margin: 5px 0;
+      }
+      ol.steps {
+        list-style: none;
+        padding: 0;
+        counter-reset: s;
+      }
+      ol.steps > li {
+        counter-increment: s;
+        position: relative;
+        padding-left: 34px;
+        margin: 10px 0;
+      }
+      ol.steps > li::before {
+        content: counter(s);
+        position: absolute;
+        left: 0;
+        top: 1px;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        background: var(--green-dim);
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      code {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--green);
+        background: rgba(88, 214, 141, 0.08);
+        padding: 1px 6px;
+        border-radius: 5px;
+      }
+      pre {
+        margin: 12px 0 0;
+        padding: 14px 16px;
+        background: var(--bg-ink);
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+        overflow-x: auto;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.7;
+        color: var(--text-2);
+      }
+      pre code {
+        background: none;
+        color: inherit;
+        padding: 0;
+        font-size: inherit;
+      }
+      pre .c {
+        color: var(--muted-2);
+      }
+      pre .g {
+        color: var(--green);
+      }
+
+      .table-scroll {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 560px;
+        font-size: 13.5px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      td strong {
+        color: var(--text);
+      }
+      td code {
+        white-space: nowrap;
+      }
+
+      .note {
+        display: flex;
+        gap: 12px;
+        border: 1px solid rgba(88, 214, 141, 0.28);
+        background: var(--green-dim);
+        border-radius: var(--r-md);
+        padding: 14px 16px;
+        margin: 16px 0 0;
+        font-size: 13.5px;
+        color: var(--text-2);
+      }
+      .note.warn {
+        border-color: rgba(240, 58, 58, 0.3);
+        background: rgba(240, 58, 58, 0.07);
+      }
+      .note b {
+        color: var(--text);
+      }
+      .note .ic {
+        flex: none;
+        font-weight: 700;
+        color: var(--green);
+      }
+      .note.warn .ic {
+        color: var(--red);
+      }
+
+      .do-dont {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 14px;
+      }
+      .do-dont > div {
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+        padding: 16px 18px;
+        background: var(--card);
+      }
+      .do-dont h4 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .do h4 {
+        color: var(--green);
+      }
+      .dont h4 {
+        color: var(--red);
+      }
+      .do-dont ul {
+        margin: 0;
+        padding-left: 18px;
+        font-size: 13.5px;
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 24px;
+        text-align: center;
+        color: var(--muted-2);
+        font-size: 13px;
+      }
+
+      @media (max-width: 560px) {
+        header.top {
+          padding: 0 14px;
+          gap: 10px;
+        }
+        .brand span.sub {
+          display: none;
+        }
+      }
+
+      @media (max-width: 880px) {
+        .wrap {
+          grid-template-columns: 1fr;
+        }
+        nav.toc {
+          display: none;
+        }
+        .hero {
+          padding: 24px;
+        }
+        .hero h1 {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body data-lang="th">
+    <header class="top">
+      <a class="home" href="./index.html">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M19 12H5" />
+          <path d="m12 19-7-7 7-7" />
+        </svg>
+        <span class="lang th">หน้าหลัก</span>
+        <span class="lang en">All guides</span>
+      </a>
+      <div class="brand">
+        <span class="dot"></span>ZYRA
+        <span class="sub lang th">คู่มือ developer ใหม่</span>
+        <span class="sub lang en">New developer guide</span>
+      </div>
+      <div class="spacer"></div>
+      <div class="lang-switch" role="tablist" aria-label="Language">
+        <button role="tab" data-set-lang="th" aria-selected="true">ไทย</button>
+        <button role="tab" data-set-lang="en" aria-selected="false">EN</button>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <nav class="toc">
+        <p class="lang th">หัวข้อ</p>
+        <p class="lang en">Contents</p>
+        <a href="#map"><span class="lang th">1 · แผนที่ระบบ</span><span class="lang en">1 · Service map</span></a>
+        <a href="#setup"><span class="lang th">2 · ตั้งเครื่อง &amp; รัน local</span><span class="lang en">2 · Local setup</span></a>
+        <a href="#app"><span class="lang th">3 · zyra-app</span><span class="lang en">3 · zyra-app</span></a>
+        <a href="#api"><span class="lang th">4 · zyra-api</span><span class="lang en">4 · zyra-api</span></a>
+        <a href="#ws"><span class="lang th">5 · zyra-ws &amp; sfu</span><span class="lang en">5 · zyra-ws &amp; sfu</span></a>
+        <a href="#rules"><span class="lang th">6 · กฎที่ต้องรู้</span><span class="lang en">6 · House rules</span></a>
+        <a href="#style"><span class="lang th">7 · Code style</span><span class="lang en">7 · Code style</span></a>
+        <a href="#git"><span class="lang th">8 · Git &amp; deploy</span><span class="lang en">8 · Git &amp; deploy</span></a>
+        <a href="#test"><span class="lang th">9 · Test</span><span class="lang en">9 · Testing</span></a>
+        <a href="#next"><span class="lang th">10 · อ่านต่อ</span><span class="lang en">10 · Read next</span></a>
+      </nav>
+
+      <main>
+        <div class="hero">
+          <span class="pill lang th">วันแรก · อ่านให้จบก่อนแตะโค้ด</span>
+          <span class="pill lang en">Day one · read before touching code</span>
+          <div class="lang th">
+            <h1>Zyra สำหรับ developer ใหม่</h1>
+            <p>
+              Zyra เป็น monorepo ของ virtual office แบบ 2D — frontend Next.js หนึ่งตัว
+              คุยกับ REST API (Go), WebSocket service (Go) และ LiveKit SFU แยกกันชัดเจน
+              หน้านี้สรุปว่า “อะไรอยู่ที่ไหน”, “รัน local ยังไง” และ
+              “กฎอะไรที่ห้ามพลาด” เพื่อให้คุณส่ง PR แรกได้ภายในวันเดียว
+            </p>
+          </div>
+          <div class="lang en">
+            <h1>Zyra for new developers</h1>
+            <p>
+              Zyra is a monorepo behind a 2D virtual office — one Next.js frontend talking to a
+              Go REST API, a Go WebSocket service and a LiveKit SFU, each with a strict
+              responsibility. This page covers what lives where, how to run it locally, and the
+              rules you must not miss, so you can land your first PR on day one.
+            </p>
+          </div>
+        </div>
+
+        <!-- 1 -->
+        <section id="map">
+          <h2><span class="num">1</span><span class="lang th">แผนที่ระบบ</span><span class="lang en">Service map</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>Repo</th><th>Stack</th><th>Port (local)</th><th>หน้าที่</th></tr></thead>
+              <tbody>
+                <tr><td><code>zyra-app</code></td><td>Next.js 16.2 · React 19 · TS 5 · Tailwind v4 · PixiJS 8</td><td><code>3000</code></td><td>UI ทั้งหมด + game canvas ของ Virtual Office (สิ่งเดียวที่ผู้ใช้เจอตรง)</td></tr>
+                <tr><td><code>zyra-api</code></td><td>Go 1.26 · Gin · pgx/v5 · minio-go</td><td><code>3002</code></td><td>REST data plane: auth, workspace/map/object, member/invite, mint LiveKit token</td></tr>
+                <tr><td><code>zyra-ws</code></td><td>Go 1.25 · gorilla/websocket · go-redis</td><td><code>3003</code></td><td>Real-time control plane: ตำแหน่ง avatar, presence, chat, wave/follow/knock</td></tr>
+                <tr><td><code>zyra-notifications</code></td><td>Go 1.25 · Gin · net/smtp</td><td><code>3004</code></td><td>ส่งอีเมลตาม template (OTP, invite, reset password) — service เดียวที่รู้จัก SMTP</td></tr>
+                <tr><td><code>zyra-sfu</code></td><td>LiveKit server v1.13 (Docker)</td><td><code>7880-7882</code></td><td>Media plane: forward เสียง/วิดีโอ/แชร์จอ (ไม่มี application code)</td></tr>
+                <tr><td><code>zyra-infra</code></td><td>Terraform</td><td>—</td><td>GCE VM ของ SFU, k3s + Argo CD GitOps, data plane (AlloyDB/Redis/GCS)</td></tr>
+                <tr><td><code>zyra-service</code></td><td>Shell scripts</td><td>—</td><td>เข้า prod DB/Redis ผ่าน IAP tunnel + เช็ก schema drift</td></tr>
+                <tr><td><code>zyra-landing</code></td><td>HTML/CSS/JS ล้วน</td><td>—</td><td>เว็บ marketing — ไม่เรียก service ใดเลย</td></tr>
+                <tr><td><code>zyra-doc</code></td><td>Markdown</td><td>—</td><td>เอกสารทั้งหมด: plan, glossary, issue, migration guide</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Repo</th><th>Stack</th><th>Port (local)</th><th>Responsibility</th></tr></thead>
+              <tbody>
+                <tr><td><code>zyra-app</code></td><td>Next.js 16.2 · React 19 · TS 5 · Tailwind v4 · PixiJS 8</td><td><code>3000</code></td><td>All UI plus the Virtual Office game canvas — the only thing users touch directly</td></tr>
+                <tr><td><code>zyra-api</code></td><td>Go 1.26 · Gin · pgx/v5 · minio-go</td><td><code>3002</code></td><td>REST data plane: auth, workspace/map/object, members/invites, minting LiveKit tokens</td></tr>
+                <tr><td><code>zyra-ws</code></td><td>Go 1.25 · gorilla/websocket · go-redis</td><td><code>3003</code></td><td>Real-time control plane: avatar positions, presence, chat, wave/follow/knock</td></tr>
+                <tr><td><code>zyra-notifications</code></td><td>Go 1.25 · Gin · net/smtp</td><td><code>3004</code></td><td>Templated email (OTP, invite, password reset) — the only service that knows SMTP</td></tr>
+                <tr><td><code>zyra-sfu</code></td><td>LiveKit server v1.13 (Docker)</td><td><code>7880-7882</code></td><td>Media plane: forwards audio/video/screen. No application code here</td></tr>
+                <tr><td><code>zyra-infra</code></td><td>Terraform</td><td>—</td><td>The SFU's GCE VM, k3s + Argo CD GitOps, shared data plane (AlloyDB/Redis/GCS)</td></tr>
+                <tr><td><code>zyra-service</code></td><td>Shell scripts</td><td>—</td><td>Reach prod DB/Redis through an IAP tunnel; check schema drift</td></tr>
+                <tr><td><code>zyra-landing</code></td><td>Plain HTML/CSS/JS</td><td>—</td><td>Marketing site — calls no service at all</td></tr>
+                <tr><td><code>zyra-doc</code></td><td>Markdown</td><td>—</td><td>All documentation: plans, glossary, issues, migration guides</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="lang th">ทางเดินของ request</h3>
+          <h3 class="lang en">How a request travels</h3>
+          <pre><code>Browser
+  ├─ HTTP   ─▶ zyra-app (Next.js) ──rewrite /api/*──▶ zyra-api ──▶ PostgreSQL
+  │                                                     │        ╰─▶ Cloudflare R2 (S3)
+  │                                                     ╰──HTTP──▶ zyra-notifications ──SMTP──▶
+  ├─ WS     ─▶ zyra-ws  ──▶ Redis  <span class="c">(presence / cooldown, TTL-based)</span>
+  └─ WebRTC ─▶ zyra-sfu (LiveKit)  <span class="c">(audio · video · screen)</span></code></pre>
+          <div class="note lang th">
+            <span class="ic">◆</span>
+            <div>
+              <b>กฎเหล็กของ 2 plane:</b> track เสียง/วิดีโอจริงไหลผ่าน <b>LiveKit เท่านั้น</b>
+              ส่วน state (ใคร mute, ใคร share, ใครอยู่ในโซน) ไหลผ่าน <b>zyra-ws</b> เสมอ
+              เพื่อให้ client ทุกตัวเห็นตรงกันแม้ยังไม่ได้ join media room · และ
+              <code>zyra-ws</code> ไม่แตะ PostgreSQL ตรง — state ถาวรอ่าน/เขียนผ่าน <code>zyra-api</code>
+            </div>
+          </div>
+          <div class="note lang en">
+            <span class="ic">◆</span>
+            <div>
+              <b>The two-plane rule:</b> real audio/video tracks flow through <b>LiveKit only</b>;
+              state (who is muted, who is sharing, who is in a zone) always flows through
+              <b>zyra-ws</b> so every client agrees even before joining the media room. And
+              <code>zyra-ws</code> never touches PostgreSQL directly — durable state goes through
+              <code>zyra-api</code>.
+            </div>
+          </div>
+        </section>
+
+        <!-- 2 -->
+        <section id="setup">
+          <h2><span class="num">2</span><span class="lang th">ตั้งเครื่องและรัน local</span><span class="lang en">Local setup</span></h2>
+          <div class="lang th">
+            <h3>ต้องมีบนเครื่อง</h3>
+            <ul>
+              <li>Go 1.26+ (zyra-api) และ Go 1.25+ (ws, notifications) · Node.js 20+ · Docker Desktop</li>
+              <li><code>gcloud</code> CLI + บัญชี <code>@hpktechnology.com</code> (เฉพาะเวลาต้องแตะ prod DB)</li>
+              <li>ขอไฟล์ <code>.env</code> ของแต่ละ repo จากทีม — <b>ไม่มีอยู่ใน git</b></li>
+            </ul>
+            <h3>วิธีรันที่ทีมใช้จริง</h3>
+            <p>Docker รันแค่ infra ที่ตั้งเองยาก (LiveKit + Redis) ส่วน app/api/ws รัน native เพื่อให้ hot-reload ทำงาน</p>
+            <pre><code><span class="c"># 1) infra: LiveKit SFU + Redis</span>
+docker compose up -d
+
+<span class="c"># 2) แต่ละ terminal แยกกัน</span>
+cd zyra-api && go run .            <span class="c"># :3002  (หรือ `air` เพื่อ hot-reload)</span>
+cd zyra-ws  && go run main.go      <span class="c"># :3003</span>
+cd zyra-notifications && go run .  <span class="c"># :3004</span>
+cd zyra-app && npm install && npm run dev   <span class="c"># :3000 (Turbopack)</span></code></pre>
+            <p>อยากให้ backend อยู่ใน container แทน: <code>docker compose --profile backend up -d --build</code> (native กับ container ใช้ port เดียวกันไม่ได้ — ปิดฝั่งหนึ่งก่อน)</p>
+            <h3>Env ที่สำคัญ</h3>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Repo</th><th>ตัวแปร</th><th>ความหมาย</th></tr></thead>
+                <tbody>
+                  <tr><td>zyra-app</td><td><code>BACKEND_URL</code></td><td>เป้าหมายของ rewrite <code>/api/*</code> → ต้องชี้ไป port จริงของ zyra-api (local <code>http://127.0.0.1:3002</code>)</td></tr>
+                  <tr><td>zyra-app</td><td><code>NEXT_PUBLIC_SOCKET_URL</code></td><td>URL ของ zyra-ws ที่ browser ต่อตรง (<code>ws://localhost:3003</code>)</td></tr>
+                  <tr><td>zyra-api</td><td><code>DATABASE_URL</code></td><td>dev Postgres (ไม่ได้ containerize) — ขอจากทีม</td></tr>
+                  <tr><td>zyra-api / zyra-ws</td><td><code>tokenKey</code></td><td>JWT secret — <b>ต้องเป็นค่าเดียวกันทั้งสอง service</b> ไม่งั้น WS join จะ 401 หมด</td></tr>
+                  <tr><td>zyra-api / zyra-ws</td><td><code>REDIS_URL</code></td><td>Redis ร่วม (presence, cooldown, pub/sub)</td></tr>
+                  <tr><td>zyra-api</td><td><code>AWS_BUCKET_*</code>, <code>AWS_PUBLIC_URL</code></td><td>Cloudflare R2 — ที่เก็บรูป/ไฟล์ทั้งหมด</td></tr>
+                  <tr><td>zyra-api</td><td><code>NOTIFICATION_SERVICE_URL</code></td><td>ถ้าว่าง จะ fallback ไปส่ง SMTP ตรงจาก zyra-api</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="note warn">
+              <span class="ic">!</span>
+              <div>
+                <b>Port ในเอกสารกับใน .env ไม่ตรงกันได้</b> — ค่า default ในโค้ดคือ api <code>3001</code> / ws <code>3004</code>
+                แต่ layout ที่ทีมใช้ local คือ api <code>3002</code> / ws <code>3003</code> / notifications <code>3004</code>
+                (มาจาก <code>PORT</code> ใน <code>.env</code>) ยึด <code>.env</code> + header ของ <code>docker-compose.yml</code> เป็นหลัก
+              </div>
+            </div>
+            <h3>Migration</h3>
+            <p><code>zyra-api</code> สร้างเฉพาะ 10 ตารางหลักตอน start (inline DDL ใน <code>internal/database/postgres.go</code>) ไฟล์ใน <code>zyra-api/migrations/*.sql</code> <b>ไม่ auto-run</b> — ต้อง apply ด้วยมือด้วย <code>psql</code></p>
+          </div>
+          <div class="lang en">
+            <h3>Prerequisites</h3>
+            <ul>
+              <li>Go 1.26+ (zyra-api) and Go 1.25+ (ws, notifications) · Node.js 20+ · Docker Desktop</li>
+              <li><code>gcloud</code> CLI with an <code>@hpktechnology.com</code> account (only needed to reach prod DB)</li>
+              <li>Ask the team for each repo's <code>.env</code> — they are <b>not in git</b></li>
+            </ul>
+            <h3>How the team actually runs it</h3>
+            <p>Docker runs only the infra that is painful natively (LiveKit + Redis); app/api/ws run natively so hot-reload works.</p>
+            <pre><code><span class="c"># 1) infra: LiveKit SFU + Redis</span>
+docker compose up -d
+
+<span class="c"># 2) one terminal each</span>
+cd zyra-api && go run .            <span class="c"># :3002  (or `air` for hot reload)</span>
+cd zyra-ws  && go run main.go      <span class="c"># :3003</span>
+cd zyra-notifications && go run .  <span class="c"># :3004</span>
+cd zyra-app && npm install && npm run dev   <span class="c"># :3000 (Turbopack)</span></code></pre>
+            <p>Want the backend containerised instead? <code>docker compose --profile backend up -d --build</code> — native and container cannot share a port, so stop one side first.</p>
+            <h3>Env vars that matter</h3>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Repo</th><th>Variable</th><th>Meaning</th></tr></thead>
+                <tbody>
+                  <tr><td>zyra-app</td><td><code>BACKEND_URL</code></td><td>Target of the <code>/api/*</code> rewrite — must point at zyra-api's real port (locally <code>http://127.0.0.1:3002</code>)</td></tr>
+                  <tr><td>zyra-app</td><td><code>NEXT_PUBLIC_SOCKET_URL</code></td><td>zyra-ws URL the browser connects to directly (<code>ws://localhost:3003</code>)</td></tr>
+                  <tr><td>zyra-api</td><td><code>DATABASE_URL</code></td><td>The dev Postgres (not containerised) — ask the team</td></tr>
+                  <tr><td>zyra-api / zyra-ws</td><td><code>tokenKey</code></td><td>JWT secret — <b>must be identical in both services</b>, otherwise every WS join 401s</td></tr>
+                  <tr><td>zyra-api / zyra-ws</td><td><code>REDIS_URL</code></td><td>Shared Redis (presence, cooldowns, pub/sub)</td></tr>
+                  <tr><td>zyra-api</td><td><code>AWS_BUCKET_*</code>, <code>AWS_PUBLIC_URL</code></td><td>Cloudflare R2 — where every image and file lives</td></tr>
+                  <tr><td>zyra-api</td><td><code>NOTIFICATION_SERVICE_URL</code></td><td>If empty, zyra-api falls back to sending SMTP itself</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="note warn">
+              <span class="ic">!</span>
+              <div>
+                <b>Docs and .env disagree on ports.</b> Code defaults are api <code>3001</code> / ws <code>3004</code>,
+                but the local layout the team uses is api <code>3002</code> / ws <code>3003</code> /
+                notifications <code>3004</code> (from <code>PORT</code> in each <code>.env</code>). Trust
+                <code>.env</code> and the header of <code>docker-compose.yml</code>.
+              </div>
+            </div>
+            <h3>Migrations</h3>
+            <p><code>zyra-api</code> only bootstraps the 10 core tables on start (inline DDL in <code>internal/database/postgres.go</code>). Files in <code>zyra-api/migrations/*.sql</code> are <b>not auto-run</b> — apply them by hand with <code>psql</code>.</p>
+          </div>
+        </section>
+
+        <!-- 3 -->
+        <section id="app">
+          <h2><span class="num">3</span><span class="lang th">zyra-app — ไม่ใช่ Next.js ที่คุณเคยเจอ</span><span class="lang en">zyra-app — not the Next.js you know</span></h2>
+          <div class="lang th">
+            <pre><code>app/                <span class="c">route export เท่านั้น — ห้ามมี JSX หรือ state ในนี้</span>
+views/&lt;feature&gt;/    <span class="c">UI จริง: hero-&lt;feature&gt;.tsx (top level) + components/</span>
+components/         <span class="c">ของที่ reuse ข้าม feature (admin/admin-sidebar.tsx, app-navbar, auth-guard)</span>
+lib/api/            <span class="c">REST call — แยก /api/user/* กับ /api/admin/* ชัดเจน</span>
+lib/auth/           <span class="c">session.ts · register.ts · forgot-password.ts</span>
+stores/             <span class="c">Zustand + Dexie (draft persistence)</span>
+hooks/              <span class="c">use-user-guard, use-admin-guard, ...</span>
+zyra-engine/        <span class="c">PixiJS engine ของ Virtual Office — import จาก @/zyra-engine</span>
+i18n/ messages/     <span class="c">next-intl — locale เก็บใน cookie zyra_locale (URL ไม่เปลี่ยน)</span></code></pre>
+            <h3>Auth / session</h3>
+            <ul>
+              <li>Access token เก็บ <b>in-memory เท่านั้น</b> ผ่าน <code>lib/auth/session.ts</code> — ห้ามลง localStorage</li>
+              <li>Refresh token เป็น httpOnly cookie · <code>zyra_token</code> cookie ใช้เป็นแค่ธง presence</li>
+              <li>Guard 2 ชั้น: <code>proxy.ts</code> (edge) + <code>components/auth-guard.tsx</code> (client) — <b>หน้า public ใหม่ต้องเพิ่มใน PUBLIC_PATHS ทั้งสองไฟล์</b></li>
+            </ul>
+            <h3>zyra-engine (Virtual Office canvas)</h3>
+            <p>แยกเป็น system: <code>InputSystem</code> · <code>CameraSystem</code> · <code>PlayerSystem</code> · <code>HitboxSystem</code> · <code>SitSystem</code> · <code>PlacementSystem</code> · ค่าคงที่หลัก <code>TILE_SIZE=32</code>, <code>PLAYER_SPEED=120</code> px/s</p>
+            <p>การเดินเป็น <b>path-based</b>: engine ยิง <code>onPathStarted</code> → client ส่ง <code>move_to</code> (path) → server คำนวณ <code>duration_ms</code> แล้ว broadcast <code>moving</code> → peer interpolate ตาม path → จบเดินส่ง <code>stop</code> · <code>move</code>/<code>moved</code> แบบเดิมเหลือใช้เฉพาะ state ที่ไม่ใช่ตำแหน่ง (นั่ง, ทิศทาง)</p>
+            <div class="note">
+              <span class="ic">◆</span>
+              <div>บั๊กตระกูล “ตัวละครวาร์ป / นั่งแล้วหลุด / peer เห็นไม่ตรงกับเรา” เป็น bug family ที่ลึกมาก — อ่าน skill <code>vo-desync-debug</code> และ <code>zyra-doc/plan/VO-Movement-V2/</code> ก่อนเริ่ม debug ทุกครั้ง</div>
+            </div>
+          </div>
+          <div class="lang en">
+            <pre><code>app/                <span class="c">route exports only — no JSX, no state in here</span>
+views/&lt;feature&gt;/    <span class="c">the real UI: hero-&lt;feature&gt;.tsx (top level) + components/</span>
+components/         <span class="c">cross-feature reuse (admin/admin-sidebar.tsx, app-navbar, auth-guard)</span>
+lib/api/            <span class="c">REST calls — /api/user/* strictly separate from /api/admin/*</span>
+lib/auth/           <span class="c">session.ts · register.ts · forgot-password.ts</span>
+stores/             <span class="c">Zustand + Dexie (draft persistence)</span>
+hooks/              <span class="c">use-user-guard, use-admin-guard, ...</span>
+zyra-engine/        <span class="c">the Virtual Office PixiJS engine — import from @/zyra-engine</span>
+i18n/ messages/     <span class="c">next-intl — locale in the zyra_locale cookie (URL never changes)</span></code></pre>
+            <h3>Auth / session</h3>
+            <ul>
+              <li>The access token lives <b>in memory only</b>, via <code>lib/auth/session.ts</code> — never localStorage</li>
+              <li>The refresh token is an httpOnly cookie; the <code>zyra_token</code> cookie is just a presence flag</li>
+              <li>Two guard layers: <code>proxy.ts</code> (edge) and <code>components/auth-guard.tsx</code> (client) — <b>a new public page must be added to PUBLIC_PATHS in both files</b></li>
+            </ul>
+            <h3>zyra-engine (the Virtual Office canvas)</h3>
+            <p>Split into systems: <code>InputSystem</code> · <code>CameraSystem</code> · <code>PlayerSystem</code> · <code>HitboxSystem</code> · <code>SitSystem</code> · <code>PlacementSystem</code>. Core constants: <code>TILE_SIZE=32</code>, <code>PLAYER_SPEED=120</code> px/s.</p>
+            <p>Movement is <b>path-based</b>: the engine fires <code>onPathStarted</code> → the client sends <code>move_to</code> (the path) → the server computes <code>duration_ms</code> and broadcasts <code>moving</code> → peers interpolate along the path → on arrival the client sends <code>stop</code>. Legacy <code>move</code>/<code>moved</code> is now only for non-positional state (sitting, direction).</p>
+            <div class="note">
+              <span class="ic">◆</span>
+              <div>The "avatar warps / slides off a chair / peers see something else" bug family runs eight rounds deep — read the <code>vo-desync-debug</code> skill and <code>zyra-doc/plan/VO-Movement-V2/</code> before debugging any of it.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4 -->
+        <section id="api">
+          <h2><span class="num">4</span><span class="lang th">zyra-api — 3 ชั้นเสมอ</span><span class="lang en">zyra-api — always three layers</span></h2>
+          <div class="lang th">
+            <p>ทุก endpoint ใหม่ต้องมี <b>Handler → Service → SQL ใน service</b> (ไม่มี ORM หรือ repository layer แยก)</p>
+            <ul>
+              <li><b>Handler</b> — รับ input, validate ผิวเผิน, ตอบ JSON</li>
+              <li><b>Service</b> — business logic + transaction + sentinel error (<code>ErrNotFound</code>, <code>ErrDuplicate</code>)</li>
+              <li><b>Model</b> — struct ข้าม layer อยู่ใน <code>internal/model/</code></li>
+            </ul>
+            <pre><code><span class="c">// response envelope — ต้องใช้ทุก endpoint</span>
+model.APIResponse{ Status: 200, Message: "success", Data: &amp;logon, Token: token }
+
+<span class="c">// transaction pattern</span>
+tx, err := s.db.BeginTx(ctx, pgx.TxOptions{})
+if err != nil { return fmt.Errorf("begin tx: %w", err) }
+defer tx.Rollback(ctx)
+<span class="c">// ...</span>
+return tx.Commit(ctx)</code></pre>
+            <h3>Middleware / เส้นแบ่งสิทธิ์</h3>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Guard</th><th>Base path</th><th>ใช้ที่ไหน</th></tr></thead>
+                <tbody>
+                  <tr><td><code>user_guard</code></td><td><code>/api/user/*</code>, <code>/api/objects</code></td><td>member page, lobby, virtual office</td></tr>
+                  <tr><td><code>admin_guard</code></td><td><code>/api/admin/*</code></td><td>admin dashboard เท่านั้น (<code>role_</code> ∈ ADMIN, SYSADMIN)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>ไฟล์อัปโหลดทุกชนิดขึ้น Cloudflare R2 ผ่าน <code>storage.S3Client</code> แล้วเก็บ <b>public URL</b> ลง DB — ห้ามเขียนไฟล์ถาวรลง filesystem ของ API server</p>
+          </div>
+          <div class="lang en">
+            <p>Every new endpoint is <b>Handler → Service → SQL inside the service</b>. There is no ORM and no separate repository layer.</p>
+            <ul>
+              <li><b>Handler</b> — take input, validate at the surface, return JSON</li>
+              <li><b>Service</b> — business logic, transactions, sentinel errors (<code>ErrNotFound</code>, <code>ErrDuplicate</code>)</li>
+              <li><b>Model</b> — cross-layer structs live in <code>internal/model/</code></li>
+            </ul>
+            <pre><code><span class="c">// response envelope — required on every endpoint</span>
+model.APIResponse{ Status: 200, Message: "success", Data: &amp;logon, Token: token }
+
+<span class="c">// transaction pattern</span>
+tx, err := s.db.BeginTx(ctx, pgx.TxOptions{})
+if err != nil { return fmt.Errorf("begin tx: %w", err) }
+defer tx.Rollback(ctx)
+<span class="c">// ...</span>
+return tx.Commit(ctx)</code></pre>
+            <h3>Middleware / the permission line</h3>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Guard</th><th>Base path</th><th>Used by</th></tr></thead>
+                <tbody>
+                  <tr><td><code>user_guard</code></td><td><code>/api/user/*</code>, <code>/api/objects</code></td><td>Member pages, lobby, virtual office</td></tr>
+                  <tr><td><code>admin_guard</code></td><td><code>/api/admin/*</code></td><td>Admin dashboard only (<code>role_</code> ∈ ADMIN, SYSADMIN)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>Every upload goes to Cloudflare R2 through <code>storage.S3Client</code>, and only the <b>public URL</b> is stored in the DB. Never write permanent files to the API server's filesystem.</p>
+          </div>
+        </section>
+
+        <!-- 5 -->
+        <section id="ws">
+          <h2><span class="num">5</span><span class="lang th">zyra-ws และ media plane</span><span class="lang en">zyra-ws and the media plane</span></h2>
+          <div class="lang th">
+            <p>ต่อที่ <code>GET /ws?workspace_id=&amp;token=</code> (JWT ต้องออกโดย zyra-api ด้วย <code>tokenKey</code> เดียวกัน) ทุก message เป็น JSON envelope <code>{ "type": ..., "payload": ... }</code> ยกเว้น <code>moved</code> ความถี่สูงที่ส่งเป็น <b>binary frame</b> (type byte <code>0x01</code>)</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>กลุ่ม</th><th>ตัวอย่าง message</th></tr></thead>
+                <tbody>
+                  <tr><td>ตำแหน่ง</td><td><code>move_to</code> · <code>stop</code> → <code>moving</code> · <code>stopped</code> · <code>moved</code></td></tr>
+                  <tr><td>presence / state</td><td><code>welcome</code> · <code>joined</code> · <code>left</code> · <code>status_changed</code> · <code>heartbeat</code></td></tr>
+                  <tr><td>social</td><td><code>wave</code> · <code>follow</code> · <code>knock</code> / <code>knock_decision</code></td></tr>
+                  <tr><td>zone / โซนประชุม</td><td><code>room_enter</code> · <code>room_exit</code> · <code>section_sync</code></td></tr>
+                  <tr><td>ระบบ</td><td><code>capacity_reached</code> (ปิด connection) · <code>server_drain</code> ก่อน shutdown</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>สิ่งที่ควรรู้เวลาแก้ zyra-ws</h3>
+            <ul>
+              <li><b>AOI grid</b> 16×16 tile — broadcast <code>moved</code> แค่ neighbourhood 3×3 cell (พื้นที่ราว 48×48 tile) เฉพาะพื้นที่เปิด; ในห้องส่วนตัวใช้ broadcast ระดับห้อง</li>
+              <li>Server คำนวณ <code>duration_ms = pathDistancePx / 120 * 1000</code> เอง — client ไม่ได้กำหนด</li>
+              <li>State ทุกอย่างอยู่ใน Redis พร้อม TTL (<code>vo:presence:*</code> 35s, <code>vo:last_pos:*</code> 7 วัน, cooldown ของ wave/knock ฯลฯ)</li>
+              <li>ทุกครั้งที่ยกเลิกการเดิน <b>ต้องบอกอีกฝ่าย</b> ไม่งั้นจะเกิดอาการ warp-back / เดินทะลุกำแพงในสายตา peer</li>
+            </ul>
+            <p><b>zyra-sfu</b> ไม่รู้ business rule อะไรเลย (single-presenter, force-mute, capacity) — บังคับกฎที่ <code>zyra-ws</code>/<code>zyra-api</code> เสมอ</p>
+          </div>
+          <div class="lang en">
+            <p>Connect to <code>GET /ws?workspace_id=&amp;token=</code> — the JWT must be minted by zyra-api with the same <code>tokenKey</code>. Messages use a JSON envelope <code>{ "type": ..., "payload": ... }</code>, except high-frequency <code>moved</code> updates, which are <b>binary frames</b> (type byte <code>0x01</code>).</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Group</th><th>Example messages</th></tr></thead>
+                <tbody>
+                  <tr><td>Position</td><td><code>move_to</code> · <code>stop</code> → <code>moving</code> · <code>stopped</code> · <code>moved</code></td></tr>
+                  <tr><td>Presence / state</td><td><code>welcome</code> · <code>joined</code> · <code>left</code> · <code>status_changed</code> · <code>heartbeat</code></td></tr>
+                  <tr><td>Social</td><td><code>wave</code> · <code>follow</code> · <code>knock</code> / <code>knock_decision</code></td></tr>
+                  <tr><td>Zones &amp; meetings</td><td><code>room_enter</code> · <code>room_exit</code> · <code>section_sync</code></td></tr>
+                  <tr><td>System</td><td><code>capacity_reached</code> (closes the connection) · <code>server_drain</code> before shutdown</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Things to know before editing zyra-ws</h3>
+            <ul>
+              <li><b>AOI grid</b> of 16×16 tiles — <code>moved</code> only reaches the 3×3 cell neighbourhood (~48×48 tiles), and only on the open floor; private rooms use room-level broadcast</li>
+              <li>The server computes <code>duration_ms = pathDistancePx / 120 * 1000</code> itself — clients don't get to decide</li>
+              <li>All state lives in Redis with TTLs (<code>vo:presence:*</code> 35s, <code>vo:last_pos:*</code> 7 days, wave/knock cooldowns, …)</li>
+              <li>Whenever a walk is cancelled, <b>you must tell the other side</b> — otherwise peers see warp-backs and avatars standing in walls</li>
+            </ul>
+            <p><b>zyra-sfu</b> knows no business rules at all (single presenter, force mute, capacity). Enforce those in <code>zyra-ws</code>/<code>zyra-api</code>.</p>
+          </div>
+        </section>
+
+        <!-- 6 -->
+        <section id="rules">
+          <h2><span class="num">6</span><span class="lang th">กฎบ้านนี้ (.claude/rules/)</span><span class="lang en">House rules (.claude/rules/)</span></h2>
+          <div class="lang th">
+            <p>กฎเหล่านี้ถูกบังคับใน review — ละเมิดคือ PR ไม่ผ่าน</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>เรื่อง</th><th>กฎ</th></tr></thead>
+                <tbody>
+                  <tr><td>UI</td><td>Tailwind utility class เท่านั้น — ห้าม import จาก <code>@/components/ui/*</code> (shadcn) ยกเว้น <code>skeleton.tsx</code> / <code>icon.tsx</code> · ห้าม inline style</td></tr>
+                  <tr><td>Icon</td><td><code>lucide-react</code> เท่านั้น — ห้าม react-icons / heroicons / inline SVG</td></tr>
+                  <tr><td>Component</td><td>ค้นหาก่อนสร้างใหม่: <code>components/ui/</code> → <code>components/admin/</code> → feature อื่น · ต้องการ variant ให้เพิ่ม prop ห้าม fork · ทุกหน้า admin ต้องใช้ <code>AdminSidebar</code></td></tr>
+                  <tr><td>API separation</td><td>member page เรียก <code>/api/user/*</code> เท่านั้น — ห้ามแตะ <code>/api/admin/*</code></td></tr>
+                  <tr><td>Storage</td><td>ไฟล์/รูปทุกอย่างขึ้น R2 ผ่าน <code>storage.S3Client</code> — ห้าม <code>os.WriteFile</code> ถาวร, ห้ามเก็บ path <code>/uploads/...</code> ลง DB</td></tr>
+                  <tr><td>Figma</td><td>ก่อนเขียน UI ต้องดึง spec จาก Figma MCP (<code>get_design_context</code> + screenshot) — ห้ามเดา spacing/สี/ฟอนต์ ใช้ exact hex เสมอ</td></tr>
+                  <tr><td>No-overreach</td><td>ทำเฉพาะที่สั่ง — ได้ Figma node ใหม่แต่ไม่รู้ว่าอยู่ flow ไหน ต้องถามก่อน ห้ามเดาแล้วสร้าง flow เอง</td></tr>
+                  <tr><td>เอกสาร</td><td>doc ใหม่ทุกชิ้นลง <code>zyra-doc/</code> — ห้ามสร้าง <code>docs/</code> ใน sub-repo</td></tr>
+                  <tr><td>ClickUp</td><td>อ่านได้อย่างเดียว · <b>ห้ามแตะ status เด็ดขาด</b> (เป็นสิทธิ์ของ PM/QA)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="lang en">
+            <p>These are enforced in review — breaking one means the PR doesn't land.</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Topic</th><th>Rule</th></tr></thead>
+                <tbody>
+                  <tr><td>UI</td><td>Tailwind utilities only — no imports from <code>@/components/ui/*</code> (shadcn) except <code>skeleton.tsx</code> / <code>icon.tsx</code>; no inline styles</td></tr>
+                  <tr><td>Icons</td><td><code>lucide-react</code> only — no react-icons, no heroicons, no ad-hoc inline SVG</td></tr>
+                  <tr><td>Components</td><td>Search before creating: <code>components/ui/</code> → <code>components/admin/</code> → other features. Need a variant? Add a prop, don't fork. Every admin page uses <code>AdminSidebar</code></td></tr>
+                  <tr><td>API separation</td><td>Member pages call <code>/api/user/*</code> only — never <code>/api/admin/*</code></td></tr>
+                  <tr><td>Storage</td><td>All files and images go to R2 via <code>storage.S3Client</code> — no permanent <code>os.WriteFile</code>, never store <code>/uploads/...</code> paths in the DB</td></tr>
+                  <tr><td>Figma</td><td>Pull the spec from the Figma MCP first (<code>get_design_context</code> + screenshot) — never guess spacing, colour or type; always use exact hex</td></tr>
+                  <tr><td>No overreach</td><td>Build only what was asked. Given a Figma node with no flow context, ask first — don't invent a flow around it</td></tr>
+                  <tr><td>Docs</td><td>Every new doc goes in <code>zyra-doc/</code> — never create a <code>docs/</code> folder in a sub-repo</td></tr>
+                  <tr><td>ClickUp</td><td>Read-only, and <b>never touch status</b> — that belongs to PM/QA</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7 -->
+        <section id="style">
+          <h2><span class="num">7</span><span class="lang th">Code style</span><span class="lang en">Code style</span></h2>
+          <div class="do-dont lang th">
+            <div class="do">
+              <h4>ทำ</h4>
+              <ul>
+                <li>Prettier: <b>ไม่มี semicolon</b> · double quotes · trailing comma · width 100 · indent 2 · <code>(x) =&gt; x</code></li>
+                <li><code>npx tsc --noEmit</code> และ <code>npm run lint</code> ผ่านก่อน commit ทุกครั้ง</li>
+                <li>Go: wrap error ด้วย context <code>fmt.Errorf("save user: %w", err)</code> · ใช้ <code>slog</code> · <code>defer tx.Rollback(ctx)</code></li>
+                <li>ตัวแปรที่จงใจไม่ใช้ ให้ prefix <code>_</code></li>
+                <li><code>&lt;Image&gt;</code> จาก next/image และ <code>&lt;Link&gt;</code> สำหรับลิงก์ภายใน</li>
+                <li>Commit แบบ Conventional: <code>feat(api):</code> · <code>fix(app):</code> (lowercase, ≤72 ตัวอักษร)</li>
+              </ul>
+            </div>
+            <div class="dont">
+              <h4>ห้าม</h4>
+              <ul>
+                <li><code>any</code> ใน TypeScript — ใช้ <code>unknown</code></li>
+                <li><code>console.log</code> ค้างใน PR · <code>fmt.Println</code> ใน Go production</li>
+                <li><code>&lt;img&gt;</code> · <code>&lt;a href="/..."&gt;</code> ในลิงก์ภายใน</li>
+                <li><code>useEffect</code> ที่ deps ไม่ครบ</li>
+                <li>hardcode secret หรือ commit <code>.env</code></li>
+                <li>log PII (email, password, JWT, OTP)</li>
+                <li>รัน <code>prettier --write</code> ทั่ว repo — repo ยัง format ไม่สะอาดทั้งหมด จะกลบ diff ของคุณ ให้จัด format แค่ไฟล์ที่คุณแก้</li>
+              </ul>
+            </div>
+          </div>
+          <div class="do-dont lang en">
+            <div class="do">
+              <h4>Do</h4>
+              <ul>
+                <li>Prettier: <b>no semicolons</b> · double quotes · trailing commas · width 100 · 2-space indent · <code>(x) =&gt; x</code></li>
+                <li>Run <code>npx tsc --noEmit</code> and <code>npm run lint</code> clean before every commit</li>
+                <li>Go: wrap errors with context — <code>fmt.Errorf("save user: %w", err)</code> · use <code>slog</code> · <code>defer tx.Rollback(ctx)</code></li>
+                <li>Prefix deliberately unused variables with <code>_</code></li>
+                <li>Use <code>&lt;Image&gt;</code> from next/image and <code>&lt;Link&gt;</code> for internal links</li>
+                <li>Conventional Commits: <code>feat(api):</code> · <code>fix(app):</code> (lowercase, ≤72 chars)</li>
+              </ul>
+            </div>
+            <div class="dont">
+              <h4>Don't</h4>
+              <ul>
+                <li><code>any</code> in TypeScript — use <code>unknown</code></li>
+                <li>Leave <code>console.log</code> in a PR, or <code>fmt.Println</code> in Go production code</li>
+                <li>Use <code>&lt;img&gt;</code>, or <code>&lt;a href="/..."&gt;</code> for internal links</li>
+                <li>Ship a <code>useEffect</code> with incomplete deps</li>
+                <li>Hardcode secrets or commit <code>.env</code></li>
+                <li>Log PII (email, password, JWT, OTP)</li>
+                <li>Run <code>prettier --write</code> across the repo — it isn't format-clean yet and it will bury your diff. Format only the files you touched</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 8 -->
+        <section id="git">
+          <h2><span class="num">8</span><span class="lang th">Git workflow &amp; deploy</span><span class="lang en">Git workflow &amp; deploy</span></h2>
+          <div class="lang th">
+            <pre><code>feat/&lt;name&gt;  ──▶  develop  ──▶  main  ──▶  tag v&lt;x.y.z&gt;
+   <span class="c">local</span>          <span class="g">dev</span>        <span class="g">uat</span>          <span class="g">prod</span>
+                <span class="c">auto deploy</span>  <span class="c">auto deploy</span>  <span class="c">auto deploy (gated)</span></code></pre>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Ref</th><th>Environment</th><th>Trigger</th></tr></thead>
+                <tbody>
+                  <tr><td>push <code>develop</code></td><td>dev</td><td>auto deploy (<code>web:dev-&lt;sha&gt;</code>)</td></tr>
+                  <tr><td>push <code>main</code></td><td>uat</td><td>auto deploy (<code>web:uat-&lt;sha&gt;</code>)</td></tr>
+                  <tr><td>tag <code>v*</code></td><td>prod</td><td>auto deploy (<code>web-prod:&lt;tag&gt;</code>)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <pre><code>git checkout develop &amp;&amp; git pull origin develop
+git checkout -b feat/&lt;feature-name&gt;    <span class="c"># หรือ fix/&lt;name&gt;</span>
+<span class="c"># ...ทำงาน แล้ว push branch ตัวเอง...</span>
+git push origin feat/&lt;feature-name&gt;</code></pre>
+            <div class="note warn">
+              <span class="ic">!</span>
+              <div>
+                <b>ห้าม</b> commit/push ตรงเข้า <code>develop</code> หรือ <code>main</code> · ห้าม merge ข้ามขั้น
+                (<code>feat/*</code> → <code>main</code>) · ห้ามแตก feature branch จาก <code>main</code> ·
+                push เข้า <code>main</code> = deploy uat ทันที และ tag = deploy prod ทันที
+                จึงต้อง <b>ขอ confirm จากผู้ใช้ก่อนทุกครั้ง</b>
+              </div>
+            </div>
+            <p>ก่อน release เช็ก: <code>go test ./...</code> ผ่าน · <code>npm run lint</code> + <code>next build</code> ผ่าน · env ครบบน target · migration รันก่อน deploy · <code>/healthz</code> ตอบ 200 หลัง deploy</p>
+          </div>
+          <div class="lang en">
+            <pre><code>feat/&lt;name&gt;  ──▶  develop  ──▶  main  ──▶  tag v&lt;x.y.z&gt;
+   <span class="c">local</span>          <span class="g">dev</span>        <span class="g">uat</span>          <span class="g">prod</span>
+                <span class="c">auto deploy</span>  <span class="c">auto deploy</span>  <span class="c">auto deploy (gated)</span></code></pre>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Ref</th><th>Environment</th><th>Trigger</th></tr></thead>
+                <tbody>
+                  <tr><td>push <code>develop</code></td><td>dev</td><td>auto deploy (<code>web:dev-&lt;sha&gt;</code>)</td></tr>
+                  <tr><td>push <code>main</code></td><td>uat</td><td>auto deploy (<code>web:uat-&lt;sha&gt;</code>)</td></tr>
+                  <tr><td>tag <code>v*</code></td><td>prod</td><td>auto deploy (<code>web-prod:&lt;tag&gt;</code>)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <pre><code>git checkout develop &amp;&amp; git pull origin develop
+git checkout -b feat/&lt;feature-name&gt;    <span class="c"># or fix/&lt;name&gt;</span>
+<span class="c"># ...work, then push your own branch...</span>
+git push origin feat/&lt;feature-name&gt;</code></pre>
+            <div class="note warn">
+              <span class="ic">!</span>
+              <div>
+                <b>Never</b> commit or push straight to <code>develop</code> or <code>main</code>, never skip a
+                step (<code>feat/*</code> → <code>main</code>), and never branch a feature off
+                <code>main</code>. Pushing to <code>main</code> deploys uat immediately and a tag deploys
+                prod immediately — so both need <b>explicit confirmation from the user first</b>.
+              </div>
+            </div>
+            <p>Release gate: <code>go test ./...</code> green · <code>npm run lint</code> + <code>next build</code> green · env vars complete on the target · migrations applied before deploy · <code>/healthz</code> returns 200 afterwards.</p>
+          </div>
+        </section>
+
+        <!-- 9 -->
+        <section id="test">
+          <h2><span class="num">9</span><span class="lang th">Test</span><span class="lang en">Testing</span></h2>
+          <div class="grid-2">
+            <div class="tile">
+              <div class="lang th">
+                <h4><span class="swatch" style="background: var(--blue)"></span>Go (zyra-api / ws)</h4>
+                <p>Table-driven test + <code>testify</code> · mock DB ด้วย interface — ห้ามต่อ PostgreSQL จริงใน unit test · test ทุก sentinel error · เป้า coverage <code>internal/service/*</code> ≥ 80%</p>
+              </div>
+              <div class="lang en">
+                <h4><span class="swatch" style="background: var(--blue)"></span>Go (zyra-api / ws)</h4>
+                <p>Table-driven tests with <code>testify</code>; mock the DB behind an interface — never hit a real PostgreSQL in a unit test. Cover every sentinel error. Target: <code>internal/service/*</code> ≥ 80%</p>
+              </div>
+            </div>
+            <div class="tile">
+              <div class="lang th">
+                <h4><span class="swatch" style="background: var(--green)"></span>TypeScript (zyra-app)</h4>
+                <p><code>npm run test</code> (Vitest) · <code>vi.mock</code> เสมอ ห้ามยิง <code>/api/*</code> จริง · test happy path + error path ของทุก function · เป้า <code>lib/*.ts</code> ≥ 80%</p>
+              </div>
+              <div class="lang en">
+                <h4><span class="swatch" style="background: var(--green)"></span>TypeScript (zyra-app)</h4>
+                <p><code>npm run test</code> (Vitest); always <code>vi.mock</code> — never call real <code>/api/*</code>. Cover the happy path and the error path of every function. Target: <code>lib/*.ts</code> ≥ 80%</p>
+              </div>
+            </div>
+            <div class="tile">
+              <div class="lang th">
+                <h4><span class="swatch" style="background: var(--purple)"></span>E2E</h4>
+                <p><code>npm run e2e</code> (Playwright) · <code>npm run e2e:report</code> ดูผล</p>
+              </div>
+              <div class="lang en">
+                <h4><span class="swatch" style="background: var(--purple)"></span>E2E</h4>
+                <p><code>npm run e2e</code> (Playwright) · <code>npm run e2e:report</code> to read results</p>
+              </div>
+            </div>
+            <div class="tile">
+              <div class="lang th">
+                <h4><span class="swatch" style="background: var(--orange)"></span>Virtual Office</h4>
+                <p>บั๊ก real-time ต้อง verify ด้วย 2 client จริง — unit test จับ desync ไม่ได้ · ดูสูตรใน <code>zyra-doc/plan/Real-time-Engine/</code></p>
+              </div>
+              <div class="lang en">
+                <h4><span class="swatch" style="background: var(--orange)"></span>Virtual Office</h4>
+                <p>Real-time bugs need two live clients to verify — unit tests can't catch a desync. Recipes in <code>zyra-doc/plan/Real-time-Engine/</code></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 10 -->
+        <section id="next">
+          <h2><span class="num">10</span><span class="lang th">อ่านต่อ</span><span class="lang en">Read next</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>ไฟล์</th><th>มีอะไร</th></tr></thead>
+              <tbody>
+                <tr><td><code>AGENTS.md</code> (root)</td><td>route table เต็มทุก service, DB schema, business rule, env vars — แหล่งอ้างอิงหลัก</td></tr>
+                <tr><td><code>&lt;repo&gt;/README.md</code></td><td>บทบาทของ repo นั้นในระบบ + วิธีรัน</td></tr>
+                <tr><td><code>&lt;repo&gt;/AGENTS.md</code></td><td>รายละเอียดสถาปัตยกรรมภายใน repo (zyra-app มีเรื่อง Virtual Office ละเอียดสุด)</td></tr>
+                <tr><td><code>.claude/rules/*.md</code></td><td>กฎ 17 ข้อแยกตาม phase (plan → design → develop → test → review → release → monitor)</td></tr>
+                <tr><td><code>zyra-doc/doc/GLOSSARY.md</code></td><td>คำศัพท์ทางการ — ใช้คำให้ตรงกับที่นี่เวลาเขียน doc/PR</td></tr>
+                <tr><td><code>zyra-doc/plan/&lt;Feature&gt;/</code></td><td>spec + technical design ของแต่ละฟีเจอร์ (Chat, VirtualOffice, UserGuide, ...)</td></tr>
+                <tr><td><code>zyra-doc/issus/</code></td><td>บันทึกบั๊ก/ปัญหาที่เคยเจอ</td></tr>
+                <tr><td><code>zyra-doc/DEV-DB-ACCESS.md</code></td><td>credential/access model ของ dev &amp; prod DB</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>File</th><th>What's in it</th></tr></thead>
+              <tbody>
+                <tr><td><code>AGENTS.md</code> (root)</td><td>Full route table for every service, DB schema, business rules, env vars — the primary reference</td></tr>
+                <tr><td><code>&lt;repo&gt;/README.md</code></td><td>That repo's role in the system and how to run it</td></tr>
+                <tr><td><code>&lt;repo&gt;/AGENTS.md</code></td><td>Internal architecture per repo (zyra-app's is the most detailed on Virtual Office)</td></tr>
+                <tr><td><code>.claude/rules/*.md</code></td><td>17 rule files by phase (plan → design → develop → test → review → release → monitor)</td></tr>
+                <tr><td><code>zyra-doc/doc/GLOSSARY.md</code></td><td>The canonical vocabulary — match it in docs and PRs</td></tr>
+                <tr><td><code>zyra-doc/plan/&lt;Feature&gt;/</code></td><td>Spec plus technical design per feature (Chat, VirtualOffice, UserGuide, …)</td></tr>
+                <tr><td><code>zyra-doc/issus/</code></td><td>Recorded bugs and incidents</td></tr>
+                <tr><td><code>zyra-doc/DEV-DB-ACCESS.md</code></td><td>Credential and access model for the dev &amp; prod databases</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note lang th">
+            <span class="ic">◆</span>
+            <div><b>PR แรกที่ดี:</b> หยิบ bug เล็ก ๆ จาก <code>zyra-doc/issus/</code> แตก branch จาก <code>develop</code> แก้ ใส่ test แล้วเปิด PR เข้า <code>develop</code> — จะได้เดินผ่านทุกขั้นของ workflow ครบรอบหนึ่ง</div>
+          </div>
+          <div class="note lang en">
+            <span class="ic">◆</span>
+            <div><b>A good first PR:</b> pick a small bug from <code>zyra-doc/issus/</code>, branch off <code>develop</code>, fix it with a test, and open a PR into <code>develop</code> — that walks you through the whole workflow once.</div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      <span class="lang th">Zyra · คู่มือ developer ใหม่ — อยู่ที่ <code>zyra-doc/doc/onboarding/developer.html</code> · <a href="./index.html">กลับหน้าหลัก</a></span>
+      <span class="lang en">Zyra · new developer guide — lives at <code>zyra-doc/doc/onboarding/developer.html</code> · <a href="./index.html">back to all guides</a></span>
+    </footer>
+
+    <script>
+      const buttons = document.querySelectorAll("[data-set-lang]")
+      const setLang = (lang) => {
+        document.body.dataset.lang = lang
+        document.documentElement.lang = lang
+        document.documentElement.dataset.lang = lang
+        buttons.forEach((b) =>
+          b.setAttribute("aria-selected", String(b.dataset.setLang === lang)),
+        )
+        try {
+          localStorage.setItem("zyra_onboarding_lang", lang)
+        } catch (_e) {}
+      }
+      buttons.forEach((b) => b.addEventListener("click", () => setLang(b.dataset.setLang)))
+      try {
+        const saved = localStorage.getItem("zyra_onboarding_lang")
+        if (saved === "en" || saved === "th") setLang(saved)
+      } catch (_e) {}
+    </script>
+  </body>
+</html>

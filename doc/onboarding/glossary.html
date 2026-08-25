@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="th" data-lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Zyra — Glossary</title>
+    <meta
+      name="description"
+      content="พจนานุกรมคำศัพท์ของ Zyra — คำเดียวกันต้องหมายถึงสิ่งเดียวกันทั้งทีม: entity, role, map, movement, social, status, UI, WS event (ไทย / English)"
+    />
+    <meta name="theme-color" content="#2b3540" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Zyra" />
+    <meta property="og:title" content="Zyra — Glossary / พจนานุกรมคำศัพท์" />
+    <meta
+      property="og:description"
+      content="คำศัพท์ที่ทีม Zyra ใช้ร่วมกัน — Workspace, Zone, Knock, Wave, Follow, HUD, presence, WS event และกฎธุรกิจ พร้อมช่องค้นหา"
+    />
+    <meta property="og:url" content="https://zyra-onboarding.vercel.app/glossary.html" />
+    <meta property="og:image" content="https://zyra-onboarding.vercel.app/og-glossary.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Zyra — glossary" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://zyra-onboarding.vercel.app/og-glossary.png" />
+    <style>
+      :root {
+        --bg: #2b3540;
+        --bg-deep: #242b32;
+        --bg-ink: #1a1b1e;
+        --card: #242b32;
+        --line: rgba(255, 255, 255, 0.1);
+        --line-strong: rgba(255, 255, 255, 0.2);
+        --green: #58d68d;
+        --green-dim: rgba(88, 214, 141, 0.12);
+        --purple: #a77efc;
+        --blue: #2db6ff;
+        --yellow: #ffd400;
+        --orange: #ff8000;
+        --red: #f03a3a;
+        --text: #ffffff;
+        --text-2: #dbdfe3;
+        --muted: #8c99a6;
+        --muted-2: #636d76;
+        --r-sm: 8px;
+        --r-md: 12px;
+        --r-lg: 16px;
+        --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
+          "Noto Sans Thai", "Helvetica Neue", sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 15px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+      body[data-lang="th"] .lang.en,
+      body[data-lang="en"] .lang.th {
+        display: none;
+      }
+
+      header.top {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        height: 64px;
+        padding: 0 24px;
+        background: rgba(26, 27, 30, 0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--line);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        font-size: 15px;
+      }
+      .brand .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--yellow);
+        box-shadow: 0 0 0 4px rgba(255, 212, 0, 0.14);
+      }
+      .brand span.sub {
+        color: var(--muted);
+        font-weight: 500;
+        letter-spacing: 0;
+        font-size: 13px;
+        border-left: 1px solid var(--line-strong);
+        padding-left: 10px;
+        margin-left: 2px;
+      }
+      .spacer {
+        flex: 1;
+      }
+      a.home {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        flex: none;
+        height: 34px;
+        padding: 0 12px 0 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: 0.15s;
+      }
+      a.home:hover {
+        color: var(--text);
+        border-color: var(--line-strong);
+        background: rgba(255, 255, 255, 0.07);
+      }
+      a.home svg {
+        flex: none;
+      }
+      .lang-switch {
+        display: flex;
+        padding: 3px;
+        gap: 2px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--line);
+        border-radius: var(--r-sm);
+      }
+      .lang-switch button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-family: var(--font);
+        font-size: 13px;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      .lang-switch button:hover {
+        color: var(--text);
+      }
+      .lang-switch button[aria-selected="true"] {
+        background: var(--yellow);
+        color: #3a3000;
+      }
+
+      .wrap {
+        display: grid;
+        grid-template-columns: 228px minmax(0, 1fr);
+        gap: 32px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 24px 96px;
+      }
+      nav.toc {
+        position: sticky;
+        top: 96px;
+        align-self: start;
+        font-size: 13.5px;
+      }
+      nav.toc p {
+        margin: 0 0 10px;
+        color: var(--muted-2);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      nav.toc a {
+        display: block;
+        padding: 7px 10px;
+        color: var(--muted);
+        text-decoration: none;
+        border-radius: 6px;
+        border-left: 2px solid transparent;
+      }
+      nav.toc a:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.04);
+        border-left-color: var(--yellow);
+      }
+      main {
+        min-width: 0;
+      }
+
+      .hero {
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        background: radial-gradient(
+            120% 140% at 0% 0%,
+            rgba(255, 212, 0, 0.12) 0%,
+            rgba(255, 212, 0, 0) 55%
+          ),
+          var(--card);
+        padding: 32px;
+        margin-bottom: 24px;
+      }
+      .hero .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(255, 212, 0, 0.12);
+        border: 1px solid rgba(255, 212, 0, 0.3);
+        color: var(--yellow);
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 14px;
+      }
+      .hero h1 {
+        margin: 0 0 10px;
+        font-size: 30px;
+        line-height: 1.25;
+        letter-spacing: -0.01em;
+      }
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 66ch;
+      }
+
+      /* search */
+      .search {
+        position: sticky;
+        top: 64px;
+        z-index: 30;
+        padding: 14px 0 18px;
+        background: linear-gradient(var(--bg) 70%, rgba(43, 53, 64, 0));
+      }
+      .search input {
+        width: 100%;
+        height: 46px;
+        padding: 0 16px;
+        border-radius: var(--r-sm);
+        border: 1px solid var(--line-strong);
+        background: var(--bg-deep);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 14.5px;
+      }
+      .search input::placeholder {
+        color: var(--muted-2);
+      }
+      .search input:focus {
+        outline: none;
+        border-color: rgba(255, 212, 0, 0.55);
+      }
+      .search .count {
+        margin-top: 8px;
+        color: var(--muted-2);
+        font-size: 12.5px;
+        min-height: 18px;
+      }
+
+      section {
+        margin-bottom: 34px;
+        scroll-margin-top: 132px;
+      }
+      section.hidden {
+        display: none;
+      }
+      h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 19px;
+        margin: 0 0 14px;
+      }
+      h2 .num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        width: 28px;
+        height: 28px;
+        border-radius: var(--r-sm);
+        background: rgba(255, 212, 0, 0.12);
+        color: var(--yellow);
+        font-size: 13px;
+        font-weight: 700;
+      }
+      p {
+        color: var(--text-2);
+      }
+      a {
+        color: var(--yellow);
+      }
+
+      code {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--yellow);
+        background: rgba(255, 212, 0, 0.08);
+        padding: 1px 6px;
+        border-radius: 5px;
+      }
+
+      .table-scroll {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--r-md);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 560px;
+        font-size: 13.5px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      tbody tr.hidden {
+        display: none;
+      }
+      td:first-child {
+        white-space: nowrap;
+      }
+      td strong {
+        color: var(--text);
+      }
+      td.def {
+        color: var(--text-2);
+      }
+      .never {
+        color: var(--red);
+        font-size: 12.5px;
+      }
+      .swatch {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+
+      .note {
+        display: flex;
+        gap: 12px;
+        border: 1px solid rgba(255, 212, 0, 0.28);
+        background: rgba(255, 212, 0, 0.07);
+        border-radius: var(--r-md);
+        padding: 14px 16px;
+        margin: 16px 0 0;
+        font-size: 13.5px;
+        color: var(--text-2);
+      }
+      .note b {
+        color: var(--text);
+      }
+      .note .ic {
+        flex: none;
+        font-weight: 700;
+        color: var(--yellow);
+      }
+      .empty {
+        display: none;
+        padding: 28px;
+        text-align: center;
+        color: var(--muted);
+        border: 1px dashed var(--line-strong);
+        border-radius: var(--r-md);
+      }
+      .empty.show {
+        display: block;
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 24px;
+        text-align: center;
+        color: var(--muted-2);
+        font-size: 13px;
+      }
+
+      @media (max-width: 560px) {
+        header.top {
+          padding: 0 14px;
+          gap: 10px;
+        }
+        .brand span.sub {
+          display: none;
+        }
+      }
+      @media (max-width: 880px) {
+        .wrap {
+          grid-template-columns: 1fr;
+        }
+        nav.toc {
+          display: none;
+        }
+        .hero {
+          padding: 24px;
+        }
+        .hero h1 {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body data-lang="th">
+    <header class="top">
+      <a class="home" href="./index.html">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M19 12H5" />
+          <path d="m12 19-7-7 7-7" />
+        </svg>
+        <span class="lang th">หน้าหลัก</span>
+        <span class="lang en">All guides</span>
+      </a>
+      <div class="brand">
+        <span class="dot"></span>ZYRA
+        <span class="sub lang th">พจนานุกรมคำศัพท์</span>
+        <span class="sub lang en">Glossary</span>
+      </div>
+      <div class="spacer"></div>
+      <div class="lang-switch" role="tablist" aria-label="Language">
+        <button role="tab" data-set-lang="th" aria-selected="true">ไทย</button>
+        <button role="tab" data-set-lang="en" aria-selected="false">EN</button>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <nav class="toc">
+        <p class="lang th">หมวด</p>
+        <p class="lang en">Sections</p>
+        <a href="#product"><span class="lang th">1 · ชื่อ product &amp; module</span><span class="lang en">1 · Product &amp; modules</span></a>
+        <a href="#entity"><span class="lang th">2 · Entity หลัก</span><span class="lang en">2 · Core entities</span></a>
+        <a href="#role"><span class="lang th">3 · Role</span><span class="lang en">3 · Roles</span></a>
+        <a href="#map"><span class="lang th">4 · Map &amp; zone</span><span class="lang en">4 · Map &amp; zones</span></a>
+        <a href="#move"><span class="lang th">5 · Movement &amp; engine</span><span class="lang en">5 · Movement &amp; engine</span></a>
+        <a href="#social"><span class="lang th">6 · Social &amp; presence</span><span class="lang en">6 · Social &amp; presence</span></a>
+        <a href="#status"><span class="lang th">7 · Availability status</span><span class="lang en">7 · Availability status</span></a>
+        <a href="#ui"><span class="lang th">8 · UI &amp; หน้าจอ</span><span class="lang en">8 · UI &amp; screens</span></a>
+        <a href="#invite"><span class="lang th">9 · Invite &amp; membership</span><span class="lang en">9 · Invite &amp; membership</span></a>
+        <a href="#ws"><span class="lang th">10 · WebSocket event</span><span class="lang en">10 · WebSocket events</span></a>
+        <a href="#rule"><span class="lang th">11 · กฎธุรกิจ</span><span class="lang en">11 · Business rules</span></a>
+        <a href="#id"><span class="lang th">12 · Scenario / test id</span><span class="lang en">12 · Scenario / test ids</span></a>
+      </nav>
+
+      <main>
+        <div class="hero">
+          <span class="pill lang th">Reference · ใช้คำให้ตรงกัน</span>
+          <span class="pill lang en">Reference · one word, one meaning</span>
+          <div class="lang th">
+            <h1>พจนานุกรมคำศัพท์ Zyra</h1>
+            <p>
+              คำเดียวกันต้องหมายถึงสิ่งเดียวกันทั้งทีม — ทั้งใน spec, PR, ClickUp และ UI copy
+              หน้านี้เป็นเวอร์ชันอ่านง่ายของ <code>zyra-doc/doc/GLOSSARY.md</code>
+              ซึ่งยังเป็นต้นฉบับอ้างอิงหลัก
+            </p>
+          </div>
+          <div class="lang en">
+            <h1>Zyra glossary</h1>
+            <p>
+              One word should mean one thing across specs, PRs, ClickUp and UI copy. This is the
+              readable version of <code>zyra-doc/doc/GLOSSARY.md</code>, which remains the canonical
+              source.
+            </p>
+          </div>
+        </div>
+
+        <div class="search">
+          <input
+            id="q"
+            type="search"
+            autocomplete="off"
+            placeholder="ค้นหาคำศัพท์… (เช่น knock, zone, presence)"
+            aria-label="Search glossary"
+          />
+          <div class="count" id="count"></div>
+        </div>
+
+        <div class="empty" id="empty">
+          <span class="lang th">ไม่พบคำที่ค้นหา — ลองคำสั้นลง หรือดูต้นฉบับที่ <code>zyra-doc/doc/GLOSSARY.md</code></span>
+          <span class="lang en">No match — try a shorter word, or check the canonical <code>zyra-doc/doc/GLOSSARY.md</code></span>
+        </div>
+
+        <!-- 1 -->
+        <section id="product">
+          <h2><span class="num">1</span><span class="lang th">ชื่อ product &amp; module</span><span class="lang en">Product &amp; modules</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>คำที่ใช้</th><th>ห้ามใช้</th><th>ความหมาย</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Zyra</strong></td><td class="never">ZyRA, ZYRA (ยกเว้นใน constant)</td><td class="def">ชื่อผลิตภัณฑ์</td></tr>
+                <tr><td><strong>Virtual Office</strong></td><td class="never">Virtual Office Room, VO</td><td class="def">โมดูลแผนที่ 2D avatar-based ตัวหลัก</td></tr>
+                <tr><td><strong>Space Builder</strong></td><td class="never">Workspace List, Workspace Page</td><td class="def">หน้ารายการ workspace ทั้งหมด (ชื่อตาม Figma)</td></tr>
+                <tr><td><strong>Space</strong> / <strong>Workspace</strong></td><td class="never">Office, Room</td><td class="def">ใช้แทนกันได้ — Workspace ใช้ใน backend/DB, Space ใช้ใน UI copy</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Use</th><th>Never</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Zyra</strong></td><td class="never">ZyRA, ZYRA (except in constants)</td><td class="def">The product name</td></tr>
+                <tr><td><strong>Virtual Office</strong></td><td class="never">Virtual Office Room, VO</td><td class="def">The main 2D avatar-based map module</td></tr>
+                <tr><td><strong>Space Builder</strong></td><td class="never">Workspace List, Workspace Page</td><td class="def">The screen listing every workspace (name comes from Figma)</td></tr>
+                <tr><td><strong>Space</strong> / <strong>Workspace</strong></td><td class="never">Office, Room</td><td class="def">Interchangeable — Workspace in backend/DB, Space in UI copy</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 2 -->
+        <section id="entity">
+          <h2><span class="num">2</span><span class="lang th">Entity หลัก</span><span class="lang en">Core entities</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>Entity</th><th>ความหมาย</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Workspace</strong></td><td class="def">พื้นที่ทำงาน 1 ชุด มี map, member, capacity — เก็บใน <code>tb_workspace</code></td></tr>
+                <tr><td><strong>Map</strong></td><td class="def">แผนที่ 2D ใน workspace หนึ่ง — เก็บใน <code>tb_map</code>; workspace หนึ่งมีได้หลาย map (หลายชั้น)</td></tr>
+                <tr><td><strong>Room</strong> / Room Zone</td><td class="def">พื้นที่ย่อยบน map สูงสุด 20 ห้องต่อ map</td></tr>
+                <tr><td><strong>Private Zone</strong></td><td class="def">Room แบบปิด ต้อง Knock ก่อนเข้า (<code>knock_required: true</code>)</td></tr>
+                <tr><td><strong>Zone Section</strong></td><td class="def">session ของกลุ่มคนที่กำลังใช้ zone นั้น — <code>tb_zone_section</code> + <code>tb_zone_section_member</code></td></tr>
+                <tr><td><strong>Avatar</strong></td><td class="def">ตัวละคร pixel-art ที่แทน user บน map (คนละอย่างกับรูปโปรไฟล์)</td></tr>
+                <tr><td><strong>Spawn Point</strong></td><td class="def">จุดเกิดของ avatar เมื่อเข้า workspace ครั้งแรกหรือหลัง re-join</td></tr>
+                <tr><td><strong>Office Session</strong></td><td class="def">session ของ user ที่ active บน map — เก็บใน Redis ไม่ใช่ DB</td></tr>
+                <tr><td><strong>Presence</strong></td><td class="def">ข้อมูลว่าใคร online บน map ณ ขณะนั้น (จาก WebSocket + Redis)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Entity</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Workspace</strong></td><td class="def">One working area with a map, members and capacity — stored in <code>tb_workspace</code></td></tr>
+                <tr><td><strong>Map</strong></td><td class="def">A 2D map inside a workspace — <code>tb_map</code>; a workspace can hold several (multiple floors)</td></tr>
+                <tr><td><strong>Room</strong> / room zone</td><td class="def">A sub-area of a map, max 20 per map</td></tr>
+                <tr><td><strong>Private Zone</strong></td><td class="def">A closed room you must knock into (<code>knock_required: true</code>)</td></tr>
+                <tr><td><strong>Zone Section</strong></td><td class="def">The session of people currently using a zone — <code>tb_zone_section</code> + <code>tb_zone_section_member</code></td></tr>
+                <tr><td><strong>Avatar</strong></td><td class="def">The pixel-art character representing a user on the map (not the profile picture)</td></tr>
+                <tr><td><strong>Spawn Point</strong></td><td class="def">Where an avatar appears on first entry or after re-joining</td></tr>
+                <tr><td><strong>Office Session</strong></td><td class="def">A user's active session on the map — kept in Redis, not the DB</td></tr>
+                <tr><td><strong>Presence</strong></td><td class="def">Who is online on the map right now (from WebSocket + Redis)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 3 -->
+        <section id="role">
+          <h2><span class="num">3</span><span class="lang th">Role</span><span class="lang en">Roles</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>Role</th><th>สี badge</th><th>สิทธิ์</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Owner</strong></td><td>orange / amber</td><td class="def">สิทธิ์สูงสุด เชิญได้ทุก role — ออกจาก workspace ไม่ได้จนกว่าจะ Transfer Ownership</td></tr>
+                <tr><td><strong>Admin</strong> / Space Admin</td><td>purple</td><td class="def">จัดการ member ได้ แต่เชิญได้เฉพาะระดับ Member</td></tr>
+                <tr><td><strong>Member</strong></td><td>blue</td><td class="def">ใช้งาน workspace ได้ ออกได้ตลอด</td></tr>
+                <tr><td><strong>Pending</strong></td><td>gray</td><td class="def">ถูกเชิญแล้วแต่ยังไม่ยืนยัน — แสดงว่า “รอยืนยัน”</td></tr>
+                <tr><td><code>role_</code> ใน DB</td><td>—</td><td class="def">ระดับระบบ: <code>MEMBER</code> · <code>ADMIN</code> · <code>SYSADMIN</code> (คนละชั้นกับ role ใน workspace)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Role</th><th>Badge colour</th><th>Rights</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Owner</strong></td><td>orange / amber</td><td class="def">Full rights, invites any role — cannot leave until ownership is transferred</td></tr>
+                <tr><td><strong>Admin</strong> / space admin</td><td>purple</td><td class="def">Manages members but can only invite at Member level</td></tr>
+                <tr><td><strong>Member</strong></td><td>blue</td><td class="def">Uses the workspace; may leave at any time</td></tr>
+                <tr><td><strong>Pending</strong></td><td>gray</td><td class="def">Invited but not yet accepted — shown as "awaiting confirmation"</td></tr>
+                <tr><td><code>role_</code> in the DB</td><td>—</td><td class="def">Platform level: <code>MEMBER</code> · <code>ADMIN</code> · <code>SYSADMIN</code> (a different axis from workspace role)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 4 -->
+        <section id="map">
+          <h2><span class="num">4</span><span class="lang th">Map &amp; zone</span><span class="lang en">Map &amp; zones</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>คำ</th><th>ความหมาย</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Collision Layer</strong></td><td class="def">layer ที่กำหนด tile ที่ avatar เดินผ่านไม่ได้</td></tr>
+                <tr><td><strong>Block zone</strong></td><td class="def">zone type ที่ทำให้ tile ทั้งบริเวณเดินไม่ได้ (ไม่ใช่ object)</td></tr>
+                <tr><td><strong>Barrier</strong></td><td class="def">collision tile ที่มองไม่เห็นตรงขอบ private zone — กันเดินเข้าโดยไม่ได้รับอนุญาต</td></tr>
+                <tr><td><strong>Spotlight zone</strong></td><td class="def">zone ที่เสียงถูก broadcast ไปทั้งชั้น</td></tr>
+                <tr><td><strong>Meeting zone</strong></td><td class="def">zone ที่เข้าโหมดประชุม (video grid + chat ของ zone)</td></tr>
+                <tr><td><strong>zone tiles</strong></td><td class="def">zone ที่ไม่ใช่สี่เหลี่ยม เก็บเป็น JSONB ใน <code>tb_map_zone.tiles</code> — ใช้ helper ใน <code>lib/zone-utils.ts</code> ห้ามคำนวณ AABB ดิบ</td></tr>
+                <tr><td><strong>walkable_group</strong></td><td class="def">ตัวชี้ว่า object เป็นพื้นที่เดินได้ — ใช้ตัดสิน render order ชั้นพื้น</td></tr>
+                <tr><td><strong>wall_mounted</strong></td><td class="def">object ที่ติดผนัง — render อยู่หน้าสุดเสมอ</td></tr>
+                <tr><td><strong>zIndex</strong></td><td class="def">ลำดับ render: floor &lt; objects &lt; avatars &lt; UI overlay</td></tr>
+                <tr><td><strong>last_position</strong></td><td class="def">tile ล่าสุดที่ user อยู่ ใช้เป็น spawn เมื่อกลับเข้ามา</td></tr>
+                <tr><td><strong>Tiled</strong></td><td class="def">โปรแกรมออกแบบ map ที่ export เป็น <code>map.json</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Collision layer</strong></td><td class="def">The layer marking tiles an avatar cannot walk through</td></tr>
+                <tr><td><strong>Block zone</strong></td><td class="def">A zone type that makes its whole area unwalkable (not an object)</td></tr>
+                <tr><td><strong>Barrier</strong></td><td class="def">Invisible collision tiles along a private zone's edge, stopping uninvited entry</td></tr>
+                <tr><td><strong>Spotlight zone</strong></td><td class="def">A zone whose audio is broadcast to the entire floor</td></tr>
+                <tr><td><strong>Meeting zone</strong></td><td class="def">A zone that switches you into meeting mode (video grid + zone chat)</td></tr>
+                <tr><td><strong>Zone tiles</strong></td><td class="def">Non-rectangular zones stored as JSONB in <code>tb_map_zone.tiles</code> — use the helpers in <code>lib/zone-utils.ts</code>, never raw AABB maths</td></tr>
+                <tr><td><strong>walkable_group</strong></td><td class="def">Marks an object as walkable surface — decides floor-level render order</td></tr>
+                <tr><td><strong>wall_mounted</strong></td><td class="def">A wall-attached object — always rendered front-most</td></tr>
+                <tr><td><strong>zIndex</strong></td><td class="def">Render order: floor &lt; objects &lt; avatars &lt; UI overlay</td></tr>
+                <tr><td><strong>last_position</strong></td><td class="def">The user's last tile, used as the spawn point when they return</td></tr>
+                <tr><td><strong>Tiled</strong></td><td class="def">The map editor used for design; exports <code>map.json</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 5 -->
+        <section id="move">
+          <h2><span class="num">5</span><span class="lang th">Movement &amp; engine</span><span class="lang en">Movement &amp; engine</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>คำ</th><th>ความหมาย</th></tr></thead>
+              <tbody>
+                <tr><td><strong>zyra-engine</strong></td><td class="def">game engine ของ Virtual Office (PixiJS) — import จาก <code>@/zyra-engine</code></td></tr>
+                <tr><td><strong>WASD</strong></td><td class="def">เดินด้วยคีย์บอร์ด W/A/S/D หรือปุ่มลูกศร</td></tr>
+                <tr><td><strong>Click-to-move</strong></td><td class="def">คลิกบน map แล้วเดินไปตามเส้นทางที่หาให้</td></tr>
+                <tr><td><strong>Sprint</strong></td><td class="def">กด Shift ค้างเพื่อวิ่ง — ค่าความเร็วต้องตรงกันทั้ง client และ zyra-ws</td></tr>
+                <tr><td><strong>Path-based movement</strong></td><td class="def">โมเดลปัจจุบัน: <code>move_to</code> (ส่ง path) → server คิด <code>duration_ms</code> → <code>moving</code> → จบด้วย <code>stop</code></td></tr>
+                <tr><td><strong>force_sync</strong></td><td class="def">server สั่งให้ client เด้งกลับไปตำแหน่งจริง เมื่อ state ไม่ตรงกัน</td></tr>
+                <tr><td><strong>Desync</strong></td><td class="def">อาการที่หน้าจอเราและ peer เห็นไม่ตรงกัน (วาร์ป, ลื่นไถล, นั่งแล้วหลุด)</td></tr>
+                <tr><td><strong>AOI (Area of Interest)</strong></td><td class="def">grid 16×16 tile ที่ใช้จำกัดการ broadcast ตำแหน่งให้เฉพาะ 3×3 cell รอบตัว</td></tr>
+                <tr><td><strong>Silent Block</strong></td><td class="def">เดินชนสิ่งกีดขวางแล้วหยุดเฉย ๆ ไม่มี error</td></tr>
+                <tr><td><strong>TILE_SIZE / PLAYER_SPEED</strong></td><td class="def">32 px ต่อ tile · 120 px/s</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><strong>zyra-engine</strong></td><td class="def">The Virtual Office game engine (PixiJS) — imported from <code>@/zyra-engine</code></td></tr>
+                <tr><td><strong>WASD</strong></td><td class="def">Keyboard walking with W/A/S/D or the arrow keys</td></tr>
+                <tr><td><strong>Click-to-move</strong></td><td class="def">Click the map and the avatar walks the path found for it</td></tr>
+                <tr><td><strong>Sprint</strong></td><td class="def">Hold Shift to run — the speed constant must match on client and zyra-ws</td></tr>
+                <tr><td><strong>Path-based movement</strong></td><td class="def">The current model: <code>move_to</code> (send the path) → server computes <code>duration_ms</code> → <code>moving</code> → ends with <code>stop</code></td></tr>
+                <tr><td><strong>force_sync</strong></td><td class="def">The server snapping a client back to the authoritative position when state diverges</td></tr>
+                <tr><td><strong>Desync</strong></td><td class="def">Your screen and a peer's disagreeing (warps, sliding, sliding off a chair)</td></tr>
+                <tr><td><strong>AOI (area of interest)</strong></td><td class="def">A 16×16-tile grid limiting position broadcast to the 3×3 cells around you</td></tr>
+                <tr><td><strong>Silent block</strong></td><td class="def">Walking into an obstacle just stops you — no error is shown</td></tr>
+                <tr><td><strong>TILE_SIZE / PLAYER_SPEED</strong></td><td class="def">32 px per tile · 120 px/s</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 6 -->
+        <section id="social">
+          <h2><span class="num">6</span><span class="lang th">Social &amp; presence</span><span class="lang en">Social &amp; presence</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>คำ</th><th>ชื่อใน UI</th><th>ความหมาย</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Wave</strong></td><td>ทักทาย</td><td class="def">ส่ง gesture ทักทาย ไม่ต้องอยู่ใกล้ — cooldown 10 วินาทีต่อคน</td></tr>
+                <tr><td><strong>Follow</strong></td><td>ติดตาม</td><td class="def">เดินตาม avatar อื่นอัตโนมัติ เก็บใน Redis เท่านั้น</td></tr>
+                <tr><td><strong>Knock</strong></td><td>ขอเข้าห้อง</td><td class="def">ขอเข้า private zone — คนในห้องกด Allow / Deny</td></tr>
+                <tr><td><strong>Progressive Cooldown</strong></td><td>—</td><td class="def">ถูก Deny ครั้งที่ 1–2 รอ 30 วินาที, ครั้งที่ 3+ รอ 5 นาที</td></tr>
+                <tr><td><strong>Spotlight broadcast</strong></td><td>—</td><td class="def">พูดออกไปทั้งชั้นจาก spotlight zone</td></tr>
+                <tr><td><strong>Proximity chat</strong></td><td>—</td><td class="def">วงสนทนาที่เกิดจากการเดินเข้าใกล้กัน</td></tr>
+                <tr><td><strong>Presenter guard</strong></td><td>—</td><td class="def">กฎว่าหนึ่ง zone แชร์จอพร้อมกันได้สูงสุด 2 คน</td></tr>
+                <tr><td><strong>HUD</strong></td><td>—</td><td class="def">UI ที่ลอยอยู่บนแผนที่ (member panel, chat, minimap, status)</td></tr>
+                <tr><td><strong>Heartbeat</strong></td><td>—</td><td class="def">สัญญาณต่ออายุ presence ใน Redis (TTL 35 วินาที)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Term</th><th>UI name</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Wave</strong></td><td>Wave</td><td class="def">A greeting gesture; no proximity needed — 10s cooldown per person</td></tr>
+                <tr><td><strong>Follow</strong></td><td>Follow</td><td class="def">Automatically walking after another avatar; stored only in Redis</td></tr>
+                <tr><td><strong>Knock</strong></td><td>Knock</td><td class="def">Requesting entry to a private zone — those inside press Allow / Deny</td></tr>
+                <tr><td><strong>Progressive cooldown</strong></td><td>—</td><td class="def">After a deny: 30s for the 1st–2nd, 5 minutes from the 3rd on</td></tr>
+                <tr><td><strong>Spotlight broadcast</strong></td><td>—</td><td class="def">Speaking to the whole floor from a spotlight zone</td></tr>
+                <tr><td><strong>Proximity chat</strong></td><td>—</td><td class="def">The conversation circle formed by walking close to someone</td></tr>
+                <tr><td><strong>Presenter guard</strong></td><td>—</td><td class="def">The rule capping one zone at two simultaneous screen shares</td></tr>
+                <tr><td><strong>HUD</strong></td><td>—</td><td class="def">The UI floating over the map (member panel, chat, minimap, status)</td></tr>
+                <tr><td><strong>Heartbeat</strong></td><td>—</td><td class="def">The signal refreshing presence TTL in Redis (35s)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 7 -->
+        <section id="status">
+          <h2><span class="num">7</span><span class="lang th">Availability status</span><span class="lang en">Availability status</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>Status</th><th>ชื่อใน UI</th><th>ความหมาย</th></tr></thead>
+              <tbody>
+                <tr><td><span class="swatch" style="background: #58d68d"></span><strong>available</strong></td><td>Active</td><td class="def">พร้อมคุย</td></tr>
+                <tr><td><span class="swatch" style="background: #f03a3a"></span><strong>busy</strong></td><td>Busy</td><td class="def">ไม่ว่าง แต่ยังรับ Wave</td></tr>
+                <tr><td><span class="swatch" style="background: #ffd400"></span><strong>away</strong></td><td>Away</td><td class="def">ไม่อยู่หน้าจอชั่วคราว</td></tr>
+                <tr><td><span class="swatch" style="background: #f03a3a"></span><strong>dnd</strong></td><td>Do not disturb</td><td class="def">บล็อก Wave notification ทั้งหมด</td></tr>
+                <tr><td><span class="swatch" style="background: #636d76"></span><strong>offline</strong></td><td>—</td><td class="def">ออกจาก office แล้ว — ระบบตั้งให้อัตโนมัติ</td></tr>
+                <tr><td><span class="swatch" style="background: #f03a3a"></span><strong>meeting</strong></td><td>Meeting</td><td class="def">สถานะที่ client คิดเอง เมื่ออยู่ใน meeting zone ตั้งแต่ 2 คน — ไม่ได้เก็บใน DB</td></tr>
+                <tr><td><strong>Custom message</strong></td><td>—</td><td class="def">ข้อความสั้นที่ผู้ใช้พิมพ์ต่อท้ายสถานะ</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Status</th><th>UI name</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><span class="swatch" style="background: #58d68d"></span><strong>available</strong></td><td>Active</td><td class="def">Happy to talk</td></tr>
+                <tr><td><span class="swatch" style="background: #f03a3a"></span><strong>busy</strong></td><td>Busy</td><td class="def">Heads down, but still receives waves</td></tr>
+                <tr><td><span class="swatch" style="background: #ffd400"></span><strong>away</strong></td><td>Away</td><td class="def">Temporarily away from the screen</td></tr>
+                <tr><td><span class="swatch" style="background: #f03a3a"></span><strong>dnd</strong></td><td>Do not disturb</td><td class="def">Blocks all wave notifications</td></tr>
+                <tr><td><span class="swatch" style="background: #636d76"></span><strong>offline</strong></td><td>—</td><td class="def">Left the office — set automatically</td></tr>
+                <tr><td><span class="swatch" style="background: #f03a3a"></span><strong>meeting</strong></td><td>Meeting</td><td class="def">Derived client-side when 2+ people share a meeting zone — never stored in the DB</td></tr>
+                <tr><td><strong>Custom message</strong></td><td>—</td><td class="def">The short text a user appends to their status</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note lang th">
+            <span class="ic">◆</span>
+            <div>สีของ status ต้องอ่านจาก <code>lib/presence-status.ts</code> เท่านั้น — ห้าม hardcode สีซ้ำในหน้าอื่น</div>
+          </div>
+          <div class="note lang en">
+            <span class="ic">◆</span>
+            <div>Status colours come from <code>lib/presence-status.ts</code> only — never re-hardcode them elsewhere.</div>
+          </div>
+        </section>
+
+        <!-- 8 -->
+        <section id="ui">
+          <h2><span class="num">8</span><span class="lang th">UI &amp; หน้าจอ</span><span class="lang en">UI &amp; screens</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>ชื่อ</th><th>อยู่ที่</th><th>ความหมาย</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Space Builder</strong></td><td><code>/</code></td><td class="def">หน้ารายการ workspace 3 แท็บ (All / My / Shared with me)</td></tr>
+                <tr><td><strong>Before Enter Space</strong></td><td>modal</td><td class="def">popup เลือก avatar + ตั้งชื่อ ก่อน join</td></tr>
+                <tr><td><strong>Loading Workspace</strong></td><td><code>/workspace/[id]/loading</code></td><td class="def">หน้าโหลด: connect → map → members</td></tr>
+                <tr><td><strong>Virtual Office</strong></td><td><code>/workspace/[id]/play</code></td><td class="def">หน้าแผนที่หลักพร้อม HUD</td></tr>
+                <tr><td><strong>Left Sidebar</strong></td><td>—</td><td class="def">แถบไอคอนด้านซ้าย (Map, People, Chat, Notifications, Help, Settings, Profile)</td></tr>
+                <tr><td><strong>Bottom Toolbar</strong></td><td>—</td><td class="def">Mic, Cam, Screen share, Emoji, Wave, Lock</td></tr>
+                <tr><td><strong>Minimap</strong></td><td>—</td><td class="def">แผนที่ย่อมุมล่างขวา แสดงโซนและสมาชิก</td></tr>
+                <tr><td><strong>Zone Enter Panel</strong></td><td>—</td><td class="def">panel ที่เด้งเมื่อเดินเข้าโซน (video grid + chat ของโซน)</td></tr>
+                <tr><td><strong>Knock Overlay / Notification</strong></td><td>—</td><td class="def">การ์ดขออนุญาตเข้า และ popup แจ้งเจ้าของห้อง (Allow / Deny)</td></tr>
+                <tr><td><strong>Status Picker</strong></td><td>—</td><td class="def">popover เลือก availability status</td></tr>
+                <tr><td><strong>Player Context Menu</strong></td><td>—</td><td class="def">เมนูตอนคลิก avatar คนอื่น (Wave, Follow, Chat, View profile)</td></tr>
+                <tr><td><strong>Help Center</strong></td><td>panel</td><td class="def">ปุ่ม “?” → บทความช่วยเหลือ + Contact Support</td></tr>
+                <tr><td><strong>AdminSidebar</strong></td><td><code>components/admin/</code></td><td class="def">sidebar ที่ทุกหน้า admin ต้องใช้</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Name</th><th>Where</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Space Builder</strong></td><td><code>/</code></td><td class="def">The workspace list with three tabs (All / My / Shared with me)</td></tr>
+                <tr><td><strong>Before Enter Space</strong></td><td>modal</td><td class="def">The popup for picking an avatar and name before joining</td></tr>
+                <tr><td><strong>Loading Workspace</strong></td><td><code>/workspace/[id]/loading</code></td><td class="def">The loading screen: connect → map → members</td></tr>
+                <tr><td><strong>Virtual Office</strong></td><td><code>/workspace/[id]/play</code></td><td class="def">The main map screen with its HUD</td></tr>
+                <tr><td><strong>Left sidebar</strong></td><td>—</td><td class="def">The icon rail (Map, People, Chat, Notifications, Help, Settings, Profile)</td></tr>
+                <tr><td><strong>Bottom toolbar</strong></td><td>—</td><td class="def">Mic, cam, screen share, emoji, wave, lock</td></tr>
+                <tr><td><strong>Minimap</strong></td><td>—</td><td class="def">The small map bottom-right showing zones and members</td></tr>
+                <tr><td><strong>Zone enter panel</strong></td><td>—</td><td class="def">The panel that appears on entering a zone (video grid + zone chat)</td></tr>
+                <tr><td><strong>Knock overlay / notification</strong></td><td>—</td><td class="def">The request card, and the owner's popup with Allow / Deny</td></tr>
+                <tr><td><strong>Status picker</strong></td><td>—</td><td class="def">The popover for choosing an availability status</td></tr>
+                <tr><td><strong>Player context menu</strong></td><td>—</td><td class="def">The menu on clicking another avatar (Wave, Follow, Chat, View profile)</td></tr>
+                <tr><td><strong>Help Center</strong></td><td>panel</td><td class="def">The "?" button → help articles + Contact Support</td></tr>
+                <tr><td><strong>AdminSidebar</strong></td><td><code>components/admin/</code></td><td class="def">The sidebar every admin page must use</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 9 -->
+        <section id="invite">
+          <h2><span class="num">9</span><span class="lang th">Invite &amp; membership</span><span class="lang en">Invite &amp; membership</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>คำ</th><th>ความหมาย</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Invitation Token</strong></td><td class="def">token ในลิงก์เชิญที่ส่งทางอีเมล — หมดอายุ 7 วัน</td></tr>
+                <tr><td><strong>Join Link</strong></td><td class="def">ลิงก์ถาวรต่อ workspace (ต่างจาก invitation token) สร้างใหม่ได้เพื่อยกเลิกอันเก่า</td></tr>
+                <tr><td><strong>Join Request</strong></td><td class="def">คำขอเข้าจากคนที่มาทางลิงก์ — Owner/Admin กด Approve / Reject</td></tr>
+                <tr><td><strong>Pending Invite</strong></td><td class="def">คำเชิญที่ส่งแล้วแต่ยังไม่ถูกรับ</td></tr>
+                <tr><td><strong>Auto-accept Invite</strong></td><td class="def">token ถูกรับอัตโนมัติหลังสมัคร + ยืนยัน OTP หรือหลัง Google OAuth</td></tr>
+                <tr><td><strong>Transfer Ownership</strong></td><td class="def">Owner ส่งสิทธิ์ให้ Admin คนอื่น — owner เดิมกลายเป็น Admin</td></tr>
+                <tr><td><strong>Leave Confirmation</strong></td><td class="def">ต้องพิมพ์ชื่อ workspace ให้ตรง (case-sensitive) ก่อนออก</td></tr>
+                <tr><td><strong>Capacity</strong></td><td class="def">จำนวนคนสูงสุดที่ workspace รับได้ — เต็มแล้ว WS join จะถูกปฏิเสธ</td></tr>
+                <tr><td><strong>1 batch = 10 email</strong></td><td class="def">เชิญได้สูงสุด 10 อีเมลต่อครั้ง</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Invitation token</strong></td><td class="def">The token in an emailed invite link — expires after 7 days</td></tr>
+                <tr><td><strong>Join link</strong></td><td class="def">A permanent per-workspace link (unlike the invite token); regenerate it to kill the old one</td></tr>
+                <tr><td><strong>Join request</strong></td><td class="def">A request from someone arriving via the link — Owner/Admin approves or rejects</td></tr>
+                <tr><td><strong>Pending invite</strong></td><td class="def">An invite that was sent but not yet accepted</td></tr>
+                <tr><td><strong>Auto-accept invite</strong></td><td class="def">The token is accepted automatically after signup + OTP, or after Google OAuth</td></tr>
+                <tr><td><strong>Transfer ownership</strong></td><td class="def">The owner hands ownership to an Admin — the old owner becomes an Admin</td></tr>
+                <tr><td><strong>Leave confirmation</strong></td><td class="def">You must type the workspace name exactly (case-sensitive) to leave</td></tr>
+                <tr><td><strong>Capacity</strong></td><td class="def">The workspace's people limit — once full, WS joins are refused</td></tr>
+                <tr><td><strong>1 batch = 10 emails</strong></td><td class="def">Up to ten addresses per invite batch</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 10 -->
+        <section id="ws">
+          <h2><span class="num">10</span><span class="lang th">WebSocket event</span><span class="lang en">WebSocket events</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>Event</th><th>ทิศทาง</th><th>ความหมาย</th></tr></thead>
+              <tbody>
+                <tr><td><code>welcome</code></td><td>S → C</td><td class="def">state ทั้งหมดตอน connect (<code>me</code>, <code>players[]</code>)</td></tr>
+                <tr><td><code>joined</code> / <code>left</code></td><td>S → C</td><td class="def">มีคน join / disconnect</td></tr>
+                <tr><td><code>move_to</code> / <code>stop</code></td><td>C → S</td><td class="def">เริ่มเดินตาม path / หยุดเดิน</td></tr>
+                <tr><td><code>moving</code> / <code>stopped</code></td><td>S → C</td><td class="def">peer เริ่ม/จบการเดิน พร้อม <code>duration_ms</code></td></tr>
+                <tr><td><code>moved</code></td><td>S → C</td><td class="def">อัปเดตตำแหน่งความถี่สูง — ส่งเป็น binary frame (<code>0x01</code>)</td></tr>
+                <tr><td><code>status</code> / <code>status_changed</code></td><td>C → S / S → C</td><td class="def">เปลี่ยน availability status</td></tr>
+                <tr><td><code>wave</code> / <code>wave_received</code></td><td>C → S / S → C</td><td class="def">ทักทาย และ notification ถึงปลายทาง</td></tr>
+                <tr><td><code>knock</code> / <code>knock_decision</code></td><td>C → S</td><td class="def">เคาะประตู และการตัดสิน allow/deny</td></tr>
+                <tr><td><code>room_enter</code> / <code>room_exit</code></td><td>C → S</td><td class="def">เข้า/ออกห้อง (คนละอย่างกับ media room)</td></tr>
+                <tr><td><code>section_sync</code></td><td>ทั้งสองทาง</td><td class="def">sync สถานะ zone section (จำนวนคน, ล็อกหรือไม่)</td></tr>
+                <tr><td><code>capacity_reached</code></td><td>S → C</td><td class="def">workspace เต็ม — connection ถูกปิด</td></tr>
+                <tr><td><code>server_drain</code></td><td>S → C</td><td class="def">server กำลังจะปิด บอกให้ reconnect ใหม่</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Event</th><th>Direction</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><code>welcome</code></td><td>S → C</td><td class="def">Full state on connect (<code>me</code>, <code>players[]</code>)</td></tr>
+                <tr><td><code>joined</code> / <code>left</code></td><td>S → C</td><td class="def">Someone joined / disconnected</td></tr>
+                <tr><td><code>move_to</code> / <code>stop</code></td><td>C → S</td><td class="def">Start walking a path / stop walking</td></tr>
+                <tr><td><code>moving</code> / <code>stopped</code></td><td>S → C</td><td class="def">A peer started or finished a walk, with <code>duration_ms</code></td></tr>
+                <tr><td><code>moved</code></td><td>S → C</td><td class="def">High-frequency position update — sent as a binary frame (<code>0x01</code>)</td></tr>
+                <tr><td><code>status</code> / <code>status_changed</code></td><td>C → S / S → C</td><td class="def">Availability status change</td></tr>
+                <tr><td><code>wave</code> / <code>wave_received</code></td><td>C → S / S → C</td><td class="def">A wave, and the notification delivered to the target</td></tr>
+                <tr><td><code>knock</code> / <code>knock_decision</code></td><td>C → S</td><td class="def">Knocking, and the allow/deny decision</td></tr>
+                <tr><td><code>room_enter</code> / <code>room_exit</code></td><td>C → S</td><td class="def">Entering/leaving a room (not the same as a media room)</td></tr>
+                <tr><td><code>section_sync</code></td><td>both ways</td><td class="def">Syncs zone-section state (member count, locked or not)</td></tr>
+                <tr><td><code>capacity_reached</code></td><td>S → C</td><td class="def">The workspace is full — the connection is closed</td></tr>
+                <tr><td><code>server_drain</code></td><td>S → C</td><td class="def">The server is shutting down; reconnect after the given delay</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 11 -->
+        <section id="rule">
+          <h2><span class="num">11</span><span class="lang th">กฎธุรกิจที่พูดถึงบ่อย</span><span class="lang en">Business rules people quote</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>คำ</th><th>ความหมาย</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Office เต็ม</strong></td><td class="def">online count ≥ capacity → เข้าไม่ได้</td></tr>
+                <tr><td><strong>Max 20 rooms</strong></td><td class="def">จำนวน room สูงสุดต่อ map</td></tr>
+                <tr><td><strong>Solo Workspace</strong></td><td class="def">workspace ที่มี owner คนเดียวเป็นสมาชิก</td></tr>
+                <tr><td><strong>Private zone claim</strong></td><td class="def">การจับจองโซนส่วนตัว — claim ได้ทันที และการ claim ใหม่ย้ายความเป็นเจ้าของ</td></tr>
+                <tr><td><strong>Screen share max 2</strong></td><td class="def">หนึ่ง zone แชร์จอพร้อมกันได้ 2 คน</td></tr>
+                <tr><td><strong>OTP</strong></td><td class="def">รหัส 6 หลักยืนยันการสมัคร มีเวลาหมดอายุและจำกัดจำนวนครั้ง</td></tr>
+                <tr><td><strong>Login lock</strong></td><td class="def">ผิดครบจำนวนครั้ง → ล็อกชั่วคราว และล็อกนานขึ้นถ้าเกิดซ้ำ</td></tr>
+                <tr><td><strong>S3 only</strong></td><td class="def">ไฟล์/รูปทุกอย่างเก็บบน Cloudflare R2 ไม่เก็บลง filesystem ของ API</td></tr>
+                <tr><td><strong>Member API separation</strong></td><td class="def">member page เรียกได้แค่ <code>/api/user/*</code> ห้าม <code>/api/admin/*</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Office full</strong></td><td class="def">online count ≥ capacity → nobody else can enter</td></tr>
+                <tr><td><strong>Max 20 rooms</strong></td><td class="def">The room limit per map</td></tr>
+                <tr><td><strong>Solo workspace</strong></td><td class="def">A workspace whose only member is its owner</td></tr>
+                <tr><td><strong>Private zone claim</strong></td><td class="def">Claiming a private zone — instant, and a new claim transfers ownership</td></tr>
+                <tr><td><strong>Screen share max 2</strong></td><td class="def">Two simultaneous presenters per zone</td></tr>
+                <tr><td><strong>OTP</strong></td><td class="def">The 6-digit signup code, with an expiry and an attempt limit</td></tr>
+                <tr><td><strong>Login lock</strong></td><td class="def">Enough wrong attempts locks the account temporarily, longer on repeats</td></tr>
+                <tr><td><strong>S3 only</strong></td><td class="def">Every file and image lives on Cloudflare R2, never the API's filesystem</td></tr>
+                <tr><td><strong>Member API separation</strong></td><td class="def">Member pages may call <code>/api/user/*</code> only, never <code>/api/admin/*</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 12 -->
+        <section id="id">
+          <h2><span class="num">12</span><span class="lang th">Scenario / test id</span><span class="lang en">Scenario / test ids</span></h2>
+          <div class="table-scroll lang th">
+            <table>
+              <thead><tr><th>Prefix</th><th>โมดูล</th></tr></thead>
+              <tbody>
+                <tr><td><code>SC-VO-*</code></td><td class="def">Virtual Office</td></tr>
+                <tr><td><code>SC-SB-*</code></td><td class="def">Space Builder</td></tr>
+                <tr><td><code>SC-PROFILE-*</code></td><td class="def">Profile / Settings</td></tr>
+                <tr><td><code>SC-UG-*</code></td><td class="def">User Guide / Help Center</td></tr>
+                <tr><td><code>SC-UM-*</code></td><td class="def">User Management</td></tr>
+                <tr><td><code>SC-AV-*</code></td><td class="def">Avatar Management</td></tr>
+                <tr><td><code>SC-ANC-*</code></td><td class="def">Announcement</td></tr>
+                <tr><td><code>TC-*</code></td><td class="def">test case ที่คู่กับ scenario นั้น</td></tr>
+                <tr><td><code>ZYR-{n}</code></td><td class="def">เลข ticket ของ support ที่ผู้ใช้ส่งเข้ามา</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-scroll lang en">
+            <table>
+              <thead><tr><th>Prefix</th><th>Module</th></tr></thead>
+              <tbody>
+                <tr><td><code>SC-VO-*</code></td><td class="def">Virtual Office</td></tr>
+                <tr><td><code>SC-SB-*</code></td><td class="def">Space Builder</td></tr>
+                <tr><td><code>SC-PROFILE-*</code></td><td class="def">Profile / Settings</td></tr>
+                <tr><td><code>SC-UG-*</code></td><td class="def">User Guide / Help Center</td></tr>
+                <tr><td><code>SC-UM-*</code></td><td class="def">User Management</td></tr>
+                <tr><td><code>SC-AV-*</code></td><td class="def">Avatar Management</td></tr>
+                <tr><td><code>SC-ANC-*</code></td><td class="def">Announcement</td></tr>
+                <tr><td><code>TC-*</code></td><td class="def">The test case paired with a scenario</td></tr>
+                <tr><td><code>ZYR-{n}</code></td><td class="def">A user-submitted support ticket number</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note lang th">
+            <span class="ic">◆</span>
+            <div>ต้นฉบับที่ครบที่สุดคือ <code>zyra-doc/doc/GLOSSARY.md</code> — ถ้าเพิ่มคำใหม่ ให้เพิ่มที่นั่นก่อนแล้วค่อยอัปเดตหน้านี้ตาม</div>
+          </div>
+          <div class="note lang en">
+            <span class="ic">◆</span>
+            <div>The fullest source is <code>zyra-doc/doc/GLOSSARY.md</code> — add new terms there first, then mirror them here.</div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      <span class="lang th">Zyra · พจนานุกรมคำศัพท์ — อยู่ที่ <code>zyra-doc/doc/onboarding/glossary.html</code> · <a href="./index.html">กลับหน้าหลัก</a></span>
+      <span class="lang en">Zyra · glossary — lives at <code>zyra-doc/doc/onboarding/glossary.html</code> · <a href="./index.html">back to all guides</a></span>
+    </footer>
+
+    <script>
+      const buttons = document.querySelectorAll("[data-set-lang]")
+      const setLang = (lang) => {
+        document.body.dataset.lang = lang
+        document.documentElement.lang = lang
+        document.documentElement.dataset.lang = lang
+        buttons.forEach((b) =>
+          b.setAttribute("aria-selected", String(b.dataset.setLang === lang)),
+        )
+        try {
+          localStorage.setItem("zyra_onboarding_lang", lang)
+        } catch (_e) {}
+        input.placeholder =
+          lang === "en"
+            ? "Search terms… (e.g. knock, zone, presence)"
+            : "ค้นหาคำศัพท์… (เช่น knock, zone, presence)"
+        filter()
+      }
+      buttons.forEach((b) => b.addEventListener("click", () => setLang(b.dataset.setLang)))
+
+      const input = document.getElementById("q")
+      const countEl = document.getElementById("count")
+      const emptyEl = document.getElementById("empty")
+      const sections = [...document.querySelectorAll("main section")]
+
+      const visibleBlock = (el) => {
+        const block = el.closest(".lang")
+        return !block || block.classList.contains(document.body.dataset.lang)
+      }
+
+      function filter() {
+        const q = input.value.trim().toLowerCase()
+        let hits = 0
+        sections.forEach((section) => {
+          let sectionHits = 0
+          section.querySelectorAll("tbody tr").forEach((row) => {
+            const match = !q || row.textContent.toLowerCase().includes(q)
+            row.classList.toggle("hidden", !match)
+            if (match && visibleBlock(row)) sectionHits++
+          })
+          section.classList.toggle("hidden", q !== "" && sectionHits === 0)
+          hits += sectionHits
+        })
+        emptyEl.classList.toggle("show", q !== "" && hits === 0)
+        if (!q) {
+          countEl.textContent = ""
+        } else {
+          const th = document.body.dataset.lang === "th"
+          countEl.textContent = th ? `พบ ${hits} คำ` : `${hits} match${hits === 1 ? "" : "es"}`
+        }
+      }
+
+      input.addEventListener("input", filter)
+
+      try {
+        const saved = localStorage.getItem("zyra_onboarding_lang")
+        if (saved === "en" || saved === "th") setLang(saved)
+      } catch (_e) {}
+    </script>
+  </body>
+</html>

@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="สรุปสำหรับ PM: 7 ต้นเหตุที่ทำให้เสียงพูดใน Virtual Office เบา ขาด และไม่สลับไปหูฟัง พร้อมแผนทดสอบบน dev">
+<meta name="robots" content="noindex">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  img, svg { display: block; max-width: 100%; }
+  code { font-family: inherit; }
+</style>
+<title>เสียงประชุม VO</title>
+<style>
+  /* ── Tokens: light is the base set, dark redefines the same names ────────── */
+  :root {
+    --ground: #F1F4F3;
+    --surface: #FFFFFF;
+    --surface-2: #E7EDEA;
+    --line: #D5DEDA;
+    --line-strong: #BCC8C3;
+    --ink: #192026;
+    --ink-2: #5B6A74;
+    --ink-3: #7D8B94;
+    --accent: #12855A;
+    --accent-ink: #0B5B3D;
+    --accent-soft: rgba(18, 133, 90, 0.10);
+    --alert: #B23A2F;
+    --alert-soft: rgba(178, 58, 47, 0.09);
+    --shadow: 0 1px 2px rgba(25, 32, 38, 0.05), 0 8px 24px rgba(25, 32, 38, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #1B2228;
+      --surface: #242B32;
+      --surface-2: #2B3540;
+      --line: rgba(255, 255, 255, 0.10);
+      --line-strong: rgba(255, 255, 255, 0.20);
+      --ink: #EDF1F3;
+      --ink-2: #A3B0BA;
+      --ink-3: #8C99A6;
+      --accent: #58D68D;
+      --accent-ink: #7CE3A8;
+      --accent-soft: rgba(88, 214, 141, 0.12);
+      --alert: #F2726A;
+      --alert-soft: rgba(242, 114, 106, 0.12);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.30), 0 8px 24px rgba(0, 0, 0, 0.28);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1B2228;
+    --surface: #242B32;
+    --surface-2: #2B3540;
+    --line: rgba(255, 255, 255, 0.10);
+    --line-strong: rgba(255, 255, 255, 0.20);
+    --ink: #EDF1F3;
+    --ink-2: #A3B0BA;
+    --ink-3: #8C99A6;
+    --accent: #58D68D;
+    --accent-ink: #7CE3A8;
+    --accent-soft: rgba(88, 214, 141, 0.12);
+    --alert: #F2726A;
+    --alert-soft: rgba(242, 114, 106, 0.12);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.30), 0 8px 24px rgba(0, 0, 0, 0.28);
+  }
+
+  /* ── Faces: one Thai-capable sans across display + body, mono for data ──── */
+  :root {
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Sukhumvit Set",
+      "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, sans-serif;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+  }
+  @media (max-width: 600px) {
+    .wrap { padding: 36px 18px 72px; gap: 44px; }
+  }
+
+  /* ── Shared type ─────────────────────────────────────────────────────────── */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0;
+  }
+  h1 {
+    font-size: clamp(30px, 5.2vw, 40px);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    margin: 8px 0 0;
+    text-wrap: balance;
+  }
+  h2 {
+    font-size: 22px;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.5;
+  }
+  p { margin: 0; }
+  a { color: var(--accent-ink); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  .lede { color: var(--ink-2); font-size: 17px; }
+  .num { font-variant-numeric: tabular-nums; font-family: var(--mono); }
+
+  /* ── Header ──────────────────────────────────────────────────────────────── */
+  header { display: flex; flex-direction: column; gap: 18px; }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    padding: 3px 11px;
+    white-space: nowrap;
+  }
+  .tag--live {
+    border-color: transparent;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  /* ── Section shell ───────────────────────────────────────────────────────── */
+  section { display: flex; flex-direction: column; gap: 20px; }
+  .section-head { display: flex; flex-direction: column; gap: 6px; }
+
+  /* ── Reported symptoms ───────────────────────────────────────────────────── */
+  .quotes { display: grid; gap: 12px; }
+  .quote {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--alert);
+    border-radius: 4px 10px 10px 4px;
+    padding: 14px 18px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .quote p:first-child { font-size: 17px; }
+  .quote-note { font-size: 13px; color: var(--ink-3); }
+
+  /* ── Signal chain: the one place order is real information ───────────────── */
+  .chain-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .chain-row { display: flex; flex-direction: column; gap: 8px; }
+  .chain-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .chain {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .stage {
+    font-family: var(--mono);
+    font-size: 12px;
+    white-space: nowrap;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: var(--ink-2);
+    background: var(--surface-2);
+  }
+  .stage--new {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+  .stage--gone {
+    text-decoration: line-through;
+    text-decoration-color: var(--alert);
+    text-decoration-thickness: 1.5px;
+    color: var(--ink-3);
+    border-style: dashed;
+    background: transparent;
+  }
+  .arrow { color: var(--ink-3); font-family: var(--mono); font-size: 12px; }
+  .chain-legend { font-size: 13px; color: var(--ink-2); }
+
+  /* ── Cause → fix pairs ───────────────────────────────────────────────────── */
+  .causes { display: flex; flex-direction: column; gap: 12px; }
+  .cause {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    display: grid;
+    gap: 12px;
+  }
+  .cause-head { display: flex; flex-direction: column; gap: 4px; }
+  .chip {
+    align-self: flex-start;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 2px 7px;
+  }
+  .cause-body { color: var(--ink-2); font-size: 15px; }
+  .fix {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    border-top: 1px solid var(--line);
+    padding-top: 12px;
+    font-size: 15px;
+  }
+  .fix-key {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    white-space: nowrap;
+    padding-top: 2px;
+  }
+
+  /* ── Status callout ──────────────────────────────────────────────────────── */
+  .status {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  @media (max-width: 560px) { .status { grid-template-columns: 1fr; } }
+  .status > div {
+    background: var(--surface);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .status ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 15px; }
+  .status li { margin-bottom: 3px; }
+  .status-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot--ok { background: var(--accent); }
+  .dot--open { background: var(--alert); }
+
+  .callout {
+    background: var(--alert-soft);
+    border: 1px solid color-mix(in srgb, var(--alert) 35%, transparent);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .callout-title { font-weight: 700; color: var(--alert); font-size: 15px; }
+  .callout p { font-size: 15px; color: var(--ink-2); }
+
+  /* ── Test plan: genuinely ordered, so it gets numbers ────────────────────── */
+  ol.plan { margin: 0; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 10px; }
+  ol.plan li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 12px;
+    align-items: start;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 15px;
+  }
+  ol.plan li::before {
+    content: counter(step);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    border-radius: 6px;
+    text-align: center;
+    line-height: 24px;
+    height: 24px;
+  }
+  .expect { display: block; color: var(--ink-3); font-size: 13.5px; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+    color: var(--ink-3);
+    font-size: 13.5px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Virtual Office · Media</p>
+    <h1>แก้ปัญหาเสียงพูดใน Virtual Office</h1>
+    <p class="lede">
+      ผู้ใช้แจ้ง 2 อาการ ตรวจแล้วพบต้นเหตุแยกกัน 7 จุด แก้ครบทุกจุดใน PR เดียว
+      รอ review แล้ว merge เข้า develop
+    </p>
+    <div class="meta">
+      <span class="tag tag--live">รอ review</span>
+      <span class="tag">zyra-app PR #97 → develop</span>
+      <span class="tag">แก้เฉพาะ frontend</span>
+      <span class="tag">ไม่มี DB migration</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">อาการที่ผู้ใช้แจ้ง</p>
+      <h2>ตั้งต้นจากอะไร</h2>
+    </div>
+    <div class="quotes">
+      <div class="quote">
+        <p>“บางครั้งไมค์คนอื่นก็เบา ไม่ดูดเสียง เสียงขาด ๆ หาย ๆ”</p>
+        <p class="quote-note">พบต้นเหตุ 4 จุด ทุกจุดอยู่ในขั้นตอนประมวลผลเสียงก่อนส่งออกจากไมค์</p>
+      </div>
+      <div class="quote">
+        <p>“ใส่หูฟังอยู่ แต่ตอนเดินเข้า meeting มันไม่เปลี่ยนเป็นหูฟังให้เอง”</p>
+        <p class="quote-note">พบต้นเหตุ 3 จุด เรื่องการเลือกอุปกรณ์เสียงตอนเข้าห้อง</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">ปัญหาที่ 1 · เสียงเบาและขาดหาย</p>
+      <h2>เสียงถูกกินตั้งแต่ต้นทาง ก่อนส่งออกจากเครื่องคนพูด</h2>
+      <p class="lede" style="font-size:16px">
+        เสียงจากไมค์ต้องวิ่งผ่านหลายด่านกว่าจะถึงคนฟัง แต่ละด่านตัดเสียงรบกวนออก
+        ปัญหาคือมีด่านที่ตัดแรงเกินไป และไม่มีด่านไหนคืนความดังกลับมาเลย
+        คนที่พูดเบาหรือนั่งห่างไมค์จึงหายไปทั้งประโยค
+      </p>
+    </div>
+
+    <div class="chain-card">
+      <div class="chain-row">
+        <span class="chain-label">เดิม</span>
+        <div class="chain">
+          <span class="stage">ไมค์</span><span class="arrow">→</span>
+          <span class="stage stage--gone">ตัดเสียงของ OS</span><span class="arrow">→</span>
+          <span class="stage">ลดเสียงรบกวน</span><span class="arrow">→</span>
+          <span class="stage">ประตูเสียง</span><span class="arrow">→</span>
+          <span class="stage">ส่งออก</span>
+        </div>
+      </div>
+      <div class="chain-row">
+        <span class="chain-label">ใหม่</span>
+        <div class="chain">
+          <span class="stage">ไมค์</span><span class="arrow">→</span>
+          <span class="stage">ลดเสียงรบกวน</span><span class="arrow">→</span>
+          <span class="stage stage--new">+ เร่งความดัง</span><span class="arrow">→</span>
+          <span class="stage">ประตูเสียง</span><span class="arrow">→</span>
+          <span class="stage stage--new">+ กันเสียงแตก</span><span class="arrow">→</span>
+          <span class="stage">ส่งออก</span>
+        </div>
+      </div>
+      <p class="chain-legend">
+        ถอดด่านที่ซ้ำซ้อนออก <span class="num">1</span> ด่าน เพิ่มด่านที่ทำให้เสียงกลับมาดังพอ <span class="num">2</span> ด่าน
+      </p>
+    </div>
+
+    <div class="causes">
+      <div class="cause">
+        <div class="cause-head">
+          <span class="chip">ตัดเสียงซ้ำซ้อน</span>
+          <h3>ระบบตัดเสียงรบกวนทำงานซ้อนกัน 2 ชั้น</h3>
+        </div>
+        <p class="cause-body">
+          ไลบรารีที่เราใช้เปิดตัวกรองเสียงของเครื่องผู้ใช้เองมาให้เป็นค่าเริ่มต้น
+          เสียงจึงถูกบีบไปรอบหนึ่งก่อน แล้วค่อยมาเจอตัวกรองของเราอีกรอบ
+          คนพูดเบาหรืออยู่ห่างไมค์เลยเหลือเสียงมาไม่ถึงครึ่ง
+        </p>
+        <div class="fix">
+          <span class="fix-key">แก้</span>
+          <span>ปิดตัวกรองของเครื่อง เหลือตัวกรองของเราตัวเดียว ซึ่งเป็นตัวที่ผู้ใช้ปรับระดับเองได้จากเมนูไมค์</span>
+        </div>
+      </div>
+
+      <div class="cause">
+        <div class="cause-head">
+          <span class="chip">ไม่มีการเร่งเสียงคืน</span>
+          <h3>ตัวกรองมีแต่ “ตัดออก” ไม่เคย “เพิ่มกลับ”</h3>
+        </div>
+        <p class="cause-body">
+          เสียงหลังผ่านตัวกรองจะเบากว่าเสียงไมค์จริงเสมอ
+          ถ้าไมค์ตัวนั้นเสียงเบาอยู่แล้ว เสียงที่เหลือจะต่ำกว่าเกณฑ์ของด่านถัดไป
+          และถูกตัดทิ้งทั้งหมด — ตรงกับอาการ “ไม่ดูดเสียงเลย”
+        </p>
+        <div class="fix">
+          <span class="fix-key">แก้</span>
+          <span>เพิ่มด่านเร่งความดังคืน <span class="num">+4dB</span> และด่านกันเสียงแตกท้ายสุด ทำให้ไมค์ทุกรุ่นมาถึงระดับใกล้เคียงกัน</span>
+        </div>
+      </div>
+
+      <div class="cause">
+        <div class="cause-head">
+          <span class="chip">เกณฑ์ตัดแน่นไป</span>
+          <h3>ด่านตัดเสียงเงียบตั้งไว้แน่นเกินกว่าเสียงพูดเบา</h3>
+        </div>
+        <p class="cause-body">
+          ด่านนี้มีหน้าที่ตัดเสียงรบกวนช่วงที่ไม่มีใครพูด
+          แต่เกณฑ์เดิมสูงพอที่จะเข้าใจผิดว่าเสียงพูดเบา ๆ คือความเงียบ
+        </p>
+        <div class="fix">
+          <span class="fix-key">แก้</span>
+          <span>ผ่อนเกณฑ์ทั้งระดับ High และ Medium และยืดเวลาที่ปล่อยให้เสียงผ่านหลังหยุดพูด เพื่อไม่ตัดหางคำ</span>
+        </div>
+      </div>
+
+      <div class="cause">
+        <div class="cause-head">
+          <span class="chip">คำแรกหาย</span>
+          <h3>ระบบประหยัดแบนด์วิดท์ตัดพยางค์แรกหลังเงียบ</h3>
+        </div>
+        <p class="cause-body">
+          ระบบจะหยุดส่งข้อมูลตอนเงียบเพื่อประหยัดเน็ต แล้วค่อยเริ่มส่งใหม่เมื่อมีเสียง
+          แต่ด่านตัดเสียงเงียบของเราป้อนความเงียบให้มันบ่อยกว่าปกติมาก
+          ทุกครั้งที่เริ่มส่งใหม่จะเสียเสียงต้นคำไป — ตรงกับอาการ “เสียงขาด”
+        </p>
+        <div class="fix">
+          <span class="fix-key">แก้</span>
+          <span>ปิดระบบนี้สำหรับเสียงพูด (แลกกับแบนด์วิดท์เพิ่มไม่กี่ kbps) และล็อกระบบกู้คืนเสียงที่หายจากเน็ตกระตุกให้เปิดไว้เสมอ</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">ปัญหาที่ 2 · หูฟัง</p>
+      <h2>ระบบไม่เคยเลือกอุปกรณ์เสียงให้เลย</h2>
+      <p class="lede" style="font-size:16px">
+        เราคาดหวังให้เบราว์เซอร์เลือกอุปกรณ์เองตาม OS แต่จริง ๆ แล้วโค้ดไม่ได้สั่งอะไรเลย
+        และในบางกรณีก็สั่งผิดตัวด้วย
+      </p>
+    </div>
+
+    <div class="causes">
+      <div class="cause">
+        <div class="cause-head">
+          <span class="chip">ตอนเข้าห้อง</span>
+          <h3>เข้าห้องประชุมแล้วไม่ได้กำหนดลำโพงเลย</h3>
+        </div>
+        <p class="cause-body">
+          ถ้าผู้ใช้ไม่เคยเลือกอุปกรณ์เอง โค้ดเดิมจะข้ามขั้นตอนนี้ไปทั้งหมด
+          เสียงแต่ละคนจึงออกอุปกรณ์ที่บังเอิญเป็นค่าเริ่มต้นตอนสร้างช่องเสียงนั้น
+          ซึ่งไม่ได้ย้ายตามหูฟังที่เสียบไว้ก่อนหน้า
+        </p>
+        <div class="fix">
+          <span class="fix-key">แก้</span>
+          <span>สั่งใช้อุปกรณ์ค่าเริ่มต้นของ OS ทุกครั้งที่เข้าห้อง (กล้องไม่แตะ เพราะจะทำให้ไฟกล้องติดทั้งที่ปิดอยู่)</span>
+        </div>
+      </div>
+
+      <div class="cause">
+        <div class="cause-head">
+          <span class="chip">เลือกผิดตัว</span>
+          <h3>ตอนเสียบหูฟังกลางประชุม ระบบอาจสลับหนีจากหูฟัง</h3>
+        </div>
+        <p class="cause-body">
+          โค้ดเดิมเลือก “อุปกรณ์ตัวแรกในรายการ” แต่ลำดับในรายการไม่ได้เรียงตามความสำคัญ
+          จึงมีโอกาสสลับไปลำโพงในตัวเครื่อง ทั้งที่ OS ย้ายไปหูฟังให้แล้ว
+        </p>
+        <div class="fix">
+          <span class="fix-key">แก้</span>
+          <span>อ้างอิงอุปกรณ์ค่าเริ่มต้นของ OS โดยตรง แทนการเดาจากลำดับในรายการ</span>
+        </div>
+      </div>
+
+      <div class="cause">
+        <div class="cause-head">
+          <span class="chip">ค่าเก่าค้าง</span>
+          <h3>อุปกรณ์ที่เคยเลือกไว้ครั้งเดียว ถูกล็อกไว้ถาวร</h3>
+        </div>
+        <p class="cause-body">
+          ผู้ใช้ที่เคยเลือกไมค์หรือลำโพงจากเมนูสักครั้ง จะถูกล็อกกับอุปกรณ์นั้นตลอดไป
+          เสียบหูฟังมาก็ไม่มีผล เพราะระบบถือว่าตัวเลือกเดิมยังใช้ได้อยู่
+        </p>
+        <div class="fix">
+          <span class="fix-key">แก้</span>
+          <span>
+            เมื่อมีอุปกรณ์เสียงใหม่ถูกเสียบเข้ามา ให้ปลดล็อกและกลับไปตาม OS
+            (พฤติกรรมเดียวกับ Zoom / Google Meet) — ถอดออกไม่ปลด เสียบตัวเดิมกลับจึงได้ตัวเลือกเดิมคืน
+            และระบบเฝ้าดูตลอดเวลาที่อยู่ในออฟฟิศ ไม่ใช่เฉพาะตอนอยู่ในห้องประชุม เพราะคนใส่หูฟังตอนเดินอยู่
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">สถานะ</p>
+      <h2>ตรวจอะไรไปแล้ว และอะไรที่ยังตรวจไม่ได้</h2>
+    </div>
+    <div class="status">
+      <div>
+        <span class="status-title"><span class="dot dot--ok"></span>ผ่านแล้ว</span>
+        <ul>
+          <li>Type check และ lint ไม่มี error</li>
+          <li>Build production ผ่าน</li>
+          <li>Unit test <span class="num">707</span> เคสผ่านทั้งหมด</li>
+          <li>เขียนเทสต์ใหม่เพิ่ม <span class="num">20</span> เคส ครอบเรื่องการเลือกอุปกรณ์</li>
+        </ul>
+      </div>
+      <div>
+        <span class="status-title"><span class="dot dot--open"></span>ยังไม่ได้ตรวจ</span>
+        <ul>
+          <li>ยังไม่ได้ทดสอบกับหูฟังจริง</li>
+          <li>ยังไม่ได้ทดสอบคุยกัน 2 เครื่องจริง</li>
+          <li>ยังไม่ได้วัดคุณภาพเสียงเทียบก่อน–หลัง</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout">
+      <span class="callout-title">ต้องมีคนช่วยเทสต์บน dev ก่อนดันขึ้น uat</span>
+      <p>
+        การแก้ครั้งนี้พิสูจน์ด้วยเครื่องมือพัฒนาอย่างเดียวไม่ได้ ต้องใช้คนจริง หูฟังจริง และเครื่อง 2 เครื่อง
+        เมื่อ merge เข้า develop ระบบจะ deploy ขึ้น dev อัตโนมัติ — ขอให้เทสต์ตามขั้นตอนด้านล่างก่อน
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">แผนทดสอบบน dev</p>
+      <h2>4 ขั้นตอน ใช้เวลาประมาณ 10 นาที</h2>
+    </div>
+    <ol class="plan">
+      <li>
+        <span>
+          เสียบหูฟังก่อนเปิด Zyra แล้วเดินเข้าห้องประชุม
+          <span class="expect">คาดหวัง: เสียงออกหูฟังทันที ไม่ต้องเลือกเอง</span>
+        </span>
+      </li>
+      <li>
+        <span>
+          อยู่ในห้องประชุมอยู่แล้ว ค่อยเสียบหูฟัง
+          <span class="expect">คาดหวัง: สลับไปหูฟังให้เองภายในไม่กี่วินาที</span>
+        </span>
+      </li>
+      <li>
+        <span>
+          เลือกลำโพงในตัวเครื่องเองจากเมนูไมค์ แล้วถอด–เสียบหูฟังใหม่
+          <span class="expect">คาดหวัง: ย้ายไปหูฟัง (ตัวเลือกเดิมถูกปลดล็อก)</span>
+        </span>
+      </li>
+      <li>
+        <span>
+          ให้คนพูดเบา ๆ หรือนั่งห่างไมค์ แล้วฟังเทียบกับ dev ตัวปัจจุบัน
+          <span class="expect">คาดหวัง: ได้ยินชัดขึ้น พยางค์แรกไม่หาย — ถ้ายังขาดอยู่ แจ้งได้ ปรับเกณฑ์ลงได้อีก</span>
+        </span>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">ความเสี่ยง</p>
+      <h2>ถ้ามีปัญหา ย้อนกลับได้ทันที</h2>
+    </div>
+    <div class="causes">
+      <div class="cause">
+        <p class="cause-body" style="color:var(--ink)">
+          แก้เฉพาะฝั่ง frontend ไม่มีการเปลี่ยนฐานข้อมูล ไม่มี migration และไม่กระทบ API
+          ถ้าเสียงแย่ลงหรือมีอาการใหม่ ย้อนกลับด้วยการ revert PR เดียวได้เลย
+        </p>
+        <div class="fix">
+          <span class="fix-key">จุดที่ต้องจับตา</span>
+          <span>
+            เสียงแตกในคนที่พูดใกล้ไมค์มาก (มีด่านกันเสียงแตกรองรับไว้แล้ว)
+            และแบนด์วิดท์ขาขึ้นเพิ่มเล็กน้อยจากการปิดระบบประหยัดตอนเงียบ
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>zyra-app · branch <code>fix/vo-audio-quality-and-device-follow</code> · 2 commits · PR #97 → develop</p>
+    <p>ไฟล์ที่แก้: การตั้งค่าการส่งเสียง, ตัวกรองเสียงรบกวน, การเลือกอุปกรณ์เสียง, ตัวเฝ้าดูอุปกรณ์ (ไฟล์ใหม่)</p>
+  </footer>
+</div>
+</body>
+</html>
