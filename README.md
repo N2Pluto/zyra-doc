@@ -55,8 +55,16 @@ batch งานที่จบไปแล้ว เก็บไว้เป็�
 ข้อมูลในนี้ **อาจไม่ตรงกับโค้ดปัจจุบันแล้ว** — ต้อง verify กับโค้ดจริงก่อนใช้ตัดสินใจ
 
 ### [`web/`](web/) — หน้าเว็บที่ deploy
-`onboarding/` (คู่มือคนใหม่ TH/EN) และ `vo-audio-fixes-summary/` — เป็น static HTML deploy ผ่าน Vercel
-แก้ HTML ในนี้แล้ว**ต้อง redeploy** เว็บที่ deploy อยู่จึงจะเปลี่ยนตาม
+static HTML บน Vercel
+
+| site | URL | deploy ยังไง |
+|---|---|---|
+| `onboarding/` (คู่มือคนใหม่ TH/EN) | https://zyra-onboarding.vercel.app | **อัตโนมัติ** — push เข้า `main` แล้ว Vercel build ให้เลย (~1s) |
+| `vo-audio-fixes-summary/` | https://vo-audio-fixes-summary.vercel.app | ด้วยมือ — `cd web/vo-audio-fixes-summary && vercel deploy --prod` |
+
+**onboarding auto-deploy ทำงานยังไง:** project `zyra-onboarding` ต่อ GitHub repo นี้ไว้ · Root Directory ของ project เป็น `.` เลยชี้ปลายทางผ่าน [`vercel.json`](vercel.json) → `outputDirectory: web/onboarding` และ [`.vercelignore`](.vercelignore) จำกัดให้ upload แค่โฟลเดอร์นั้น — **ถ้าย้าย/เปลี่ยนชื่อโฟลเดอร์ `web/onboarding` ต้องแก้ 2 ไฟล์นั้นด้วย ไม่งั้นเว็บ live พัง**
+
+ต้องใช้ `vercel` CLI ≥ 47.2.2 (ที่ลงผ่าน homebrew อาจเก่ากว่า — ใช้ `npx vercel@latest` แทนได้)
 
 ---
 
