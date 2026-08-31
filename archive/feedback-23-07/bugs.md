@@ -175,7 +175,7 @@ peer ไม่เคยถูกดันจากการชนจริง (r
 
 **Feedback เดิม (AI100 #2):** "เห็น เพื่อนลอยได้"
 
-> **หมายเหตุ:** ทีมระบุสถานะ In-Progress · ทับกับ item #2 ในเอกสารเก่า `zyra-doc/issus/ai100-feedback-2026-07-21.md` (เคย fix แล้ว 2026-07-21) → อาจเป็น regression หรืออีก vector ของอาการเดิม
+> **หมายเหตุ:** ทีมระบุสถานะ In-Progress · ทับกับ item #2 ในเอกสารเก่า `zyra-doc/issues/ai100-feedback-2026-07-21.md` (เคย fix แล้ว 2026-07-21) → อาจเป็น regression หรืออีก vector ของอาการเดิม
 
 **ไฟล์ที่เกี่ยวข้อง:**
 - `zyra-app/zyra-engine/pixi-game/utils.ts` (`tileToWaypoint` L138–151, `trimRemainingPath` L237–276 — hardcode py L249–252)

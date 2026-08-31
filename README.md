@@ -1,0 +1,79 @@
+# zyra-doc
+
+เอกสารทั้งหมดของโปรเจกต์ **ZYRA** อยู่ที่ repo นี้ที่เดียว — ห้ามสร้างโฟลเดอร์ `docs/` ใหม่ใน `zyra-app/`, `zyra-api/`, `zyra-ws/` หรือ repo อื่น
+
+> ถ้าเพิ่งเข้าทีม เริ่มที่ [`web/onboarding/index.html`](web/onboarding/index.html) (เปิดในเบราว์เซอร์) แล้วอ่าน [`guides/glossary.md`](guides/glossary.md) ให้จบ
+
+---
+
+## จะเขียนเอกสารใหม่ — วางไว้ที่ไหน?
+
+| ถ้าเอกสารคือ… | วางที่ | ตั้งชื่อไฟล์ |
+|---|---|---|
+| แผน / spec / design / task breakdown ของฟีเจอร์ | `plan/<Feature>/` | `spec.md`, `technical-design.md`, `task-breakdown.md`, `test-plan.md`, `ux-ui-plan.md` |
+| วิธีทำ, วิธีต่อระบบ, คำศัพท์, convention — ของที่กลับมาอ่านซ้ำได้เรื่อย ๆ | `guides/` | `<topic>.md` |
+| บั๊ก / ปัญหาในตัวแอป + root cause + สิ่งที่แก้ | `issues/` | `<topic>-YYYY-MM-DD.md` |
+| ปัญหา infra, k3s, DB, deploy, observability, capacity | `ops/` | `<topic>-YYYY-MM-DD.md` |
+| release note ต่อเวอร์ชัน | `releases/` | `v<x.y.z>.md` |
+| batch งานที่ปิดแล้ว ไม่แก้ต่อ | `archive/` | โฟลเดอร์ต่อ batch |
+| หน้าเว็บ HTML ที่ deploy ให้คนอ่าน | `web/` | โฟลเดอร์ต่อ site |
+
+**ไม่แน่ใจว่าหมวดไหน → `guides/`**
+
+---
+
+## 7 หมวด
+
+### [`plan/`](plan/) — แผนและ spec ต่อฟีเจอร์
+หนึ่งโฟลเดอร์ต่อหนึ่งฟีเจอร์/โมดูล ชื่อโฟลเดอร์เป็น PascalCase (`Chat`, `VirtualOffice`, `PetManagement`)
+ดูสารบัญ + สถานะแต่ละฟีเจอร์ที่ [`plan/README.md`](plan/README.md)
+
+### [`guides/`](guides/) — เอกสารที่ต้องอ่านซ้ำ (evergreen)
+ของที่ต้อง**อัปเดตให้ตรงความจริงเสมอ** ไม่ใช่บันทึกเหตุการณ์
+
+| ไฟล์ | เนื้อหา |
+|---|---|
+| [`glossary.md`](guides/glossary.md) | พจนานุกรมคำศัพท์ — Single Source of Truth ของภาษาที่ใช้ในโปรเจกต์ |
+| [`docker-stack.md`](guides/docker-stack.md) | รัน dev stack (sfu + redis ใน Docker, app/api/ws รัน native) |
+| [`prod-db-access.md`](guides/prod-db-access.md) | ต่อ prod AlloyDB + Redis จากเครื่องตัวเองผ่าน IAP tunnel |
+| [`i18n-migration.md`](guides/i18n-migration.md) | next-intl — โครงสร้าง locale และวิธีเพิ่มคำแปล |
+| [`tanstack-query-migration.md`](guides/tanstack-query-migration.md) | TanStack Query v5 — pattern ที่ใช้ใน zyra-app |
+
+### [`issues/`](issues/) — บั๊ก/ปัญหาในตัวแอป
+บันทึกต่อรอบรายงาน: อาการ → root cause จากโค้ดจริง → สิ่งที่แก้ → verify แล้วหรือยัง
+เอกสารเก่าไม่ต้องลบและไม่ต้องแก้ย้อนหลัง — เจอรอบใหม่ให้เปิดไฟล์ใหม่ตามวันที่
+
+### [`ops/`](ops/) — infra / platform / observability
+audit และปัญหาระดับ cluster, DB, SFU, Grafana รวมถึง **กับดักที่ยังค้างอยู่** (เช่น [`argocd-helm-values-drift.md`](ops/argocd-helm-values-drift.md)) — ไฟล์ประเภทกับดักไม่ต้องใส่วันที่ในชื่อ เพราะยังมีผลอยู่ตอนนี้
+`prod-schema-check.sql` เป็นสคริปต์ที่ใช้คู่กับ [`guides/prod-db-access.md`](guides/prod-db-access.md)
+
+### [`releases/`](releases/) — release note
+หนึ่งไฟล์ต่อ tag ที่ขึ้น prod (`v1.2.0.md`)
+
+### [`archive/`](archive/) — ปิดแล้ว อ่านได้ ห้ามแก้
+batch งานที่จบไปแล้ว เก็บไว้เป็นหลักฐาน/อ้างอิงย้อนหลังเท่านั้น
+ข้อมูลในนี้ **อาจไม่ตรงกับโค้ดปัจจุบันแล้ว** — ต้อง verify กับโค้ดจริงก่อนใช้ตัดสินใจ
+
+### [`web/`](web/) — หน้าเว็บที่ deploy
+`onboarding/` (คู่มือคนใหม่ TH/EN) และ `vo-audio-fixes-summary/` — เป็น static HTML deploy ผ่าน Vercel
+แก้ HTML ในนี้แล้ว**ต้อง redeploy** เว็บที่ deploy อยู่จึงจะเปลี่ยนตาม
+
+---
+
+## กฎการเขียน
+
+1. **ชื่อไฟล์** kebab-case ตัวเล็กทั้งหมด (`vo-media-session-audit-2026-08-19.md`) — ยกเว้นชื่อโฟลเดอร์ใน `plan/` ที่เป็น PascalCase
+2. **หัวเอกสาร** ทุกไฟล์เริ่มด้วย `# <ชื่อเรื่อง>` แล้วต่อด้วย blockquote บอกสถานะ:
+   ```md
+   # VO Media Session — Bug Audit
+
+   > **สถานะ:** แก้แล้ว 2026-08-19 (ยังไม่ live-test) · **repo:** zyra-app, zyra-ws
+   > **ที่มา:** รายงานจาก QA · **PR:** zyra-app#119
+   ```
+   คนที่มาอ่านต่อต้องรู้ภายใน 3 บรรทัดว่า "เชื่อได้แค่ไหน" และ "ของจริงตอนนี้เป็นยังไง"
+3. **อัปเดตของเดิมก่อนสร้างไฟล์ใหม่** — เอกสาร evergreen (`guides/`, `plan/`) ให้แก้ที่เดิม; เอกสารเหตุการณ์ (`issues/`, `ops/`) ให้เปิดไฟล์ใหม่
+4. **ศัพท์เทคนิคต้องตรงกับ** [`guides/glossary.md`](guides/glossary.md) — เพิ่มคำใหม่ที่นั่นก่อน
+5. **ลิงก์เอกสารอื่นแบบ relative** (`../guides/glossary.md`) ไม่ใช้ absolute path เพื่อให้ลิงก์ยังใช้ได้เวลาย้ายไฟล์
+6. อ้างอิงโค้ดให้ใส่ path จาก root ของ repo นั้น (`` `zyra-ws/internal/hub/client.go` ``) — ไม่ต้องทำเป็นลิงก์ เพราะข้ามคนละ repo
+
+> ฝั่ง AI (Claude Code) มีกฎเดียวกันย่อไว้ที่ `.claude/rules/16-documentation.md` ของ workspace — **ถ้าแก้โครงสร้างที่นี่ ต้องแก้ไฟล์นั้นด้วย**

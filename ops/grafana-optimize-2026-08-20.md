@@ -45,7 +45,7 @@ Log ของ `zyra-api` ใน prod = 36.5 lines/s (88% ของ log volume pr
 
 **สาเหตุ — บั๊กสองฝั่งประกบกัน**
 
-ฝั่ง server ([router.go:141](zyra-api/internal/router/router.go#L141) → [user_workspace_handler.go:190](zyra-api/internal/handler/user_workspace_handler.go#L190)):
+ฝั่ง server (`zyra-api/internal/router/router.go:141` → `zyra-api/internal/handler/user_workspace_handler.go:190`):
 
 ```go
 if err := h.wsSvc.VerifyUserOwnsWorkspace(ctx, workspaceID, userID); err != nil {
@@ -53,11 +53,11 @@ if err := h.wsSvc.VerifyUserOwnsWorkspace(ctx, workspaceID, userID); err != nil 
 }
 ```
 
-`VerifyUserOwnsWorkspace` ([workspace_service.go:2252](zyra-api/internal/service/workspace_service.go#L2252)) เทียบ `owner_id` ตรงๆ —
-**endpoint นี้เป็น owner-only** ทั้งที่ comment ฝั่ง client ([hero-virtual-office.tsx:3174](zyra-app/views/user/virtual-office/hero-virtual-office.tsx#L3174))
+`VerifyUserOwnsWorkspace` (`zyra-api/internal/service/workspace_service.go:2252`) เทียบ `owner_id` ตรงๆ —
+**endpoint นี้เป็น owner-only** ทั้งที่ comment ฝั่ง client (`zyra-app/views/user/virtual-office/hero-virtual-office.tsx:3174`)
 เขียนว่า *"Any member can publish because the data is deterministic"* → สอง assumption ไม่ตรงกัน
 
-ฝั่ง client ([hero-virtual-office.tsx:3185-3235](zyra-app/views/user/virtual-office/hero-virtual-office.tsx#L3185)):
+ฝั่ง client (`zyra-app/views/user/virtual-office/hero-virtual-office.tsx:3185-3235`):
 
 ```ts
 const timer = setInterval(tryPublish, 3000)      // poll ทุก 3 วิ ไม่มี jitter
@@ -77,7 +77,7 @@ payload ไม่ใช่ของเล็ก: ส่ง grid เต็ม (`b
 **แก้**
 
 1. ฝั่ง client — permanent failure ต้องหยุด: 403/400 → `clearInterval` แล้วเลิก (อย่าล้าง sig), เก็บ retry ไว้แค่ 5xx/network + ใส่ exponential backoff
-2. ฝั่ง server — ตัดสินให้ชัดว่า obstacles เป็น owner-only จริงไหม ถ้า member ควร publish ได้ ให้เปลี่ยนเป็น membership check (ระวัง [owner ไม่มี member row](../doc/) ตามที่เจอมาก่อน)
+2. ฝั่ง server — ตัดสินให้ชัดว่า obstacles เป็น owner-only จริงไหม ถ้า member ควร publish ได้ ให้เปลี่ยนเป็น membership check (ระวัง [owner ไม่มี member row](../guides/) ตามที่เจอมาก่อน)
 3. ถ้าเลือกให้เป็น owner-only ต่อ → client ต้องไม่ยิงเลยตอนไม่ใช่ owner (มี flag owner อยู่แล้วในหน้า VO)
 
 **ผลที่คาด:** traffic prod ลด 44%, log prod ลดครึ่งนึง, DB query ทิ้ง ~20/s หายไป

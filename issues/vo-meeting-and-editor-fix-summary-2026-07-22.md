@@ -1,7 +1,7 @@
 # สรุปการแก้บั๊ก/เพิ่มฟีเจอร์ — VO Meeting + Map Editor (2026-07-21)
 
 > รายละเอียดเชิงเทคนิคเต็ม (root cause แบบ line-by-line) อยู่ที่
-> `[zyra-doc/issus/vo-meeting-and-editor-issues-2026-07-21-batch2.md](../issus/vo-meeting-and-editor-issues-2026-07-21-batch2.md)`
+> `[zyra-doc/issues/vo-meeting-and-editor-issues-2026-07-21-batch2.md](vo-meeting-and-editor-issues-2026-07-21-batch2.md)`
 > ไฟล์นี้เป็นสรุปภาพรวม + list โค้ดที่เปลี่ยนทั้งหมด ให้ดูเร็วๆ ว่าแก้อะไรไปบ้าง
 
 **สถานะรวม:** ทุกข้อผ่าน `tsc --noEmit` + `npx eslint` (0 error) ในทุกรอบที่แก้ — **ยังไม่มีข้อไหน live-test จริงในเบราว์เซอร์** เพราะ `zyra-api` ไม่ได้รันอยู่ในสภาพแวดล้อมนี้ตลอดทั้ง session

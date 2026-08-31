@@ -40,7 +40,7 @@
 
 ### Layout constants
 
-- Sidebar width: `275px` (fixed, full height) — **มีอยู่แล้วใน [admin-sidebar.tsx](zyra-app/components/admin/admin-sidebar.tsx) ตาม [[component-reuse]] rule ต้อง reuse ไม่สร้างใหม่**
+- Sidebar width: `275px` (fixed, full height) — **มีอยู่แล้วใน `zyra-app/components/admin/admin-sidebar.tsx` ตาม [[component-reuse]] rule ต้อง reuse ไม่สร้างใหม่**
 - Headbar height: `72px`
 - Content area padding: `16px`, gap ระหว่าง section หลัก `24px`
 - Card/panel radius: `16px` (panel ใหญ่), `8px` (input/button/pet card), `6px` (small icon button)

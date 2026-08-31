@@ -57,7 +57,7 @@ prod (`postgres`) **ขาด 29 ตาราง + 3 คอลัมน์**:
 หรือรัน SQL ตรง ๆ:
 ```bash
 PGPASSWORD=... psql "host=35.247.177.198 port=3500 user=gather-dev dbname=postgres sslmode=disable" \
-  -f prod_schema_check.sql
+  -f prod-schema-check.sql
 ```
 
 ## วิธีแก้
