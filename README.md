@@ -62,14 +62,9 @@ static HTML บน Vercel
 | `onboarding/` (คู่มือคนใหม่ TH/EN) | https://zyra-onboarding.vercel.app | **อัตโนมัติ** — push เข้า `main` แล้ว Vercel build ให้เลย (~1s) |
 | `vo-audio-fixes-summary/` | https://vo-audio-fixes-summary.vercel.app | ด้วยมือ — `cd web/vo-audio-fixes-summary && vercel deploy --prod` |
 
-**onboarding auto-deploy ทำงานยังไง:** project `zyra-onboarding` (scope `h2ofridays-projects`) ต่อ GitHub repo นี้ไว้ และตั้ง **Root Directory = `web/onboarding`** ใน project settings → Vercel มองโฟลเดอร์นั้นเป็นรากของ site เลย ไม่ต้องมี `vercel.json` ในรีโป
-`web/onboarding/.vercelignore` กัน `make-og.py` ไม่ให้โดน serve เป็นไฟล์ public
+**onboarding auto-deploy ทำงานยังไง:** project `zyra-onboarding` ต่อ GitHub repo นี้ไว้ · Root Directory ของ project เป็น `.` เลยชี้ปลายทางผ่าน [`vercel.json`](vercel.json) → `outputDirectory: web/onboarding` และ [`.vercelignore`](.vercelignore) จำกัดให้ upload แค่โฟลเดอร์นั้น — **ถ้าย้าย/เปลี่ยนชื่อโฟลเดอร์ `web/onboarding` ต้องแก้ 2 ไฟล์นั้นด้วย ไม่งั้นเว็บ live พัง**
 
-> ⚠️ **ย้าย/เปลี่ยนชื่อโฟลเดอร์ `web/onboarding` = เว็บ live พัง** — Root Directory ตั้งอยู่ใน Vercel dashboard แก้จากในรีโปไม่ได้ ต้องไปแก้ที่ [project settings](https://vercel.com/h2ofridays-projects/zyra-onboarding/settings) ด้วยทุกครั้ง
-> จะ build ทุก push หรือ build เฉพาะตอนโฟลเดอร์นี้เปลี่ยน — คุมที่ **Ignored Build Step** ในหน้า settings เดียวกัน
-> เว็บพังหลัง deploy → [deployments](https://vercel.com/h2ofridays-projects/zyra-onboarding/deployments) เลือกตัวก่อนหน้า → `⋯` → **Promote to Production** (instant ไม่ต้อง build)
-
-deploy ด้วยมือต้องใช้ `vercel` CLI ≥ 47.2.2 (ที่ลงผ่าน homebrew อาจเก่ากว่า — ใช้ `npx vercel@latest` แทนได้)
+ต้องใช้ `vercel` CLI ≥ 47.2.2 (ที่ลงผ่าน homebrew อาจเก่ากว่า — ใช้ `npx vercel@latest` แทนได้)
 
 ---
 
