@@ -1,9 +1,0 @@
-# Vercel project `zyra-onboarding` serve เฉพาะ web/onboarding (ตั้งไว้ที่ vercel.json → outputDirectory)
-# ที่เหลือในรีโปเป็นเอกสาร ไม่ต้อง upload ขึ้น build
-/*
-!/web
-/web/*
-!/web/onboarding
-
-# script ตอน build og image — ไม่ควรโดน serve เป็นไฟล์ public
-web/onboarding/make-og.py
