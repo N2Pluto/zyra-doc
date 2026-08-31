@@ -3,6 +3,84 @@
 > อ้างอิง: [spec.md](spec.md) · [db-schema-api-contract.md](db-schema-api-contract.md) (9-PR breakdown) · [ux-ui.md](ux-ui.md) · [pm-discussion-notes.md](pm-discussion-notes.md)
 >
 > สมมติฐาน: **Dev A = senior**, **Dev B = junior**, ทั้งคู่ใช้ AI ช่วยเขียนโค้ด — ถ้าทั้งคู่เป็น fullstack ระดับใกล้กัน การแบ่งนี้ใช้ไม่ได้ ต้องแบ่งเป็น vertical slice แทน
+>
+> **แผนเดิมด้านล่าง (08-17) ยังใช้ได้ แต่ PR 1–5 merge เข้า `develop` แล้ว** — งานที่เหลือจริงดูที่ [§งานที่เหลือ](#งานที่เหลือ--อัปเดต-2026-08-31) (ตรวจกับโค้ดเมื่อ 2026-08-31)
+
+## งานที่เหลือ — อัปเดต 2026-08-31
+
+> ที่มาของสถานะ: [progress-2026-08-31.md](progress-2026-08-31.md) (ผลตรวจโค้ดบน `origin/develop` — zyra-app `d748a39`, zyra-api `2419213`)
+> รายละเอียดจุดที่ต้องเก็บย้อนหลัง (F1–F15): [code-findings-2026-08-31.md](code-findings-2026-08-31.md)
+
+### สถานะ 9 PR
+
+| # | PR | สถานะ | หมายเหตุ |
+|---|---|---|---|
+| 1 | `feat(api): pet type CRUD + migration` | ✅ merged | migration ใช้เลข **83** ไม่ใช่ 77 · ยังขาด 409 `PET_TYPE_IN_USE` + `workspace_usage_count` (ไปกับ PR 6) |
+| 2 | `feat(api): pet animation upload + grid validation` | ✅ merged | เก็บ F3, F4, F5, F10, F11 |
+| 3 | `feat(api): pet xp config + version history` | ✅ merged | ตรง contract ครบ |
+| 4 | `feat(app): pet library + stage manager UI` | ✅ merged | 4a/4b/4d ครบ · **4c ยังไม่ครบ** (F8) · เก็บ F1, F2, F9 |
+| 5 | `feat(app): xp config form` | ✅ merged | เก็บ F13 |
+| 6 | `feat(api): room pet placement + realtime` | ⬜ ยังไม่เริ่ม | Dev A |
+| 7 | `feat(ws): forward pet_* events` | ⬜ ยังไม่เริ่ม | Dev A |
+| 8a | `feat(app): pet palette + popup ตั้งชื่อ` | ⬜ ยังไม่เริ่ม | Dev B |
+| 8b | `feat(app): pet drag-drop ใน Pixi scene` | ⬜ ยังไม่เริ่ม | Dev A |
+| 9 | `feat(api): xp earning engine + ledger` | ⬜ ยังไม่เริ่ม | Dev A |
+
+### ยังไม่เริ่มเลย — 4 PR
+
+| PR | เจ้าของ | งานย่อย |
+|---|---|---|
+| **6** | Dev A | migration `tb_room_pet` (ยังไม่มีในรีโป — 83 สร้างแค่ 3 ตาราง) · 4 endpoint `/api/admin/maps/:mapId/pets` (GET/POST/PATCH/DELETE) · validate จุดวางอยู่ใน `zone_id` จริง (tiles JSONB ไม่ใช่ AABB — ใช้ `lib/zone-utils` ฝั่ง FE + ตรวจซ้ำใน service) · gate `status=active` + `stage_ready` ครบ → `PET_NOT_READY` · `POSITION_OUTSIDE_ZONE` · publish 4 event ผ่าน `ZoneEventPublisher` · **เก็บของค้างจาก PR 1**: `DELETE /pets/:id` คืน 409 `PET_TYPE_IN_USE` + เขียน `workspace_usage_count` (F7) |
+| **7** | Dev A | เพิ่ม 6 type (`pet_spawned` / `pet_moved` / `pet_renamed` / `pet_removed` / `pet_stage_changed` / `pet_xp_changed`) ใน subscriber `vo:zone` — ปัจจุบัน ws รู้จักแค่ `zone_claim_changed`, `map_object_changed`, `map_updated` type อื่นถูกทิ้งเงียบ |
+| **8a** | Dev B | pet palette panel ใน Map Editor + popup ตั้งชื่อตอนวาง — **ไม่แตะ Pixi scene** |
+| **8b** | Dev A | drag-drop + render pet บน scene · อ่าน skill `vo-desync-debug` ก่อนแตะ |
+| **9** | Dev A | migration `tb_room_pet_xp_event` + `uq_room_pet_xp_daily` ที่ต้อง `COALESCE(user_id,'')` · hook 10 activity เข้า flow จริง · `day_key` UTC+7 · derive `stage`/`mood` ห้ามเก็บคอลัมน์ · `last_seen_stage` detect transition → ยิง `pet_stage_changed` · throttle `pet_xp_changed` |
+
+> ⚠️ **เลข migration** — แผนเดิมเขียน `77_pet_management.sql` แต่ของจริงลงเป็น 83 / 84 / 85 และตอนนี้เลขสูงสุดในรีโปคือ **86** (แถม 85 ถูกใช้ซ้ำ 3 ไฟล์แล้ว) → migration ของ PR 6 / PR 9 ต้องเช็กเลขว่างก่อนตั้งชื่อ อย่าถือว่า 87 ว่างโดยไม่ดู
+
+### ไม่มีใครเป็นเจ้าของใน 9 PR — ต้องเพิ่มใบใหม่
+
+| PR ใหม่ | เจ้าของ | งาน | หลักฐานว่าตกหล่น |
+|---|---|---|---|
+| **10** `feat(api): member pet endpoints` | Dev A | `GET /api/user/workspaces/:workspaceId/pets` (+ derived `stage`/`mood` + animation URL ครบ) · `POST /api/user/workspaces/:workspaceId/pets/:petId/play` (idempotent วันละครั้ง/คน) | อยู่ใน [db-schema-api-contract.md §Member](db-schema-api-contract.md) แต่ไม่ปรากฏใน PR 1–9 เลย |
+| **11** `feat(app): render pet ใน VO` | Dev A | render pet บน VO scene ฝั่ง member · เล่น animation ตาม stage/mood · ลำดับแถว direction ต้อง import จาก `AVATAR_DIR_ROW` | "เกณฑ์ก่อนเปิด Feature Flag" ระบุ "render ตาม stage/mood" แต่ PR 8 คือ Map Editor เท่านั้น · ข้อสมมติลำดับแถว (`0=down 1=left 2=right 3=up`) **ยังไม่มีใครใช้ = ยังไม่เคยพิสูจน์กับ sprite จริง** |
+
+### ของที่ต้องเก็บใน PR ที่ merge แล้ว
+
+รายละเอียดเต็ม (ไฟล์:บรรทัด + วิธี verify) อยู่ใน [code-findings-2026-08-31.md](code-findings-2026-08-31.md)
+
+| ระดับ | ID | เรื่อง | repo |
+|---|---|---|---|
+| บล็อก UAT | F3 | เพดาน 1000px / 1MB ขัดกับ frame_count ที่ล็อกไว้ 50 → อัปชีทจริงไม่ผ่าน | api + app |
+| ต้องแก้ | F1 · F2 | progress bar ยังเป็นสเกล 17 slots · preview modal hardcode 6×4@8fps + ทิ้ง metadata | app |
+| ต้องแก้ | F4 · F5 | `FRAME_SIZE_MISMATCH` ไม่ได้เช็ค modulo · error detail ไม่แนบ `{width, frame_count}` / `{height, direction_rows}` | api |
+| ต้องแก้ | F8 | SC-PM-07 ฝั่ง FE — toast ยัง generic ตัวเดียว + ไม่มี client-side pre-check | app |
+| ตกหล่น | F6 · F7 | ไม่มี `POST /pets/:id/thumbnail` · `workspace_usage_count` ไม่มีใครเขียน | api |
+| ปรับให้ตรง | F9 · F10 · F11 | Pet Library ไม่ใช้ TanStack key ตาม contract · S3 key slot ตัวเล็ก · GIF ที่ slot Evolution ไม่มีในเอกสาร | app / api |
+| คุณภาพ | F12 · F13 · F14 | Go test ครอบแค่ pure function (ไม่มี `pet_handler_test.go` / ไม่มี mock DB) · XP panel import `@/components/ui/*` ผิด rule 08 · search ไม่มี debounce | api / app |
+| ตัดสินใจ | F15 | flag ปิดแค่เมนู — route + `/api/admin/pets*` ยังเข้าได้ | app + api |
+
+### blocker — ต้องได้คำตอบก่อนลงมือ
+
+| ต้องได้ก่อน | คำถาม |
+|---|---|
+| แก้ F1 / F2 | **17 หรือ 20 slots** — โค้ดใช้ 20 (Egg 2 + Baby/Adult/Evolved ละ 6 โดยเพิ่ม `Idle`) แต่ [§RequiredSlots(stage)](#requiredslotsstage--ค่าที่ใช้-ยึด-figma) ในเอกสารนี้เขียน 17 (ละ 5) — ตอบก่อนไม่งั้นแก้ progress bar เสร็จต้องแก้อีกรอบ |
+| แก้ F3 | **metadata ต่อ animation** — เปิดให้ตั้งเองตาม spec หรือรับค่า fixed 50/24/4 อย่างเป็นทางการ (คำตอบกำหนดว่าจะยกเพดาน หรือปลดล็อกฟอร์ม) |
+| merge PR 6 / 8 | 1 room = 1 pet บังคับไหม (`uq_room_pet_one_per_zone` ยังไม่เปิด) · วาง pet ใน Workspace Template แล้ว workspace ที่สร้างไปก่อนหน้าได้ pet ด้วยไหม |
+| merge PR 9 | mood ช่วง 48–72 ชม. เป็น state อะไร · activity ตัวไหน per-user ตัวไหน per-room · `xp_play_with_pet` คือ interaction แบบไหนใน VO (ยังไม่มี spec member-side) |
+| F15 | เจตนาของ `NEXT_PUBLIC_PET` — ปิดแค่เมนู หรือต้องปิด route + API ด้วย |
+
+### เวลาที่เหลือ
+
+| ช่วง | PR | กินเวลา |
+|---|---|---|
+| Placement + realtime + Map Editor | 6, 7, 8a, 8b | D1–D5 |
+| XP earning engine | 9 | D6–D7 |
+| Member API + VO render (ใบใหม่) | 10, 11 | D7–D9 |
+| เก็บ F1–F15 | — | +1–2 วัน (ขนานกับ 8a ได้บางส่วน) |
+| **รวม** | | **~8–10 วันทำการ** |
+
+คอขวดยังเป็น **คิวของ Dev A** เหมือนเดิมและหนักกว่าแผนเดิม — 6 → 7 → 8b → 9 → 10 → 11 ต่อกัน 6 ใบ ขณะที่งานที่โยนให้ Dev B ขนานได้จริงมีแค่ 8a + ข้อ F1/F2/F8/F9/F13/F14 ฝั่ง FE ถ้าจะคลายต้องแยก PR 10 (member API เป็น read endpoint ตรงไปตรงมา + มี precedent ใน `/api/user/*`) ออกมาให้ Dev B ทำใต้ review ของ Dev A
 
 ## ✅ PM ปิด 2 blocker แล้ว (2026-08-17)
 
