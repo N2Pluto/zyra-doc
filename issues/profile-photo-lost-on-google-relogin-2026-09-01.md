@@ -131,3 +131,83 @@ join space เพื่อ mirror character name ลง `display_name` แต่
   temp-commit flow เก็บ full image เป็น `<uuid>.jpg` → `thumbKey == key` → **thumbnail เก่าไม่เคยถูกลบ**
 - `_thumb.jpg` ถูก generate + upload ทุกครั้งแต่ **ไม่มี column ไหนเก็บและไม่มี query ไหนอ่าน** — dead weight
 - `zyra-app/lib/api/profile.ts` `uploadAvatar()` (ยิง `POST /api/user/me/avatar`) เป็น **dead code** ไม่มี caller
+
+---
+
+## รอบที่ 2 — 2026-09-01 · รูปใน hover tag ของ private zone ไม่อัปเดต
+
+> **สถานะ:** แก้แล้ว — vitest เขียว 30/30 + ผ่าน mutation check (no-op fail 5 เคส) · `next build` ผ่าน · **ยังไม่ live-test ใน VO** · **repo:** zyra-app
+> **branch/PR:** zyra-app `fix/zone-claim-avatar-stale` → [zyra-app#233](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/233)
+> **คนละ root cause กับรอบที่ 1** — รอบนี้เป็น client-side cache ไม่ใช่ DB ถูกเขียนทับ
+
+### อาการที่รายงาน
+
+> รูปตอนที่ไป hover ที่ zone นั้นไม่ได้เปลี่ยนไปด้วยเมื่อ upload profile ใหม่ไป
+
+(แนบ screenshot: tag "Tester Ten's zone" ตอน hover โซนใน VO ยังโชว์รูปเดิม)
+
+### Root cause — TanStack Query cache ไม่มีใคร invalidate เมื่อรูปเปลี่ยน
+
+Backend **ถูกอยู่แล้ว**: `PrivateZoneClaimService.List` resolve `owner_name` / `owner_avatar_url`
+ด้วย `JOIN tb_user` ตอนอ่าน (`COALESCE(u.image_upload, '')`) และ `tb_private_zone_claim`
+(migration 58) เก็บแค่ `zone_name` — **ไม่มี snapshot ของรูปในตาราง** ตรวจแล้วทั้ง
+`resolveOwnerIdentity` และ `List`
+
+ปัญหาอยู่ที่ query `["zone-claims", workspaceId]` (`hooks/use-zone-claims.ts`) ที่ถูก
+invalidate **เฉพาะ** เมื่อ claim เปลี่ยน — `zone_claim_changed`, `welcome`, และ
+claim/unclaim actions **ไม่มีอะไร invalidate มันเมื่อรูปโปรไฟล์เปลี่ยน**
+
+handler `profile_updated` ใน `hero-virtual-office.tsx` อัปเดต `otherPlayers` +
+`allWorkspaceMembers` (รวม `avatar_url`) อยู่แล้ว แต่ไม่แตะ cache ก้อนนี้ →
+nameplate กับ member panel สด แต่ tag โซนค้าง
+
+**เสียทั้งสองทาง:**
+
+| ใคร | ทำไมค้าง |
+|---|---|
+| peers | ได้ event `profile_updated` แต่ cache ไม่ถูก patch |
+| คนที่อัปโหลดเอง | `Room.handleProfileUpdated` relay ด้วย `broadcastExcept(msg, c.UserID)` → **ผู้ส่งไม่ได้รับ event ของตัวเอง** เลยไม่มีสัญญาณอะไรมาอัปเดตเลย |
+
+เคสที่ผู้ใช้เจอคือแบบที่สอง (hover โซนของตัวเอง) — เกิดเมื่ออัปโหลดจาก VO Settings → Profile
+แล้วอยู่ใน VO ต่อโดยไม่ reload (ถ้าอัปโหลดจากหน้า `/profile` แล้วเดินกลับเข้า VO query จะ
+refetch ตอน mount ทำให้ไม่เห็นอาการ)
+
+### สิ่งที่แก้
+
+เพิ่ม pure helper `applyOwnerProfileToClaims` ใน `lib/api/private-zone-claims.ts`
+(อยู่กับ `displayZoneName` / `zoneClaimNameMap`) แล้วเรียกจาก 2 จุดใน `hero-virtual-office.tsx`:
+handler `profile_updated` (สำหรับ peers) และ `onProfileSaved` (สำหรับตัวเอง เพราะไม่มี echo)
+
+- `avatarUrl === ""` = ค่าจริง (ลบรูป → initials) · เฉพาะ `undefined` ที่คงค่าเดิม
+- `owner_name` อัปเดตด้วย precedence ตาม server: `character_name || display_name || เดิม`
+  (tag render `owner_name` จาก row เดียวกัน ถ้าแก้แต่รูปจะเป็นการแก้ครึ่งเดียว)
+- แก้ cache ก้อนเดียว → ครอบทั้ง `pz-zone-hover.tsx` และ `pz-zone-card.tsx` (2 จุดเดียวที่อ่าน `owner_avatar_url`)
+- ใช้ `setQueryData` ไม่ใช่ `invalidateQueries` — payload มีข้อมูลครบ ไม่ต้องยิง REST ซ้ำ และ
+  ไม่ต้องเพิ่ม dep ใหม่ให้ effect ก้อนใหญ่ (`queryClient` อยู่ใน scope นั้นแล้ว — ถ้าประกาศ
+  `useCallback` ทีหลังในไฟล์แล้วใส่ใน dep array ของ effect ที่อยู่ก่อนหน้าจะเจอ TDZ)
+
+`avatar_url` ใน `ProfileUpdatedPayload` เป็นรูปโปรไฟล์ ไม่ใช่ spritesheet (comment ใน
+`room.go` ระบุไว้: "Deliberately does NOT touch c.AvatarURL") — ตรงตามกฎ
+photo-or-initials-never-sprite
+
+### Verify ถึงไหน
+
+- `npx vitest run __tests__/private-zone-claims.test.ts` → **30 passed** (เดิม 20 + ใหม่ 10)
+- **Mutation check:** ทำ helper เป็น no-op → fail 5 เคส รวมเคสตรงอาการ
+  ("pushes a new photo onto the owner's claim") แล้ว restore กลับ pass 30/30
+- `npx tsc --noEmit` ไม่มี error ใหม่ — 2 error ใน `__tests__/pixi-game-scene.test.ts`
+  (`RemotePlayerSnapshot.avatar_url`) **มีอยู่ก่อนแล้วบน develop** ยืนยันด้วยการ stash แล้วรันซ้ำ
+- `npx eslint` ไฟล์ที่แก้ clean · `npx next build` สำเร็จ (route `/workspace/[id]/play` ผ่าน)
+- **ยังไม่ได้ทำ:** live E2E ใน VO — ต้อง login ซึ่ง AI พิมพ์รหัสผ่านเองไม่ได้
+  ขั้นตอนที่ต้องลอง: hover โซนที่ claim ไว้ → VO Settings → Profile → อัปโหลดรูป → Save →
+  hover โซนเดิม รูปต้องเปลี่ยนทันทีโดยไม่ reload (เช็กทั้งฝั่งเจ้าของและฝั่ง peer)
+
+### ต่อจากนี้ / ยังค้าง
+
+- อัปโหลดจากหน้า `/profile` ตรงๆ **ไม่ broadcast `profile_updated`** เลย เพราะหน้านั้นไม่มี
+  WS client → peer ที่อยู่ใน VO เห็นรูปเก่าทุก surface (nameplate, member panel, zone tag)
+  จนกว่าจะ reload ตัวเจ้าของไม่มีปัญหาเพราะ query refetch ตอน mount เข้า VO
+  แก้ได้โดยให้หน้า `/profile` แจ้ง VO (เช่นผ่าน storage event / BroadcastChannel) หรือให้
+  server relay จาก REST — **ยังไม่ทำ คนละ scope**
+- **develop มี tsc error ค้างอยู่ 2 ข้อ** ใน `__tests__/pixi-game-scene.test.ts`
+  (`avatar_url` ไม่มีใน `RemotePlayerSnapshot`) — ไม่ได้เกิดจาก PR นี้ แต่ควรมีคนแก้
