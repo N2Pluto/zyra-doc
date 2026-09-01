@@ -1,6 +1,6 @@
 # เมนู meeting ค้างหลังคลิกออกจากห้องประชุมกลับ private zone ตัวเอง
 
-> **สถานะ:** แก้แล้ว 2026-09-01 — unit test เขียว (10 เคสใหม่, suite รวม 1287 ผ่าน) + `tsc`/eslint/prettier สะอาด · **ยังไม่ live-test บน dev** · **repo:** zyra-app (client-only fix, ไม่แตะ zyra-ws)
+> **สถานะ:** แก้แล้ว + **live-verified 2026-09-01** — repro บั๊กได้จริงบน local stack แล้วพิสูจน์ว่าหายทั้ง 2 ชั้น (ตาราง §Live verify) · unit test เขียว (15 เคสใหม่, suite รวม 1287 ผ่าน) + `tsc`/eslint/prettier/`next build` สะอาด · **repo:** zyra-app (client-only fix, ไม่แตะ zyra-ws)
 > **branch:** zyra-app `fix/vo-meeting-panel-stuck-on-walkout` · **doc:** zyra-doc `docs/vo-meeting-panel-stuck-on-walkout`
 > **สำคัญ:** ต้นเหตุ **ไม่ใช่** LiveKit/SFU และ **ไม่ใช่** media-plane union (BUG #50) — เป็น client ยิง zone-claim ที่ server verify ไม่ได้ แล้วโดน `force_sync` ฆ่า walk ทิ้ง
 
@@ -125,16 +125,46 @@ chatSpaceZoneReport(activeZone, liveZoneId) => { suppressed, zoneId }
 
 | ไฟล์ | ครอบอะไร |
 |---|---|
-| `__tests__/vo-chat-space-zone-claim.test.ts` (ใหม่) | `chatSpaceZoneReport` — suppression ตาม activeZone (4 zone type), claim ต้องรอ tile จริง, ไม่ claim ตอน walk in-flight (เคส regression ตรงตัว), ไม่ claim meeting/spotlight, ไม่ claim โซนที่เดินออกมาแล้ว |
-| `__tests__/pixi-game-scene.test.ts` → `describe("click-walk survives force_sync")` | re-issue walk หลัง force_sync, resume ครั้งเดียวต่อคลิก, ไม่ resume walk ที่จบปกติแล้ว, seat branch ยังชนะเมื่อมี sit intent, ปลายทางยังเป็น tile ที่คลิก |
+| `__tests__/vo-chat-space-zone-claim.test.ts` (ใหม่, 10 เคส) | `chatSpaceZoneReport` — suppression ตาม activeZone (4 zone type), claim ต้องรอ tile จริง, ไม่ claim ตอน walk in-flight (เคส regression ตรงตัว), ไม่ claim meeting/spotlight, ไม่ claim โซนที่เดินออกมาแล้ว |
+| `__tests__/pixi-game-scene.test.ts` → `describe("click-walk survives force_sync")` (5 เคส) | re-issue walk หลัง force_sync, resume ครั้งเดียวต่อคลิก, ไม่ resume walk ที่จบปกติแล้ว, seat branch ยังชนะเมื่อมี sit intent, ปลายทางยังเป็น tile ที่คลิก |
 
 รวม: `npx vitest run` → 101 files / 1287 passed · `npx tsc --noEmit` สะอาด (เหลือ error เดิม 2 ตัว
 ใน `pixi-game-scene.test.ts` เรื่อง `avatar_url` ที่มีอยู่บน develop ก่อนแล้ว) · eslint + prettier ผ่าน
 
+## Live verify (2026-09-01)
+
+Stack: `next build` + `next start -p 3200` (prod build ของ branch นี้) → zyra-api local :3002 → dev DB ·
+zyra-ws ของตัวเองที่ :3103 (`ALLOWED_ORIGINS='*'`) · workspace `office`
+(`256893ae-…`) · user `member-a@zyra.test` · **Meeting Group 6** (tiles 15,26→25,33) →
+**Private Group 9** (tiles 15,19→19,22), click พื้นว่าง tile `17,21`
+
+> **ต้องทำก่อน repro:** local Redis ไม่มี key `vo:zones:<workspaceId>` (zyra-api publish เฉพาะตอน
+> zone CRUD) → `getZoneSet()` = nil → `zoneClaimTileOK` **fail open** → server ไม่เคยส่ง force_sync
+> และบั๊กไม่ขึ้นเลย ต้อง publish zone set ก่อน (มิรเรอร์ `publishZoneCache` จาก DB) ไม่งั้นการทดสอบ
+> จะ "ผ่าน" แบบหลอกๆ
+
+ทั้ง 3 เคสรันบน build เดียวกัน ต่างกันแค่ปิด/เปิดฟิกซ์ทีละชั้น:
+
+| # | premature claim (fix 1) | click-walk resume (fix 2) | ผล |
+|---|---|---|---|
+| 1 | ไม่ถูกส่ง (ตามที่ ship) | armed | panel ปิด**ตั้งแต่กลางทาง** (sample แรกที่ tile 18,23), `force_sync` = **0 เฟรม**, ปิดค้าง 6 วิ ✅ |
+| 2 | ส่ง claim แบบโค้ดเก่า | armed | ได้ `force_sync{zone_claim_rejected}` ที่ tile `20,27` (ในห้อง meeting) → walk ตาย → resume เดินใหม่ → **panel ปิดเองใน ~1.6 วิ** ✅ |
+| 3 | ส่ง claim แบบโค้ดเก่า | ถอด `_clickWalkGoal` ออก | **panel ค้าง 7 วิ+ ไม่หาย** — header `Meeting Group 6`, สมาชิก `0`, "No one here yet", timer เดิน ขณะตัวละครยืนที่ `17,21` ใน private zone ❌ **= อาการที่รายงานเป๊ะ** |
+
+เคส 3 คือหลักฐานว่า mechanism ถูกต้องทั้งเส้น: `pathQueue` เหลือ 0 ทันทีที่ force_sync มา (walk ตาย
+ไม่มี `onPathEnded`) แต่ตัวละคร**ยังไปถึง `17,21`** เพราะ server เดิน goto ที่ถูกทิ้งต่อแล้วลากด้วย
+self-sync — ตรงกับที่วิเคราะห์ไว้ทุกข้อ
+
+เคส 2 ยังยืนยันว่า fix 2 เป็น safety net จริง ไม่ใช่โค้ดตาย: ถึงจะมี hard correction กลางทาง
+(เหตุผลอื่นก็ได้ — `blocked_dest`, `visibility_resume`, …) click-walk ก็ไม่ตายเงียบอีก
+
 ## ยัง verify ไม่ถึงระดับไหน
 
-- **ยังไม่ live-test** — ยังไม่ได้ repro flow จริง (เข้า meeting ว่าง → click พื้นว่างใน private
-  zone) บน dev หรือ isolated stack ทั้งหมดยืนยันจากการอ่านโค้ดครบเส้นทาง client → ws → client + unit test
+- verify บน **local stack (prod build) + dev DB** เท่านั้น — ยังไม่ได้ทดสอบบน dev cluster / uat
+- ยังไม่ทดสอบ**หลายคน**พร้อมกันในห้อง (เคสนี้เล่นคนเดียว 1 online) — media-plane union (BUG #50)
+  จะเปลี่ยนภาพที่เห็น แต่ไม่เปลี่ยน mechanism
+- mic/cam ถูกบล็อกใน Browser pane → ไม่ได้ยืนยันว่า LiveKit session ถูกตัดจริงตอน panel ปิด
+  (ตามโค้ดคือ `mediaZoneId` เป็น null ทันทีที่ `activeZone` ออกจาก meeting)
 - ยังไม่ได้วัดว่า claim ที่เลื่อนไปออกตอน "ถึงจริง" (ช้าลงเท่าอายุ poll ของ `debugMyTile` ~100ms)
   กระทบจังหวะเกิด proximity pop ในห้อง room/private หรือไม่ — ตามโค้ดคือ pop ผูกกับ claim นี้
   เท่านั้น และเดิม claim ก็ออกตอน `onPathEnded` อยู่แล้ว จึงคาดว่าไม่ต่าง
