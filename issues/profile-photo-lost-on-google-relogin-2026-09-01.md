@@ -211,3 +211,83 @@ photo-or-initials-never-sprite
   server relay จาก REST — **ยังไม่ทำ คนละ scope**
 - **develop มี tsc error ค้างอยู่ 2 ข้อ** ใน `__tests__/pixi-game-scene.test.ts`
   (`avatar_url` ไม่มีใน `RemotePlayerSnapshot`) — ไม่ได้เกิดจาก PR นี้ แต่ควรมีคนแก้
+
+---
+
+## รอบที่ 3 — 2026-09-01 · วัด blast radius บน prod + เตรียมสคริปต์กู้รูป
+
+> **สถานะ:** fix ทั้งชุด merge เข้า develop แล้ว (dev) · **prod ยังมีบั๊ก** · สคริปต์กู้รูปเตรียมไว้แล้ว **ยังไม่รัน**
+> **ต้องทำตามลำดับ:** release zyra-api ขึ้น prod **ก่อน** แล้วค่อยรันสคริปต์กู้
+
+### ตัวเลขจริงบน prod (read-only, ผ่าน IAP tunnel)
+
+| | จำนวน |
+|---|---|
+| ผู้ใช้ทั้งหมด | 142 |
+| บัญชี Google | **127** (89% ของทั้งระบบ) |
+| `image_upload` เป็น URL ของ Google ตอนนี้ | 121 |
+| `image_upload` เป็นรูปที่อัปโหลดเอง | 8 |
+| `image_upload` เป็น NULL (บัญชี Google) | 1 |
+| **legacy `/uploads/profiles/*`** | **0** |
+
+**P1 ที่บันทึกไว้ในรอบที่ 1 ตกไป** — ไม่มี legacy local path เหลือบน prod เลย ไม่ต้องทำ migration backfill
+
+### รูปที่ถูกทับ "ยังอยู่" — กู้คืนได้ 20 คน
+
+Google-login path ไม่เคยเรียก `deleteOldAvatar` → object ที่ผู้ใช้อัปโหลดยังค้างในบัคเก็ต
+`gs://zyra-prod-gather-dev-458614/profiles/<userID>/`
+
+- บัคเก็ตมีไฟล์รูปเต็ม **44 ไฟล์ จาก 28 คน** (หลายคนมีหลายเวอร์ชันเพราะ delete ไม่เคยทำงาน)
+- cross-reference กับ DB: **20 คน** DB ชี้ Google URL แต่รูปตัวเองยังอยู่ → **กู้ได้ ไม่ต้องอัปโหลดใหม่**
+- อีก 8 คนยังชี้รูปตัวเองอยู่ ปกติดี — ไม่อยู่ในรายการกู้
+
+20 คนนั้น (เรียงตามวันที่อัปโหลดรูปที่จะกู้):
+
+| อัปโหลดเมื่อ | อีเมล |
+|---|---|
+| 2026-08-31 | pup@hpktechnology.com · game.ponlawat.lk@gmail.com |
+| 2026-08-27 | jane@hpktechnology.com · ja@hpktechnology.com |
+| 2026-08-25 | pai@hpktechnology.com · got@hpktechnology.com |
+| 2026-08-24 | tonkaow@hpktechnology.com |
+| 2026-08-21 | team@hpktechnology.com · oat_cs@hpktechnology.com · jeen@hpktechnology.com |
+| 2026-08-20 | trust_uxui@ · ruj_cs@ · pingpong@ · peach_cs@ · golf_cs@ · earth@ · bank_cs@ |
+| 2026-08-19 | tum@hpktechnology.com |
+| 2026-07-21 | poom@hpktechnology.com |
+| 2026-07-20 | witsanu.sj@gmail.com |
+
+### ยืนยันบั๊ก thumbnail กำพร้าจากข้อมูลจริง
+
+บัคเก็ตมี 96 object แต่เป็นรูปเต็มแค่ 44 → **มี `_thumb.jpg` ที่ไม่มีตัวเต็มคู่กัน 8 ไฟล์**
+ตรงกับที่รายงานไว้ว่า `deleteOldAvatar` หา thumb ด้วย `_full.jpg` → `_thumb.jpg` ซึ่งไม่ match
+key ของ temp-commit (`<uuid>.jpg`) ตัวอย่าง: `profiles/104236071591997276879/64c5af03-..._thumb.jpg`
+
+### สคริปต์ที่เตรียมไว้ (ยังไม่รัน)
+
+| ไฟล์ | ใช้ทำอะไร |
+|---|---|
+| `ops/restore-clobbered-profile-photos-2026-09-01.sql` | UPDATE กู้รูป 20 คน (ต้อง `--write`) |
+| `ops/restore-clobbered-profile-photos-2026-09-01-dryrun.sql` | read-only preview ว่าจะแก้แถวไหน |
+
+คุณสมบัติของสคริปต์:
+- **รันซ้ำได้ปลอดภัย** — `WHERE image_upload LIKE '%googleusercontent%'` จึงไม่ทับรูปของคนที่
+  อัปโหลดใหม่เองไปแล้วหลังจากทำรายการนี้
+- เลือก object ที่ **ใหม่สุด** ต่อคน = รูปที่เขาเลือกไว้ล่าสุด
+- **verify กับ prod แล้วแบบ read-only**: dry-run คืนมา **20 แถวพอดี** ตรงกับรายการข้างบน
+  (SQL parse ผ่าน, array จับคู่ถูก) หลังกู้สำเร็จ dry-run ต้องคืน 0 แถว
+- คาดหมายผลรวม: `own_photos` 8 → 28, `google_pics` 121 → 101
+
+### ⚠️ ลำดับสำคัญ — ห้ามรันก่อน release
+
+fix ที่กันการทับ (`b1ab1a7`, PR #58) **อยู่แค่ develop** prod ยังทับอยู่ทุกครั้งที่มีคนล็อกอิน Google
+ถ้ารันสคริปต์ตอนนี้ ทั้ง 20 คนจะถูกทับใหม่ในการล็อกอินครั้งถัดไป → เสียเปล่า
+
+ลำดับที่ถูก:
+1. release **zyra-api** ขึ้น prod (develop → main → tag `v*`) — develop นำ main อยู่ 6 commits
+   และ **เป็นงานชุดนี้ทั้งหมด ไม่มีของคนอื่นปน** (Google clobber + security audit + delete ordering/temp key)
+2. รัน dry-run ยืนยันว่ายังได้ 20 แถว
+3. รันสคริปต์กู้ ด้วย `--write`
+4. รัน dry-run ซ้ำ ต้องได้ 0 แถว
+
+**zyra-app release แยกเรื่อง** — develop นำ main อยู่ 12 commits และมี `feat/pet-management-xp`
+(#234) ของคนอื่นปนอยู่ ซึ่งยังไม่ผ่านการ verify ในรอบนี้ เป็นการตัดสินใจของ PM
+(fix ที่กันการทับอยู่ใน zyra-api เท่านั้น จึงไม่ต้องรอ app release เพื่อกู้รูป)
