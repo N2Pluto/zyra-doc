@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="description" content="สี่ตัวเลือกระบบตัดเสียงรบกวนสำหรับ Zyra Virtual Office — สามเจ้าที่ต้องจ่ายเงิน กับหนึ่งตัวฟรีที่ทำคู่ขนานได้">
+<style>
+*{margin:0;padding:0}
+img,svg,video{display:block;max-width:100%}
+table{border-collapse:collapse}
+</style>
+<title>เลือกตัวตัดเสียงรบกวนให้ Zyra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --paper:#EAEEF0; --surface:#FFFFFF; --surface-2:#F3F6F7;
+  --ink:#0F1A21; --ink-2:#33454F; --muted:#63757F;
+  --line:#D2DBDF; --line-strong:#B4C2C8;
+  --voice:#0B6E6A; --voice-soft:#D9EDEB;
+  --warn:#9C4A12; --warn-soft:#F6E6D8;
+  --shadow:0 1px 2px rgba(15,26,33,.06),0 8px 24px rgba(15,26,33,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0C1418; --surface:#141F26; --surface-2:#1A272F;
+    --ink:#E6EDF0; --ink-2:#B7C7CF; --muted:#8298A3;
+    --line:#25353E; --line-strong:#354A55;
+    --voice:#4FBFB4; --voice-soft:#123231;
+    --warn:#E09A50; --warn-soft:#33230F;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.28);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0C1418; --surface:#141F26; --surface-2:#1A272F;
+  --ink:#E6EDF0; --ink-2:#B7C7CF; --muted:#8298A3;
+  --line:#25353E; --line-strong:#354A55;
+  --voice:#4FBFB4; --voice-soft:#123231;
+  --warn:#E09A50; --warn-soft:#33230F;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.28);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:"IBM Plex Sans Thai","Helvetica Neue",Arial,sans-serif;
+  font-size:17px;line-height:1.8;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1000px;margin:0 auto;padding:0 24px 96px}
+.col{max-width:680px}
+h1,h2,h3,h4{font-family:"Bai Jamjuree","IBM Plex Sans Thai",sans-serif;text-wrap:balance;margin:0}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.16;font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(23px,3vw,30px);line-height:1.3;font-weight:600}
+h3{font-size:22px;line-height:1.35;font-weight:600}
+p{margin:0}
+a{color:var(--voice);text-decoration:underline;text-underline-offset:3px}
+a:focus-visible{outline:2px solid var(--voice);outline-offset:3px;border-radius:4px}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:20px;line-height:1.65;color:var(--ink-2)}
+.small{font-size:15px;line-height:1.7;color:var(--muted)}
+
+header.masthead{border-bottom:1px solid var(--line);background:var(--surface);padding:56px 0 40px;margin-bottom:52px}
+header.masthead .wrap{display:flex;flex-direction:column;gap:20px}
+.meta-row{display:flex;flex-wrap:wrap;gap:10px}
+.chip{font-family:"IBM Plex Mono",monospace;font-size:11.5px;border:1px solid var(--line-strong);border-radius:999px;padding:4px 11px;color:var(--muted);white-space:nowrap}
+
+section{margin-top:64px}
+section > * + *{margin-top:22px}
+.section-head{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
+
+/* ── the one-line answer ── */
+.answer{
+  background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--voice);
+  border-radius:0 12px 12px 0;padding:26px 30px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:12px;
+}
+.answer .q{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.answer .a{font-family:"Bai Jamjuree",sans-serif;font-size:clamp(20px,2.6vw,26px);line-height:1.45;font-weight:600}
+.answer .a em{font-style:normal;color:var(--voice)}
+.answer .note{font-size:16px;color:var(--ink-2);line-height:1.7}
+
+/* ── two-tier problem, compact ── */
+.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.why > div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.why > div.open{border-color:var(--warn);background:var(--warn-soft)}
+.why h3{font-size:19px}
+.why p{font-size:16px;color:var(--ink-2);line-height:1.65}
+.tag{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.05em;padding-top:10px;border-top:1px dashed var(--line-strong)}
+
+/* ── candidates ── */
+.cards{display:flex;flex-direction:column;gap:18px}
+.group-label{
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--muted);display:flex;align-items:center;gap:12px;margin:10px 0 -4px;
+}
+.group-label::after{content:"";flex:1;height:1px;background:var(--line)}
+.cand{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:28px;display:grid;grid-template-columns:1fr;gap:20px;box-shadow:var(--shadow);
+}
+@media(min-width:760px){.cand{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}}
+.cand.top{border-color:var(--voice);border-width:2px}
+.cand.free{background:var(--surface-2);border-style:dashed;box-shadow:none}
+.cand .head{display:flex;flex-direction:column;gap:12px}
+.rank{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rank .n{
+  font-family:"Bai Jamjuree",sans-serif;font-weight:700;font-size:15px;
+  width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
+  background:var(--line-strong);color:var(--surface);
+}
+.cand.top .rank .n{background:var(--voice);color:#fff}
+.verdict-tag{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:6px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line-strong)}
+.cand.top .verdict-tag{background:var(--voice);color:#fff;border-color:var(--voice)}
+.cand.free .verdict-tag{background:transparent;border-style:dashed}
+.cand .pitch{font-size:16.5px;line-height:1.7;color:var(--ink-2)}
+.price{display:flex;flex-direction:column;gap:2px;padding:14px 0 0;border-top:1px solid var(--line)}
+.price .v{font-family:"Bai Jamjuree",sans-serif;font-size:24px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums}
+.price .u{font-size:13.5px;color:var(--muted)}
+.pts{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none;font-size:16px;line-height:1.6}
+.pts li{display:grid;grid-template-columns:20px 1fr;gap:10px;color:var(--ink-2)}
+.pts .m{font-family:"IBM Plex Mono",monospace;font-weight:500;text-align:center}
+.pts li.good .m{color:var(--voice)}
+.pts li.bad .m{color:var(--warn)}
+
+/* ── table ── */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:16px}
+th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--surface-2);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+tbody td:first-child{color:var(--muted);font-size:15px}
+col.hi{background:var(--voice-soft)}
+.yes{color:var(--voice);font-weight:600}
+.no{color:var(--muted)}
+.stop{color:var(--warn);font-weight:600}
+td.num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ── steps ── */
+.steps{display:flex;flex-direction:column}
+.step{display:grid;grid-template-columns:44px 1fr;gap:18px;padding:22px 0;border-top:1px solid var(--line)}
+.step:last-child{border-bottom:1px solid var(--line)}
+.step .n{font-family:"Bai Jamjuree",sans-serif;font-size:30px;font-weight:700;line-height:1.1;color:var(--line-strong)}
+.step.now .n{color:var(--voice)}
+.step .b{display:flex;flex-direction:column;gap:6px}
+.step .when{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.step p{font-size:16px;color:var(--ink-2);line-height:1.7}
+
+ol.ask{margin:0;padding-left:24px;display:flex;flex-direction:column;gap:11px;font-size:16.5px;color:var(--ink-2);line-height:1.65}
+ol.ask li::marker{font-family:"IBM Plex Mono",monospace;color:var(--muted)}
+
+.callout{border-left:3px solid var(--warn);background:var(--surface);padding:18px 22px;border-radius:0 8px 8px 0;font-size:16px;color:var(--ink-2);line-height:1.7}
+.callout strong{color:var(--ink)}
+
+footer{margin-top:72px;padding-top:26px;border-top:1px solid var(--line);font-size:14px;color:var(--muted);line-height:1.85}
+footer a{color:var(--muted)}
+</style>
+
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">เสนอตัวเลือก · Virtual Office Audio</p>
+    <h1>เลือกตัวตัดเสียงรบกวนให้ Zyra</h1>
+    <p class="lede col">คัดมา 4 ตัวเลือก — สามเจ้าที่ต้องจ่ายเงินและแก้ปัญหาได้ตรงจุด กับหนึ่งตัวฟรีที่ทำคู่ขนานไปได้เลย</p>
+    <div class="meta-row">
+      <span class="chip">1 ก.ย. 2026</span>
+      <span class="chip">ราคาเป็น list price</span>
+      <span class="chip">ยังไม่ได้ทดสอบจริง</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section style="margin-top:0">
+    <div class="answer col">
+      <span class="q">สรุปสั้นที่สุด</span>
+      <p class="a">เอา <em>Krisp</em> — เป็นเจ้าเดียวที่แก้ปัญหาที่ user บ่นได้ตรงจุด และใช้กับระบบที่เรามีอยู่ได้เลย</p>
+      <p class="note">ระหว่างรอราคาจาก Krisp (ไม่เปิดเผยบนเว็บ ต้องถาม sales) ทีมลง <strong>DeepFilterNet3</strong> ซึ่งฟรี ไปคู่ขนานได้ทันที เสียงจะสะอาดขึ้นก่อนโดยไม่ต้องรออนุมัติงบ · ขอราคา <strong>ai-coustics</strong> ไว้ต่อรองด้วย</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">ทำไมถึงต้องจ่ายเงิน</p>
+      <h2>ปัญหาที่เราเจอมีสองแบบ</h2>
+    </div>
+    <p class="col">เวลา user บอกว่า “ตัดเสียงรบกวนไม่ดี” จริง ๆ มีสองเรื่องปนกัน และมีแค่เรื่องเดียวที่ยังแก้ไม่ได้</p>
+    <div class="why">
+      <div>
+        <h3>เสียงพัดลม แอร์ คีย์บอร์ด</h3>
+        <p>เสียงรบกวนทั่วไปที่ไม่ใช่เสียงคน — ระบบที่เราใช้อยู่ตอนนี้จัดการได้อยู่แล้ว และของฟรีทำให้ดีขึ้นได้อีก</p>
+        <p class="tag" style="color:var(--voice)">แก้ได้แล้ว · ใช้ของฟรี · 0 บาท</p>
+      </div>
+      <div class="open">
+        <h3>เสียงคนอื่นพูดข้าง ๆ</h3>
+        <p>เพื่อนร่วมโต๊ะคุยกัน เสียงประชุมโต๊ะข้าง ๆ — ระบบมองว่านี่ก็คือ “เสียงพูด” เหมือนกัน เลยเก็บไว้ให้ ไม่ได้ตัดทิ้ง</p>
+        <p class="tag" style="color:var(--warn)">ยังแก้ไม่ได้ · ต้องจ่ายเงินเท่านั้น</p>
+      </div>
+    </div>
+    <p class="small col">ปรับตั้งค่าเป็น High แรงแค่ไหนก็ไม่ช่วย เพราะเป็นเทคโนโลยีคนละชนิดกัน — ตัวที่แก้ข้อสองได้เรียกว่า voice isolation และมีขายอยู่ไม่กี่เจ้าในโลก</p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">ตัวเลือก</p>
+      <h2>สี่ตัวที่คัดมา</h2>
+    </div>
+
+    <div class="cards">
+
+      <p class="group-label">แก้เรื่องเสียงคนพูดข้าง ๆ ได้ — ต้องจ่ายเงิน</p>
+
+      <article class="cand top">
+        <div class="head">
+          <div class="rank">
+            <span class="n">1</span>
+            <h3>Krisp</h3>
+            <span class="verdict-tag">แนะนำ</span>
+          </div>
+          <p class="pitch">เทคโนโลยีตัวเดียวกับที่อยู่ในโปรแกรมประชุมดัง ๆ ที่คนใช้กันทั่วโลก มีโมเดลชื่อ BVC ที่ตัดเสียงคนอื่นออกโดยเฉพาะ ประมวลผลบนเครื่อง user ทั้งหมด เสียงไม่ออกไปไหน</p>
+          <div class="price">
+            <span class="v">ต้องคุย sales</span>
+            <span class="u">ราคา $8–16/เดือน ที่เห็นในเว็บคือแอปสำหรับผู้ใช้ทั่วไป ไม่ใช่ราคาที่เราจะจ่าย</span>
+          </div>
+        </div>
+        <ul class="pts">
+          <li class="good"><span class="m">+</span><span><strong>ตัดเสียงคนอื่นพูดได้จริง</strong> — เป็นสินค้าที่ขายอยู่แล้ว ไม่ใช่งานวิจัย</span></li>
+          <li class="good"><span class="m">+</span><span><strong>ใช้กับระบบเดิมได้เลย</strong> ไม่ต้องรื้อ ไม่ต้องย้ายไปใช้บริการเจ้าอื่น</span></li>
+          <li class="good"><span class="m">+</span><span>เสียงไม่ถูกส่งขึ้น cloud — ตอบลูกค้าองค์กรเรื่องความปลอดภัยได้สบาย</span></li>
+          <li class="bad"><span class="m">−</span><span><strong>ยังไม่รู้ราคา</strong> ต้องยื่นขอแล้วรอ sales ตอบ จึงควรเริ่มติดต่อทันที</span></li>
+          <li class="bad"><span class="m">−</span><span><strong>user ต้องใส่หูฟัง</strong> ถึงจะได้ผลเต็มที่ — ถ้าใช้ไมค์โน้ตบุ๊กจะยังได้ยินเสียงคนข้าง ๆ อยู่</span></li>
+        </ul>
+      </article>
+
+      <article class="cand">
+        <div class="head">
+          <div class="rank">
+            <span class="n">2</span>
+            <h3>ai-coustics</h3>
+            <span class="verdict-tag">ตัวเทียบราคา</span>
+          </div>
+          <p class="pitch">เจ้าใหม่จากเยอรมนี ทำได้เหมือน Krisp คือแยกเสียงคนพูดหลักออกจากเสียงคนอื่น จุดเด่นคือ<strong>บอกราคาชัดเจนบนเว็บ</strong> และให้ทดลองฟรีทันทีโดยไม่ต้องคุยกับใคร</p>
+          <div class="price">
+            <span class="v">$135–540</span>
+            <span class="u">ต่อเดือน (จ่ายรายปี) ตามจำนวนนาทีที่ใช้ · ทดลองฟรี 30 วัน</span>
+          </div>
+        </div>
+        <ul class="pts">
+          <li class="good"><span class="m">+</span><span><strong>ตัดเสียงคนอื่นพูดได้เหมือนกัน</strong> และใช้กับระบบเดิมได้</span></li>
+          <li class="good"><span class="m">+</span><span><strong>รู้ราคาทันที</strong> ทำให้วางงบได้ และใช้เป็นไพ่ต่อรองกับ Krisp</span></li>
+          <li class="good"><span class="m">+</span><span>ทดลองได้เองเลย ไม่ต้องรอ sales</span></li>
+          <li class="bad"><span class="m">−</span><span>เป็นเจ้าใหม่กว่า มีคนใช้งานจริงน้อยกว่า Krisp มาก</span></li>
+          <li class="bad"><span class="m">−</span><span>หน่วงกว่า Krisp เล็กน้อย และต้องทดสอบยืนยันว่าใช้ในเบราว์เซอร์ได้จริง</span></li>
+        </ul>
+      </article>
+
+      <article class="cand">
+        <div class="head">
+          <div class="rank">
+            <span class="n">3</span>
+            <h3>LiveKit Cloud</h3>
+            <span class="verdict-tag">ไม่แนะนำ</span>
+          </div>
+          <p class="pitch">แทนที่จะซื้อตัวตัดเสียงมาติดเอง ก็ย้ายไปใช้บริการสำเร็จรูปของ LiveKit ที่มีของ Krisp กับ ai-coustics ให้พร้อมใช้ ฟังดูง่ายที่สุด แต่แพงที่สุดและต้องรื้อของเดิม</p>
+          <div class="price">
+            <span class="v">$50–500 + ค่าต่อนาที</span>
+            <span class="u">ต่อเดือน · ตัวที่แก้ปัญหาเราคิดเพิ่มต่างหากอีก $0.0012 ต่อนาที</span>
+          </div>
+        </div>
+        <ul class="pts">
+          <li class="good"><span class="m">+</span><span>ไม่ต้องพัฒนาเอง เปิดใช้ได้เร็ว</span></li>
+          <li class="bad"><span class="m">−</span><span><strong>ต้องทิ้งเซิร์ฟเวอร์เสียงที่เราลงทุนทำเองไปแล้ว</strong> แล้วย้ายไปใช้ของเขา</span></li>
+          <li class="bad"><span class="m">−</span><span><strong>แพงกว่าเกือบเท่าตัว</strong> เมื่อผู้ใช้เยอะขึ้น เพราะจ่ายทั้งค่าระบบและค่าตัดเสียง</span></li>
+          <li class="bad"><span class="m">−</span><span>สุดท้ายก็คือของ Krisp ตัวเดิม — จ่ายผ่านคนกลางแทนที่จะซื้อตรง</span></li>
+        </ul>
+      </article>
+
+      <p class="group-label">ไม่แก้เรื่องเสียงคนพูด แต่ทำให้เสียงสะอาดขึ้น — ฟรี</p>
+
+      <article class="cand free">
+        <div class="head">
+          <div class="rank">
+            <span class="n">4</span>
+            <h3>DeepFilterNet3</h3>
+            <span class="verdict-tag">ทำคู่ขนานได้เลย</span>
+          </div>
+          <p class="pitch">โอเพนซอร์สที่เอามาใช้เชิงพาณิชย์ได้ ไม่มีค่าลิขสิทธิ์ ตัดเสียงพัดลม แอร์ คีย์บอร์ด <strong>ได้ดีกว่าตัวที่เราใช้อยู่ตอนนี้ชัดเจน</strong> ทีมเราเสียบเข้าโค้ดเดิมเองได้ ไม่ต้องคุยกับใคร</p>
+          <div class="price">
+            <span class="v">ฟรี</span>
+            <span class="u">ไม่มีค่าต่อนาที ไม่มีสัญญา · ใช้เวลาพัฒนาราว 2–3 วัน</span>
+          </div>
+        </div>
+        <ul class="pts">
+          <li class="good"><span class="m">+</span><span><strong>ไม่ต้องรออนุมัติงบ</strong> เริ่มได้ทันที และเห็นผลก่อนใคร</span></li>
+          <li class="good"><span class="m">+</span><span>ไม่มีค่าใช้จ่ายเพิ่มเลยแม้ผู้ใช้จะโตขึ้นเท่าตัว</span></li>
+          <li class="good"><span class="m">+</span><span>เสียงไม่ออกนอกเครื่อง user เหมือนกัน</span></li>
+          <li class="bad"><span class="m">−</span><span><strong>ไม่ตัดเสียงคนอื่นพูด</strong> — ปัญหาหลักที่ user บ่นจะยังอยู่</span></li>
+          <li class="bad"><span class="m">−</span><span>ไม่มีใครซัพพอร์ต ถ้ามีปัญหาทีมต้องแก้เอง</span></li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">เทียบเร็ว</p>
+      <h2>ดูพร้อมกันทีเดียว</h2>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <colgroup><col><col class="hi"><col><col><col></colgroup>
+        <thead>
+          <tr><th></th><th>Krisp</th><th>ai-coustics</th><th>LiveKit Cloud</th><th>DeepFilterNet3</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ตัดเสียงคนอื่นพูด</td>
+            <td class="yes">ได้</td><td class="yes">ได้</td><td class="yes">ได้</td><td class="stop">ไม่ได้</td>
+          </tr>
+          <tr>
+            <td>ตัดเสียงพัดลม/คีย์บอร์ด</td>
+            <td class="yes">ดีมาก</td><td class="yes">ดีมาก</td><td class="yes">ดีมาก</td><td class="yes">ดี</td>
+          </tr>
+          <tr>
+            <td>ใช้กับระบบเดิมของเรา</td>
+            <td class="yes">ได้เลย</td><td class="yes">ได้เลย</td><td class="no">ต้องย้ายระบบ</td><td class="yes">ได้เลย</td>
+          </tr>
+          <tr>
+            <td>รู้ราคาตอนนี้ไหม</td>
+            <td class="no">ต้องถาม</td><td class="yes">รู้แล้ว</td><td class="yes">รู้แล้ว</td><td class="yes">ฟรี</td>
+          </tr>
+          <tr>
+            <td>ค่าใช้จ่ายเมื่อโตขึ้น<span class="small" style="display:block">ที่ 50 คนใช้พร้อมกัน</span></td>
+            <td class="num">รอราคา</td><td class="num">~$400 / เดือน</td><td class="num">~$880 / เดือน</td><td class="num">$0</td>
+          </tr>
+          <tr>
+            <td>เสียงออกนอกเครื่อง user ไหม</td>
+            <td class="yes">ไม่ออก</td><td class="yes">ไม่ออก</td><td class="no">ผ่านเซิร์ฟเวอร์เขา</td><td class="yes">ไม่ออก</td>
+          </tr>
+          <tr>
+            <td>ถ้ามีปัญหา ใครดูแล</td>
+            <td class="yes">ผู้ขาย</td><td class="yes">ผู้ขาย</td><td class="yes">ผู้ขาย</td><td class="no">ทีมเราเอง</td>
+          </tr>
+          <tr>
+            <td>เริ่มได้เมื่อไร</td>
+            <td class="no">หลังได้ราคา</td><td>ทดลองได้เลย</td><td>ทดลองได้เลย</td><td class="yes">สัปดาห์นี้</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout col">
+      <strong>ข้อควรรู้ที่เหมือนกันทั้งสามเจ้าที่เสียเงิน:</strong> ทุกเจ้าตัดเสียงคนข้าง ๆ ได้ดีที่สุดเมื่อ user ใส่หูฟัง ถ้าใช้ไมค์ในตัวโน้ตบุ๊ก ผลจะลดลงมาก — ข้อนี้ต้องบอก user ตั้งแต่แรก ไม่งั้นจ่ายเงินแล้วจะยังโดนบ่นเหมือนเดิม
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">อ่านตารางให้ถูก</p>
+      <h2>DeepFilterNet3 ไม่ได้แข่งกับอีกสามเจ้า</h2>
+    </div>
+    <p class="col">มันคนละหมวดกัน — <strong>ไม่ใช่ตัวเลือกที่จะเอามาแทน Krisp ได้</strong> เพราะไม่ตัดเสียงคนพูด แต่เป็นของฟรีที่ทำให้เสียงพัดลม แอร์ คีย์บอร์ด สะอาดขึ้นกว่าที่ใช้อยู่ และทำได้เลยโดยไม่ต้องรอใคร</p>
+    <p class="col">ท่าที่คุ้มที่สุดคือ<strong>ทำทั้งสองอย่าง</strong>: ลง DeepFilterNet3 สัปดาห์นี้เพื่อให้เสียงดีขึ้นทันที ระหว่างที่ฝ่ายจัดซื้อไล่ราคา Krisp อยู่ — ถ้าสุดท้ายซื้อ Krisp ก็สลับมาใช้แทนได้ ไม่เสียของ</p>
+    <p class="small col">ของฟรีตัวอื่นที่ตรวจแล้วไม่เสนอ: RNNoise (ที่ใช้อยู่), Picovoice, ตัวที่ติดมากับเบราว์เซอร์ — ทุกตัวตัดได้แต่เสียงที่ไม่ใช่เสียงคน เหมือนกันหมด</p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">ขอมติ</p>
+      <h2>ขั้นต่อไป</h2>
+    </div>
+    <div class="steps">
+      <div class="step now">
+        <span class="n">1</span>
+        <div class="b">
+          <span class="when">สัปดาห์นี้ · ไม่มีค่าใช้จ่าย · ทำขนานกันทั้งสองข้อ</span>
+          <h3>ขอราคาจาก Krisp กับ ai-coustics · ให้ทีมลง DeepFilterNet3</h3>
+          <p>ราคาของ Krisp เป็นของที่รู้ช้า ต้องเริ่มถามตั้งแต่ตอนนี้ ส่วนฝั่งพัฒนาไม่ต้องรอ — ลงตัวฟรีให้เสียงดีขึ้นก่อนได้เลย</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">2</span>
+        <div class="b">
+          <span class="when">หลังได้สิทธิ์ทดลอง</span>
+          <h3>ทดสอบจริงในห้องที่มีคนคุยกันข้าง ๆ</h3>
+          <p>ให้ทีมฟังเทียบกันเองว่าเสียงที่ปลายทางต่างกันจริงไหม และเครื่องผู้ใช้อืดลงหรือเปล่า ตัดสินด้วยหู ไม่ใช่ด้วยโบรชัวร์</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">3</span>
+        <div class="b">
+          <span class="when">หลังทดสอบ</span>
+          <h3>เลือกเจ้า แล้วเปิดเป็นฟีเจอร์ของแพ็กที่จ่ายเงิน</h3>
+          <p>เพราะค่าใช้จ่ายคิดตามจำนวนนาทีที่ใช้ ควรให้มีรายได้รองรับ ไม่เปิดฟรีให้ทุก workspace — ส่วนตัวฟรียังเปิดให้ทุกคนใช้ได้ตามเดิม</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">เตรียมไว้คุย</p>
+      <h2>ห้าคำถามที่ต้องถาม</h2>
+    </div>
+    <ol class="ask col">
+      <li>คิดราคาแบบไหน — ต่อคน ต่อนาที หรือเหมารายปี? มีขั้นต่ำเท่าไร?</li>
+      <li>ตัวที่ตัดเสียงคนอื่นได้ ใช้ในเว็บได้จริงใช่ไหม ไม่ต้องให้ user ลงโปรแกรมเพิ่ม?</li>
+      <li>ใช้กับเซิร์ฟเวอร์เสียงที่เราทำเองได้ โดยไม่ต้องซื้อบริการอื่นเพิ่มใช่ไหม?</li>
+      <li>ขอทดลองใช้กับระบบจริงของเราได้กี่วัน กี่นาที?</li>
+      <li>เสียงของผู้ใช้ถูกส่งออกไปนอกเครื่องหรือไม่ — ขอเป็นลายลักษณ์อักษร ไว้ตอบลูกค้าองค์กร</li>
+    </ol>
+  </section>
+
+  <footer>
+    <p>ราคาและข้อมูลรวบรวมเมื่อ 1 ก.ย. 2026 จากเอกสารสาธารณะของผู้ให้บริการ ยังไม่ได้ติดต่อฝ่ายขาย และยังไม่มีการทดสอบคุณภาพเสียงจริงกับระบบของเรา · ตัวเลขค่าใช้จ่ายคำนวณจากสมมติฐานการใช้งาน 5 ชั่วโมงต่อวัน 22 วันทำการ</p>
+    <p style="margin-top:10px">แหล่งข้อมูล: <a href="https://sdk-docs.krisp.ai/docs/introduction">Krisp</a> · <a href="https://ai-coustics.com/pricing">ai-coustics</a> · <a href="https://livekit.com/pricing">LiveKit</a> · <a href="https://github.com/Rikorose/DeepFilterNet">DeepFilterNet</a></p>
+  </footer>
+
+</div>
+</body>
+</html>

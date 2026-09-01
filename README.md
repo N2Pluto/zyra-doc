@@ -61,8 +61,13 @@ static HTML บน Vercel
 |---|---|---|
 | `onboarding/` (คู่มือคนใหม่ TH/EN) | https://zyra-onboarding.vercel.app | **อัตโนมัติ** — push เข้า `main` แล้ว Vercel build ให้เลย (~1s) |
 | `vo-audio-fixes-summary/` | https://vo-audio-fixes-summary.vercel.app | ด้วยมือ — `cd web/vo-audio-fixes-summary && vercel deploy --prod` |
+| `noise-vendor-review/` (เทียบเจ้าตัดเสียงรบกวน — ให้ PM เสนอ) | https://zyra-noise-vendor-review.vercel.app | **อัตโนมัติ** — push เข้า `main` |
+
+**auto-deploy ของสอง site ใช้กลไกคนละแบบ — อย่าสับสน**
 
 **onboarding auto-deploy ทำงานยังไง:** project `zyra-onboarding` ต่อ GitHub repo นี้ไว้ · Root Directory ของ project เป็น `.` เลยชี้ปลายทางผ่าน [`vercel.json`](vercel.json) → `outputDirectory: web/onboarding` และ [`.vercelignore`](.vercelignore) จำกัดให้ upload แค่โฟลเดอร์นั้น — **ถ้าย้าย/เปลี่ยนชื่อโฟลเดอร์ `web/onboarding` ต้องแก้ 2 ไฟล์นั้นด้วย ไม่งั้นเว็บ live พัง**
+
+**noise-vendor-review auto-deploy ทำงานยังไง:** project `zyra-noise-vendor-review` ต่อ GitHub repo นี้เหมือนกัน แต่ตั้ง **Root Directory = `web/noise-vendor-review`** บน Vercel แทน — เลย**ไม่แตะ** [`vercel.json`](vercel.json) และ [`.vercelignore`](.vercelignore) ที่เป็นของ onboarding · ถ้าจะเพิ่ม site ใหม่ในอนาคต ให้ใช้วิธีนี้ (project แยก + Root Directory) ห้ามไปแก้ 2 ไฟล์นั้น ไม่งั้น onboarding พัง
 
 ต้องใช้ `vercel` CLI ≥ 47.2.2 (ที่ลงผ่าน homebrew อาจเก่ากว่า — ใช้ `npx vercel@latest` แทนได้)
 
