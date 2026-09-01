@@ -4,6 +4,7 @@
 > **base ที่ตรวจ:** zyra-app `d748a39` · zyra-api `2419213` (ทั้งคู่คือ `origin/develop` — โค้ด Pet merge เข้า develop แล้ว)
 > **verify แล้ว:** `go build ./...` เขียว · `go test ./internal/service/... ./internal/handler/... -run 'Pet|XP'` ผ่าน · Vitest pet 5 ไฟล์ / 39 tests ผ่าน · **ยังไม่ได้ live-test บน dev / ยังไม่ได้ UAT ไฟล์ sprite จริง**
 > **repo ที่กระทบ:** zyra-app, zyra-api · **เอกสารอ้างอิง:** [progress-2026-08-31.md](progress-2026-08-31.md) · [db-schema-api-contract.md](db-schema-api-contract.md) · [work-split.md](work-split.md)
+> **อัปเดต 2026-09-01** — หลังดู sprite จริง (`zyra-app/public/image/petdemo/Cat_Adult_Happy.png`) และ user เคาะ decision แล้ว: **F1 / F2 / F3 เขียนใหม่** (ตอนตรวจรอบแรกยังไม่เห็น asset จริง) และคำถามข้อ 1-2 ท้ายไฟล์ปิดแล้ว — กฎที่เป็นทางการอยู่ใน [spec.md](spec.md)
 
 สถานะรายหัวข้อใน [progress-2026-08-31.md](progress-2026-08-31.md) **ตรงกับโค้ดทั้งหมด** ไฟล์นี้คือส่วนที่เอกสารยังไม่ได้บันทึก — เรียงตามความเร่งด่วน
 
@@ -11,10 +12,10 @@
 
 | ID | เรื่อง | repo | ระดับ | ต้องรอคำตอบก่อนไหม |
 |---|---|---|---|---|
-| F1 | progress bar ยังเป็นสเกล 17 slots | zyra-app | ต้องแก้ | ✅ รอ 17 vs 20 |
-| F2 | preview modal hardcode 6×4@8fps + ทิ้ง metadata | zyra-app | ต้องแก้ | ✅ รอ 17 vs 20 + metadata policy |
-| F3 | เพดาน 1000px ขัดกับ frame 50 → อัปไฟล์จริงไม่ผ่าน | zyra-api + zyra-app | **บล็อก UAT** | ✅ รอ metadata policy |
-| F4 | `FRAME_SIZE_MISMATCH` ไม่ได้เช็ค modulo | zyra-api | ต้องแก้ | — |
+| F1 | `PET_UPLOAD_TOTAL` เป็น 20 (มี `Idle`) แต่ของจริงคือ 17 | zyra-app + zyra-api | ต้องแก้ | ✔️ เคาะแล้ว = **17** |
+| F2 | preview modal ทิ้ง metadata จริง (hardcode 6×4@8) | zyra-app | ต้องแก้ | ✔️ เคาะแล้ว |
+| F3 | กฎ sprite ปัจจุบัน reject/ตัด asset จริงของ artist | zyra-api + zyra-app | **บล็อก UAT** | ✔️ เคาะแล้ว |
+| F4 | `validatePetSpriteDimensions` ยังใช้สูตรเก่า (ไม่ใช่เซลล์จัตุรัส) | zyra-api | ต้องแก้ | ✔️ เคาะแล้ว |
 | F5 | error detail ไม่แนบตัวเลขตาม contract | zyra-api | ต้องแก้ | — |
 | F6 | ไม่มี `POST /pets/:id/thumbnail` | zyra-api | ตกหล่น | — |
 | F7 | `workspace_usage_count` ไม่มีใครเขียน | zyra-api | ตกหล่น | ต่อ PR 6 |
@@ -31,47 +32,60 @@
 
 ## กลุ่ม 1 — ต้องแก้ก่อน (มองเห็นได้ / บล็อก UAT)
 
-### F1 — progress bar ยังเป็นสเกล 17 slots ทั้งที่ระบบต้องการ 20
+### F1 — โค้ดใช้ 20 slots (มี `Idle`) แต่ของจริงคือ 17
 
-- **ไฟล์:** `zyra-app/views/admin/pet-management/components/pet-detail-panel.tsx:33-52` (ตาราง `PET_UPLOAD_PROGRESS_WIDTHS`) และการใช้งานที่ `:97`
-- **อาการ:** อัปโหลดครบ 17/20 บาร์ขึ้นเต็ม 100% แล้ว จากนั้น 18, 19, 20 บาร์ไม่ขยับ (`?? "w-full"` กลืนไป)
-- **สาเหตุ:** array มี 18 ค่า step ละ 5.88% = 100/17 → ถูกทำไว้ตอน spec ยัง 17 slots แต่ตอนนี้ `PET_UPLOAD_TOTAL = 20` (`pet-upload-config.ts:72`) และ `model.RequiredPetSlots` ฝั่ง Go ก็ 20 (`zyra-api/internal/model/pet.go:35-40`)
-- **ต้องแก้:** เลิก hardcode ตาราง width → คำนวณจาก `uploaded / total` ตรง ๆ (ถ้าต้องคง Tailwind class ล้วน ให้ gen ตามจำนวน slot จริง ไม่ใช่ค่าคงที่ 17 ขั้น)
-- **กระทบ 2 ที่:** หน้า create/edit และ `PetSelectedView` (`:454-459`) ที่ส่ง `animations.length` เข้าตัวเดียวกัน
-- **verify:** อัปโหลด 18/20 แล้วดูว่าบาร์ยังขยับ
+- **เคาะแล้ว 2026-09-01: ใช้ 17 slots** — Egg 2 (`Wobbling`, `Evolution`) + Baby/Adult/Evolved ละ 5 (`Walking`, `Sitting`, `Happy`, `Sad`, `Evolution`) ตาม [spec.md SC-PM-03](spec.md)
+- **ต้องแก้ 4 ที่ให้ `Idle` หายไป:**
+  - `zyra-api/internal/model/pet.go:35-40` — ถอด `PetSlotIdle` ออกจาก `RequiredPetSlots` (และ const ถ้าไม่ได้ใช้ที่อื่น)
+  - `zyra-api/internal/database/postgres.go` + `migrations/84_pet_animation_idle_slot.sql` — ถอด `'Idle'` ออกจาก CHECK และ **ล้าง row ที่ `slot = 'Idle'` ก่อนใส่ constraint ใหม่** (ไม่งั้น ALTER ไม่ผ่าน)
+  - `zyra-app/views/admin/pet-management/pet-upload-config.ts` — `GROWN_STAGE_ANIMATIONS` ตัด `idle` ออก → `PET_UPLOAD_TOTAL` = 17
+- **ผลพลอยได้:** `PET_UPLOAD_PROGRESS_WIDTHS` (`pet-detail-panel.tsx:33-52`) มี 18 ค่า = สเกล 17 ขั้นพอดี **ถ้า total กลับเป็น 17 บาร์จะตรงเอง** — ไม่ต้องรื้อตาราง แต่แนะนำให้เปลี่ยนไปคำนวณจาก `uploaded / PET_UPLOAD_TOTAL` อยู่ดี เพื่อไม่ให้พังอีกถ้าจำนวน slot เปลี่ยน
+- **verify:** อัปครบ 17/17 แล้วบาร์เต็มพอดี · `stage_ready` ของทั้ง 4 stage เป็น true · pet ที่เคยอัป `Idle` ไว้ต้องไม่ค้างใน DB
 
-### F2 — preview modal ใช้ค่า animation ชุดที่ 3 ที่ไม่ตรงกับใครเลย
+### F2 — preview modal ทิ้ง metadata จริงแล้ว hardcode ค่าไว้
 
 - **ไฟล์:** `zyra-app/views/admin/pet-management/components/pet-preview-modal.tsx:166` (`void animationMeta`) และ `:177-180`
-- **อาการ:** preview เล่นเป็น 6 เฟรม × 4 rows @ 8fps ตายตัว ไม่ว่าไฟล์จริงจะเป็นเท่าไร → preview ไม่ตรงกับของที่จะเห็นในเกม
-- **สาเหตุ:** modal รับ `animationMeta` (ค่าจริงจาก DB: `frame_count/frame_rate/direction_rows/frame_width/frame_height`) แล้ว `void` ทิ้ง และ prop `frameCount`/`frameRate` (50/24) ที่ `pet-upload-step.tsx:456-465` ส่งมาก็ไม่ได้ถูก destructure ออกมาใช้
-- **ตอนนี้มี 3 สัญญาที่ไม่ตรงกัน:** DB (ค่าจริงต่อ animation) · upload form (50 / 24 / 4) · preview (6 / 4 / 8)
-- **ต้องแก้:** ให้ preview อ่านจาก `animationMeta[key]` เป็นหลัก แล้ว fallback เป็นค่าที่ upload ส่งมา
-- **verify:** อัปชีทที่ frame_count ≠ 6 แล้วเทียบว่า preview เดินตามจำนวนเฟรมจริง
+- **สถานะจริง (แก้จากรอบตรวจแรก):** ค่าที่ hardcode ไว้ (6 เฟรม × 4 แถว @ 8fps) **ตรงกับ asset จริงของ artist** — `Cat_Adult_Happy.png` เป็น 6 ท่า × 4 ทิศ และ 8fps คือ `AVATAR_WALK_FPS` ที่ engine ใช้ ค่าที่ผิดคือ **ฟอร์ม upload ที่ล็อก 50 เฟรม / 24 fps** (ดู F3)
+- **แต่ยังต้องแก้อยู่ดี:** modal รับ `animationMeta` (ค่าจริงจาก DB) แล้ว `void` ทิ้ง → พอ artist ส่งไฟล์ที่ใช้ค่าอื่น (เช่น `Wobbling` ที่มีทิศเดียว) preview จะเล่นผิดทันทีโดยไม่มีอะไรเตือน
+- **ต้องแก้:** อ่าน `frame_count` / `frame_rate` / `direction_rows` จาก `animationMeta[key]` เป็นหลัก → fallback เป็นค่าที่ฟอร์มส่งมา → fallback สุดท้าย 6/4/8 · เพิ่ม empty state ต่อ (stage, animation) ที่ยังไม่มีไฟล์
+- **verify:** อัปไฟล์ที่ `frame_count ≠ 6` หรือ `direction_rows = 1` แล้วดูว่า preview เดินตามค่าจริง
 
-### F3 — เพดาน 1000px ขัดกับ frame_count ที่ล็อกไว้ 50 → อัปโหลดไฟล์จริงจะไม่ผ่าน (บล็อก UAT)
+### F3 — กฎ sprite ปัจจุบัน reject / ตัด asset จริงของ artist (บล็อก UAT)
 
-- **ไฟล์:** `zyra-api/internal/service/pet_service.go:24` (`maxPetSpriteSize = 1MB`) และ `:512-523` (`validatePetSpriteDimensions`) · ฝั่ง FE `pet-upload-step.tsx:241-303` ล็อก `frameCount=50` / `frameRate=24` / `directionRows=4` และ `<select disabled>`
-- **อาการที่จะเจอใน UAT:** ชีท 50 เฟรมที่เฟรมขนาดปกติ (เช่น 64px → กว้าง 3200px) จะได้ `INVALID_DIMENSIONS` ทันที เพราะ API รับไม่เกิน 1000×1000 → เฟรมกว้างได้ไม่เกิน **20px** (เคส "valid" ใน unit test เองคือ 1000×400 → 20×100 ที่ `pet_service_test.go:71`) และไฟล์ต้องไม่เกิน 1 MB ด้วย
-- **ต้องเลือกทางใดทางหนึ่งก่อนนัด UAT:**
-  1. ปลดล็อก metadata ให้ตั้งค่าต่อ animation ตาม spec (เลิกล็อก 50/24/4) แล้วให้ artist ส่งชีทตามที่ระบบรับ หรือ
-  2. ยกเพดาน dimension/ขนาดไฟล์ให้รองรับชีท 50 เฟรมของจริง (ต้องคุยขนาดจริงกับ artist ก่อนตั้งเลข)
-- **หมายเหตุ:** ข้อนี้เป็นเรื่องเดียวกับ "Animation metadata" ใน [progress §จุดที่ต้องตัดสินใจ](progress-2026-08-31.md) แต่เอกสารยังไม่ได้บันทึกว่ามัน **ขัดกับเพดานฝั่ง API จนอัปไฟล์จริงไม่ได้**
+- **ไฟล์:** `zyra-api/internal/service/pet_service.go:512-523` (`validatePetSpriteDimensions`) · `zyra-app/.../pet-upload-step.tsx:241-303` (ล็อก `frameCount=50` / `frameRate=24` + `<select disabled>`)
+- **ทดสอบกับ asset จริง** `zyra-app/public/image/petdemo/Cat_Adult_Happy.png` (1000×1000, 6 ท่า × 4 ทิศ):
 
----
+| กฎปัจจุบัน | ผลกับไฟล์จริง |
+|---|---|
+| `width % frame_count = 0` (contract) | `1000 % 6 = 4` → **reject ไฟล์ทั้งชุด** |
+| `frame_height = height / direction_rows` | `1000/4 = 250` แต่แถวจริงสูง ~166 → เส้นแบ่งที่ y=250 มีพิกเซลทึบ **624 พิกเซล** = ตัดแมวครึ่งตัว |
+| ฟอร์มล็อก 50 เฟรม / 24 fps | ของจริงคือ **6 เฟรม / 8 fps** — และ 50 เฟรมบนชีท 1000px จะเหลือเฟรมกว้าง 20px |
+
+- **กฎใหม่ที่เคาะแล้ว** (รายละเอียด + ผลวัดอยู่ใน [spec.md § Sprite Grid](spec.md)):
+  - ชีทต้องเป็น **1000 × 1000 px เท่านั้น** (reuse `requiredSpritesheetDim` จาก `avatar_service.go`)
+  - เซลล์ **จัตุรัส**: `frame_width = frame_height = floor(width / frame_count)` · อ่าน `direction_rows` แถวจากด้านบน · ที่เหลือปล่อยว่างได้
+  - ทิ้งกฎหารลงตัวทั้ง 2 แกน → ตรวจแทนด้วย `frame_size ≥ 16px` (`FRAME_SIZE_MISMATCH`) และ `direction_rows × frame_size ≤ height` (`FRAME_ROW_MISMATCH`)
+  - ฟอร์มปลดล็อกทั้ง 3 ช่อง default **6 / 8 / 4**
+- **verify:** อัป `Cat_Adult_Happy.png` ด้วย `frame_count=6, frame_rate=8, direction_rows=4` ต้องผ่าน และ preview ต้องเห็นแมวเต็มตัวทั้ง 24 เฟรม
 
 ## กลุ่ม 2 — ไม่ตรง [db-schema-api-contract.md](db-schema-api-contract.md)
 
-### F4 — `FRAME_SIZE_MISMATCH` เช็คผิดเงื่อนไข
+### F4 — `validatePetSpriteDimensions` ยังใช้สูตรเก่าทั้งฟังก์ชัน
 
-- **ไฟล์:** `zyra-api/internal/service/pet_service.go:516`
-- contract เขียน `width % frame_count = 0` แต่โค้ดเช็คแค่ `width < frame_count` → ชีทที่หารไม่ลงตัว (เช่น width 100, frame_count 3) **ผ่าน** แล้ว `width / frame_count` ปัดทิ้งเศษเงียบ ๆ → เฟรมเพี้ยนทีละพิกเซลสะสม
-- **ต้องแก้:** เพิ่ม `width % frame_count != 0 → ErrPetFrameSizeMismatch` (แกน height มี modulo อยู่แล้วที่ `:519`)
+- **ไฟล์:** `zyra-api/internal/service/pet_service.go:512-523`
+- ตอนนี้: `width/height ≤ 1000` · `width < frame_count → FRAME_SIZE_MISMATCH` · `height % direction_rows ≠ 0 → FRAME_ROW_MISMATCH` · คืน `(width/frame_count, height/direction_rows)`
+- **ต้องเปลี่ยนเป็น** (ตาม [spec.md § Sprite Grid](spec.md)):
+  1. `width == 1000 && height == 1000` ไม่งั้น `INVALID_DIMENSIONS` (ตอนนี้เป็น "ไม่เกิน" ต้องเป็น "เท่ากับ")
+  2. `frameSize := width / frameCount` → ถ้า `< 16` คืน `FRAME_SIZE_MISMATCH`
+  3. `directionRows * frameSize > height` → คืน `FRAME_ROW_MISMATCH`
+  4. คืน `(frameSize, frameSize)` — **เซลล์จัตุรัส** ไม่ใช่ `height / directionRows`
+- ข้อ 4 สำคัญที่สุด: สูตรเดิมทำให้ `frame_height` ของ asset จริงเป็น 250 แทนที่จะเป็น 166 → renderer ตัดสไปรต์ (ดู F3)
+- unit test เดิม (`pet_service_test.go:61-75`) ต้องเขียนใหม่ทั้งชุดเพราะอิงสูตรเก่า
 
 ### F5 — error detail ไม่แนบตัวเลขให้ FE
 
 - **ไฟล์:** `zyra-api/internal/handler/pet_handler.go:162-166`, `:197-201`
-- contract ระบุให้แนบ `{width, frame_count}` กับ `FRAME_SIZE_MISMATCH` และ `{height, direction_rows}` กับ `FRAME_ROW_MISMATCH` เพื่อให้ FE ขึ้นข้อความพร้อมเลข — ปัจจุบันส่งแค่ `detail: {code}`
+- spec ระบุให้แนบ `{width, frame_count, frame_size}` กับ `FRAME_SIZE_MISMATCH` และ `{height, direction_rows, frame_size}` กับ `FRAME_ROW_MISMATCH` เพื่อให้ FE ขึ้นข้อความพร้อมเลขตามตาราง copy ใน [spec.md SC-PM-07](spec.md) — ปัจจุบันส่งแค่ `detail: {code}`
 - เกี่ยวกับ F8 โดยตรง (FE ขึ้นข้อความละเอียดไม่ได้เพราะไม่มีข้อมูล)
 
 ### F6 — ไม่มี endpoint upload thumbnail
@@ -148,10 +162,10 @@
 
 ---
 
-## คำถามที่ต้องได้คำตอบก่อนแก้ F1–F3 / F15
+## คำถามที่ต้องได้คำตอบ (เหลือข้อ 3)
 
 | # | คำถาม | ค้างมาจาก |
 |---|---|---|
-| 1 | **17 หรือ 20 slots** — โค้ดใช้ 20 (Egg 2 + Baby/Adult/Evolved ละ 6 โดยเพิ่ม `Idle`), [work-split.md:50-57](work-split.md) เขียน 17 (ละ 5) → ต้องได้คำตอบก่อนแก้ F1/F2 ไม่งั้นแก้แล้วต้องแก้อีกรอบ | progress §Required animation slots |
-| 2 | **metadata ต่อ animation** — เปิดให้ตั้งค่าเองตาม spec หรือรับค่า fixed อย่างเป็นทางการ (คำตอบกำหนดว่าจะแก้ F3 ทางไหน) | progress §Animation metadata |
+| 1 | ~~17 หรือ 20 slots~~ — ✅ **ปิดแล้ว 2026-09-01: ใช้ 17** (ถอด `Idle` ออกจากโค้ด) | progress §Required animation slots |
+| 2 | ~~metadata ต่อ animation~~ — ✅ **ปิดแล้ว 2026-09-01: ปลดล็อกให้กรอกต่อ animation** default 6 / 8 fps / 4 rows และล็อกชีทที่ 1000×1000 | progress §Animation metadata |
 | 3 | **เจตนาของ feature flag** — ปิดแค่เมนู หรือต้องปิดทั้ง route + API (F15) | ใหม่จากรอบตรวจนี้ |

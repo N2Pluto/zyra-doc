@@ -5,6 +5,8 @@
 > Migration ถัดไปที่ว่าง: **77** (ล่าสุดในโปรเจกต์คือ `76_user_security_sessions.sql`)
 >
 > **อัปเดต 2026-08-17 — ✅ ข้อ 2 กับ ข้อ 5 ปิดแล้ว** schema ข้างล่างแก้ตามคำตอบจริงแล้ว ไม่มีจุด 🔴 เหลือ
+>
+> **อัปเดต 2026-09-01 — แก้ตาม [spec.md](spec.md) ที่ล็อกกฎ sprite จาก asset จริง** 5 จุด: สูตร frame (เซลล์จัตุรัส), ยกเลิกกฎหารลงตัว 2 แกน, ขนาดชีทต้อง = 1000×1000, `direction_rows` ปิดแล้ว (`1`/`4` เรียงตาม `AVATAR_DIR_ROW`), mood Neutral ยืดถึง 72 ชม.
 
 ## ข้อควรรู้ก่อนอ่าน
 
@@ -99,9 +101,9 @@ CREATE TABLE IF NOT EXISTS tb_pet_animation (
     frame_count    INT       NOT NULL CHECK (frame_count    BETWEEN 1 AND 64),
     frame_rate     INT       NOT NULL CHECK (frame_rate     BETWEEN 4 AND 24),
     direction_rows INT       NOT NULL DEFAULT 1
-                             CHECK (direction_rows >= 1),  -- ⏸ ค่าที่ยอมรับจริงรอดู sprite จาก artist
-    frame_width  INT         NOT NULL,          -- = sprite_width  / frame_count    (คำนวณตอน upload)
-    frame_height INT         NOT NULL,          -- = sprite_height / direction_rows (คำนวณตอน upload)
+                             CHECK (direction_rows IN (1, 4)),  -- ✅ ปิดแล้ว 2026-09-01 (เห็น sprite จริงแล้ว)
+    frame_width  INT         NOT NULL,          -- = floor(sprite_width / frame_count)  เซลล์จัตุรัส
+    frame_height INT         NOT NULL,          -- = frame_width (จัตุรัส) ไม่ใช่ sprite_height / direction_rows
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (pet_type_id, stage, slot)
@@ -110,35 +112,32 @@ CREATE TABLE IF NOT EXISTS tb_pet_animation (
 CREATE INDEX IF NOT EXISTS idx_pet_animation_type ON tb_pet_animation (pet_type_id);
 ```
 
-- **spritesheet เป็น grid** (ข้อ 2 — ยึด Figma): คอลัมน์ = frame, แถว = direction → ต้องหารลงตัวทั้ง 2 แกน
-  - `frame_width  = sprite_width  / frame_count`
-  - `frame_height = sprite_height / direction_rows`
+- **spritesheet เป็น grid ของเซลล์จัตุรัส** (ข้อ 2 — ยึด Figma; ล็อกค่าจาก asset จริง 2026-09-01): คอลัมน์ = frame, แถว = direction
+  - ชีทต้องเป็น **1000 × 1000 px เท่านั้น** (เหมือน avatar — `requiredSpritesheetDim` ใน `avatar_service.go`)
+  - `frame_width = frame_height = floor(sprite_width / frame_count)`
+  - อ่าน `direction_rows` แถวจากด้านบน **พื้นที่ที่เหลือด้านล่าง/ขวาปล่อยว่างได้**
+  - ❌ **ไม่มีกฎหารลงตัวแล้ว** — asset จริง (`Cat_Adult_Happy.png`, 6 คอลัมน์ × 4 แถว) มี `1000 % 6 = 4` และแถวจริงสูง ~166 ไม่ใช่ 250 กฎเดิมจึง reject ไฟล์และตัดสไปรต์กลางตัว ดูผลวัดใน [spec.md § Sprite Grid](spec.md)
+  - ตรวจแทนด้วย: `frame_size ≥ 16px` และ `direction_rows × frame_size ≤ sprite_height`
 
-### ⏸ ค่า `direction_rows` + ลำดับแถว — รอดู sprite จริงจาก artist ก่อน
+### ✅ ค่า `direction_rows` + ลำดับแถว — ปิดแล้ว 2026-09-01
 
-**ยังไม่ล็อก** — ตั้งใจจะให้เป็น `1` หรือ `4` (VO orthogonal-only) และเรียงแถวตาม avatar เดิม แต่ต้องเห็นไฟล์จริงก่อนว่า artist ทำมาแบบไหน
-
-สมมติฐานที่ตั้งไว้ (ยังไม่ยืนยัน):
+ยืนยันจาก asset จริงของ artist (`zyra-app/public/image/petdemo/Cat_Adult_Happy.png` — 1000×1000, 6 ท่า × 4 ทิศ, ล่างว่าง ~1/3):
 
 | row | ทิศ | ที่มา |
 |---|---|---|
-| 0 | `down` (ใต้) | `AVATAR_DIR_ROW` ใน `zyra-app/zyra-engine/avatar-frames.ts:26` |
+| 0 | `down` (ใต้) | `AVATAR_DIR_ROW` ใน `zyra-app/zyra-engine/avatar-frames.ts:26` — ตรงกับไฟล์จริงเป๊ะ |
 | 1 | `left` (ตก) | |
 | 2 | `right` (ออก) | |
 | 3 | `up` (เหนือ) | |
 
-| slot | คาดว่า direction_rows |
+| slot | direction_rows ที่ใช้ |
 |---|---|
 | `Walking`, `Sitting` | 4 |
-| `Wobbling`, `Evolution` | 1 |
-| `Happy`, `Sad` | 1 |
+| `Wobbling`, `Evolution`, `Happy`, `Sad` | 1 หรือ 4 (แล้วแต่ไฟล์ที่ artist ส่ง — `Cat_Adult_Happy.png` เป็น 4) |
 
-**สิ่งที่ยังทำได้เลยโดยไม่ต้องรอ** — คอลัมน์ `direction_rows INT` เข้า migration 77 ได้เลยไม่ว่าคำตอบจะเป็นอะไร เพราะสิ่งที่เปลี่ยนคือ **CHECK constraint กับ const ลำดับแถวใน Go เท่านั้น**:
-
-- ใส่ CHECK แบบหลวม (`>= 1`) ไปก่อน → รัดให้แคบทีหลังด้วย `ALTER TABLE … DROP CONSTRAINT … ADD CONSTRAINT …` หนึ่งบรรทัด
-- **อย่าใส่ `CHECK (direction_rows IN (1, 4))` ตั้งแต่แรก** — ถ้า artist ส่ง 8 ทิศมาจะ insert ไม่เข้าและต้อง migration แก้ ขณะที่การรัดทีหลังไม่มีความเสี่ยง (ข้อมูลที่มีอยู่ผ่าน constraint ใหม่แน่นอนถ้าค่าจริงแคบกว่า)
-- ลำดับแถว: เขียนเป็น const ที่ **import จาก `AVATAR_DIR_ROW`** ตั้งแต่แรก ถ้า artist ทำมาไม่ตรง ค่อยตัดสินว่าจะขอให้แก้ไฟล์ หรือเพิ่ม mapping แยก
-- `frame_width`/`frame_height` **เก็บ** ไม่ derive — client ต้องใช้ทุกเฟรมเพื่อ slice spritesheet ถ้าไม่เก็บต้อง decode PNG ใหม่ทุก request (ค่าถูก validate ให้หารลงตัวตอน upload อยู่แล้ว จึงไม่ขัดกัน)
+- `CHECK (direction_rows IN (1, 4))` ใส่ได้เลยแล้ว ไม่ต้องรออีก
+- ลำดับแถว: ต้อง **import จาก `AVATAR_DIR_ROW`** ไม่ใช่พิมพ์เลข 0-3 ใหม่ (engine มี single source อยู่แล้ว)
+- `frame_width`/`frame_height` **เก็บ** ไม่ derive ตอน read — client ต้องใช้ทุกเฟรมเพื่อ slice spritesheet ถ้าไม่เก็บต้อง decode PNG ใหม่ทุก request
 - `CHECK` ของ `frame_count`/`frame_rate`/`direction_rows` = ค่าเดียวกับ SC-PM-07 — validate 2 ชั้น (Go ให้ error code สวย, DB กัน bug)
 
 **Slot vocabulary — const ใน Go ไม่ใช่ CHECK** (เพิ่มท่าใหม่ไม่ต้อง migration):
@@ -196,7 +195,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_pet_xp_config_current
   },
   "mood": {
     "happy":   { "within_hours": 12, "xp_rate_percent": 150 },
-    "neutral": { "within_hours": 48, "xp_rate_percent": 100 },
+    "neutral": { "within_hours": 72, "xp_rate_percent": 100 },
     "sad":     { "after_hours":  72, "xp_rate_percent": 50  }
   }
 }
@@ -295,12 +294,16 @@ xp >= xp_evolve  → evolved
 
 ```
 ≤ 12 ชม.       → happy   (×150%)
-≤ 48 ชม.       → neutral (×100%)
-> 48 ชม.       → ???  ⚠️ ช่วง 48–72 ชม. ไม่มี state ใน card
+12–72 ชม.      → neutral (×100%)
 > 72 ชม.       → sad     (×50%)
 ```
 
-**ตอนนี้ implement เป็น `> 48 ชม. = sad`** (Sad เริ่มที่ 48 ไม่ใช่ 72) เพราะเป็นการตีความเดียวที่ไม่มีช่องว่าง — แต่ถ้า PM ตอบว่า Neutral ยืดถึง 72 ชม. ก็แก้เลขเดียวใน Go const **ต้องถามก่อน merge**
+**✅ ปิดแล้ว 2026-09-01 — Neutral ยืดถึง 72 ชม.** (ช่องว่าง 48–72 ที่เคยไม่มี state หายไป)
+
+- ค่าที่ admin ตั้งได้จริงมี 2 ค่า: `mood.happy.within_hours` (ขอบบนของ Happy) และ `mood.sad.after_hours` (ขอบที่เข้า Sad)
+- `mood.neutral.within_hours` **ต้องเท่ากับ** `mood.sad.after_hours` เสมอ (เป็นค่า mirror ไม่ใช่ค่าอิสระ) — ฟอร์มแสดงช่อง Neutral เป็น read-only
+- ⚠️ **validation ฝั่ง Go ต้องแก้**: จาก `happy.within < neutral.within < sad.after` เป็น `happy.within < sad.after` **และ** `neutral.within == sad.after`
+- seed ของ migration 85 + bootstrap DDL ต้องเปลี่ยน `neutral.within_hours` จาก 48 → 72
 
 ### `stage_ready` — จากจำนวน animation ที่ upload ครบ
 
@@ -401,9 +404,9 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 
 | field | ค่า |
 |---|---|
-| `file` | PNG spritesheet (≤ 1 MB, ≤ 1000×1000, `width % frame_count = 0`, `height % direction_rows = 0`) |
-| `frame_count` | `1`–`64` (จำนวนคอลัมน์) |
-| `frame_rate` | `4`–`24` |
+| `file` | PNG spritesheet — **1000 × 1000 px เท่านั้น**, ≤ 1 MB (ไม่มีกฎหารลงตัวแล้ว) |
+| `frame_count` | `1`–`64` (จำนวนคอลัมน์) — default **6** · ต้องได้ `frame_size = floor(1000 / frame_count) ≥ 16px` |
+| `frame_rate` | `4`–`24` — default **8** (= `AVATAR_WALK_FPS`) |
 | `direction_rows` | `1` หรือ `4` เท่านั้น (`4` = down/left/right/up ตามลำดับ `AVATAR_DIR_ROW`) |
 
 ```json
@@ -412,7 +415,7 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
   "message": "success",
   "data": {
     "sprite_url": "https://pub-b74ca….r2.dev/static/pet/9f3c…/adult/Sitting_7c1e….png",
-    "frame_width": 96, "frame_height": 128, "direction_rows": 4,
+    "frame_width": 166, "frame_height": 166, "direction_rows": 4,
     "stage_ready": true
   }
 }
@@ -426,12 +429,12 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 |---|---|---|
 | 400 | `INVALID_FILE_TYPE` | ไม่ใช่ PNG (นามสกุล + magic bytes `89 50 4E 47`) |
 | 400 | `FILE_TOO_LARGE` | > 1 MB |
-| 400 | `INVALID_DIMENSIONS` ⚠️ | width หรือ height > 1000 (ชื่อ code รอ PM ยืนยัน) |
+| 400 | `INVALID_DIMENSIONS` | ขนาดชีทไม่ใช่ 1000 × 1000 px พอดี |
 | 400 | `INVALID_FRAME_COUNT` | นอกช่วง 1–64 |
 | 400 | `INVALID_FRAME_RATE` | นอกช่วง 4–24 |
 | 400 | `INVALID_DIRECTION_ROWS` ⚠️ | ไม่ใช่ `1` หรือ `4` |
-| 400 | `FRAME_SIZE_MISMATCH` | `width % frame_count ≠ 0` — แนบ `{width, frame_count}` ให้ FE ขึ้นข้อความพร้อมเลข |
-| 400 | `FRAME_ROW_MISMATCH` ⚠️ | `height % direction_rows ≠ 0` — แนบ `{height, direction_rows}` |
+| 400 | `FRAME_SIZE_MISMATCH` | `floor(width / frame_count) < 16px` (frame_count มากเกินไป) — แนบ `{width, frame_count, frame_size}` ให้ FE ขึ้นข้อความพร้อมเลข |
+| 400 | `FRAME_ROW_MISMATCH` | `direction_rows × frame_size > height` (grid ล้นภาพ) — แนบ `{height, direction_rows, frame_size}` |
 | 400 | `INVALID_SLOT` | `slot` ไม่อยู่ใน 6 ตัว (`Wobbling`/`Walking`/`Sitting`/`Happy`/`Sad`/`Evolution`) หรือไม่ valid สำหรับ stage นั้น |
 | 400 | `PET_NOT_READY` | วาง pet type ที่ sprite ยังไม่ครบทุก stage |
 | 400 | `POSITION_OUTSIDE_ZONE` | จุดที่วางอยู่นอก `zone_id` ที่ส่งมา |
@@ -532,12 +535,12 @@ playWithPet(workspaceId: string, petId: string): Promise<PlayWithPetResponse>
 2. วาง pet ใน Workspace **Template** แล้ว workspace ที่สร้างไปก่อนหน้าได้ pet ด้วยไหม
 
 **ต้องได้ก่อน merge PR 9**
-3. mood ช่วง 48–72 ชม. เป็น state อะไร (ตอนนี้ตีความว่า sad เริ่มที่ 48)
+3. ~~mood ช่วง 48–72 ชม. เป็น state อะไร~~ — ✅ **ปิดแล้ว 2026-09-01: Neutral ยืดถึง 72 ชม.** (Sad เริ่ม > 72)
 4. activity ตัวไหนนับ per-user ตัวไหนนับ per-room (ตารางที่เสนอไว้ข้างบน)
 5. `xp_play_with_pet` — "เล่นกับ pet" คือ interaction แบบไหนใน VO (คลิก? emoji? เดินเข้าใกล้?) ยังไม่มี spec member-side
 
 **ไม่บล็อก แต่ควรรู้**
-6. ยืนยันชื่อ error code ที่เราตั้งเอง: `INVALID_DIMENSIONS`, `INVALID_DIRECTION_ROWS`, `FRAME_ROW_MISMATCH`
+6. ยืนยันชื่อ error code ที่เราตั้งเอง: `INVALID_DIMENSIONS`, `INVALID_DIRECTION_ROWS`, `FRAME_ROW_MISMATCH` (ความหมายของ 2 ตัวหลังเปลี่ยนแล้วตาม spec 2026-09-01)
 7. `Max` ใน card = เพดานที่ admin ตั้งได้ (ตีความแบบนี้) หรือเพดาน XP ต่อวัน?
 8. activity toggle เปิด/ปิด ที่เห็นใน Figma ต้องมีจริงไหม (เผื่อ `enabled` ไว้แล้ว)
 9. Adult / Evolved required slots — อนุมานว่าเหมือน Baby (Figma ไม่มี frame ที่โชว์ตรง ๆ)
