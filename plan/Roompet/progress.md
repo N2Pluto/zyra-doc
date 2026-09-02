@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-09-02 (รอบ 10) — `lib/sprite-grid.ts` (port จาก #240) + harness ใช้ sprite จริงของ "ปรื๊ด"
+
+- **ทำอะไร:** branch ใหม่ `feat/room-pet-sprite-utils` (จาก `develop` @ `bde39ce`) — user สั่ง cherry-pick sprite utils จาก #240 มาเริ่มก่อน merge
+  - `lib/sprite-grid.ts` — port `detectSpriteGridFromPixels` / `getSpriteCrop` จาก `views/admin/pet-management/sprite-preview-utils.ts` ของ #240 (เนื้อเดิม 100 %) มาไว้ที่ `lib/` ตาม rule 09 + เพิ่ม DOM helper `detectSpriteGridFromImage` / `cropSpriteFrameToCanvas` / `loadSpriteImage` และ **`normalizeSpriteGrid()` ใหม่**
+  - **บั๊กของแนวทาง #240 ที่ asset จริงเปิดเผย:** alpha-run detection นับ row/column เกินจริงเพราะ sprite มีช่องโปร่งใส**ภายในตัว** (ลำตัวกับขา) — baby Walking detect ได้ 8 rows, adult 5 rows ทั้งที่มี 4 ทิศ → crop "left/right" ได้ช่องว่าง · `normalizeSpriteGrid` รวม run ที่เกิน `direction_rows`/`frame_count` ข้ามช่องว่างเล็กสุด (gap ในตัว sprite แคบกว่า gutter ระหว่างเซลล์เสมอ) · run ที่**น้อยกว่า** metadata ให้เชื่อ detection
+  - **ข้อมูลใน DB ไม่ตรง sheet จริง:** egg Wobbling detect ได้ **4 cols × 3 rows** แต่ `tb_pet_animation` เก็บ `frame_count 6 / direction_rows 4` (มาจากค่าที่ admin form ล็อกไว้แล้ว migration 88/89 normalize) → renderer ห้ามเชื่อ metadata อย่างเดียว ต้อง detect จากภาพ · ต้องแจ้ง PetManagement (`frame_count` ต่อ animation ต้องกรอกได้จริงตาม spec 2026-09-01)
+  - `__tests__/sprite-grid.test.ts` — 12 เคส (4 เคสเดิมของ #240 + normalize 4 + edge 4)
+  - harness: `views/dev/room-pet-preview/real-pet-fixture.ts` (URL R2 ของปรื๊ด — public ไม่ใช่ secret) · `real-pet-sprite-strip.tsx` แสดงเฟรม 0 ทั้ง 4 ทิศของ egg/baby/adult/evolved + GIF ไข่แตก · nameplate icon = เฟรมจริง baby Walking · panel avatar = thumbnail จริง · ทั้งหมดผ่าน `/api/img` (`proxyUrl`)
+- **verify:** live บน 3110 — sheet ทั้ง 4 crop ถูกทุกทิศหลัง normalize (baby/adult/evolved 6×4, egg 4×3), GIF 960×960 + thumbnail 166×166 โหลดสำเร็จ, ไม่มี request 4xx/5xx · vitest 12/12 · tsc/eslint/prettier ผ่าน · ระหว่างทาง Turbopack cache `.next/room-pet` เพี้ยน (`[turbopack]_runtime.js` หาย) → ลบแล้วสตาร์ตใหม่หาย
+- **PR:** ยังไม่ commit — รอ user สั่ง · หลัง #240 merge: ไฟล์ `sprite-preview-utils.ts` ของ admin ควรเปลี่ยนเป็น re-export จาก `lib/sprite-grid.ts` (เนื้อเดิมเท่ากัน add/add จะไม่ conflict)
+- **ต่อจากนี้:** commit + PR → member endpoint อ่าน XP config → เริ่ม component ที่เหลือ (hatch overlay + evolution modal ใช้ GIF จริง, marker, mood bubble) ตาม decision รอบ 9
+
 ## 2026-09-02 (รอบ 9) — PM ตอบ 9 ข้อที่ค้างใน test-plan §6 · ข้อมูล Pet Management จริงมาถึง
 
 - **PM ตัดสิน 9 ข้อ** (บันทึกในแถว ✅ ของ [test-plan.md §6](test-plan.md)): CLASH-01 toast เลื่อนใต้ panel · CLASH-02 overlay รอออกจาก meeting · RT-04 pet ถูกลบระหว่าง GIF → เล่นจบ **และยังโชว์ modal** (soft delete) · LOAD-03 sprite 404 → **ไม่แสดงอะไร** · LOAD-06 stroke 500 → ไม่เล่น + toast error · ZOOM-02 zoom ไกล → จุด `#996ADF` · ZOOM-05 PiP ซ่อน panel/modal/overlay · A11Y-02 Esc ข้าม overlay ได้ · A11Y-04 GIF เล่นปกติ ลด effect
