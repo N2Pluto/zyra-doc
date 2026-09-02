@@ -496,6 +496,7 @@ path เทียบจาก `zyra-app/` · สำรวจ 2026-09-02 (บร�
 4. **Mood bubble ความถี่** — sticky บอก "อาจจะ 30 วิ : ครั้ง (ค่อยกำหนด)"
 5. **Pet menu panel ≠ ClickUp SC-PET-06** (ไม่มี Top 3 / ปุ่มลูบหัว / Feed แต่มี Daily quest + streak "Together for N days") — streak ต้องมี field ใหม่ (วันที่วาง pet → นับวัน?) ยังไม่มีใน schema
 6. **SC-PET-05 ต้องคลิกก่อนเริ่ม animation เหมือน 04 ไหม** — sticky บอก "อิง 04" แต่ไม่มี frame prompt
+6b. ~~**pet ตอน zoom ไกลสุด (compact mode)**~~ — **PM ตอบ 2026-09-02: จุดเล็กสีเดียวกับ minimap `#996ADF`** แทน sprite + nameplate (ไม่ต้องขอ frame ใหม่) · **Esc ข้าม hatch overlay ได้** · **PiP ซ่อน panel/modal ทั้งหมด** · **sprite 404 บน map = ไม่แสดงอะไร** — รายละเอียด + test ใน [test-plan.md §6](test-plan.md)
 7. **Toast หลัง toggle Pet activity** — ข้อความอะไร
 8. **ไม่มีปุ่ม Pet บน HUD / bottom menu** ในทุก frame — ClickUp บอกมี "Pet icon บน HUD" → ตัดหรือเพิ่ม
 9. **Prestige XP** — Figma ใช้ `MAX XP` (บาร์ขาวเต็ม) ไม่มีสี prestige

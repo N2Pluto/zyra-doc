@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-09-02 (รอบ 9) — PM ตอบ 9 ข้อที่ค้างใน test-plan §6 · ข้อมูล Pet Management จริงมาถึง
+
+- **PM ตัดสิน 9 ข้อ** (บันทึกในแถว ✅ ของ [test-plan.md §6](test-plan.md)): CLASH-01 toast เลื่อนใต้ panel · CLASH-02 overlay รอออกจาก meeting · RT-04 pet ถูกลบระหว่าง GIF → เล่นจบ **และยังโชว์ modal** (soft delete) · LOAD-03 sprite 404 → **ไม่แสดงอะไร** · LOAD-06 stroke 500 → ไม่เล่น + toast error · ZOOM-02 zoom ไกล → จุด `#996ADF` · ZOOM-05 PiP ซ่อน panel/modal/overlay · A11Y-02 Esc ข้าม overlay ได้ · A11Y-04 GIF เล่นปกติ ลด effect
+  - 3 ข้อต่างจากที่ผมเสนอ (RT-04, LOAD-03, ZOOM-02) — ไม่มีโค้ดที่ merge แล้วต้องแก้ เพราะยังไม่ได้ทำ overlay / map sprite / compact mode · จุดเดียวที่ควรถาม: `VOPetPanel` avatar เมื่อไม่มีรูปยังใช้ `PawPrint` (เคส null ไม่ใช่ 404) จะให้ว่างเหมือน LOAD-03 ไหม
+- **ข้อมูลจริงบน dev DB** (ประเมินแล้ว ยังไม่แก้โค้ด): pet type "ปรื๊ด" (dog, active) 20 animation ครบ 4 stage — PNG 6×4 @8fps (egg @16fps), `Evolution` เป็น GIF ทุก stage, มี thumbnail · XP config v7 (threshold 100/500/2000, เปิด 8/10 activity, `neutral.within_hours` ยัง 48) · `tb_room_pet` ยังไม่มี
+  - **ขัด spec:** ข้อมูลมี slot `Idle` ทั้ง 3 stage (20 slot) ทั้งที่ spec 2026-09-01 ถอด Idle → เสนอเก็บ Idle (ตอบคำถาม idle animation) รอ PM
+  - PR #240 (ยัง CHANGES_REQUESTED) มี `views/admin/pet-management/sprite-preview-utils.ts` (`detectSpriteGridFromPixels`, `getSpriteCrop`) ที่ VO ต้องใช้ crop เฟรมจริง → หลัง merge ต้องย้ายไป `lib/` (rule 09)
+- **ต่อจากนี้:** รอ #240 merge → PR ย้าย sprite utils + harness ใช้ sprite/thumbnail ของปรื๊ดผ่าน `/api/img` → member endpoint อ่าน XP config → อัปเดต spec เรื่อง Idle/neutral 48 → แล้วค่อยเริ่ม overlay/modal/marker/mood bubble ตาม decision ใหม่
+
 ## 2026-09-02 (รอบ 8) — dev preview harness + บั๊กที่ preview จับได้
 
 - **ทำอะไร:** หน้า preview รวมทุก component กับ fixture เดียวกับเทส เปิดใน Browser pane แล้ว **render ครบทุกชิ้น** (badge 3 แถว · tooltip 3 variant · Pixi nameplate 3 ตัวอย่างรวมชื่อไทยที่ถูกตัด · VOPetPanel 4 state สลับได้ · minimap compact + expanded มี pet dot ม่วง · รายชื่อ section Setting มี PET · ตาราง derive)

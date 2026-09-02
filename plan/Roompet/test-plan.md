@@ -344,7 +344,7 @@ export const SHARED_EGG_GIF = "https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.d
 
 - [ ] ทุก component ใน §1 มี test file คู่กันใน PR เดียวกับที่สร้าง component
 - [ ] เคส §6.1 (ชนกับ UI เดิม) และ §6.3 (loading/error) เขียนใน **PR แรก** ที่วาง pet ลงหน้า VO — ไม่รอ PR หลัง
-- [ ] เคส §6.2 (realtime edge) เขียนพร้อม PR ที่ต่อ zyra-ws · เคสที่ยัง "เคาะ" อยู่ให้เขียนทั้ง 2 ทางแล้ว `skip` ทางที่ไม่เลือก พร้อม comment อ้าง ID
+- [ ] เคส §6.2 (realtime edge) เขียนพร้อม PR ที่ต่อ zyra-ws · **9 เคสที่เคย "เคาะ" PM ตอบครบแล้ว 2026-09-02** (CLASH-01/02, RT-04, LOAD-03/06, ZOOM-02/05, A11Y-02/04 — ดูคำตอบในแถวนั้น ✅) ไม่ต้องเขียน 2 ทางแล้ว
 - [ ] `vitest run` เขียว · `go test ./internal/service/... -run Pet` เขียว
 - [ ] ไม่มี test ที่ยิง `/api/*` จริง (ตรวจด้วย `vi.mock` ทุกไฟล์ที่ import `@/lib/api/pets`)
 - [ ] E2E อย่างน้อย E2E-PET-01, 03a/b, 04, 06, 07a, ADMIN-PREFILL + CLASH-01, LOAD-02, LOAD-07 ผ่านบน dev ก่อนตั้ง `NEXT_PUBLIC_ROOM_PET=true` บน uat/prod (dev ตั้งได้ก่อนเพื่อ live-test)
@@ -355,13 +355,14 @@ export const SHARED_EGG_GIF = "https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.d
 ## 6. เคสที่ ux-ui.md ไม่ได้พูดถึงแต่จะเจอตอนวางลงหน้า VO จริง
 
 > เพิ่ม 2026-09-02 หลังเทียบ test plan §1–§3 กับโค้ด VO ปัจจุบัน — เรียงตามความเสี่ยง · **กลุ่ม 6.1 และ 6.3 ควรเขียนพร้อม PR แรก** · กลุ่ม 6.2 รอ technical design ของ zyra-ws ก่อนจึงเขียน expected ได้ครบ
+> **PM ตอบ 9 ข้อที่ค้างแล้ว 2026-09-02** (แถวที่มี ✅): toast เลื่อนใต้ panel · overlay รอออกจาก meeting · pet ถูกลบระหว่าง GIF = เล่นจบ + โชว์ modal (soft delete) · sprite 404 = ไม่แสดงอะไร · stroke 500 = ไม่เล่น + toast · zoom ไกล = จุด `#996ADF` · PiP ซ่อน panel/modal · Esc ข้าม overlay ได้ · reduce-motion ลดเฉพาะ effect
 
 ### 6.1 การชนกับ UI เดิมของ VO (เสี่ยงสุด)
 
 | ID | เคส | Expected / สิ่งที่ต้องตัดสิน |
 |---|---|---|
-| CLASH-01 | เปิด `VOPetPanel` (`top-24 right-24`) แล้วมี `VOConnectionToast` (`right-24 top-24 w-322`) หรือ wave/knock stack (`right-24`) โผล่ | **ตำแหน่งชนกันตรง ๆ** — ต้องเคาะ: toast ดัน panel ลง / panel ดัน toast ลง / toast ทับ panel · test ว่าทั้งสองอ่านได้และกดได้ ไม่มีอันไหนถูกบัง 100% |
-| CLASH-02 | Hatch/Evolve overlay ขณะ meeting panel expanded (`zone-enter-panel` `absolute inset-0 z-50`) | เคาะว่า overlay ทับ meeting หรือรอจนออกจาก meeting (gate เดิมพูดถึงแค่ status + bubble ไม่พูดถึง meeting) · test ทั้ง 2 ทางแล้ว `skip` ทางที่ไม่เลือก |
+| CLASH-01 | เปิด `VOPetPanel` (`top-24 right-24`) แล้วมี `VOConnectionToast` (`right-24 top-24 w-322`) หรือ wave/knock stack (`right-24`) โผล่ | ✅ **PM 2026-09-02: toast เลื่อนลงใต้ panel** (panel อยู่ที่เดิม) — toast อยู่ไม่นาน panel เป็นของที่ผู้ใช้เปิดเอง · test: เมื่อ panel เปิด `topOffset` ของ toast stack = 24 + สูง panel + gap · ทั้งสองอ่านได้และกดได้ |
+| CLASH-02 | Hatch/Evolve overlay ขณะ meeting panel expanded (`zone-enter-panel` `absolute inset-0 z-50`) | ✅ **PM: รอ แล้วเล่นตอนออกจาก meeting** · notification card ยังส่งทันที · test: event `pet_stage_changed` มาระหว่าง meeting → queue ไว้ · ออกจาก meeting → overlay เริ่มภายใน 1 tick · ไม่เล่นซ้ำถ้า queue มีหลายครั้ง (เล่นครั้งสุดท้าย) |
 | CLASH-03 | Pet panel เปิดพร้อม `VOProfilePanel` (ฝั่งขวาเหมือนกัน) | เปิดอันหนึ่งปิดอีกอัน (single right-side slot) — ไม่ซ้อน |
 | CLASH-04 | Pet panel เปิดพร้อม member/notification panel (ฝั่งซ้าย) | อยู่ร่วมกันได้ ไม่ปิดกัน |
 | CLASH-05 | คีย์ลัด `P` ชน shortcut เดิมของ VO | สแกน keydown handler ใน `hero-virtual-office.tsx` + `vo-hud.tsx` ว่าไม่มีใครใช้ `p`/`P` อยู่ · ถ้ามี ต้องเปลี่ยนคีย์ใน Figma ไม่ใช่ทับ |
@@ -377,7 +378,7 @@ export const SHARED_EGG_GIF = "https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.d
 | RT-01 | admin ลบ pet (`pet_removed`) ขณะ panel เปิด | panel ปิด + toast info · ไม่ error |
 | RT-02 | admin ย้าย pet (`pet_moved`) ขณะ hover/marker เปิด | marker/tooltip ตามไปตำแหน่งใหม่หรือปิด · ไม่ค้างกลางอากาศ |
 | RT-03 | admin เปลี่ยนชื่อ (`pet_renamed`) | nameplate + panel header อัปเดตทันที |
-| RT-04 | `pet_removed` มาระหว่าง GIF hatch เล่นอยู่ | เล่นจบแล้วปิด overlay โดยไม่เปิด modal · หรือปิดทันที — เคาะ |
+| RT-04 | `pet_removed` มาระหว่าง GIF hatch เล่นอยู่ | ✅ **PM: ไม่ตัดกลางคัน เล่น GIF จนจบ และยังโชว์ evolution modal ตามปกติ** — การลบเป็น soft delete (`tb_room_pet.is_deleted`) pet ยังอยู่ในระบบ · test: modal เปิดได้แม้ pet ถูกลบไปแล้ว · Confirm → pet ไม่กลับมาบน map (ตาม `pet_removed`) · ปุ่ม Share ยังทำงาน |
 | RT-05 | คนอื่นทำ XP เต็มขณะผมกำลัง stroke | ผมได้ modal แบบ "คนในทีม" (ไม่ใช่ prompt) · ไม่เล่น 2 flow ซ้อน |
 | RT-06 | `pet_stage_changed` มาถึงก่อน `pet_xp_changed` (ลำดับสลับ) | stage ยึด derived จาก xp ล่าสุด ไม่กระพริบกลับ |
 | RT-07 | WS หลุด → reconnect | pet position/xp resync จาก `welcome`/snapshot · timer mood bubble ไม่ซ้อน 2 ตัว |
@@ -392,10 +393,10 @@ export const SHARED_EGG_GIF = "https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.d
 |---|---|---|
 | LOAD-01 | GIF Evolution 404 | overlay ไม่ค้าง → ข้ามไป reveal/modal พร้อม log · ไม่ throw |
 | LOAD-02 | GIF โหลดช้า | **preload ก่อนแสดง prompt** "Click to start…" — คลิกแล้วต้องเล่นทันที ไม่มีจอดำ |
-| LOAD-03 | sprite ของ pet type 404 | fallback placeholder (ตัดสินว่าใช้ `PawPrint` เหมือน admin thumbnail) ไม่ใช่กล่องดำ/crash |
+| LOAD-03 | sprite ของ pet type 404 (บน map) | ✅ **PM: ไม่แสดงอะไรเลย** — ไม่มี placeholder บน map · test: texture load fail → ไม่ render sprite / nameplate / mood bubble ของ pet ตัวนั้น ไม่ throw ไม่กล่องดำ · minimap dot ยังแสดง (ตำแหน่งรู้) · ⚠️ `VOPetPanel` avatar ที่ `imageUrl = null` ยังใช้ `PawPrint` (เป็นเคส "ไม่มีรูป" คนละเคสกับ 404 บน map) — ถ้า PM อยากให้ว่างเหมือนกันแก้ 1 บรรทัด |
 | LOAD-04 | `GET .../pets` 500 | ไม่มี pet render · toast error ครั้งเดียว ไม่ retry ถี่ |
 | LOAD-05 | `getPetStatus` 500 ขณะเปิด panel | panel แสดง error state + ปุ่ม retry ไม่ใช่ skeleton ค้าง |
-| LOAD-06 | `strokePet` 500 | ไม่เล่น XP tooltip · เล่น happy ไหม — เคาะ (เสนอ: ไม่เล่น, toast error) |
+| LOAD-06 | `strokePet` 500 | ✅ **PM: ไม่เล่นอะไรเลย + toast error** (`zyraToast.error`) · test: ไม่มี XP tooltip, ไม่มี ♥, ไม่มี happy animation, counter ไม่ขยับ · rate-limit 3 วิ ยังนับ (กันกดรัว) |
 | LOAD-07 | Feature flag `NEXT_PUBLIC_ROOM_PET` ปิด (unset / ไม่ใช่ `"true"`) | ไม่ render pet ใด ๆ (`innerHTML === ""` — ✅ มี test แล้วใน 3 component) และ **ไม่ยิง API pet เลย** (assert ด้วย mock call count = 0 — เขียนตอนมี hook ดึงข้อมูล) · `isRoomPetEnabled()` default false (✅ `room-pet-feature.test.ts`) |
 | LOAD-08 | ชั้นไม่มี pet | ไม่มี element pet ตกค้าง · minimap ไม่มี dot · ไม่มี listener |
 | LOAD-09 | panel เปิดตอน status ยังไม่มา | skeleton ตาม geometry จริง (ไม่กระตุกตอนข้อมูลมา) |
@@ -417,10 +418,10 @@ export const SHARED_EGG_GIF = "https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.d
 | ID | เคส | Expected |
 |---|---|---|
 | ZOOM-01 | camera zoom 12 ระดับ | nameplate, mood bubble, marker มือ สเกลด้วย `_nameTagLayerScale()/zoom` เหมือน avatar · ไม่เบลอที่ zoom สูงสุด (`NAME_TAG_RESOLUTION`) |
-| ZOOM-02 | zoom ไกลสุดที่ avatar เปลี่ยนเป็น compact circle 34px | pet เป็นอะไร — **Figma ไม่มี** → เคาะ (เสนอ: dot เหมือน minimap หรือซ่อน nameplate) แล้ว test ตามที่เลือก |
+| ZOOM-02 | zoom ไกลสุดที่ avatar เปลี่ยนเป็น compact circle 34px | ✅ **PM: pet เป็นจุดเล็กสีเดียวกับ minimap** (`PET_MINIMAP_DOT_COLOR` `#996ADF`) แทน sprite + nameplate · test: ที่ `farZoom` sprite/nameplate/mood bubble ซ่อน, วาด dot วงกลม (ขนาดเสนอ `COMPACT_AVATAR_DIAMETER × 6/34` ≈ 6px แล้วสเกลตาม `_nameTagLayerScale`) · zoom กลับ → sprite กลับมา |
 | ZOOM-03 | pet sprite ที่ zoom ใน | ขยายเท่า avatar (Figma ห้องซูม: 120px) ไม่ใช่ขนาดคงที่ |
 | ZOOM-04 | viewport 1280×720 | panel 320×599 ไม่ล้น · modal 458×498 กึ่งกลาง · overlay text ไม่ทับ HUD |
-| ZOOM-05 | PiP window เล็ก (เช่น 480×300) | panel/modal ต้องซ่อนหรือย่อ — เคาะ · อย่างน้อยไม่มี scrollbar แนวนอน ([[vo-pip-zoom-fit]]) |
+| ZOOM-05 | PiP window เล็ก (เช่น 480×300) | ✅ **PM: ซ่อน panel / modal / overlay ใน PiP ทั้งหมด แสดงแค่ pet บน map** (+ minimap dot) · test: ใน `vo-outside-display` ไม่ mount `VOPetPanel`, `PetEvolutionModal`, hatch overlay, tooltip · คลิก pet ใน PiP ไม่เปิดอะไร · ไม่มี scrollbar แนวนอน ([[vo-pip-zoom-fit]]) |
 | ZOOM-06 | browser zoom 80% / 125% | overlay + pet 320 ยังกึ่งกลาง · tooltip ตำแหน่งตรง pet (คำนวณจาก `getBoundingClientRect` ไม่ใช่ px คงที่) |
 
 ### 6.6 Cleanup / performance / a11y
@@ -432,9 +433,9 @@ export const SHARED_EGG_GIF = "https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.d
 | CLEAN-03 | 20 pet บนชั้นเดียว (หลายห้อง) | frame time ไม่แย่กว่า baseline > 10% · texture ของ pet type เดียวกัน share ไม่โหลดซ้ำ |
 | CLEAN-04 | GIF 960×960 ×3 stage โหลดพร้อมกัน | โหลดเฉพาะตอนจะใช้ (lazy) ไม่ preload ทุกตัวตอนเข้าห้อง ([[vo-open-network-and-perf-batch-2026-07-30]] — asset burst on mount) |
 | A11Y-01 | ปุ่ม icon-only (มือ, X, Go to, Replace) | มี `aria-label` จาก i18n |
-| A11Y-02 | `Esc` | ปิด panel → ปิด modal → ไม่ปิด overlay hatch (ต้องคลิก) — เคาะลำดับ |
+| A11Y-02 | `Esc` | ✅ **PM: Esc ข้าม hatch overlay ได้** → ลำดับ: Esc ปิด Pet panel → ปิด evolution modal → **ปิด/ข้าม overlay** (ถือว่าดู animation จบ stage เปลี่ยนตาม server ตามปกติ) · test: Esc ตอน prompt "Click to start" = ข้ามไป modal เลย · Esc ระหว่าง GIF = หยุด GIF แล้วเปิด modal · Esc ทีละชั้น ไม่ปิดหลายชั้นพร้อมกัน |
 | A11Y-03 | focus | เปิด modal focus ไปที่ Confirm · ปิดแล้ว focus กลับที่เดิม · Tab ไม่หลุดออกจาก modal |
-| A11Y-04 | `prefers-reduced-motion` | GIF ยังเล่น (เป็นเนื้อหา) แต่ particle/flash ลด — เคาะ |
+| A11Y-04 | `prefers-reduced-motion` | ✅ **PM: (a) GIF เล่นปกติ (เป็นเนื้อหา) ลดเฉพาะ particle / แสงวาบ / heart burst** · test: `matchMedia("(prefers-reduced-motion: reduce)")` → ไม่ mount flash overlay + particle, GIF ยังเล่นและ modal ยังเปิด |
 | A11Y-05 | เสียง pet ตอน reveal | เคารพ mute / audio settings ของ VO ([[vo-audio-settings-wiring]]) · ไม่เล่นถ้า tab hidden |
 
 ### สิ่งที่ยังไม่ต้องเขียน
