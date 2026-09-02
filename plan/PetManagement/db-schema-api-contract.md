@@ -7,6 +7,8 @@
 > **อัปเดต 2026-08-17 — ✅ ข้อ 2 กับ ข้อ 5 ปิดแล้ว** schema ข้างล่างแก้ตามคำตอบจริงแล้ว ไม่มีจุด 🔴 เหลือ
 >
 > **อัปเดต 2026-09-01 — แก้ตาม [spec.md](spec.md) ที่ล็อกกฎ sprite จาก asset จริง** 5 จุด: สูตร frame (เซลล์จัตุรัส), ยกเลิกกฎหารลงตัว 2 แกน, ขนาดชีทต้อง = 1000×1000, `direction_rows` ปิดแล้ว (`1`/`4` เรียงตาม `AVATAR_DIR_ROW`), mood Neutral ยืดถึง 72 ชม.
+>
+> **อัปเดต 2026-09-02 — slot `Evolution` เป็น GIF เท่านั้น (PM เคาะ)** → `frame_count/frame_rate/direction_rows` ต้อง nullable สำหรับ row GIF · egg → baby ใช้ GIF กลางบน R2 ไม่ใช่ slot ต่อ pet type · ดู [§ GIF ที่ slot Evolution](#gif-ที่-slot-evolution--pm-เคาะ-2026-09-02)
 
 ## ข้อควรรู้ก่อนอ่าน
 
@@ -133,7 +135,44 @@ CREATE INDEX IF NOT EXISTS idx_pet_animation_type ON tb_pet_animation (pet_type_
 | slot | direction_rows ที่ใช้ |
 |---|---|
 | `Walking`, `Sitting` | 4 |
-| `Wobbling`, `Evolution`, `Happy`, `Sad` | 1 หรือ 4 (แล้วแต่ไฟล์ที่ artist ส่ง — `Cat_Adult_Happy.png` เป็น 4) |
+| `Wobbling`, `Happy`, `Sad` | 1 หรือ 4 (แล้วแต่ไฟล์ที่ artist ส่ง — `Cat_Adult_Happy.png` เป็น 4) |
+| `Evolution` | **ไม่มี** — เป็น GIF (2026-09-02) ดูหัวข้อถัดไป |
+
+### GIF ที่ slot `Evolution` — PM เคาะ 2026-09-02
+
+`Evolution` ไม่ใช่ spritesheet อีกต่อไป: อัปโหลดเป็น **GIF จบในตัว** เล่นตอน pet ข้าม threshold (สถานะ evo ของช่วงวัยนั้น) — ดูกฎเต็มใน [spec.md § Evolution slot = GIF](spec.md)
+
+ผลต่อ schema `tb_pet_animation`:
+
+| คอลัมน์ | row PNG (slot อื่น) | row GIF (`Evolution`) |
+|---|---|---|
+| `sprite_url` | `.../{stage}/{slot}_{uuid}.png` | `.../{stage}/evolution_{uuid}.gif` (โค้ดตั้ง ext/content-type ตาม GIF อยู่แล้ว) |
+| `frame_count` / `frame_rate` / `direction_rows` | NOT NULL + CHECK | **NULL** → ต้องปลด `NOT NULL` เป็น `CHECK ((slot = 'Evolution' AND frame_count IS NULL AND frame_rate IS NULL AND direction_rows IS NULL) OR (slot <> 'Evolution' AND frame_count BETWEEN 1 AND 64 AND ...))` — migration ใหม่ + แก้ bootstrap DDL ใน `internal/database/postgres.go` |
+| `frame_width` / `frame_height` | `floor(1000 ÷ frame_count)` | **width × height ของ GIF** (เช่น 960 × 960) — ใช้เป็นขนาดตอน render |
+
+Validation ฝั่ง Go สำหรับ GIF: magic `GIF87a`/`GIF89a` (มีแล้ว) · `gif.DecodeConfig` แล้วเช็ค **`width == height && width ≤ 1000`** เท่านั้น · **ห้าม**เรียก `validatePetSpriteDimensions` (โค้ดปัจจุบันยังเรียก — ต้องแก้) · ไม่ตรวจ transparency · ขนาดไฟล์ ≤ 1 MB เท่าเดิม
+
+API response ของ animation GIF: `{ sprite_url, frame_width, frame_height, frame_count: null, frame_rate: null, direction_rows: null, mime_type: "image/gif" }` — เพิ่ม `mime_type` (หรือ FE ดูจากนามสกุล) เพื่อให้ client เลือก renderer ถูก
+
+**`RequiredSlots` ไม่เปลี่ยน — PM ยืนยัน 2026-09-02 ว่า egg และ evolved ยังต้องมี `Evolution`** (17 slot): egg = `{Wobbling, Evolution}` · baby/adult/evolved = `{Walking, Sitting, Happy, Sad, Evolution}`
+
+**Prefill egg `Evolution` (เคาะ 2026-09-02) — fallback ตอนอ่าน ไม่มี row:**
+
+```
+GET /api/admin/pets/:id  →  animations.egg.Evolution
+  มี row       → { sprite_url: <ของ type>, frame_width, frame_height, ..., is_default: false }
+  ไม่มี row    → { sprite_url: cfg.PetEggEvolutionDefaultURL, frame_width: 960, frame_height: 960,
+                   frame_count: null, frame_rate: null, direction_rows: null,
+                   mime_type: "image/gif", is_default: true }
+stage_ready.egg = has(Wobbling)            // Evolution ถือว่าพร้อมเสมอ (default หรือของเอง)
+DELETE .../stages/egg/animations/Evolution → ลบ row แล้วคืน 200 พร้อม object default (ไม่ใช่ 404 / ไม่ใช่ว่าง)
+```
+
+- config ใหม่ใน `zyra-api/internal/config`: `PET_EGG_EVOLUTION_DEFAULT_URL` (default `${AWS_PUBLIC_URL}/static/pet/shared/egg-evolution.gif`) — ไฟล์จริงอยู่บน R2 แล้ว 960×960 · 24 เฟรม · 159 KB
+- ไม่ insert row ตอน `POST /api/admin/pets` และไม่ backfill type เก่า — default มีผลกับทุก type รวมที่สร้างไปแล้ว
+- `is_default` ปรากฏใน animation object **ทุกตัว** (false สำหรับ slot อื่น) เพื่อให้ FE ไม่ต้อง special-case ชื่อ slot
+- member endpoint `GET /api/user/workspaces/:id/pets` ใช้ fallback เดียวกัน — client VO ไม่รู้จัก URL กลางเอง
+- **ไม่ต้องแก้ schema** — เป็น logic ใน service + config อย่างเดียว
 
 - `CHECK (direction_rows IN (1, 4))` ใส่ได้เลยแล้ว ไม่ต้องรออีก
 - ลำดับแถว: ต้อง **import จาก `AVATAR_DIR_ROW`** ไม่ใช่พิมพ์เลข 0-3 ใหม่ (engine มี single source อยู่แล้ว)

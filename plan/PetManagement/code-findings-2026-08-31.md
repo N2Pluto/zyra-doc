@@ -119,6 +119,7 @@
 
 - `pet_service.go:258-283`, `:387-415` — ถ้า slot เป็น `Evolution` และไฟล์นามสกุล `.gif` จะ validate ด้วย magic `GIF87a/GIF89a` แล้วอัปเป็น `image/gif` ข้าม logic frame/transparency ไปเลย
 - contract §Error codes เขียนว่า PNG เท่านั้น (magic `89 50 4E 47`) → **เป็นของแถมที่ยังไม่มีในเอกสาร** ต้องยืนยันว่าตั้งใจ แล้วเขียนลง contract (หรือถอดออก)
+- **ปิดแล้ว 2026-09-02 — PM เคาะให้ `Evolution` เป็น GIF เท่านั้น** (ดู [spec.md § Evolution slot = GIF](spec.md), [pm-discussion-notes.md ข้อ 11](pm-discussion-notes.md)) → งานกลับด้าน: ต้อง**ถอด PNG** ออกจาก `allowedMimeTypesBySlot[Evolution]` ไม่ใช่ถอด GIF · แก้คำอธิบายบรรทัดบน: GIF **ไม่ได้**ข้าม frame logic จริง — `UploadAnimation` ยังส่ง GIF เข้า `validatePetSpriteDimensions` (บังคับ `width ≥ frame_count`, `height % direction_rows = 0`) และเก็บ `frame_width = width/frame_count` ซึ่งต้องเลิกทำสำหรับ GIF · ข้ามเฉพาะ transparency check เท่านั้น
 
 ---
 

@@ -15,6 +15,8 @@
 > - ปิดข้อ ⏸ `direction_rows` + ลำดับแถว (มี sprite จริงแล้ว)
 > - ที่มา: [progress-2026-08-31.md](progress-2026-08-31.md) · [code-findings-2026-08-31.md](code-findings-2026-08-31.md) · UI audit ของ [ux-ui.md](ux-ui.md)
 >
+> **อัปเดต 2026-09-02 — PM เคาะ: slot `Evolution` ต้องอัปโหลดเป็น GIF เท่านั้น** (ไม่ใช่ PNG spritesheet) — เมื่อ pet ถึง threshold จะเข้า "สถานะ evo" ของช่วงวัยนั้นแล้วเล่น GIF นี้ · ส่วน **ไข่แตก (egg → baby) ใช้ GIF กลางตัวเดียวทุก pet type** ที่อัปขึ้น R2 แล้ว (`static/pet/shared/egg-evolution.gif`) → ดู [SC-PM-03 § Evolution = GIF](#evolution-slot--gif-เท่านั้น-2026-09-02) · **ยืนยันแล้ว: egg และ evolved ยังต้องมี slot `Evolution`** → required slot คง **17** ไม่เปลี่ยน
+>
 > เนื้อหาในเอกสารนี้แก้ตามที่เคาะแล้ว — **ClickUp card 2 ใบยังเป็นของเก่า** (PM ต้องแก้เอง) ถ้าขัดกันให้ยึดเอกสารนี้
 > DB schema + API contract: [db-schema-api-contract.md](db-schema-api-contract.md) · แผนแบ่งงาน: [work-split.md](work-split.md)
 
@@ -195,8 +197,53 @@ Module สำหรับ **System Admin** จัดการ Pet Types, Sprites
 - **Egg = 2 ไม่ใช่ 3** — counter ใน Figma node #4/#9 โชว์ `3/3` แต่ animation dropdown ของ Egg โชว์แค่ 2 รายการ ([ux-ui.md](ux-ui.md)) → ยึด dropdown, counter เป็น mockup ที่ไม่ sync
 - **sidebar tag ที่โชว์ `0/1` และ `0/4` ใน Figma ก็เป็น mockup เก่า** — ค่าที่ถูกคือ `0/2` และ `0/5`
 - **Adult / Evolved** ไม่มี frame ใน Figma ที่โชว์ dropdown ตรง ๆ — อนุมานว่าเหมือน Baby
-- **Egg → Baby เล่น `Evolution`** (ตอบคำถามเดิมเรื่อง animation ตอนฟักไข่)
+- **Egg → Baby เล่น `Evolution`** (ตอบคำถามเดิมเรื่อง animation ตอนฟักไข่) — **2026-09-02:** slot `Evolution` ของ egg **ยังต้องมี** (PM ยืนยัน) และเป็น GIF · **ระบบ prefill ไฟล์กลาง** `static/pet/shared/egg-evolution.gif` ให้ทุก pet type อัตโนมัติ (slot นี้ถือว่า "พร้อม" ตั้งแต่สร้าง pet type) และ admin **ยังอัป GIF ของตัวเองทับได้** — กลไกดู [§ Prefill egg Evolution](#prefill-egg-evolution-จากไฟล์กลาง-2026-09-02)
 - **Happy / Sad เป็น slot ภายใน stage ไม่ใช่ stage แยก** — สอดคล้องกับ mood 3-state ใน SC-PM-04
+
+### Evolution slot = GIF เท่านั้น (2026-09-02)
+
+PM เคาะแล้ว: เมื่อ pet ถึง threshold ของช่วงวัยจะเข้า **สถานะ evo** แล้วเล่น animation ของ slot `Evolution` ของ stage ต้นทาง — ไฟล์นี้ต้อง **อัปโหลดเป็น GIF** (ภาพเคลื่อนไหวจบในตัว) ไม่ใช่ PNG spritesheet เหมือน slot อื่น
+
+| | slot อื่น (`Wobbling` `Walking` `Sitting` `Happy` `Sad`) | slot `Evolution` |
+|---|---|---|
+| ชนิดไฟล์ | PNG 1000×1000 เท่านั้น | **GIF เท่านั้น** (`GIF87a`/`GIF89a`) — PNG ที่ slot นี้ = `INVALID_FILE_TYPE` |
+| `frame_count` / `frame_rate` / `direction_rows` | ต้องกรอก, validate grid | **ไม่มี** — GIF กำหนดเฟรมและความเร็วในไฟล์เอง ฟอร์มต้องซ่อน 3 ช่องนี้ที่ slot `Evolution` |
+| `frame_width` / `frame_height` ใน DB | = `floor(1000 ÷ frame_count)` | เก็บ **ขนาดภาพ GIF** (width × height) · `frame_count`/`frame_rate`/`direction_rows` เก็บ `NULL` (ต้องปลด `NOT NULL` + CHECK สำหรับ row ที่เป็น GIF) |
+| ขนาดภาพ | = 1000×1000 | **สี่เหลี่ยมจัตุรัส ไม่เกิน 1000×1000** (ไฟล์กลาง egg เป็น 960×960) — ไม่บังคับเท่ากับ 1000 |
+| ขนาดไฟล์ | ≤ 1 MB | ≤ 1 MB เท่ากัน (GIF 24 เฟรม 960px ของจริง = 159 KB) — ถ้า artist ส่งเกินให้ขยับเป็น 2 MB **เฉพาะ GIF** ไม่ขยับของ PNG |
+| transparency | warning ถ้าไม่มี | ไม่ตรวจ (GIF โปร่งใสแบบ 1-bit) |
+| ตอนเล่น | slice grid ตาม frame_* | `<img>` / GifSprite ทับ overlay ตอนเปลี่ยน stage (Roompet SC-PET-04/05) เล่น 1 รอบแล้ว switch sprite |
+| การเลื่อนไหวปกติในห้อง | ใช้ | **ไม่ใช้** — GIF ไม่ได้อยู่บน map ปกติ |
+
+- **ทั้ง 4 stage มี slot `Evolution` (PM ยืนยัน 2026-09-02) — required slot คง 17:** **egg → baby** เล่น `Evolution` ของ egg (prefill จากไฟล์กลางบน R2 — หัวข้อถัดไป) · **baby → adult** ใช้ `Evolution` ของ baby · **adult → evolved** ใช้ `Evolution` ของ adult · **evolved** ยังต้องอัป `Evolution` แม้ไม่มีช่วงถัดไป (สำรองไว้ตาม PM — ยังไม่มี consumer ในระบบ; ไม่ต้องเขียนโค้ดเรียก)
+
+### Prefill egg `Evolution` จากไฟล์กลาง (2026-09-02)
+
+**เคาะแล้ว:** slot `Evolution` ของ stage `egg` ได้ไฟล์กลางอัตโนมัติทุก pet type และ admin เลือกอัป GIF ของตัวเองทับได้
+
+**กลไก = fallback ตอนอ่าน ไม่ copy row ลง DB** (ตามหลัก "ค่าที่ derive ได้ ห้ามเก็บ" ใน [db-schema-api-contract.md](db-schema-api-contract.md))
+
+| กรณี | `tb_pet_animation` (egg, Evolution) | API คืน | `stage_ready.egg` |
+|---|---|---|---|
+| ยังไม่อัปเอง (ค่าเริ่มต้นทุก type) | **ไม่มี row** | `sprite_url` = URL ไฟล์กลาง · `frame_width/height` = 960 · `is_default: true` | นับว่า slot นี้พร้อม → egg พร้อมเมื่ออัป `Wobbling` ครบ |
+| admin อัปเอง | มี row (GIF ของ type นั้น) | ของ type นั้น · `is_default: false` | เหมือนเดิม |
+| admin ลบไฟล์ที่อัปเอง | ลบ row | **กลับไปไฟล์กลาง** (`is_default: true`) — ไม่มี state "ว่าง" สำหรับ slot นี้ | ยังพร้อม |
+
+- URL ไฟล์กลางเป็น **config ฝั่ง zyra-api** (`PET_EGG_EVOLUTION_DEFAULT_URL`, default = `${AWS_PUBLIC_URL}/static/pet/shared/egg-evolution.gif`) ไม่ hardcode ในโค้ดและไม่ hardcode ใน client — client อ่านจาก response เท่านั้น
+- เหตุผลที่ไม่ insert row ตอนสร้าง pet type: เปลี่ยนไฟล์กลางครั้งเดียวมีผลทุก type ทันที · pet type เก่าที่สร้างก่อน feature นี้ได้ default ด้วยโดยไม่ต้อง backfill · ลบไฟล์เองแล้วกลับ default ได้โดยไม่มี edge case row ว่าง
+- ใช้กับ **egg เท่านั้น** — baby/adult/evolved ไม่มีไฟล์กลาง ต้องอัปเอง
+
+**UI ใน wizard step 2 (egg → animation `Evolution`)**
+- การ์ด upload แสดงสถานะ **`Default`** (badge เทา `#8C99A6`) + preview GIF กลาง แทน empty state · ปุ่มเปลี่ยนจาก `Upload` เป็น `Replace`
+- หลังอัปเอง → badge หาย แสดงไฟล์ของ type นั้น · ปุ่ม `Delete` = กลับไป Default (ข้อความยืนยันต้องบอกว่า "จะกลับไปใช้ไฟล์กลาง" ไม่ใช่ "จะลบ animation")
+- count tag ของ egg เริ่มที่ `1/2` (Evolution พร้อมแล้ว) · progress bar ของ wizard นับ slot นี้เป็นอัปแล้วตั้งแต่ต้น (17 slot, เริ่มที่ 1)
+- Preview modal: dropdown ของ egg มี `Evolution` เล่นได้ทันที (จากไฟล์กลาง)
+- ข้อความบนการ์ด: `Default egg hatch animation is shared by all pets. Upload a GIF to use your own.` (i18n en/th)
+
+**สถานะโค้ด:** ยังไม่มี — `stageReadiness` นับจาก row จริงล้วน, response ไม่มี `is_default`, FE ไม่มี state Default บนการ์ด
+- ตารางใน [db-schema-api-contract.md § GIF ที่ slot Evolution](db-schema-api-contract.md) มีผลต่อ schema/validation
+
+**สถานะโค้ด ณ 2026-09-02 (ยังไม่ตรง):** `pet_service.go` รับ **ทั้ง PNG และ GIF** ที่ slot `Evolution` (`allowedMimeTypesBySlot`) · GIF ยังถูกส่งเข้า `validatePetSpriteDimensions` (บังคับ ≤1000, `width ≥ frame_count`, `height % direction_rows = 0`) และเก็บ `frame_width = width/frame_count` ซึ่งไม่มีความหมายกับ GIF · FE ยังบังคับกรอก/ล็อก `frame_count 50 / frame_rate 24 / direction_rows 4` ทุก slot รวม `Evolution` · preview modal render GIF ด้วย `<img>` ได้แล้ว (`pet-preview-modal.tsx` `isGif`)
 - ⚠️ **ไม่มี slot `Idle`** — โค้ดที่ merge เข้า `develop` แล้วเพิ่ม `Idle` เข้ามาเป็น 20 slot ต้องถอดออก (ดู [§ผลต่อโค้ด](#ผลต่อโค้ด--schema-จากการแก้-spec-รอบนี้-2026-09-01))
 
 **กฎเลข `n/N`**: ตัวเลข required/uploaded ทุกที่ (tag ข้าง stage, dropdown ใน preview modal, progress bar ของ wizard) **ต้อง derive จากตารางนี้แหล่งเดียว** ห้าม hardcode ตัวเลขซ้ำในแต่ละคอมโพเนนต์ — ที่ผ่านมา 3 ที่ใช้เลขคนละชุด (`0/1`+`0/4`, `2`+`5`, `3/3`)
@@ -257,7 +304,7 @@ Module สำหรับ **System Admin** จัดการ Pet Types, Sprites
 
 **Upload**
 - PNG **1,000 × 1,000 px เท่านั้น**, ไม่เกิน 1 MB, แนะนำให้มี transparency (ไม่มี = warning ไม่ block)
-- slot `Evolution` รับ `.gif` ได้ด้วย (ข้ามการตรวจ frame/transparency) — พฤติกรรมนี้มีในโค้ดแล้ว ต้องคงไว้และถือเป็นข้อยกเว้นที่ตั้งใจ
+- slot `Evolution` **รับ GIF เท่านั้น** (PM เคาะ 2026-09-02 — เดิมรับได้ทั้ง PNG/GIF) ไม่มี 3 ช่อง frame และไม่ตรวจ transparency — รายละเอียดใน [§ Evolution slot = GIF](#evolution-slot--gif-เท่านั้น-2026-09-02)
 
 **3 input ต่อ animation — ต้องกรอกได้จริง**
 
@@ -461,9 +508,9 @@ Max evolution within = ceil(Total XP needed ÷ Max XP / Day)  วัน
 
 | Field | Rule | Code |
 |-------|------|------|
-| file | PNG เท่านั้น (นามสกุล + magic bytes `89 50 4E 47`) · slot `Evolution` รับ `.gif` ได้ | `INVALID_FILE_TYPE` |
+| file | PNG เท่านั้น (นามสกุล + magic bytes `89 50 4E 47`) · **slot `Evolution` = GIF เท่านั้น** (magic `GIF87a`/`GIF89a`; PNG ที่ slot นี้ก็ผิด) | `INVALID_FILE_TYPE` |
 | file | ไม่เกิน 1 MB | `FILE_TOO_LARGE` |
-| width / height | **ต้องเท่ากับ 1,000 × 1,000 px พอดี** | `INVALID_DIMENSIONS` |
+| width / height | **ต้องเท่ากับ 1,000 × 1,000 px พอดี** · GIF (`Evolution`): จัตุรัส **ไม่เกิน** 1,000×1,000 | `INVALID_DIMENSIONS` |
 | frame_count | 1–64 | `INVALID_FRAME_COUNT` |
 | frame_rate | 4–24 fps | `INVALID_FRAME_RATE` |
 | direction_rows | `1` หรือ `4` | `INVALID_DIRECTION_ROWS` |
@@ -519,13 +566,19 @@ Max evolution within = ceil(Total XP needed ÷ Max XP / Day)  วัน
 | seed config v1 (migration 85 + bootstrap DDL) | `neutral.within_hours = 48` | **72** (ปิดช่องว่าง 48–72 ชม.) |
 | `DELETE /api/admin/pets/:id` | ลบได้เสมอ | คืน `409 PET_TYPE_IN_USE` ถ้ายังถูกวางในห้อง (ทำพร้อม SC-PM-05) |
 | `workspace_usage_count` | ไม่มีใครเขียน | อัปเดตตอนวาง/ลบ pet ใน SC-PM-05 |
+| `allowedMimeTypesBySlot[Evolution]` (`pet_service.go`) — **2026-09-02** | `{PNG, GIF}` | **`{GIF}` เท่านั้น** |
+| GIF path ใน `UploadAnimation` — **2026-09-02** | ผ่าน `validatePetSpriteDimensions` + เก็บ `frame_width = width/frame_count` | ข้าม grid validation · เช็คแค่จัตุรัส ≤ 1000 · เก็บ width/height จริง · `frame_count/frame_rate/direction_rows = NULL` |
+| `tb_pet_animation` CHECK/NOT NULL ของ `frame_count`/`frame_rate`/`direction_rows` — **2026-09-02** | `NOT NULL` + CHECK ทุก row | ปลดเป็น nullable สำหรับ row GIF (migration ใหม่ + bootstrap DDL) |
+| Prefill egg `Evolution` (`pet_service.go` `stageReadiness` + detail/list response, `config.go`) — **2026-09-02** | ไม่มี | ถ้าไม่มี row (egg, Evolution) → คืน URL กลางจาก `PET_EGG_EVOLUTION_DEFAULT_URL` + `is_default: true` และนับว่าพร้อม · `DeleteAnimation` ของ slot นี้ = กลับ default |
 
 ### zyra-app
 
 | ต้องแก้ | จาก | เป็น |
 |---|---|---|
 | `pet-upload-config.ts` | 20 slot (`idle` ในทุก stage) | **17 slot** |
-| `pet-upload-step.tsx` | `frameCount = 50`, `frameRate = 24`, `directionRows = 4` hardcode + `<select disabled>` | number input **enabled** ต่อ animation · default **6 / 8 / 4** |
+| `pet-upload-step.tsx` | `frameCount = 50`, `frameRate = 24`, `directionRows = 4` hardcode + `<select disabled>` | number input **enabled** ต่อ animation · default **6 / 8 / 4** · **ซ่อน 3 ช่องนี้ที่ slot `Evolution`** และ `accept="image/gif"` อย่างเดียว (2026-09-02) |
+| notice "PNG only" ใน upload step (`petUploadPngNotice`) | บอกว่ารับ PNG อย่างเดียว | เพิ่มข้อความว่า `Evolution` ต้องเป็น GIF (i18n en/th) — 2026-09-02 |
+| การ์ด upload egg/`Evolution` (`pet-upload-step.tsx` `AnimationUploadCard`) + count tag + progress + preview — **2026-09-02** | empty state เหมือน slot อื่น | state `Default` (badge + preview ไฟล์กลาง + ปุ่ม `Replace`) อ่านจาก `is_default` · ลบ = กลับ default · นับพร้อมตั้งแต่ต้น |
 | `pet-preview-modal.tsx` | hardcode 6×4@8 และ `void animationMeta` | อ่าน `frame_count` / `frame_rate` / `direction_rows` จริงจาก DB (ค่า 6×4@8 บังเอิญตรงกับ asset demo แต่จะผิดทันทีที่ไฟล์อื่นใช้ค่าอื่น) + เพิ่ม empty state ต่อ slot ที่ยังไม่มีไฟล์ |
 | ปุ่ม Preview | `disabled` จนอัปครบทุก slot | enable เมื่อมี asset ≥ 1 |
 | `pet-detail-panel.tsx` progress bar | ตาราง width 18 ค่า (สเกล 17 ขั้น) | คำนวณจาก `uploaded / RequiredSlots.total` |
