@@ -14,7 +14,7 @@
   - `__tests__/sprite-grid.test.ts` — 12 เคส (4 เคสเดิมของ #240 + normalize 4 + edge 4)
   - harness: `views/dev/room-pet-preview/real-pet-fixture.ts` (URL R2 ของปรื๊ด — public ไม่ใช่ secret) · `real-pet-sprite-strip.tsx` แสดงเฟรม 0 ทั้ง 4 ทิศของ egg/baby/adult/evolved + GIF ไข่แตก · nameplate icon = เฟรมจริง baby Walking · panel avatar = thumbnail จริง · ทั้งหมดผ่าน `/api/img` (`proxyUrl`)
 - **verify:** live บน 3110 — sheet ทั้ง 4 crop ถูกทุกทิศหลัง normalize (baby/adult/evolved 6×4, egg 4×3), GIF 960×960 + thumbnail 166×166 โหลดสำเร็จ, ไม่มี request 4xx/5xx · vitest 12/12 · tsc/eslint/prettier ผ่าน · ระหว่างทาง Turbopack cache `.next/room-pet` เพี้ยน (`[turbopack]_runtime.js` หาย) → ลบแล้วสตาร์ตใหม่หาย
-- **PR:** ยังไม่ commit — รอ user สั่ง · หลัง #240 merge: ไฟล์ `sprite-preview-utils.ts` ของ admin ควรเปลี่ยนเป็น re-export จาก `lib/sprite-grid.ts` (เนื้อเดิมเท่ากัน add/add จะไม่ conflict)
+- **PR:** ✅ **[zyra-app #242](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/242)** `feat/room-pet-sprite-utils` → `develop` (2 commit: `lib/sprite-grid.ts` + harness) · หลัง #240 merge: ไฟล์ `sprite-preview-utils.ts` ของ admin ควรเปลี่ยนเป็น re-export จาก `lib/sprite-grid.ts` (เนื้อเดิมเท่ากัน add/add จะไม่ conflict) และให้ preview modal เรียก `normalizeSpriteGrid`
 - **ต่อจากนี้:** commit + PR → member endpoint อ่าน XP config → เริ่ม component ที่เหลือ (hatch overlay + evolution modal ใช้ GIF จริง, marker, mood bubble) ตาม decision รอบ 9
 
 ## 2026-09-02 (รอบ 9) — PM ตอบ 9 ข้อที่ค้างใน test-plan §6 · ข้อมูล Pet Management จริงมาถึง
