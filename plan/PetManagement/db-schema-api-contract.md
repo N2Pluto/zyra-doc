@@ -403,6 +403,7 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 
 | Method | Path | คำอธิบาย |
 |---|---|---|
+| GET | `/api/user/pet-xp-config` | ✅ **ทำแล้ว 2026-09-02** (branch `feat/room-pet-user-xp-config`) — config ปัจจุบันแบบ member: `{ version, config: { thresholds, activities (ทุกตัวพร้อม `enabled`), mood } }` **ไม่มี** `id` / `is_current` / `created_by*` / `constraints` · 404 `PET_XP_CONFIG_NOT_FOUND` ถ้ายังไม่มี version · VO ใช้ derive stage / progress / mood + Daily quest (`buildPetDailyQuests`) |
 | GET | `/api/user/workspaces/:workspaceId/pets` | pet ในชั้นที่กำลังเข้า + derived `stage`/`mood` + animation URL ครบ (VO client) |
 | POST | `/api/user/workspaces/:workspaceId/pets/:petId/play` | activity "Play with your pet" → บวก XP (idempotent วันละครั้ง/คน) |
 
@@ -540,6 +541,7 @@ updateMapPet(mapId: string, petId: string, body: UpdateMapPetBody): Promise<MapP
 removeMapPet(mapId: string, petId: string): Promise<BaseResponse>
 
 // member — ห้ามชี้ /api/admin/*
+getPetXPConfigForUser(): Promise<PetResponse<PetXPConfigPublic>>   // ✅ มีแล้ว (lib/api/pets.ts)
 listWorkspacePets(workspaceId: string): Promise<WorkspacePetListResponse>
 playWithPet(workspaceId: string, petId: string): Promise<PlayWithPetResponse>
 ```

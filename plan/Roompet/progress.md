@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-09-02 (รอบ 11) — member endpoint `GET /api/user/pet-xp-config`
+
+- **ทำอะไร:** branch `feat/room-pet-user-xp-config` ทั้ง 2 repo (แตกจาก `develop`) — endpoint แรกฝั่ง member ของ Room Pet
+  - **zyra-api:** `model.PetXPConfigPublic { version, config }` + `PetXPConfigPublicResponse` · `handler/pet_xp_config_user_handler.go` — `PetXPConfigUserHandler` รับ interface แคบ `petXPConfigCurrentReader` (แค่ `GetCurrent`) แล้ว map ตัด `id/is_current/created_by*` และไม่ส่ง `constraints` · 404 `PET_XP_CONFIG_NOT_FOUND` เมื่อยังไม่มี version, 500 `INTERNAL_ERROR` ไม่รั่วข้อความ error · route `user.GET("/pet-xp-config")` ใต้ `UserGuard` · wire ใน `main.go` (reuse `PetXPConfigService` ตัวเดิม ไม่มี SQL ใหม่)
+  - `handler/pet_xp_config_user_handler_test.go` — table-driven 3 เคส (200 / 404 / 500) + เคสยืนยันว่า response **ไม่มี** field admin และไม่มีชื่อ/uuid ของ admin ใน body
+  - **zyra-app:** `lib/api/pets.ts` — type `PetXPConfigPublic` + `getPetXPConfigForUser()` → `/api/user/pet-xp-config` · `__tests__/pets-api-user-xp.test.ts` 3 เคส (path ไม่ใช่ `/api/admin`, payload เข้า `derivePetStage`/`derivePetProgress`/`buildPetDailyQuests` ได้ตรง ๆ, 404 ไม่ throw)
+- **verify ถึงไหน:** Go: gofmt สะอาด · `go vet` + `go build ./...` ผ่าน · `go test ./internal/handler/ ./internal/service/` ผ่านทั้งหมด · **live-test กับ local api ที่ต่อ dev DB** (รันที่ port 3012 เพราะ 3002 มี instance เก่าของ user อยู่): ไม่มี token → 401 · `member-a@zyra.test` → 200 `version 8` (มีคน save version ใหม่ระหว่างวัน) data มีแค่ `config` + `version`, enabled 8 activity, mood 12/48/72 · member เรียก `/api/admin/pet-xp-config` → 403 (guard เดิมทำงาน) · FE: vitest 11/11 (ไฟล์ใหม่ + `pets-api-xp` เดิม), tsc, eslint ผ่าน
+- **PR:** ยังไม่ commit ทั้ง 2 repo — รอ user สั่ง
+- **ต่อจากนี้:** commit + PR (api ก่อน app เพราะ app เรียก path ใหม่) → harness/`VOPetPanel` ดึง config จริงจาก endpoint นี้แทน fixture เมื่ออยู่ในหน้าที่ login → เริ่ม component ที่เหลือ (hatch overlay + evolution modal, marker, mood bubble)
+- **ติดอะไร:** config v8 บน dev ยังมี `neutral.within_hours = 48` (validation ฝั่ง Go ยังไม่บังคับ `== sad.after_hours`) — `derivePetMood` ไม่อ่านค่านี้จึงไม่กระทบ UI แต่ต้องแก้ตามรายการ PetManagement/spec.md
+
 ## 2026-09-02 (รอบ 10) — `lib/sprite-grid.ts` (port จาก #240) + harness ใช้ sprite จริงของ "ปรื๊ด"
 
 - **ทำอะไร:** branch ใหม่ `feat/room-pet-sprite-utils` (จาก `develop` @ `bde39ce`) — user สั่ง cherry-pick sprite utils จาก #240 มาเริ่มก่อน merge
