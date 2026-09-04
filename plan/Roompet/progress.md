@@ -2,6 +2,20 @@
 
 > log ต่อรอบ (entry ใหม่ไว้บนสุด) · รูปแบบตาม [zyra-doc/README.md § อัปเดตความคืบหน้า](../../README.md)
 > สถานะรวมอยู่ที่ blockquote หัว [spec.md](spec.md) · ความพร้อมของ dependency ดู [spec.md § ความพร้อม](spec.md)
+>
+> ## 🔖 มาทำต่อตรงนี้ (หยุดไว้ 2026-09-04)
+>
+> **งานที่ค้างอยู่งานเดียว: เทส UI ในเบราว์เซอร์** — โค้ดครบทุก scenario แล้ว deploy dev แล้ว verify ผ่าน REST/WebSocket แล้ว เหลือแค่ยังไม่ได้ดูด้วยตา
+>
+> **ติดตรงไหน:** AI พิมพ์รหัสผ่านลงฟอร์มไม่ได้ และ session ของแอปเป็น httpOnly `refresh_token` cookie จึงฉีด token แทนไม่ได้ · **Browser pane เป็นคนละ browser กับ Chrome ปกติ** → ต้อง login ใน pane นั้นเท่านั้น login ที่อื่นไม่ carry over
+>
+> **ของที่ตั้งค้างไว้ให้แล้ว (ตั้งใจ ไม่ใช่ขยะ):**
+> - pet **Mochi Live** (ws `256893ae`, member-a) = **baby / 150 XP / mood happy** ที่ tile (60,3) — ตั้งไว้ให้เดินได้ทันทีตอนเทส · เดิมเป็น egg/0 ถ้าจะคืนค่าให้ `UPDATE tb_room_pet SET xp=0,last_seen_stage='egg',last_milestone=0`
+> - pet **เจ้าปรื๊ด** (ws `34ffa741`, ของ user) = baby / 150 XP ที่ Floor 1 → ห้อง `test` → (60,39)
+> - โฟลเดอร์ปลายทางของภาพ: `zyra-new/storage/preview/`
+> - แผนเก็บภาพ 9 ไฟล์ (01 map → 09 notification) อยู่ในรอบ 21
+>
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api `9ad7733` · ws `44a9616` · app `eda36ae` (= image บน dev ทั้งหมด)
 
 ---
 
