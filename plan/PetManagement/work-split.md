@@ -43,7 +43,7 @@
 | PR ใหม่ | เจ้าของ | งาน | หลักฐานว่าตกหล่น |
 |---|---|---|---|
 | **10** `feat(api): member pet endpoints` | AI — 🟡 GET ทำแล้ว [zyra-api #66](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/66) (2026-09-04, animations ครบ, stage/mood derive ฝั่ง client) · `POST …/play` ย้ายไป PR 9 | `GET /api/user/workspaces/:workspaceId/pets` (+ animation URL ครบ) · `POST /api/user/workspaces/:workspaceId/pets/:petId/play` (idempotent วันละครั้ง/คน) | อยู่ใน [db-schema-api-contract.md §Member](db-schema-api-contract.md) แต่ไม่ปรากฏใน PR 1–9 เลย |
-| **11** `feat(app): render pet ใน VO` | Dev A | render pet บน VO scene ฝั่ง member · เล่น animation ตาม stage/mood · ลำดับแถว direction ต้อง import จาก `AVATAR_DIR_ROW` | "เกณฑ์ก่อนเปิด Feature Flag" ระบุ "render ตาม stage/mood" แต่ PR 8 คือ Map Editor เท่านั้น · ข้อสมมติลำดับแถว (`0=down 1=left 2=right 3=up`) **ยังไม่มีใครใช้ = ยังไม่เคยพิสูจน์กับ sprite จริง** |
+| **11** `feat(app): render pet ใน VO` | AI — 🟡 [zyra-app #248](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/248) เปิด 2026-09-04 (live-test production build ผ่าน) | render pet บน VO scene ฝั่ง member · เล่น animation ตาม stage/mood · ลำดับแถว direction ต้อง import จาก `AVATAR_DIR_ROW` | "เกณฑ์ก่อนเปิด Feature Flag" ระบุ "render ตาม stage/mood" แต่ PR 8 คือ Map Editor เท่านั้น · ข้อสมมติลำดับแถว (`0=down 1=left 2=right 3=up`) **ยังไม่มีใครใช้ = ยังไม่เคยพิสูจน์กับ sprite จริง** |
 
 ### ของที่ต้องเก็บใน PR ที่ merge แล้ว
 

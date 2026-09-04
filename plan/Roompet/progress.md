@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-09-04 (รอบ 15) — PR 11 VO render + เก็บ SC-PM-05 ให้ครบ Acceptance ก่อนส่ง QA
+
+- **PM/user เคาะ (2026-09-04):** ตัด **stage row ใน marker menu** ออกจาก v1 — ใช้ Replace แทน ("เปลี่ยนชนิดสัตว์แต่ XP/stage ติดห้องเดิม") · pet เป็นของ **workspace จริง** (ไม่ผูก template) ตามที่แนะนำ ยังรอ PM ยืนยันเรื่อง template อีกครั้ง · user ย้ำให้ **ปิด SC-PM-05 ให้ครบ AC ก่อนส่ง QA** ก่อนไปงานอื่น
+- **ทำอะไร:**
+  - **PR 11** zyra-app `feat/room-pet-vo-render` → **[#248](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/248)**: `hooks/use-workspace-pets.ts` (TanStack, gated flag) · `lib/pet-scene.ts` (stage→sheet, mood→emoji, ratio, WS delta reducer) · `zyra-engine/pixi-game/pet-layer.ts` (`PetLayer`: sprite 1 tile ใน mainContainer slot character, nameplate ใน name-tag layer, ตัดเฟรมด้วย `lib/sprite-grid` จาก `/api/img`, sheet หาย = ไม่วาด, `petAt`) · scene `setRoomPets/setOnPetClick` + click ก่อน zone/walk · ws types `pet_*` 4 ตัว · hero: pets ของชั้น → scene + minimap dots · คลิก pet → `VOPetPanel` มุมขวาบน · **แก้ `layoutPetNameTag` ใช้ solid fill แทน FillGradient** (gradient ใน sprite batch ทำ WebGL uniform พัง เกิด streak ทั้งฉาก)
+  - **AC 2 ของ SC-PM-05 ("Room list มี badge มี Pet แล้ว")** → zyra-app `feat/room-pet-editor-has-pet-badge` **[#247](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/247)**: Layers tab ใน Map Editor แสดงห้องที่มี pet เสมอ + badge เขี้ยวม่วง + ชื่อ pet (i18n `leftPanelRoomHasPet` en/th)
+- **verify ถึงไหน:** tsc/eslint/prettier ผ่าน · vitest ทั้ง repo 118 ไฟล์ 1483 เคส · **live production build** (`next build` + `start` :3300 ต่อ api local #66 :3012 + ws local #29 :3103 + dev DB) เป็น member-a: ไข่ "Mochi" วาดใน Room Group 3 พร้อม pill 🐾 ชื่อ 🥰 + XP bar · minimap dot ม่วง · admin PATCH rename+move ผ่าน API → pill/ตำแหน่งบน VO เปลี่ยนภายใน 1 วิ (relay `pet_renamed`/`pet_moved` ครบวง) · คลิกไข่ → VOPetPanel 0/100 XP · Happy · Egg · Daily quest 8 ข้อจาก config จริง · console ไม่มี error จากโค้ด pet
+  - **บทเรียน:** dev server (`next dev`) วาด VO เพี้ยน (sprite ยืด/zoom มั่ว) ต้อง build+start เท่านั้น (user ยืนยัน) · Browser pane ที่ซ่อน → tab background → hero ตั้ง away แล้ว auto-leave หลัง `AWAY_AUTO_LEAVE_MS` (`/workspace?notice=idle_removed`) ทำให้ session หลุดกลาง test 2 ครั้ง ไม่ใช่บั๊กของ pet
+  - badge #247 ยังไม่ได้ดูภาพจริง (worktree แยกกำลังเปิด)
+- **สถานะ SC-PM-05 เทียบ Acceptance Criteria ของ card** (card ยังเป็น flow ฟอร์ม PM เปลี่ยนเป็น drag-drop 08-17): ดูตาราง [PetManagement/spec.md § SC-PM-05 AC ↔ implementation](../PetManagement/spec.md)
+- **ต่อจากนี้:** merge #247 (+ #248 เพื่อ AC "member เห็นทันที") → rebuild dev → QA เทส SC-PM-05 ตามตาราง · เรื่องค้าง PM: template
+- **ติดอะไร:** AC "spawn ที่ center ของ room" ขัด PM decision (วางตรงที่ admin ลาก) ต้องบอก QA · `pet_spawned/pet_removed` refetch path ยังไม่ได้ live-test · multi-floor ยังไม่ได้ทดสอบ
+
 ## 2026-09-04 (รอบ 14) — ขั้น 1–3 ของ roadmap: merge #65 / #246 / #29 + PR 10 member API
 
 - **roadmap ที่ user อนุมัติ** (2026-09-04): 1 merge api #65 + app PR 8 → 2 ws PR 7 → 3 api PR 10 member API → 4 app PR 11 VO render → 5 api PR 9 XP engine → 6 ws pet AI → 7 notifications · หลัก: Postgres เป็นความจริง / stage+mood derive / AI อยู่ที่ ws / XP จ่ายฝั่ง server · ข้อเสนอต่อ PM: ตัด stage row ออกจาก v1 (Replace ครอบ) และ pet เป็นของ workspace ไม่ใช่ template (ถ้าต้องการ default ทำตอน clone)

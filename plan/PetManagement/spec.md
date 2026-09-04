@@ -486,13 +486,34 @@ Max evolution within = ceil(Total XP needed ÷ Max XP / Day)  วัน
 - **การวาง pet ต้องอัปเดต `workspace_usage_count` ของ pet type นั้น** — badge และ sort `usage_count` ใน SC-PM-01 พึ่งค่านี้
 - ✅ **PM เคาะ 2026-09-04: 1 room = 1 pet บังคับ** (`uq_room_pet_one_per_zone` เปิดแล้ว) · วางได้เฉพาะ `zone_type = 'room'` · จุดวางห้ามตกใน meeting/private แม้ซ้อนอยู่ใน room
   - modal "Replace this pet" ใช้จริง: วางซ้ำห้อง → 409 → confirm → `replace: true` → pet ใหม่รับ XP/stage ต่อจากตัวเดิม (sticky Figma)
-  - ⚠️ **stage row ใน marker menu (Figma 4387:121093) ยังไม่ทำ** — ต้องนิยาม "admin เลือก stage" กับ "ทีมเคยถึง stage นั้น" ก่อน ดู [ux-ui.md § สิ่งที่ Figma มีเพิ่ม](ux-ui.md)
+  - ✅ **stage row ใน marker menu (Figma 4387:121093) ตัดออกจาก v1** (user/PM เคาะ 2026-09-04) — ใช้ Replace แทน ดู [ux-ui.md § สิ่งที่ Figma มีเพิ่ม](ux-ui.md)
 
 ### Business Logic / Rules
 - วาง pet = สร้าง `tb_room_pet` record: `xp = 0`, `last_activity_at = NOW()`, `last_seen_stage = 'egg'`
 - **ไม่เก็บ `stage` / `mood` เป็นคอลัมน์** — derive จาก `xp` + threshold และ `last_activity_at` ตอนอ่าน
 - Pet ปรากฏบน map ทันทีผ่าน `ZoneEventPublisher` → Redis `vo:zone` → zyra-ws
 - ⚠️ **ยังค้าง**: วาง pet ใน Workspace Template แล้ว workspace ที่สร้างไปก่อนหน้าได้ pet ด้วยไหม
+
+### SC-PM-05 AC ↔ implementation (สำหรับ QA — อัปเดต 2026-09-04)
+
+> card ยังเขียนเป็น flow ฟอร์ม (Workspace search / Room dropdown / ปุ่ม Assign) แต่ PM เคาะ 2026-08-17 ให้เป็น **drag-drop ใน Map Editor** — ตารางนี้บอกว่าแต่ละ AC ไปทดสอบที่ไหนในของจริง
+
+| AC ใน card | ของจริง | สถานะ | ทดสอบที่ |
+|---|---|---|---|
+| Workspace search: ค้นหาชื่อ workspace | หน้า Workspace Management (search เดิม) → เปิด Map Editor ของ workspace | ✅ ของเดิม | `/admin/workspace-management` |
+| Room dropdown + badge "มี Pet แล้ว" | ไม่มี dropdown — room = zone บนแมป · **Layers tab** ใน Map Editor แสดงห้องที่มี pet พร้อม badge 🐾 + ชื่อ pet ([#247](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/247)) และ marker pet บนแมป | ✅ (#247 รอ merge) | Map Editor → Layers |
+| Pet Type dropdown: เฉพาะ active | palette หมวด **Pet** แสดงเฉพาะ `active` + sprite ครบ 4 stage | ✅ [#246](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/246) | Map Editor → Object library → chip 🐾 |
+| ชื่อ Pet optional / max 30 / default = ชื่อ pet type | dialog ตั้งชื่อตอนวาง (ว่าง = ชื่อ type) · แก้ทีหลัง dbl-click ใน marker menu · api บังคับ 30 rune | ✅ #246 + api #65 | วาง pet → dialog |
+| 1 room = 1 pet → warning "ห้องนี้มี Pet อยู่แล้ว ต้องการแทนที่ไหม?" | modal **"Replace this pet"** (copy ตาม Figma) → ยืนยัน = pet ใหม่รับ XP/stage ต่อจากตัวเดิม (PM sticky) · api unique index + 409 | ✅ #246 + #65 | วาง pet ตัวที่ 2 ห้องเดิม |
+| หลัง assign spawn ที่ **center ของ room** stage egg xp 0 | **วางตรงจุดที่ admin ลาก** (PM 08-17 เปลี่ยนจาก center) · xp 0 · stage derive = egg | ⚠️ ต่างจาก card ตาม PM · ที่เหลือ ✅ | ดู marker / `GET /api/user/workspaces/:id/pets` |
+| Broadcast hot reload ให้ users ที่ online | api publish `pet_spawned/moved/renamed/removed` → ws relay ([zyra-ws #29](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/29)) → VO render ([#248](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/248)) | ✅ api/ws merged · VO render #248 รอ merge | เปิด VO เป็น member แล้วให้ admin วาง/ย้าย/ลบ |
+| ลบ Pet ออกจาก Room ได้ | marker menu → 🗑 (soft delete, ทันที) | ✅ #246 | คลิก marker |
+| (Business) ถ้าห้องมี pet เดิม soft delete ก่อนแล้วสร้างใหม่ | `replace: true` ทำใน tx เดียว + `pet_removed` แล้ว `pet_spawned` | ✅ #65 | — |
+| (Business) event ชื่อ `ws:pet:spawned` | ใช้ `pet_spawned` (snake_case ตาม event ฝั่ง zone เดิม ไม่ใช่ `ws:` namespace) | ⚠️ ชื่อต่างจาก card | — |
+
+**ไม่ได้ทำ (ตั้งใจ / รอ PM):** stage row ใน marker menu (Figma 4387:121093) — user เคาะ 2026-09-04 ตัดออก v1 ใช้ Replace แทน · วางบน **template** ไม่มี (pet เป็นของ workspace) · undo/redo ไม่ครอบ pet · Space Builder ฝั่ง user ไม่มี pet
+
+**ต้องมีก่อน QA เทสบน dev:** merge #247 + #248 → dev deploy · `NEXT_PUBLIC_PET` (admin) + `NEXT_PUBLIC_ROOM_PET` (member) เปิดบน env dev แล้ว · pet type ที่ active + sprite ครบ ("Pie") · admin ต้องถือ lock ของ workspace (เปิด Map Editor ปกติจะได้ lock อัตโนมัติ)
 
 ### UX/UI Reference
 [Figma — node 4114-199428](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=4114-199428&t=F9kfchFmCSys23FH-0)
