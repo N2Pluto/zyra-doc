@@ -518,7 +518,9 @@ publish ผ่าน `ZoneEventPublisher` ที่มีอยู่ (Redis cha
 
 > ✅ **4 event ฝั่ง admin (`pet_spawned` / `pet_moved` / `pet_renamed` / `pet_removed`) publish จริงแล้ว 2026-09-04** — ยืนยันด้วย `redis-cli SUBSCRIBE vo:zone` ระหว่าง live-test (envelope `{workspace_id, type, payload}` เหมือน event เดิม) · `pet_spawned.pet` คือ `RoomPet` เต็มตัว · `pet_renamed.name` = ชื่อที่แสดงจริงหลังเปลี่ยน (ล้าง custom แล้วได้ชื่อ pet type) · publish เป็น best-effort หลัง commit — Redis ล่ม placement ยังสำเร็จ (log warn) · อีก 2 event (`pet_stage_changed` / `pet_xp_changed`) รอ PR 9
 
-**สิ่งที่ต้องทำใน zyra-ws**: เพิ่ม 6 type นี้ใน handler ที่ subscribe `vo:zone` — ปัจจุบันรู้จักแค่ `zone_claim_changed`, `map_object_changed`, `map_updated` type ที่ไม่รู้จักจะถูกทิ้งเงียบ ๆ
+> ✅ **zyra-ws relay ทำแล้ว** [zyra-ws #29](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/29) (2026-09-04) — 6 type ผ่าน `BroadcastZoneEvent` แบบ pure relay ไม่มี mirror
+
+**สิ่งที่ต้องทำใน zyra-ws** (ทำแล้ว ดูด้านบน): เพิ่ม 6 type นี้ใน handler ที่ subscribe `vo:zone` — ปัจจุบันรู้จักแค่ `zone_claim_changed`, `map_object_changed`, `map_updated` type ที่ไม่รู้จักจะถูกทิ้งเงียบ ๆ
 
 ⚠️ gotcha ที่เคยเจอ: ถ้า zyra-api start ผิด CWD จะไม่ได้ `INTERNAL_API_SECRET` แล้ว ws join 401 ทั้งหมด — event จะดูเหมือน "ไม่ถูก publish" ทั้งที่ publish ปกติ ([[vo-realtime-redis-bus]])
 
