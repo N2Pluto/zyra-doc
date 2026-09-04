@@ -5,6 +5,51 @@
 
 ---
 
+## 2026-09-04 (รอบ 23) — เปิด activity ครบ 10 ตัว + แก้ค่า office ที่กรอกสลับช่อง (config v9 → v11)
+
+> งาน config ล้วน ไม่มีการแก้โค้ด · ทำผ่าน **admin API** (`PUT /api/admin/pet-xp-config`) ทั้งหมด ไม่ใช่ SQL ตรง เพื่อให้ version history ถูกต้องและ restore ได้
+
+### สิ่งที่ทำ
+
+| version | เปลี่ยนอะไร |
+|---|---|
+| v9 (ของเดิม) | `xp_login_per_day` และ `xp_office_10min` = `enabled:false` · `xp_office_10min` = **30 XP ทั้งที่ cap คือ 10** |
+| **v10** | เปิด 2 ตัวนั้น + จำใจ clamp `xp_office_10min` 30 → 10 (ไม่งั้น API reject) |
+| **v11 (ปัจจุบัน)** | ย้ายเลขกลับช่องที่ควรอยู่: `xp_office_10min` = **6** · `xp_office_30min` = **30** |
+
+### สิ่งที่เจอ — config ใน DB ไม่ผ่าน validation ของตัวเอง
+
+`xp_office_10min` เก็บ `xp: 30` แต่ `tb_pet_xp_activity_definition.max_xp` ของมันคือ **10** → ถ้าเอา config เดิมยิงกลับผ่าน API จะโดน reject ที่ `must_be_between_1_and_10`
+
+แปลว่าแถวนั้น **ถูกเขียนเข้ามาโดยไม่ผ่าน API** (SQL ตรง หรือ constraint ใน migration 87 ถูกเพิ่มทีหลัง) — เป็นข้อสังเกตเรื่อง data integrity ที่ควรรู้: **หน้า XP Configuration จะ save ค่าที่ค้างอยู่ใน DB ไม่ได้** จนกว่าจะแก้ให้อยู่ในกรอบ
+
+### ทำไมถึงตีความว่ากรอกสลับช่อง
+
+เลข 30 **เกิน** cap ของช่อง 10 นาที (สูงสุด 10) แต่ **พอดีเป๊ะ** กับ cap ของช่อง 30 นาที (สูงสุด 30) · และค่า seed เดิมก็เรียงจากน้อยไปมาก (`10min`=2, `30min`=6) → ย้ายเลขเดิมกลับช่องที่ควรอยู่ ไม่ได้คิดเลขใหม่เอง · การสลับนี้ยังลบ clamp ที่จำใจใส่ตอน v10 ไปในตัว
+
+### สถานะ config ตอนนี้ (v11) — ผ่าน validation ครบเป็นครั้งแรก
+
+```
+xp_login_per_day          1/5     xp_team_meeting_10min     2/10
+xp_office_10min           6/10    xp_team_meeting_30min     6/30
+xp_office_30min          30/30    xp_first_message_fo_day   1/5
+xp_team_meeting           9/50    xp_10_message_fo_day      2/10
+xp_play_with_pet          1/5     xp_react_message_fo_day   1/5
+```
+
+**enabled ครบทั้ง 10 ตัว · ไม่มีตัวไหนเกิน cap**
+
+### verify
+
+- heartbeat 3 ครั้ง → ledger 1 แถว `xp_login_per_day` · pet xp 0 → 1 ✅ (ทำตอน v10 ก่อนสลับ)
+- `xp_office_10min` **ยังไม่ได้เทสจริง** — ต้องอยู่ใน VO จริง 10 นาที และนาฬิกา session อยู่ใน memory backdate จากข้างนอกไม่ได้ · logic มี unit test ครอบแล้ว (ปลดล็อก 10/30 นาที + ไม่จ่ายซ้ำ)
+- ข้อมูลเทสคืนค่าเดิม: Mochi Live = egg / 0 XP · ledger ว่าง
+- [api #76](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/76) (claim fix) deploy ขึ้น dev แล้ว — `dev-9ad7733` · การเปิด/ปิด activity กลางวันจึงมีผลทันที ไม่ต้องรอวันถัดไป
+
+### ⚠️ ยังต้องให้ PM ดู
+
+`xp_team_meeting` = 9 XP ดูเป็นเลขที่กรอกมั่ว ๆ (cap 50) และ `xp_team_meeting_30min` = 6 น้อยกว่า `xp_office_30min` = 30 — ไม่แตะให้ เพราะเป็นเรื่องนโยบายของ PM ไม่ใช่บั๊ก
+
 ## 2026-09-04 (รอบ 22) — จ่าย XP ครบทั้ง 10 activity (งานใหญ่สุดที่ค้างอยู่)
 
 - **ปัญหา:** `Award()` มี caller เดียวมาตลอดคือ stroke → pet โตได้ทางเดียวคือให้คนลูบ · `tb_pet_xp_config` แทบไม่มีความหมาย
