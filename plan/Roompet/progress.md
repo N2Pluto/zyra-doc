@@ -5,6 +5,43 @@
 
 ---
 
+## 2026-09-04 (รอบ 18) — implement SC-PET-01 ~ 08 ครบทุกใบ (8 PR)
+
+- **ทำอะไร:** ผู้ใช้สั่ง "ทำต่อให้เสร็จเลยนะ ทั้งหมด" → ไล่ทำ scenario ที่เหลือทั้งหมดจนครบ 8 ใบ
+
+| PR | repo | scenario | สถานะ |
+|---|---|---|---|
+| [api #69](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/69) | zyra-api | echo `last_activity_at` ใน `pet_xp_changed` | ✅ merged |
+| [app #251](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/251) | zyra-app | **SC-PET-03** stroke + **SC-PET-06** panel ต่อ API จริง | ✅ merged |
+| [app #252](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/252) | zyra-app | **SC-PET-04 / 05** growth sequence + modal | ✅ merged |
+| [app #253](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/253) | zyra-app | **SC-PET-08** sad sprite | ✅ merged |
+| [api #70](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/70) | zyra-api | internal pet list ให้ ws (`GET /api/internal/workspaces/:id/pets`) | ✅ merged |
+| [ws #31](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/31) | zyra-ws | **SC-PET-02** pet AI (wander / idle / react) | ✅ merged |
+| [app #254](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/254) | zyra-app | **SC-PET-02** client — interpolate `pet_state` | รอ CI |
+| [api #71](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/71) | zyra-api | **SC-PET-07** notification 3 ชนิด + cron 09:00 ICT | ✅ merged |
+| [app #255](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/255) | zyra-app | **SC-PET-07** client — notification card + interrupt rule | รอ CI |
+
+- **decision ที่ตัดเองระหว่างทาง** (เขียนเหตุผลไว้ในโค้ด + PR body ทุกข้อ):
+  1. **`Feed` ไม่ทำ** — card ตัดชื่อออกแล้ว เหลือ Stroke อย่างเดียว (ตอบคำถาม PM ข้อ 1)
+  2. **Top 3 carers ไม่ทำ** — Figma แทนที่ด้วย Daily quest ตาม ux-ui §0 "ยึด Figma" · ข้อมูลมีใน `GET …/status` แล้ว ถ้า PM อยากได้คืนเพิ่ม section ได้เลย
+  3. **Share your friends ไม่ทำ** — ux-ui §5.4 บอกว่าเป็น component เดิม แต่ `grep "Share to your friends"` ในโค้ดไม่เจอ (ต้องทำ member picker + card message type ใน chat ใหม่ทั้งชุด) · ปุ่มที่กดไม่ได้แย่กว่าไม่มีปุ่ม → แยกเป็นงานต่างหาก
+  4. **HUD banner 5 วิ ไม่ทำ** — Figma แทนที่ด้วย modal เต็มจอ ซึ่งทุกคนใน workspace ได้อยู่แล้ว (คนที่ไม่ได้ trigger เปิดที่ modal เลย) · ทำทั้งคู่ = ประกาศเรื่องเดียวกันสองที่
+  5. **facing ของ pet ไม่ทำ** — ws ส่ง direction มาแล้ว แต่ **ไม่มี spec ว่า sprite row ไหนคือทิศไหน** ของ pet sheet (บาง sheet มีแถวเดียว) เดาแล้วจะวาดหันผิดทาง → เปิดเป็นคำถาม design
+  6. **ledger ไม่ใช้ unique index** ตามที่ contract ร่างไว้ — unique จะจ่ายได้ activity ละ 1 ครั้ง/วัน แต่ `times` ตั้ง > 1 ได้ (stroke 5 ครั้ง/วัน) → นับด้วย `COUNT(*)` ใต้ row lock แทน
+  7. **เฉพาะ interaction ตรงกับ pet เท่านั้นที่ reset `last_activity_at`** — ถ้า login/office/chat reset ด้วย ทีมที่ active จะไม่มีวัน Sad และ SC-PET-08 เทสไม่ได้
+  8. **stage change ชนะ milestone** — ข้าม threshold = เต็ม 100% แล้วรีเซ็ต ประกาศ "50% ของช่วงถัดไป" พร้อมกันเป็น noise · award ก้อนใหญ่ที่กระโดด 40% → 95% ประกาศแค่ 90 ไม่ประกาศทั้ง 3
+- **verify ถึงไหน:**
+  - **build เขียว ทุก repo**: zyra-api `go build`/`go vet`/`go test ./...` · zyra-ws เหมือนกัน · zyra-app `tsc` + `eslint` + **vitest 1558 ผ่าน** (3 pre-existing tsc error บน develop ไม่เกี่ยว)
+  - **live-test ผ่านจริงเฉพาะ XP engine** (รอบ 17) — stroke / 429 / โควตา / 403 / 404 / `egg→baby` + เห็น 2 event บน `redis-cli SUBSCRIBE vo:zone`
+  - **ยังไม่ได้ live-test:** pet AI เดินจริงในห้อง (ต้อง deploy ws + api ใหม่ก่อน) · growth sequence เต็มจอ · notification 3 ชนิด (ไม่มี pet ตัวไหนบน dev ใกล้ threshold พอจะยิงเองได้) · ทุกอย่างต้องเปิด `NEXT_PUBLIC_ROOM_PET=true` + prod build ([[vo-verify-needs-prod-build]])
+- **migration ที่รันบน dev DB แล้ว:** 89 (`tb_room_pet_xp_event`), 90 (`tb_notification` 3 type ใหม่ + `tb_room_pet.last_milestone`)
+- **ต่อจากนี้:**
+  1. deploy dev แล้ว live-test ครบทั้ง 8 scenario (ต้องตั้ง `NEXT_PUBLIC_ROOM_PET` secret ก่อน — ตอนนี้ยังไม่ตั้ง = ปิดทุก env)
+  2. ตั้ง `xp_play_with_pet.times` = 5 ในหน้า XP Configuration (seed เป็น 1 แต่ SC-PET-03 เขียน 5)
+  3. จ่าย XP ของอีก 9 activity (login / office / meeting / chat) — ต้องแทรก `Award()` เข้า flow เดิม ยังไม่ทำ
+  4. Share flow + pet facing rows — รอ design/PM
+- **ติดอะไร:** 5 decision ด้านบนควรให้ PM/design ยืนยัน · `pet_sittable` บน object (ข้อ 15 ของ spec) ยังไม่มี — pet จึงยังนั่งบน object ไม่ได้
+
 ## 2026-09-04 (รอบ 17) — PR 9: XP engine + ledger · pet โตได้จริงเป็นครั้งแรก
 
 - **ทำอะไร:** ปิดช่องว่างใหญ่สุดที่บล็อก SC-PET-03/04/05/06/08 — `tb_pet_xp_config` มี consumer แล้ว
