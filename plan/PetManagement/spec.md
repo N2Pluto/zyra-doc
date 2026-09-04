@@ -484,8 +484,9 @@ Max evolution within = ceil(Total XP needed ÷ Max XP / Day)  วัน
 - ย้าย/เปลี่ยนชื่อ/ลบ Pet จาก Map Editor ได้ (marker menu → Trash)
 - Broadcast ให้ users ที่ online เห็นทันที (`pet_spawned` / `pet_moved` / `pet_renamed` / `pet_removed`)
 - **การวาง pet ต้องอัปเดต `workspace_usage_count` ของ pet type นั้น** — badge และ sort `usage_count` ใน SC-PM-01 พึ่งค่านี้
-- ⚠️ **กฎ 1 room = 1 pet ยังไม่เคาะ** — default ปัจจุบันคือ **วางได้หลายตัวต่อห้อง** (ไม่เปิด unique index)
-  - **modal "Replace this pet" ให้ implement เฉพาะเมื่อเปิด `uq_room_pet_one_per_zone` แล้วเท่านั้น** — ถ้าทำตอนนี้จะเป็น modal ที่ไม่มีทางถูกเรียก เพราะไม่มีเงื่อนไขใดทำให้เกิด conflict
+- ✅ **PM เคาะ 2026-09-04: 1 room = 1 pet บังคับ** (`uq_room_pet_one_per_zone` เปิดแล้ว) · วางได้เฉพาะ `zone_type = 'room'` · จุดวางห้ามตกใน meeting/private แม้ซ้อนอยู่ใน room
+  - modal "Replace this pet" ใช้จริง: วางซ้ำห้อง → 409 → confirm → `replace: true` → pet ใหม่รับ XP/stage ต่อจากตัวเดิม (sticky Figma)
+  - ⚠️ **stage row ใน marker menu (Figma 4387:121093) ยังไม่ทำ** — ต้องนิยาม "admin เลือก stage" กับ "ทีมเคยถึง stage นั้น" ก่อน ดู [ux-ui.md § สิ่งที่ Figma มีเพิ่ม](ux-ui.md)
 
 ### Business Logic / Rules
 - วาง pet = สร้าง `tb_room_pet` record: `xp = 0`, `last_activity_at = NOW()`, `last_seen_stage = 'egg'`
