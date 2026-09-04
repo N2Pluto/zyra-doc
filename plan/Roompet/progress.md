@@ -5,6 +5,47 @@
 
 ---
 
+## 2026-09-04 (รอบ 20) — owner/admin ของ workspace วาง pet เองได้ + วาง pet จริงให้ user
+
+- **PM เคาะ (ตอบคำถามค้างข้อ 10 ของ [spec.md](spec.md)):** "user ที่เป็น owner/admin map วางได้ด้วย" — ไม่ใช่แค่ System Admin
+
+| PR | ทำอะไร | สถานะ |
+|---|---|---|
+| [api #73](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/73) | `GET/POST/PATCH/DELETE /api/user/maps/:mapId/pets` — gate ด้วย `VerifyUserCanManageMapWorkspace` (owner หรือ admin member) ตัวเดิมที่ object/zone ใช้อยู่ | ✅ merged + deploy dev |
+| [api #74](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/74) | `GET /api/user/pets` — pet type ที่วางได้ สำหรับ palette (rule 15: ห้าม member เรียก `/api/admin/pets`) | ✅ merged |
+| [app #256](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/256) | เปิด palette ใน `/workspace/builder/[id]` — ตัด `!userMode` ออก · `useEditorApi(userMode)` bind endpoint family ให้ เหมือน object/zone | ✅ merged |
+
+### สิ่งที่เกือบพลาด (เจอตอนทำ #256)
+
+เปิด `petPlacementEnabled` ใน userMode เฉย ๆ จะ **403 ทันทีที่เปิด palette** เพราะ editor เรียก 2 endpoint ที่เป็น admin ล้วน:
+
+| read | เดิม | ใหม่ |
+|---|---|---|
+| palette | `/api/admin/pets` | `/api/user/pets` |
+| stage thresholds | `/api/admin/pet-xp-config` | `/api/user/pet-xp-config` |
+
+นี่คือกับดักที่ rule 15 มีไว้ดักพอดี และจะโผล่ตอน runtime เฉพาะกับคนที่ไม่ใช่ admin เท่านั้น → เขียน test ที่ pin URL ครบทุกตัวของทั้ง 2 family + assert ว่า call ฝั่ง owner ไม่มีตัวไหนไป `/api/admin` เลย
+
+### design decision
+
+แยก handler (`RoomPetOwnerHandler`) ไม่ใช่ขยาย guard ของตัวเดิม เพราะเป็นคนละ surface จริง ๆ:
+
+| | `/api/admin/maps/:mapId/pets` | `/api/user/maps/:mapId/pets` |
+|---|---|---|
+| guard | AdminGuard | UserGuard + map-manage role |
+| ขอบเขต | map ของใครก็ได้ | เฉพาะ map ที่ตัวเองเป็นเจ้าของ |
+| workspace lock | ต้องถือ | ไม่ต้อง |
+
+lock คือความต่างที่มีสาระ — system admin แก้ template ที่ใช้ร่วมกันจึงต้องกันคนอื่น ส่วน owner ตกแต่งออฟฟิศตัวเองไม่ต้อง (ตรงกับที่ hero-workspace-editor เขียนไว้อยู่แล้วว่า "userMode skips the lock system") · ทั้งคู่ใช้ `RoomPetService` เดียวกัน กฎ placement จึงเหมือนกันเป๊ะ และมี test pin `detail.code` ของทั้ง 2 ฝั่งไว้กันหลุด
+
+### วาง pet จริงให้ user แล้ว
+
+- **"เจ้าปรื๊ด"** (type Pie) — workspace `ฟหกฟหก` → **Floor 1** → room **`test`** → tile **(60,39)** · ตั้งเป็น **baby / 150 XP / mood happy** เพื่อให้ AI เดินให้เห็น
+- **ครั้งแรกวางไม่ผ่าน** ที่ `กลุ่ม Room 2` → `POSITION_BLOCKED_BY_ZONE` · **ไม่ใช่บั๊ก** — Private 13/14/15/16 ทับ Room 2 ทั้งห้อง · เช็คครบทั้ง 9 ห้องแล้ว: **`กลุ่ม Room 1–7` ถูก private/meeting zone ทับเต็มทุกห้อง** เหลือแค่ห้อง `test` 2 ห้องที่มี tile ว่าง (121 และ 83 tile)
+- ต้องวางด้วย `admin-a` (System Admin) เพราะ **`ten_dev@hpktechnology.com` เป็นแค่ `member`** ของ workspace นั้น (owner คือ `game.ponlawat.lk@gmail.com`) → ถึงมี endpoint ใหม่แล้วก็ยังวางเองไม่ได้ ต้องยกเป็น `admin` ใน workspace ก่อน · acquire lock → place → release lock เรียบร้อย
+
+- **ยังค้าง:** ทดสอบ UI ในเบราว์เซอร์ — ติดที่ผมพิมพ์รหัสผ่านลงฟอร์มไม่ได้ และ session ของแอปเป็น httpOnly `refresh_token` cookie จึงฉีด token แทนไม่ได้ · รอ user login แล้วผมค่อยขับต่อ
+
 ## 2026-09-04 (รอบ 19) — deploy dev + ตรวจ AC ทุกใบกับของจริง → เจอบั๊ก 3 ตัว
 
 - **ทำอะไร:** user สั่ง "ตั้ง `NEXT_PUBLIC_ROOM_PET` แล้ว deploy dev" + "เช็ค AC / Business Logic ทุก scenario ว่าทำงานได้จริงมั้ย"
