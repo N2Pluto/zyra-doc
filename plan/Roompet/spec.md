@@ -6,9 +6,9 @@
 > Card สร้าง 2026-06-19 · parent แก้ล่าสุด 2026-09-02 · subtask แก้ล่าสุด 2026-08-13 ~ 2026-08-18
 > ใน ClickUp **ไม่มี** comment / attachment / checklist / dependency / linked task เลยแม้แต่ใบเดียว — เนื้อหาทั้งหมดอยู่ใน description
 >
-> **สถานะเอกสาร: implement ครบทั้ง 8 scenario แล้ว 2026-09-04** (ดู [progress.md รอบ 18](progress.md)) — build เขียวทุก repo · live-test ผ่านเฉพาะ XP engine · ยังไม่ได้ review กับ PM
+> **สถานะเอกสาร: implement ครบทั้ง 8 scenario + deploy dev แล้ว 2026-09-04** — verify ผ่าน REST/WebSocket ครบทุก scenario · **ยังไม่ได้เทส UI ในเบราว์เซอร์** (ติด login) · **สรุปส่งต่ออยู่ที่ [progress.md รอบ 21](progress.md)** อ่านอันนั้นก่อนถ้าจะมาทำต่อ
 > **ความพร้อม 2026-09-04: พอแล้ว — dependency ครบทั้ง 6 ข้อ** · `tb_room_pet` + placement (api #65) · member list (api #66) · ws relay `pet_*` 6 ตัว (ws #29) · Map Editor drag-drop (app #246) · VO render (app #248) · XP engine + ledger ([api #68](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/68) รอ merge) → ดู [§ความพร้อม](#ความพร้อม--ข้อมูลพอเริ่ม-room-pet-แล้วหรือยัง-ประเมิน-2026-09-02)
-> **เหลืออะไร (2026-09-04):** live-test ครบทั้ง 8 scenario บน dev (ต้องตั้ง secret `NEXT_PUBLIC_ROOM_PET=true` ก่อน — ตอนนี้ปิดทุก env) · จ่าย XP ของอีก 9 activity (login/office/meeting/chat) ที่ยังไม่มีคนเรียก `Award()` · Share flow และ pet facing rows (รอ design) · `pet_sittable` บน object (คนละโมดูล)
+> **เหลืออะไร (2026-09-04):** งานใหญ่สุดคือ **จ่าย XP ของอีก 9 activity** (login/office/meeting/chat) ที่ยังไม่มีใครเรียก `Award()` — ตอนนี้ pet โตได้ทางเดียวคือให้คนลูบ · แล้วค่อย: เทส UI ในเบราว์เซอร์ · ตั้ง `xp_play_with_pet.times`=5 · Share flow · pet facing rows · `pet_sittable` · cron 09:00 ICT — รายการเต็มเรียงลำดับอยู่ใน [progress.md รอบ 21](progress.md)
 > **repo ที่กระทบ:** zyra-app (VO client), zyra-api (member API + XP engine), zyra-ws (pet AI + broadcast), zyra-notifications (SC-PET-07)
 >
 > **เกี่ยวเนื่องกับ [PetManagement](../PetManagement/)** — โมดูลนั้นคือฝั่ง **Admin** (pet type library, sprite, XP config, วาง pet ลงห้อง) ส่วนเอกสารนี้คือฝั่ง **Member/Client** (pet มีชีวิตอยู่ในห้อง VO) ทุก scenario ในนี้ **ขึ้นกับ SC-PM-05 (วาง pet ลงห้อง) ซึ่งยังไม่เริ่ม** — ดูตารางเทียบ + จุดขัดกันใน [§ความเกี่ยวเนื่องกับ PetManagement](#ความเกี่ยวเนื่องกับ-petmanagement)

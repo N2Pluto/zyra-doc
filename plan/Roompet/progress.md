@@ -5,6 +5,66 @@
 
 ---
 
+## 2026-09-04 (รอบ 21) — สรุปสถานะส่งต่อ (handoff)
+
+> **อ่านอันนี้ก่อนถ้าจะมาทำต่อ** — รวมสถานะทุกอย่าง ณ สิ้นวัน 2026-09-04
+
+### สถานะรวม: implement ครบทั้ง 8 scenario · deploy dev แล้ว · ไม่มี PR ค้าง
+
+| repo | image บน dev | คือ PR |
+|---|---|---|
+| zyra-app | `dev-62f840b` | #256 (owner editor) |
+| zyra-api | `dev-4b64210` | #74 (`GET /api/user/pets`) |
+| zyra-ws | `dev-44a9616` | #33 (pet diagnostics) |
+
+**PR ที่ merge วันนี้ทั้งหมด 16 ตัว** — api #68–#74 · ws #30–#33 · app #250–#256
+
+### ✅ ที่ verify แล้วว่าใช้งานได้จริงบน dev (ผ่าน REST + WebSocket)
+
+| Scenario | หลักฐาน |
+|---|---|
+| SC-PET-01 | `GET …/pets` คืน pet + animations 20 ตัว · ไม่มีคอลัมน์ stage/mood (derive) |
+| SC-PET-02 | เดินจริง 6 tile ใน 40 วิ · `step_ms=600` · ครบ 4 ทิศ · ไม่ออกนอก zone · `/healthz` โชว์ `wander_targets=72` |
+| SC-PET-03 | stroke 200 · ซ้ำทันที 429 · เกินโควตา 200 `awarded:false` · ข้าม workspace 403 · pet มั่ว 404 · ไม่มี token 401 |
+| SC-PET-04/05 | 99→100 XP = `egg→baby` + `pet_growth` ถึงสมาชิกครบ 2 คน + milestone ladder reset |
+| SC-PET-06 | status คืน stage/mood/quota/contributors/xp_today ครบ |
+| SC-PET-07 | 49→50 XP ยิง `pet_milestone` 2 แถว · stage change ชนะ milestone ไม่ยิงซ้อน |
+| SC-PET-08 | mood multiplier 15/10/5 (150%/100%/50%) · ledger บันทึก `mood_at_award` ถูก |
+
+### ❌ ที่ยังไม่ได้ทำ — ทดสอบ UI ในเบราว์เซอร์
+
+**ติดที่ login เท่านั้น** ไม่ใช่ปัญหาโค้ด:
+- AI พิมพ์รหัสผ่านลงฟอร์มไม่ได้ (กฎความปลอดภัย)
+- ฉีด token แทนก็ไม่ได้ — session ของแอปเป็น **httpOnly `refresh_token` cookie** (`lib/auth/session.ts`) JS เขียนไม่ได้ · access token อยู่ใน memory ล้วน
+- Browser pane เป็นคนละ browser กับ Chrome ปกติของ user → login ฝั่ง user ไม่ carry over
+
+**วิธีทำต่อ:** ให้ user login ใน **Browser pane** (ไม่ใช่ Chrome ตัวเอง) แล้ว AI ขับต่อได้ทันที · แผน capture 9 ไฟล์ลง `storage/preview/` (marker/tooltip/panel/growth overlay/modal/notification)
+
+### ข้อมูลเทสที่ค้างไว้บน dev (ตั้งใจทิ้งไว้)
+
+| pet | workspace | ที่ | สถานะ |
+|---|---|---|---|
+| **เจ้าปรื๊ด** | `34ffa741` (ฟหกฟหก — ของ user) | Floor 1 → room `test` → (60,39) | **baby / 150 XP** ตั้งใจให้เดินได้เลย |
+| Mochi Live | `256893ae` (member-a) | Zone 1 → Room Group 3 → (60,3) | reset เป็น egg / 0 XP แล้ว |
+
+`tb_notification` pet_* = 0 แถว · `tb_room_pet_xp_event` = 0 แถว · `xp_play_with_pet` = `{times:1, xp:1}` (ค่า seed เดิม) — ล้างครบ ไม่มีขยะค้าง
+
+### ⚠️ 3 เรื่องที่ต้องรู้ก่อนทำต่อ
+
+1. **`กลุ่ม Room 1–7` ใน workspace `34ffa741` วาง pet ไม่ได้เลย** — private/meeting zone ทับเต็มทุกห้อง (Private 13/14/15/16 ทับ Room 2 ทั้งห้อง) · เหลือแค่ห้อง `test` 2 ห้องที่มี tile ว่าง (121 / 83) · ไม่ใช่บั๊ก ถ้าอยากวางในห้องกลุ่มต้องแก้ขนาด private zone ก่อน
+2. **`ten_dev@hpktechnology.com` เป็นแค่ `member`** ของ workspace ตัวเอง (owner = `game.ponlawat.lk@gmail.com`) → ถึงจะมี endpoint owner แล้วก็ยังวาง pet เองไม่ได้ ต้องยก role เป็น `admin` ใน workspace นั้นก่อน
+3. **`Award()` มี caller เดียว** คือ stroke — อีก 9 activity (login/office/meeting/chat) ยังไม่มีใครเรียก pet จึงโตช้ามาก **นี่คืองานชิ้นถัดไปที่ใหญ่สุด**
+
+### งานที่เหลือ เรียงตามความสำคัญ
+
+1. **จ่าย XP ของอีก 9 activity** — แทรก `Award()` เข้า flow เดิม (login / office time / meeting / chat) · ไม่มีอันนี้ pet โตได้ทางเดียวคือให้คนลูบ
+2. ทดสอบ UI ในเบราว์เซอร์ (ติด login ตามด้านบน)
+3. ตั้ง `xp_play_with_pet.times` = **5** ให้ตรง SC-PET-03 (seed เป็น 1)
+4. **Share your friends** ใน evolution modal — ux-ui §5.4 บอกว่ามี component อยู่แล้ว แต่จริง ๆ ไม่มีในโค้ด ต้องทำ member picker + card message type ใน chat
+5. **pet facing rows** — ws ส่ง direction มาแล้ว แต่ไม่มี spec ว่า sprite row ไหนคือทิศไหน (บาง sheet มีแถวเดียว) → ต้องถาม design
+6. `pet_sittable` บน object (คนละโมดูล) — ไม่มีอันนี้ pet นั่งบนเฟอร์นิเจอร์ไม่ได้ตาม SC-PET-02
+7. daily reminder cron 09:00 ICT — ยังไม่ได้เทสจริง (ต้องรอเวลา หรือเรียก `SendPetDailyReminders` ตรง)
+
 ## 2026-09-04 (รอบ 20) — owner/admin ของ workspace วาง pet เองได้ + วาง pet จริงให้ user
 
 - **PM เคาะ (ตอบคำถามค้างข้อ 10 ของ [spec.md](spec.md)):** "user ที่เป็น owner/admin map วางได้ด้วย" — ไม่ใช่แค่ System Admin
