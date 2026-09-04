@@ -5,6 +5,42 @@
 
 ---
 
+## 2026-09-04 (รอบ 19) — deploy dev + ตรวจ AC ทุกใบกับของจริง → เจอบั๊ก 3 ตัว
+
+- **ทำอะไร:** user สั่ง "ตั้ง `NEXT_PUBLIC_ROOM_PET` แล้ว deploy dev" + "เช็ค AC / Business Logic ทุก scenario ว่าทำงานได้จริงมั้ย"
+  - ตั้ง secret `NEXT_PUBLIC_ROOM_PET=true` ที่ GitHub Environment `dev` ของ zyra-app (ของเดิมมีอยู่แต่ค่าอ่านไม่ได้ — ทับเป็น `true`)
+  - merge PR ที่ค้าง (app #254 #255) → dev deploy ครบทั้ง 3 repo · **app `dev-9eeeb2a` build หลังตั้ง secret** จึง bake flag ติดมาแล้ว
+
+### บั๊กที่เจอตอนเทสของจริง (ทั้ง 3 ตัวแก้แล้ว)
+
+| # | บั๊ก | เจอยังไง | แก้ที่ |
+|---|---|---|---|
+| 1 | **embedded DDL ทับ constraint ของ migration 90 ทุกครั้งที่ pod restart** → insert notification `pet_*` ตกทุกครั้ง (fail แบบเงียบ เพราะ notification เป็น best-effort) · แถม `tb_room_pet` / `tb_room_pet_xp_event` / `last_milestone` **ไม่มีใน embedded DDL เลย** → env ที่ deploy ใหม่จะไม่มีตารางเลย | stroke ที่ 49 XP แล้ว `last_milestone` ขยับเป็น 50 แต่ `tb_notification` ว่าง | [api #72](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/72) |
+| 2 | **คนยืนใกล้ = pet แข็งค้างถาวร** — พอหันหน้าหาเสร็จแล้ว react branch `return` ทุก tick ไม่เคยไปถึงการตัดสินใจ wander อีกเลยตราบที่คนยังยืนอยู่ | probe client ยืนห่าง 1 tile ดู `pet_state` 60 วิ — หันหน้า 1 ครั้งแล้วนิ่งสนิท | [ws #32](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/32) |
+| 3 | **idle-out ผูกกับ notice radius (3 tiles) แทนที่จะเป็น "ในห้อง"** — ทีมที่นั่งอยู่มุมไกลของห้องนับเป็น "ไม่มีใคร" pet เลยเงียบไปทั้งที่มีคนดูอยู่ | อ่านโค้ดตอนไล่บั๊ก #2 | [ws #32](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/32) |
+
+บั๊ก #2 และ #3 มี regression test ที่ **fail กับโค้ดเก่า** และ pass กับโค้ดใหม่ (พิสูจน์ด้วยการ stash แล้วรัน)
+
+- **เพิ่ม observability:** [ws #33](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/33) — `/healthz` คืน state ของ pet AI ทุกตัว (stage / mood / ตำแหน่ง / กำลังเดินมั้ย / เหลือกี่ ms ถึงตัดสินใจ / ห้องว่างมั้ย / **มีกี่ tile รอบบ้านที่เดินได้จริง**) เพราะ pet ที่ "นิ่ง" ถูกต้อง (ไข่ / เศร้า / ห้องว่าง / ถูกเฟอร์นิเจอร์ล้อม) หน้าตาเหมือน pet ที่พังทุกประการ — เสียเวลาเดาไปครึ่งวันเพราะไม่มีอันนี้
+
+### ผลตรวจ AC — เทสกับ dev จริง (api `dev-330e77a`+, ws `dev-4ac09ac`+)
+
+| Scenario | เทสอะไร | ผล |
+|---|---|---|
+| SC-PET-01 | `GET /api/user/workspaces/:id/pets` | ✅ คืน pet + animations 20 ตัว · ไม่มีคอลัมน์ `stage`/`mood` (derive ตามดีไซน์) |
+| SC-PET-02 | probe client ต่อ `wss://ws.dev.zyra.center` | ✅ `pet_state` heartbeat ทุก 2 วิ · ✅ หันหน้าหาคน · ✅ **เดินจริง** หลังแก้บั๊ก #2: 40 วิ เดินผ่าน 6 tile `(60,3)→(59,2)→(60,2)→(61,1)→(62,1)→(62,2)` · 6 moving frame `step_ms=600` + 16 idle heartbeat · เห็นครบทั้ง 4 ทิศ · ไม่ออกนอก zone |
+| SC-PET-03 | stroke / rate limit / โควตา / ข้าม workspace / pet มั่ว / ไม่มี token | ✅ 200 · 429 `RATE_LIMITED` · 200 `awarded:false DAILY_LIMIT_REACHED` · 403 · 404 · 401 |
+| SC-PET-04/05 | stroke ที่ 99 XP | ✅ `egg → baby` · ยิง `pet_growth` ให้สมาชิกครบ 2 คน · `last_milestone` reset เป็น 0 ให้ stage ใหม่ |
+| SC-PET-06 | `GET …/status` | ✅ stage / mood / quota / contributors / xp_today ครบ |
+| SC-PET-07 | stroke ที่ 49 XP (ข้าม 50%) | ✅ `pet_milestone` 2 แถว (หลังแก้บั๊ก #1) · stage change ชนะ milestone ไม่ยิงซ้อน |
+| SC-PET-08 | ตั้ง `last_activity_at` ย้อน 0 / 40 / 200 ชม. แล้ว stroke (base xp=10) | ✅ ได้ 15 / 10 / 5 ตรงกับ 150% / 100% / 50% · ledger บันทึก `mood_at_award=sad` ถูกต้อง |
+
+ข้อมูลเทสคืนค่าเดิมหมดแล้ว (pet `Mochi Live` กลับไป xp=0 stage=egg, config `xp_play_with_pet` กลับเป็น times=1 xp=1)
+
+- **ปิดครบ:** `/healthz` ตัวใหม่ยืนยันว่า pet ทำงานปกติ — `stage=baby mood=happy home=60,3 tile=(59,2) wander_targets=72 quiet=false` (ที่เดาว่าโดน obstacle ล้อมคือเดาผิด มี 72 tile ให้เดิน) · ที่เห็นนิ่งก่อนหน้าคือบั๊ก #2 ล้วน ๆ
+- **ยังไม่ได้เทสด้วยตา:** ทุกอย่างฝั่ง UI (marker / tooltip / panel / growth overlay / notification card) — รอบนี้ตรวจผ่าน REST + WebSocket ล้วน ยังไม่ได้เปิดเบราว์เซอร์เข้า VO จริง
+- **ยังไม่ได้เทส:** อีก 9 activity ที่ยังไม่มีคนเรียก `Award()` · daily reminder cron 09:00 ICT (ต้องรอเวลาจริง หรือเรียก `SendPetDailyReminders` ตรง ๆ)
+
 ## 2026-09-04 (รอบ 18) — implement SC-PET-01 ~ 08 ครบทุกใบ (8 PR)
 
 - **ทำอะไร:** ผู้ใช้สั่ง "ทำต่อให้เสร็จเลยนะ ทั้งหมด" → ไล่ทำ scenario ที่เหลือทั้งหมดจนครบ 8 ใบ
