@@ -15,7 +15,8 @@
   - **บทเรียน:** dev server (`next dev`) วาด VO เพี้ยน (sprite ยืด/zoom มั่ว) ต้อง build+start เท่านั้น (user ยืนยัน) · Browser pane ที่ซ่อน → tab background → hero ตั้ง away แล้ว auto-leave หลัง `AWAY_AUTO_LEAVE_MS` (`/workspace?notice=idle_removed`) ทำให้ session หลุดกลาง test 2 ครั้ง ไม่ใช่บั๊กของ pet
   - badge #247 ยังไม่ได้ดูภาพจริง (worktree แยกกำลังเปิด)
 - **สถานะ SC-PM-05 เทียบ Acceptance Criteria ของ card** (card ยังเป็น flow ฟอร์ม PM เปลี่ยนเป็น drag-drop 08-17): ดูตาราง [PetManagement/spec.md § SC-PM-05 AC ↔ implementation](../PetManagement/spec.md)
-- **ต่อจากนี้:** merge #247 (+ #248 เพื่อ AC "member เห็นทันที") → rebuild dev → QA เทส SC-PM-05 ตามตาราง · เรื่องค้าง PM: template
+- ✅ **merged 2026-09-04:** #247 `0d29a18` (badge, ดูภาพจริงใน Layers tab แล้ว: "Room Group 3 🐾 Mochi Live") → #248 `357a61b` (VO render) → dev deploy อัตโนมัติ · ลบ worktree/branch/local server ชั่วคราวแล้ว
+- **ต่อจากนี้:** QA เทส SC-PM-05 บน dev ตามตาราง AC ใน PetManagement/spec.md (pet ตัวอย่าง "Mochi Live" อยู่ในห้อง Room Group 3 ของ workspace `256893ae` ของ member-a) · เรื่องค้าง PM: template · แล้วค่อยขั้น 5 PR 9 XP engine
 - **ติดอะไร:** AC "spawn ที่ center ของ room" ขัด PM decision (วางตรงที่ admin ลาก) ต้องบอก QA · `pet_spawned/pet_removed` refetch path ยังไม่ได้ live-test · multi-floor ยังไม่ได้ทดสอบ
 
 ## 2026-09-04 (รอบ 14) — ขั้น 1–3 ของ roadmap: merge #65 / #246 / #29 + PR 10 member API
