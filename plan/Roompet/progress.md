@@ -39,7 +39,15 @@ award 1 ครั้ง = 1 transaction ที่ถือ row lock บน pet �
 - session clock เป็น per-process (ตั้งใจ) — เป็นตัวจับเวลาเกม ไม่ใช่ billing · ledger การันตี exactly-once ต่อวันอยู่แล้วไม่ว่าจะกี่ replica
 
 - **verify:** `go build` / `go vet` / `go test ./...` / `go test -race` ผ่านหมด · test ใหม่ 16 ตัว (heartbeat 25 ครั้งจ่าย login ครั้งเดียว, ปลดล็อก 10/30 นาทีและไม่ซ้ำ, scope room vs user, leave แล้วนาฬิกาเริ่มใหม่, meeting duration, "นั่งใน office ไม่ใช่ meeting", ขอบ 9/10/40 ข้อความ, count fail ไม่บล็อก first message, retry หลัง fail, claim แยกตาม user/workspace, nil receiver, 50 heartbeat พร้อมกันจ่ายครั้งเดียว, ชื่อ activity key ตรงกับ seed)
-- **ยังไม่ได้ live-test บน dev** — ต้อง deploy ก่อน แล้วเข้า VO ค้างไว้ 10 นาทีถึงจะเห็น `xp_office_10min` เข้า
+### live-test บน dev แล้ว — และเจอบั๊กเพิ่ม 1 ตัว
+
+- **ผลเทส:** heartbeat 3 ครั้ง → ledger **1 แถวเดียว** (`xp_login_per_day`, user=admin-a, awarded=1) · pet xp 0 → 1 · **short-circuit ทำงานถูกต้อง**
+- **บั๊กที่เจอ → [api #76](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/76) ✅ merged:** activity ที่ถูก **ปิดใน config** ไม่ควรยึด claim ไว้
+  - เทสรอบแรก heartbeat แล้วไม่ได้ XP — **สาเหตุถูกต้อง**: config version 9 ตั้ง `xp_login_per_day` และ `xp_office_10min` เป็น `enabled: false` (มีคนแก้ผ่านหน้า XP Configuration)
+  - แต่ tracker **claim ไปแล้ว** → admin เปิด activity ตอนเที่ยง จะไม่มีอะไรเกิดขึ้นจนถึงวันรุ่งขึ้น และ toggle จะดูเหมือนพัง
+  - แก้: `AwardWorkspaceActivity` คืน `PetXPWorkspaceOutcome{Awarded, Disabled}` แทนที่จะคืนแค่ error → caller แยก "ปิดอยู่" ออกจาก "ได้ครบโควตาแล้ว" ได้ และ release claim เฉพาะกรณีแรก
+- ⚠️ **`xp_login_per_day` กับ `xp_office_10min` ยัง `enabled:false` อยู่บน dev** (config v9) — ใครจะเทสต้องไปเปิดที่หน้า XP Configuration ก่อน ไม่ใช่บั๊กโค้ด
+- ข้อมูลเทสคืนค่าเดิมครบ (config กลับเป็น `enabled:false`, Mochi Live กลับเป็น egg/0 XP, ล้าง ledger + notification)
 
 ## 2026-09-04 (รอบ 21) — สรุปสถานะส่งต่อ (handoff)
 
