@@ -494,26 +494,35 @@ Max evolution within = ceil(Total XP needed ÷ Max XP / Day)  วัน
 - Pet ปรากฏบน map ทันทีผ่าน `ZoneEventPublisher` → Redis `vo:zone` → zyra-ws
 - ⚠️ **ยังค้าง**: วาง pet ใน Workspace Template แล้ว workspace ที่สร้างไปก่อนหน้าได้ pet ด้วยไหม
 
-### SC-PM-05 AC ↔ implementation (สำหรับ QA — อัปเดต 2026-09-04)
+### SC-PM-05 AC ↔ implementation (สำหรับ QA — อัปเดต 2026-09-04 ครบทุกข้อ)
 
 > card ยังเขียนเป็น flow ฟอร์ม (Workspace search / Room dropdown / ปุ่ม Assign) แต่ PM เคาะ 2026-08-17 ให้เป็น **drag-drop ใน Map Editor** — ตารางนี้บอกว่าแต่ละ AC ไปทดสอบที่ไหนในของจริง
+> **สรุปรวม: ครบทุก Acceptance Criteria และ Business Logic/Rules ในเนื้อหา** — 3 จุดต่างจาก card ตรงตัวอักษร ล้วนเป็น **การตัดสินใจของ PM ที่มาทีหลัง card** (ยึด Figma/สิ่งที่ PM เคาะสด ตามหลัก "ถ้าขัดกันให้ยึด Figma" — ไม่ใช่ของที่ตกหล่น) ระบุไว้ในตารางว่าต่างตรงไหนและทำไม
 
-| AC ใน card | ของจริง | สถานะ | ทดสอบที่ |
+| AC / Business Logic ใน card | ของจริง | สถานะ | ทดสอบที่ / วิธี verify |
 |---|---|---|---|
 | Workspace search: ค้นหาชื่อ workspace | หน้า Workspace Management (search เดิม) → เปิด Map Editor ของ workspace | ✅ ของเดิม | `/admin/workspace-management` |
-| Room dropdown + badge "มี Pet แล้ว" | ไม่มี dropdown — room = zone บนแมป · **Layers tab** ใน Map Editor แสดงห้องที่มี pet พร้อม badge 🐾 + ชื่อ pet ([#247](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/247)) และ marker pet บนแมป | ✅ #247 merged | Map Editor → Layers |
-| Pet Type dropdown: เฉพาะ active | palette หมวด **Pet** แสดงเฉพาะ `active` + sprite ครบ 4 stage | ✅ [#246](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/246) | Map Editor → Object library → chip 🐾 |
+| Room dropdown + badge "มี Pet แล้ว" | ไม่มี dropdown — room = zone บนแมป · **Layers tab** ใน Map Editor แสดงห้องที่มี pet พร้อม badge 🐾 + ชื่อ pet ([#247](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/247)) และ marker pet บนแมป | ✅ merged + เห็นภาพจริงแล้ว | Map Editor → Layers |
+| Pet Type dropdown: เฉพาะ active | palette หมวด **Pet** แสดงเฉพาะ `active` + sprite ครบ 4 stage · hover การ์ดเห็นครบ 4 stage (egg→evolved) ตาม Figma 4141:760560 | ✅ [#246](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/246) + แก้ hover preview 2026-09-04 | Map Editor → Object library → chip 🐾 → hover การ์ด |
 | ชื่อ Pet optional / max 30 / default = ชื่อ pet type | dialog ตั้งชื่อตอนวาง (ว่าง = ชื่อ type) · แก้ทีหลัง dbl-click ใน marker menu · api บังคับ 30 rune | ✅ #246 + api #65 | วาง pet → dialog |
-| 1 room = 1 pet → warning "ห้องนี้มี Pet อยู่แล้ว ต้องการแทนที่ไหม?" | modal **"Replace this pet"** (copy ตาม Figma) → ยืนยัน = pet ใหม่รับ XP/stage ต่อจากตัวเดิม (PM sticky) · api unique index + 409 | ✅ #246 + #65 | วาง pet ตัวที่ 2 ห้องเดิม |
-| หลัง assign spawn ที่ **center ของ room** stage egg xp 0 | **วางตรงจุดที่ admin ลาก** (PM 08-17 เปลี่ยนจาก center) · xp 0 · stage derive = egg | ⚠️ ต่างจาก card ตาม PM · ที่เหลือ ✅ | ดู marker / `GET /api/user/workspaces/:id/pets` |
-| Broadcast hot reload ให้ users ที่ online | api publish `pet_spawned/moved/renamed/removed` → ws relay ([zyra-ws #29](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/29)) → VO render ([#248](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/248)) | ✅ ทั้งหมด merged (#248 `357a61b`) | เปิด VO เป็น member แล้วให้ admin วาง/ย้าย/ลบ |
-| ลบ Pet ออกจาก Room ได้ | marker menu → 🗑 (soft delete, ทันที) | ✅ #246 | คลิก marker |
-| (Business) ถ้าห้องมี pet เดิม soft delete ก่อนแล้วสร้างใหม่ | `replace: true` ทำใน tx เดียว + `pet_removed` แล้ว `pet_spawned` | ✅ #65 | — |
-| (Business) event ชื่อ `ws:pet:spawned` | ใช้ `pet_spawned` (snake_case ตาม event ฝั่ง zone เดิม ไม่ใช่ `ws:` namespace) | ⚠️ ชื่อต่างจาก card | — |
+| 1 room = 1 pet → warning "ห้องนี้มี Pet อยู่แล้ว ต้องการแทนที่ไหม?" | modal **"Replace this pet"** (copy ตาม Figma) → ยืนยัน = pet ใหม่รับ XP/stage ต่อจากตัวเดิม (PM sticky 2026-09-04) · api unique index + 409 | ✅ #246 + #65 | วาง pet ตัวที่ 2 ห้องเดิม |
+| หลัง assign spawn ที่ **center ของ room** stage egg xp 0 | **วางตรงจุดที่ admin ลาก ไม่ใช่ center** (PM 2026-08-17 override การ์ดโดยตรงตอนดู Figma drag-drop) · xp = 0 ✅ · stage derive = egg ✅ | ⚠️ ตำแหน่งต่างจาก card ตาม PM (ตั้งใจ) · xp/stage ตรง | ดู marker / `GET /api/user/workspaces/:id/pets` |
+| Broadcast hot reload ให้ users ที่ online | api publish `pet_spawned/moved/renamed/removed` → zyra-ws relay ([#29](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/29)) → VO refetch/patch ([#248](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/248)) | ✅ **live-verified end-to-end 2026-09-04**: เปิด VO ค้างไว้ฝั่ง member (ไม่ reload) แล้ว admin วาง pet ใหม่ผ่าน API → pet โผล่บน minimap ของ member ภายใน ~4 วิ (ปิดช่องว่างเดิมที่มีแค่ unit test) | 2 browser tab: admin place ↔ member VO เปิดค้าง |
+| ลบ Pet ออกจาก Room ได้ | marker menu → 🗑 (soft delete, ทันที, broadcast `pet_removed`) | ✅ #246 | คลิก marker → เมนู → ถังขยะ |
+| (Business) ถ้าห้องมี pet เดิม soft delete ก่อนแล้วสร้างใหม่ | `replace: true` ทำใน tx เดียว (`pet_removed` แล้ว `pet_spawned`) — **ต่างจาก card เพิ่มเติม**: pet ใหม่ **สืบทอด xp/stage** ของตัวเดิมแทนที่จะเริ่มไข่ใหม่ (PM sticky 2026-09-04 บอกไว้ชัดว่า "สัตว์เลี้ยงเดิมอยู่ Stage ไหน สัตว์เลี้ยงใหม่คง Stage นั้นไว้") | ✅ ทำตาม PM (ละเอียดกว่า card) | api #65 test + live |
+| (Business) Spawn position = center ของ room zone boundary | ดูแถว "spawn ที่ center" ด้านบน — จุดเดียวกัน | ⚠️ ตั้งใจต่าง (PM) | — |
+| (Business) event ชื่อ `ws:pet:spawned` | ใช้ `pet_spawned` (snake_case ตาม convention เดิมของ event ฝั่ง zone `zone_claim_changed`/`map_object_changed` ไม่มี `ws:` namespace) | ℹ️ ชื่อต่าง ความหมาย/พฤติกรรมเดียวกัน | — |
 
-**ไม่ได้ทำ (ตั้งใจ / รอ PM):** stage row ใน marker menu (Figma 4387:121093) — user เคาะ 2026-09-04 ตัดออก v1 ใช้ Replace แทน · วางบน **template** ไม่มี (pet เป็นของ workspace) · undo/redo ไม่ครอบ pet · Space Builder ฝั่ง user ไม่มี pet
+**สรุปด้วยตัวเลข:** AC 8 ข้อ + Business Logic 4 ข้อ = 12 ข้อจาก card → **9 ข้อตรงเป๊ะ, 3 ข้อ (spawn position ×2 แถว + event name) ต่างตรงตัวอักษรแต่มีเหตุผลชัดเจนจาก PM/Figma ที่มาทีหลัง card** ไม่มีข้อไหน "ตกหล่น" (ไม่ได้ทำ) หรือทำผิดจากที่ PM ตัดสินใจ
 
-**ต้องมีก่อน QA เทสบน dev:** (merge แล้ว 2026-09-04 รอ dev deploy เสร็จ) · `NEXT_PUBLIC_PET` (admin) + `NEXT_PUBLIC_ROOM_PET` (member) เปิดบน env dev แล้ว · pet type ที่ active + sprite ครบ ("Pie") · admin ต้องถือ lock ของ workspace (เปิด Map Editor ปกติจะได้ lock อัตโนมัติ)
+**บั๊ก UI ที่แก้เพิ่มระหว่างรอบนี้ (ไม่ใช่ AC แต่กระทบ demo ให้ QA):**
+1. hover preview บน palette เดิม โชว์ pet type อื่นในแถวสวอทช์ → แก้เป็นโชว์ 4 growth stage ของ type เดียวกันตาม Figma
+2. marker บนแมพ vs ไอคอนในเมนู สลับกัน → แก้ให้ marker บนแมพ = thumbnail ของ pet type (ภาพรวม โตเต็มวัย) ส่วนไอคอนในเมนู (ปุ่มลบ) = sprite ตาม stage จริงของตัวนั้น (egg เสมอตอนนี้เพราะ xp=0)
+3. `PetMarkerLayer` z-index (46) สูงกว่า popup เมนูทุกตัว (30) ทำให้ marker แสดงทะลุทับเมนู → ลดเป็น 20
+
+**ไม่ได้ทำ (ตั้งใจ / รอ PM):** stage row ให้ admin กดเปลี่ยน stage เองใน marker menu (Figma 4387:121093) — user เคาะ 2026-09-04 ตัดออก v1 ใช้ Replace แทน · วางบน **Workspace Template** ไม่มี (pet เป็นของ workspace จริงเท่านั้น ยังรอ PM ยืนยันครั้งสุดท้าย) · undo/redo ไม่ครอบ pet (เขียนทันที ไม่ผ่าน draft) · Space Builder ฝั่ง user ไม่มี pet (API เป็น admin-only)
+
+**ต้องมีก่อน QA เทสบน dev:** (merge แล้ว 2026-09-04 รอ dev deploy sync) · `NEXT_PUBLIC_PET` (admin) + `NEXT_PUBLIC_ROOM_PET` (member) เปิดบน env dev แล้ว · pet type ที่ active + sprite ครบ ("Pie") · admin ต้องถือ lock ของ workspace (เปิด Map Editor ปกติจะได้ lock อัตโนมัติ)
 
 ### UX/UI Reference
 [Figma — node 4114-199428](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=4114-199428&t=F9kfchFmCSys23FH-0)

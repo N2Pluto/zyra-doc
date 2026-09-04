@@ -5,6 +5,26 @@
 
 ---
 
+## 2026-09-04 (รอบ 16) — เก็บ 3 บั๊ก UI จาก user เทสเอง + ปิดช่องว่างสุดท้ายของ SC-PM-05
+
+- **user เทส Map Editor เอง (dev build local ที่ผมรันให้) แล้วส่ง feedback 3 จุด:**
+  1. hover preview บน palette ต้องโชว์ครบ 4 growth stage ตาม [Figma 4141:760560](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=4141-760560) — ของเดิมโชว์ pet type อื่นแทน (ตีความ Figma ผิดตอนทำ #246 — swatch row คือ stage ของตัวเดียวกัน ไม่ใช่ type อื่น)
+  2. marker บนแมพ (ตอนแรกทำ derive stage ไปแสดงเป็นไข่) สลับกับที่ user ต้องการจริง: **บนแมพต้องเป็นรูปโตเต็มวัย (thumbnail) เมนู (ปุ่มลบ) ต้องเป็นรูปไข่** (stage จริง) — ผมเข้าใจสลับตอนแรก user แก้ให้ถูกอีกที
+  3. `PetMarkerLayer` z-index (46) สูงกว่า popup ทุกเมนู (30) → marker แสดงทะลุทับเมนูตอนเปิด (screenshot user ส่งมาเห็นไอคอนโผล่ข้างเมนู)
+- **ทำอะไร:** zyra-app worktree แยก (`run/zyra-app`) แก้ทั้ง 3 จุด:
+  - `object-library-panel.tsx` — `PetHoverPreview` เปลี่ยนจาก siblings row เป็น stage row: ดึง `usePetTypeAnimations(pet.id)` (hook ใหม่ cache ตาม pet type, เรียก `GET /api/admin/pets/:id`) แล้ว `pickStageIdleAnimation` (แยกออกจาก `lib/pet-scene.ts`'s `pickIdleAnimation` ให้รับ animations ตรงๆ ไม่ต้องผ่าน `WorkspacePet`) ต่อด้วย `usePetAnimationFrame` (hook ใหม่ ครอปเฟรม 0 เป็น PNG data URL ผ่าน `lib/pet-sprite-preview.ts` แคชตาม sprite_url — logic เดียวกับที่ VO ใช้คือ `lib/sprite-grid.ts` เพราะ sheet มี gutter หารตรงๆ ไม่ได้)
+  - `pet-marker-layer.tsx` — ทำ `PetMarkerButton` (derive stage แสดงไข่) ก่อน แล้ว**ย้อนกลับ**ตาม feedback ข้อ 2: marker บนแมพกลับไปใช้ `pet.thumbnail_url` เหมือนเดิม (ของเดิมถูกอยู่แล้ว) เหลือแค่แก้ `zIndex: 46 → 20` (ต่ำกว่าทุกเมนู 30 แต่ยังสูงกว่า ZoneCanvasLayer overlay สูงสุด 17)
+  - `pet-marker-menu.tsx` — ไอคอนในเมนูเปลี่ยนจาก `pet.thumbnail_url` เป็น derived stage sprite จริง (`usePetTypeAnimations` + `derivePetStage(pet.xp, thresholds)` + `pickStageIdleAnimation` + `usePetAnimationFrame`) — จุดนี้คือจุดที่ user ต้องการจริง (เมนู = ไข่)
+  - `hero-workspace-editor.tsx` — เพิ่ม fetch `getPetXPConfig()` (admin endpoint) เก็บ `petStageThresholds` ส่งเข้า `PetMarkerMenu` เท่านั้น (ไม่ส่งเข้า `PetMarkerLayer` เพราะ marker บนแมพไม่ต้อง derive แล้ว)
+  - tests: แก้ `pet-marker-menu.test.tsx` (mock 2 hook ใหม่ยืนยันว่าไอคอนมาจาก derived stage ไม่ใช่ thumbnail_url ตรงๆ + เคส fallback PawPrint) · เพิ่ม `pet-scene.test.ts` คุม `pickStageIdleAnimation` เวอร์ชัน raw-array
+- **verify ถึงไหน:** tsc สะอาด (error เดิม 1 ตัวใน `pet-creation-wizard.test.tsx` ยืนยันแล้วว่ามีอยู่ก่อนแก้ ไม่เกี่ยวกับรอบนี้) · eslint/prettier สะอาด · vitest ทั้ง repo 119 ไฟล์ **1491 เคสผ่าน** · build production สำเร็จ 2 รอบ (รอบแรกก่อนกลับด้าน marker, รอบสองหลังแก้ตาม feedback)
+  - **live-test ใน Browser pane ต่อ local build**: hover การ์ด "Pie" → เห็น 4 ไอคอน egg/baby/adult/evolved จริง (ครอปจากสไปรต์จริง ไม่ใช่ placeholder) · marker "Mochi Live" บนแมพ = URL รูปจาก R2 (thumbnail) ยืนยันจาก DOM `<img src>` · เปิดเมนู "Mochi Live" → icon เป็น `data:image/png` (ครอปจากสไปรต์ไข่จริง) ไม่ใช่ thumbnail · เมนูไม่มี marker ทะลุทับอีก (`getComputedStyle` ยืนยัน layer z=20 < เมนู z=30, `elementFromPoint` ที่จุดซ้อนกันได้เมนูเสมอ)
+  - **ปิดช่องว่างสุดท้ายของ SC-PM-05**: เปิด VO ค้างไว้ฝั่ง member (login คนละ tab ไม่ reload) แล้ว admin วาง pet ใหม่ผ่าน API → pet โผล่บน minimap ของ member ภายใน ~4 วิ **โดยไม่ reload หน้า** — พิสูจน์ acceptance "Broadcast hot reload ให้ users ที่ online" ครบวงจริงเป็นครั้งแรก (ก่อนหน้านี้มีแค่ unit test ของ ws relay + live test แค่ rename/move ไม่เคยทดสอบ spawn ระหว่างเปิด VO ค้างอยู่)
+- **สรุป SC-PM-05 เทียบ Acceptance Criteria + Business Logic ของ card ClickUp `86d3dcet3`:** ครบทั้ง 8 AC + 4 Business Logic — 9 ข้อตรงเป๊ะ, 3 ข้อ (spawn position ไม่ใช่ center + event name ต่างจาก `ws:pet:spawned`) ต่างตรงตัวอักษรแต่เป็นการตัดสินใจของ PM ที่มาทีหลัง card (ยึด Figma) ไม่มีข้อไหนตกหล่น — ตารางเต็มอยู่ที่ [PetManagement/spec.md § SC-PM-05 AC ↔ implementation](../PetManagement/spec.md)
+- **PR:** ยังไม่เปิด — แก้อยู่ใน worktree ท้องถิ่น (`run/zyra-app`, feature branch `feat/room-pet-editor-polish` แตกจาก develop `dd35bdf`) รอ user สั่ง commit + PR
+- **ต่อจากนี้:** commit + PR (ผู้ใช้ยังไม่สั่ง) → **SC-PM-05 พร้อมส่ง QA เต็มรูปแบบ** (ครบทุก AC + live-verified ทุกจุดรวมช่องว่างสุดท้าย) → หลังจากนั้นขั้น 5 ตาม roadmap: PR 9 XP engine (รอ PM เคาะ scope activity + "เล่นกับ pet")
+- **ติดอะไร:** ยังไม่ได้ commit/PR รอคำสั่ง user · เรื่องค้าง PM เดิม (template, stage row) ยังไม่มีคำตอบใหม่
+
 ## 2026-09-04 (รอบ 15) — PR 11 VO render + เก็บ SC-PM-05 ให้ครบ Acceptance ก่อนส่ง QA
 
 - **PM/user เคาะ (2026-09-04):** ตัด **stage row ใน marker menu** ออกจาก v1 — ใช้ Replace แทน ("เปลี่ยนชนิดสัตว์แต่ XP/stage ติดห้องเดิม") · pet เป็นของ **workspace จริง** (ไม่ผูก template) ตามที่แนะนำ ยังรอ PM ยืนยันเรื่อง template อีกครั้ง · user ย้ำให้ **ปิด SC-PM-05 ให้ครบ AC ก่อนส่ง QA** ก่อนไปงานอื่น
