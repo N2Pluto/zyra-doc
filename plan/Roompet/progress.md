@@ -5,6 +5,42 @@
 
 ---
 
+## 2026-09-04 (รอบ 22) — จ่าย XP ครบทั้ง 10 activity (งานใหญ่สุดที่ค้างอยู่)
+
+- **ปัญหา:** `Award()` มี caller เดียวมาตลอดคือ stroke → pet โตได้ทางเดียวคือให้คนลูบ · `tb_pet_xp_config` แทบไม่มีความหมาย
+- **PR:** [api #75](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/75) ✅ merged — ต่ออีก 9 activity เข้า flow ที่มีอยู่แล้ว **ไม่เพิ่ม endpoint / ไม่เพิ่ม cron / ไม่เพิ่มตาราง**
+
+| activity | trigger |
+|---|---|
+| `xp_login_per_day` | presence heartbeat |
+| `xp_office_10min` / `_30min` | presence heartbeat (นาฬิกา session) |
+| `xp_team_meeting` | `ZoneSectionService.EnterZone` |
+| `xp_team_meeting_10min` / `_30min` | presence heartbeat (นาฬิกา meeting) |
+| `xp_first_message_fo_day` | `ChatService.SendMessage` |
+| `xp_10_message_fo_day` | `SendMessage` + count ข้อความวันนี้ |
+| `xp_react_message_fo_day` | `ChatService.AddReaction` |
+
+- **meeting duration ไม่ต้องมี timer ของตัวเอง** — heartbeat ที่ client ส่งอยู่แล้วคือ tick · `EnterZone`/`LeaveZone` เป็นตัวเปิด/ปิดนาฬิกา · รูปแบบเดียวกับ office time เลยใช้ code path ร่วมกัน
+
+### decision ที่ตัดเอง (ต้องให้ PM ยืนยัน)
+
+**pet ตัวไหนได้ XP → ทุกตัวใน workspace นั้น** · เพราะ activity ส่วนใหญ่ไม่ได้เกิดใน "ห้อง" ห้องใดห้องหนึ่ง (login ไม่ได้ login ในห้อง, chat เป็นระดับ workspace) · ทางเลือกอีกทาง คือให้เฉพาะ pet ในห้องที่ยืนอยู่ จะทำให้ **pet ในห้องที่คนไม่ค่อยเข้าอยู่ที่ 0 XP ตลอดกาล** · สิ่งที่ทำให้ pet แต่ละตัวต่างกันจึงเหลือแค่การถูกลูบในห้องตัวเอง
+
+### เรื่อง performance ที่เป็นข้อจำกัดจริงของงานนี้
+
+award 1 ครั้ง = 1 transaction ที่ถือ row lock บน pet · ถ้ายิงทุก heartbeat ของทุกคน = พัง
+
+→ ใช้ **in-memory claim** จำว่าวันนี้จ่ายอะไรไปแล้ว แล้ว short-circuit **ก่อน**แตะ DB · ledger ยังเป็น authority อยู่ (restart แล้วลองใหม่ครั้งเดียว โควตาปฏิเสธเอง) · ถ้า award **fail** จะ release claim ให้ event ถัดไปลองใหม่ ไม่ใช่เงียบหายไปทั้งวัน · พอจ่ายครบวันแล้ว heartbeat เหลือแค่ lookup map ตัวเดียว
+
+### รายละเอียดที่ต้องคงไว้
+
+- **scope ตามตาราง contract**: login / message / reaction = per user · office / meeting = **per room** (ledger `user_id` = NULL โควตาเป็นของ pet ไม่ใช่ของคน) — มี test pin ไว้
+- **ไม่มีตัวไหน `TouchActivity`** — มีแต่ interaction ตรงเท่านั้นที่ reset mood clock ไม่งั้นทีมที่ active จะไม่มีวัน Sad และ SC-PET-08 จะทดสอบไม่ได้
+- session clock เป็น per-process (ตั้งใจ) — เป็นตัวจับเวลาเกม ไม่ใช่ billing · ledger การันตี exactly-once ต่อวันอยู่แล้วไม่ว่าจะกี่ replica
+
+- **verify:** `go build` / `go vet` / `go test ./...` / `go test -race` ผ่านหมด · test ใหม่ 16 ตัว (heartbeat 25 ครั้งจ่าย login ครั้งเดียว, ปลดล็อก 10/30 นาทีและไม่ซ้ำ, scope room vs user, leave แล้วนาฬิกาเริ่มใหม่, meeting duration, "นั่งใน office ไม่ใช่ meeting", ขอบ 9/10/40 ข้อความ, count fail ไม่บล็อก first message, retry หลัง fail, claim แยกตาม user/workspace, nil receiver, 50 heartbeat พร้อมกันจ่ายครั้งเดียว, ชื่อ activity key ตรงกับ seed)
+- **ยังไม่ได้ live-test บน dev** — ต้อง deploy ก่อน แล้วเข้า VO ค้างไว้ 10 นาทีถึงจะเห็น `xp_office_10min` เข้า
+
 ## 2026-09-04 (รอบ 21) — สรุปสถานะส่งต่อ (handoff)
 
 > **อ่านอันนี้ก่อนถ้าจะมาทำต่อ** — รวมสถานะทุกอย่าง ณ สิ้นวัน 2026-09-04
