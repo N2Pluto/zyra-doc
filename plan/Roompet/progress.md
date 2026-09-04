@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-09-04 (รอบ 14) — ขั้น 1–3 ของ roadmap: merge #65 / #246 / #29 + PR 10 member API
+
+- **roadmap ที่ user อนุมัติ** (2026-09-04): 1 merge api #65 + app PR 8 → 2 ws PR 7 → 3 api PR 10 member API → 4 app PR 11 VO render → 5 api PR 9 XP engine → 6 ws pet AI → 7 notifications · หลัก: Postgres เป็นความจริง / stage+mood derive / AI อยู่ที่ ws / XP จ่ายฝั่ง server · ข้อเสนอต่อ PM: ตัด stage row ออกจาก v1 (Replace ครอบ) และ pet เป็นของ workspace ไม่ใช่ template (ถ้าต้องการ default ทำตอน clone)
+- **ทำอะไร:**
+  - ✅ **merged** zyra-api #65 (`ce62893`) · zyra-app #246 (`20d6db6`, PR 8 Map Editor) · zyra-ws #29 (PR 7 relay `pet_*` 6 type) → ทั้ง 3 service deploy dev อัตโนมัติ (migration 88 อยู่บน dev แล้ว)
+  - **PR 10** zyra-api branch `feat/room-pet-member-api`: `GET /api/user/workspaces/:id/pets` (UserGuard, owner/member ผ่าน `VerifyUserIsMember` ไม่ผ่าน = 403 `FORBIDDEN` แม้ workspace ไม่มีจริง — ไม่ leak) → `{items: WorkspacePet[] (RoomPet + animations[] ทุก stage/slot ของ pet type), total}` ทุกชั้นในครั้งเดียว client filter `map_id` เอง · animations ดึงครั้งเดียวด้วย `ANY($1)` · ไม่ส่ง `stage/mood` (derive ฝั่ง client) · handler ใช้ interface แคบ 2 ตัว · ไม่มี migration
+  - tests: `room_pet_user_handler_test.go` 5 เคส + `attachPetAnimations` / `distinctPetTypeIDs`
+- **verify ถึงไหน:** `go test ./...` เขียว · live กับ dev DB: 401 ไม่มี token · member-a ใน workspace ที่ไม่ได้เป็นสมาชิก → 403 · workspace ตัวเอง → 200 ว่าง · admin วาง "Mochi" → member GET ได้ 1 ตัว xp 0 ไม่มี field stage **animations 20** · member เรียก `/api/admin/maps/:id/pets` → 403 · workspace มั่ว → 403 · cleanup แล้ว
+- **PR:** **[zyra-api #66](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/66)** เปิด 2026-09-04 รอ CI/merge
+- **ต่อจากนี้:** ขั้น 4 PR 11 VO render (branch `feat/room-pet-vo-render` เตรียมแล้วจาก develop `20d6db6`): โหลด `GET /api/user/workspaces/:id/pets` + ฟัง `pet_*` จาก ws → วาด sprite ตาม stage (Idle นิ่งก่อน) + nameplate/minimap dot/panel ที่ทำไว้ใน #241 · แล้วขั้น 5 PR 9 XP engine (รอ PM เคาะ scope activity + "เล่นกับ pet")
+- **ติดอะไร:** `POST …/pets/:petId/play` ยังไม่มี (ไปกับ PR 9) · ws relay ยังไม่ได้ live e2e (จะเห็นตอน PR 11)
+
 ## 2026-09-04 (รอบ 13) — PR 8 app: วาง Pet ลง Room ผ่าน Map Editor (SC-PM-05 ฝั่ง UI)
 
 - **ทำอะไร:** zyra-app branch `feat/room-pet-map-editor` (worktree แยก แตกจาก `develop` @ `f6c0523`) — ปิด SC-PM-05 ฝั่ง Map Editor ตาม Figma section 4114:199428 ที่ดึงซ้ำทุก frame (ดู [PetManagement/ux-ui.md § สิ่งที่ Figma มีเพิ่ม](../PetManagement/ux-ui.md))

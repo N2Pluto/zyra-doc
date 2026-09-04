@@ -417,7 +417,7 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 | Method | Path | คำอธิบาย |
 |---|---|---|
 | GET | `/api/user/pet-xp-config` | ✅ **ทำแล้ว 2026-09-02** (branch `feat/room-pet-user-xp-config`) — config ปัจจุบันแบบ member: `{ version, config: { thresholds, activities (ทุกตัวพร้อม `enabled`), mood } }` **ไม่มี** `id` / `is_current` / `created_by*` / `constraints` · 404 `PET_XP_CONFIG_NOT_FOUND` ถ้ายังไม่มี version · VO ใช้ derive stage / progress / mood + Daily quest (`buildPetDailyQuests`) |
-| GET | `/api/user/workspaces/:workspaceId/pets` | pet ในชั้นที่กำลังเข้า + derived `stage`/`mood` + animation URL ครบ (VO client) |
+| GET | `/api/user/workspaces/:workspaceId/pets` | ✅ **ทำแล้ว 2026-09-04** ([zyra-api #66](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/66)) — pet **ทุกชั้น** ของ workspace ในครั้งเดียว (client filter `map_id`) แต่ละตัว = `RoomPet` + `animations[]` ครบทุก stage/slot · **ไม่ส่ง `stage`/`mood`** ให้ client derive จาก `xp` + `/api/user/pet-xp-config` · owner/member เท่านั้น ไม่ใช่ = 403 (workspace ไม่มีจริงก็ 403 ไม่ leak) |
 | POST | `/api/user/workspaces/:workspaceId/pets/:petId/play` | activity "Play with your pet" → บวก XP (idempotent วันละครั้ง/คน) |
 
 ---
