@@ -297,13 +297,26 @@ CREATE TABLE IF NOT EXISTS tb_room_pet_xp_event (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- กันจ่ายซ้ำ: activity ที่นับ per-user ใช้ user_id, ที่นับ per-room ใส่ '' แทน NULL
--- (NULL ใน unique index ไม่ชนกันเอง — ต้อง COALESCE ไม่งั้นกันไม่ได้เลย)
-CREATE UNIQUE INDEX IF NOT EXISTS uq_room_pet_xp_daily
-    ON tb_room_pet_xp_event (room_pet_id, activity, day_key, COALESCE(user_id, ''));
+-- quota: COUNT ต่อ (pet, activity, day, actor) เทียบกับ config.activities[key].times
+CREATE INDEX IF NOT EXISTS idx_room_pet_xp_event_quota
+    ON tb_room_pet_xp_event (room_pet_id, activity, day_key, user_id);
+
+-- top contributors ของวัน (SC-PET-06) + spam guard 3 วิ อ่าน row ของวันเรียงตามเวลา
+CREATE INDEX IF NOT EXISTS idx_room_pet_xp_event_day
+    ON tb_room_pet_xp_event (room_pet_id, day_key, created_at DESC);
 ```
 
-**scope ต่อ activity** (⚠️ ตีความจากคำอธิบายใน card — ต้องให้ PM ยืนยัน):
+> ⚠️ **แก้จากที่ออกแบบไว้เดิม (implement จริง 2026-09-04, migration 89)** — ตอนแรกวางเป็น
+> `UNIQUE (room_pet_id, activity, day_key, COALESCE(user_id, ''))` ซึ่ง**ใช้ไม่ได้**: unique index
+> ยอมให้จ่ายได้ activity ละ **1 ครั้ง/วัน** เท่านั้น แต่ `PetXPActivity.times` ตั้งได้ > 1
+> (SC-PET-03 กำหนด stroke 5 ครั้ง/วัน) — pet จะรับ XP ครั้งที่ 2 ของวันไม่ได้เลย
+>
+> ของจริงจึงเป็น **index ธรรมดา** แล้วเช็ค quota ด้วย `COUNT(*)` เทียบ `times` **ภายใน transaction
+> เดียวกับที่ถือ `SELECT ... FOR UPDATE` บนแถว `tb_room_pet`** — row lock นั้น serialise ทุกการจ่าย
+> XP ของ pet ตัวนั้น สองคนกด stroke พร้อมกันจึงกินโควตาช่องสุดท้ายซ้ำกันไม่ได้
+> · quota lookup ใช้ `user_id IS NOT DISTINCT FROM $n` เพื่อให้ NULL (room-level) เทียบติด
+
+**scope ต่อ activity** (⚠️ ตีความจากคำอธิบายใน card — ต้องให้ PM ยืนยัน · **implement ตามตารางนี้แล้วใน PR 9**):
 
 | Activity | scope | เหตุผล |
 |---|---|---|
@@ -516,7 +529,7 @@ publish ผ่าน `ZoneEventPublisher` ที่มีอยู่ (Redis cha
 | `pet_stage_changed` | `{map_id, pet_id, from, to}` | XP ข้าม threshold (เล่น `Evolution`) |
 | `pet_xp_changed` | `{map_id, pet_id, xp, mood}` | ได้ XP (throttle ฝั่ง service) |
 
-> ✅ **4 event ฝั่ง admin (`pet_spawned` / `pet_moved` / `pet_renamed` / `pet_removed`) publish จริงแล้ว 2026-09-04** — ยืนยันด้วย `redis-cli SUBSCRIBE vo:zone` ระหว่าง live-test (envelope `{workspace_id, type, payload}` เหมือน event เดิม) · `pet_spawned.pet` คือ `RoomPet` เต็มตัว · `pet_renamed.name` = ชื่อที่แสดงจริงหลังเปลี่ยน (ล้าง custom แล้วได้ชื่อ pet type) · publish เป็น best-effort หลัง commit — Redis ล่ม placement ยังสำเร็จ (log warn) · อีก 2 event (`pet_stage_changed` / `pet_xp_changed`) รอ PR 9
+> ✅ **4 event ฝั่ง admin (`pet_spawned` / `pet_moved` / `pet_renamed` / `pet_removed`) publish จริงแล้ว 2026-09-04** — ยืนยันด้วย `redis-cli SUBSCRIBE vo:zone` ระหว่าง live-test (envelope `{workspace_id, type, payload}` เหมือน event เดิม) · `pet_spawned.pet` คือ `RoomPet` เต็มตัว · `pet_renamed.name` = ชื่อที่แสดงจริงหลังเปลี่ยน (ล้าง custom แล้วได้ชื่อ pet type) · publish เป็น best-effort หลัง commit — Redis ล่ม placement ยังสำเร็จ (log warn) · ✅ **อีก 2 event (`pet_stage_changed` / `pet_xp_changed`) publish จริงแล้ว 2026-09-04 ใน PR 9** (api [#68](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/68)) — ยืนยันด้วย `redis-cli SUBSCRIBE vo:zone` ตอน XP 99 → stroke → `egg` → `baby` · payload คือ `{map_id, pet_id, stage, prev_stage, xp, triggered_by}` (**ไม่ใช่ `{from, to}` ตามที่ comment ใน `zyra-ws/internal/hub/message.go` เขียนไว้** — ws เป็น relay ล้วน payload ผ่านตรง ๆ)
 
 > ✅ **zyra-ws relay ทำแล้ว** [zyra-ws #29](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/29) (2026-09-04) — 6 type ผ่าน `BroadcastZoneEvent` แบบ pure relay ไม่มี mirror
 
@@ -574,17 +587,17 @@ playWithPet(workspaceId: string, petId: string): Promise<PlayWithPetResponse>
 
 ## แบ่งเป็น PR (task sizing ตาม rule 01)
 
-| # | PR | ขึ้นกับ |
-|---|---|---|
-| 1 | `feat(api): pet type CRUD + migration 77` (SC-PM-01/02) | — |
-| 2 | `feat(api): pet animation upload + grid validation` (SC-PM-03/07) | 1 |
-| 3 | `feat(api): pet xp config + version history` (SC-PM-04) | 1 |
-| 4 | `feat(app): pet library + stage manager UI` | 1, 2 |
-| 5 | `feat(app): xp config form` | 3 |
-| 6 | `feat(api): room pet placement + realtime` (SC-PM-05) | 1 |
-| 7 | `feat(ws): forward pet_* events` | 6 |
-| 8 | `feat(app): pet drag-drop ใน Map Editor` | 6 |
-| 9 | `feat(api): xp earning engine + ledger` | 3, 6 |
+| # | PR | ขึ้นกับ | สถานะ |
+|---|---|---|---|
+| 1 | `feat(api): pet type CRUD + migration 77` (SC-PM-01/02) | — | ✅ merged |
+| 2 | `feat(api): pet animation upload + grid validation` (SC-PM-03/07) | 1 | ✅ merged |
+| 3 | `feat(api): pet xp config + version history` (SC-PM-04) | 1 | ✅ merged |
+| 4 | `feat(app): pet library + stage manager UI` | 1, 2 | ✅ merged |
+| 5 | `feat(app): xp config form` | 3 | ✅ merged |
+| 6 | `feat(api): room pet placement + realtime` (SC-PM-05) | 1 | ✅ merged — api #65 |
+| 7 | `feat(ws): forward pet_* events` | 6 | ✅ merged — ws #29 |
+| 8 | `feat(app): pet drag-drop ใน Map Editor` | 6 | ✅ merged — app #246 |
+| 9 | `feat(api): xp earning engine + ledger` | 3, 6 | 🔵 PR เปิดอยู่ — [api #68](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/68) (migration 89 + `POST …/pets/:petId/play` + `GET …/status`) |
 
 **ไม่มี PR ไหนถูก block แล้ว** — แบ่งงานให้ dev 2 คนพร้อมตารางเวลา: [work-split.md](work-split.md)
 
@@ -598,8 +611,10 @@ playWithPet(workspaceId: string, petId: string): Promise<PlayWithPetResponse>
 
 **ต้องได้ก่อน merge PR 9**
 3. ~~mood ช่วง 48–72 ชม. เป็น state อะไร~~ — ✅ **ปิดแล้ว 2026-09-01: Neutral ยืดถึง 72 ชม.** (Sad เริ่ม > 72)
-4. activity ตัวไหนนับ per-user ตัวไหนนับ per-room (ตารางที่เสนอไว้ข้างบน)
-5. `xp_play_with_pet` — "เล่นกับ pet" คือ interaction แบบไหนใน VO (คลิก? emoji? เดินเข้าใกล้?) ยังไม่มี spec member-side
+4. activity ตัวไหนนับ per-user ตัวไหนนับ per-room (ตารางที่เสนอไว้ข้างบน) — **PR 9 implement ตามตารางนั้นแล้ว** (room-level เก็บ `user_id = NULL`) · ถ้า PM ตอบต่างจากนี้ แก้ที่ `PetXPAwardInput.UserID` ของ caller แต่ละตัว ไม่ต้องแก้ schema
+5. ~~`xp_play_with_pet` — "เล่นกับ pet" คือ interaction แบบไหนใน VO~~ — ✅ **ตอบจาก card Room Pet: คือ stroke (ลูบหัว) 🤚 / คีย์ลัด `P`** (SC-PET-03) · PR 9 ผูก `PetXPPlayActivity = "xp_play_with_pet"` เข้ากับ `POST …/pets/:petId/play` ตัวเดียว
+10. **(ใหม่ 2026-09-04)** activity ไหน reset `last_activity_at` (= reset mood) — PR 9 ตัดสินไปก่อนว่า **เฉพาะ interaction ตรงกับ pet เท่านั้น** (`TouchActivity`) ส่วน login / office / chat ไม่ reset เพราะ mood คือ "ถูกทอดทิ้ง" ของ **pet** ถ้า activity เฉย ๆ ก็ reset ทีมที่ active จะไม่มีวันเห็น Sad และ SC-PET-08 จะทดสอบไม่ได้เลย — ขอ PM ยืนยัน
+11. **(ใหม่ 2026-09-04)** seed ของ `xp_play_with_pet.times` = **1** แต่ SC-PET-03 เขียนไว้ 5 ครั้ง/วัน — เป็นค่าที่ admin แก้เองได้ในหน้า XP Configuration PR 9 จึงไม่แตะ seed แต่ต้องมีคนตั้งให้ตรง spec
 
 **ไม่บล็อก แต่ควรรู้**
 6. ยืนยันชื่อ error code ที่เราตั้งเอง: `INVALID_DIMENSIONS`, `INVALID_DIRECTION_ROWS`, `FRAME_ROW_MISMATCH` (ความหมายของ 2 ตัวหลังเปลี่ยนแล้วตาม spec 2026-09-01)

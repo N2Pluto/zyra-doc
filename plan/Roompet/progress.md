@@ -5,6 +5,43 @@
 
 ---
 
+## 2026-09-04 (รอบ 17) — PR 9: XP engine + ledger · pet โตได้จริงเป็นครั้งแรก
+
+- **ทำอะไร:** ปิดช่องว่างใหญ่สุดที่บล็อก SC-PET-03/04/05/06/08 — `tb_pet_xp_config` มี consumer แล้ว
+  - `zyra-api/migrations/89_room_pet_xp_event.sql` — ledger `tb_room_pet_xp_event` (รันบน dev DB แล้ว ยืนยันด้วย `information_schema.columns`)
+  - `internal/service/room_pet_xp_service.go` — `Award()` ทำใน transaction เดียวที่ถือ `SELECT ... FOR UPDATE` บนแถว `tb_room_pet`: นับ quota ของวัน → คูณ mood multiplier → insert ledger → บวก `xp` → เทียบ stage กับ `last_seen_stage` → publish · `Status()` ตอบ Pet panel (stage/mood/quota/top-3/xp วันนี้)
+  - `internal/handler/room_pet_xp_user_handler.go` + route: `POST /api/user/workspaces/:id/pets/:petId/play` (SC-PET-03) · `GET …/status` (SC-PET-06) — `/api/user/*` ล้วนตาม rule 15
+  - `pet_xp_changed` / `pet_stage_changed` = 2 event สุดท้ายของ 6 ตัวที่ zyra-ws relay อยู่แล้ว → **ไม่ต้องแก้ ws**
+- **ตัดสินใจเองตรงที่ spec เว้นไว้** (ใส่เหตุผลไว้ใน `PetManagement/db-schema-api-contract.md` §5 + คำถามข้อ 4/5/10/11):
+  1. **ไม่ใช้ unique index** `(pet, activity, day, user)` ตามที่ contract ร่างไว้ — unique จะยอมจ่ายได้ activity ละ 1 ครั้ง/วันเท่านั้น แต่ `times` ตั้งได้ > 1 (stroke = 5 ครั้ง/วันตาม SC-PET-03) → ใช้ index ธรรมดา + `COUNT(*)` ใต้ row lock แทน
+  2. `day_key` เป็น DATE ตาม **UTC+7** ไม่ใช่ UTC
+  3. **เฉพาะ interaction ตรงกับ pet เท่านั้นที่ reset `last_activity_at`** — ถ้า login/office/chat reset ด้วย ทีมที่ active จะไม่มีวัน Sad และ SC-PET-08 จะเทสไม่ได้
+  4. ครบโควตาวันแล้ว = **200 `awarded: false`** ไม่ใช่ error (animation ยังเล่น แค่ไม่ได้ XP ตาม SC-PET-06) · มีแต่ spam guard 3 วิ ที่ตอบ 429
+  5. `xp_play_with_pet` = stroke (ตอบคำถามค้างข้อ 5 ของ PetManagement จาก card Room Pet)
+- **PR:** [api #68](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/68) (`feat/room-pet-xp-engine` → develop) — ยังไม่ merge
+- **verify ถึงไหน:**
+  - **build เขียว**: `go build` / `go vet` / `go test ./...` ผ่านหมด · test ใหม่ 7 ตัว (service, table-driven: stage derive, threshold validation, ขอบ mood รวมช่วง 48–72 ชม. ที่ card เว้นไว้, การปัดลงของ multiplier, day rollover UTC+7) + 11 เคส (handler)
+  - **live-test ผ่านจริง** กับ dev DB + Redis + token ของ `member-a` บน pet "Mochi Live":
+
+    | เคส | ผล |
+    |---|---|
+    | stroke | 200 `xp_awarded: 1` (base 1 × happy 150% ปัดลง) |
+    | stroke ซ้ำทันที | 429 `RATE_LIMITED` |
+    | stroke เกินโควตาวัน | 200 `awarded: false` `reason: DAILY_LIMIT_REACHED` |
+    | pet ของ workspace ที่ไม่ได้เป็นสมาชิก | 403 `FORBIDDEN` (เช็ค membership ก่อน lookup) |
+    | pet id มั่ว | 404 `ROOM_PET_NOT_FOUND` |
+    | XP 99 → stroke | stage `egg` → `baby` · เห็นทั้ง `pet_xp_changed` และ `pet_stage_changed` บน `redis-cli SUBSCRIBE vo:zone` |
+    | status | contributors + `xp_today` มาครบ |
+
+    ข้อมูลเทสคืนค่าเดิม (xp=0, stage=egg, ล้าง ledger) หลังเทสเสร็จ
+  - **ยังไม่ได้เทส:** ฝั่ง client (ยังไม่มีปุ่ม stroke ใน VO) · concurrent stroke 2 คนพร้อมกัน (row lock ยังพิสูจน์ด้วย test จริงไม่ได้ — เป็น argument จาก `FOR UPDATE`)
+- **ต่อจากนี้:**
+  1. app: ผูก `VOPetPanel` + marker 🤚 เข้ากับ `POST …/play` และ `GET …/status` จริง (ตอนนี้ panel ยังใช้ mock) → SC-PET-03 / SC-PET-06
+  2. api: จ่าย XP ของอีก 9 activity (login / office / meeting / chat) — ต้องแทรก `Award()` เข้า flow ที่มีอยู่ ทำเป็น PR แยก
+  3. app: evolution overlay + modal ตอนรับ `pet_stage_changed` → SC-PET-04 / SC-PET-05
+  4. zyra-ws: pet AI movement (SC-PET-02) — **ยังไม่มี technical design เลย** ต้องเขียนก่อน
+- **ติดอะไร:** ต้องให้ PM ยืนยัน 4 ข้อ (scope per-user/per-room, activity ไหน reset mood, `times` ของ stroke ควรเป็น 5 ไม่ใช่ 1, และ mood multiplier มีผลกับ stroke ตอน Sad ไหม) · comment ใน `zyra-ws/internal/hub/message.go` เขียน payload ของ `pet_stage_changed` เป็น `{from, to}` ซึ่งไม่ตรงของจริง (`{stage, prev_stage, …}`) — ws เป็น relay ล้วนจึงไม่พัง แต่ควรแก้ comment
+
 ## 2026-09-04 (รอบ 16) — เก็บ 3 บั๊ก UI จาก user เทสเอง + ปิดช่องว่างสุดท้ายของ SC-PM-05
 
 - **user เทส Map Editor เอง (dev build local ที่ผมรันให้) แล้วส่ง feedback 3 จุด:**
