@@ -1,7 +1,7 @@
 # VO โหลดซ้ำอีกรอบหลังหน้าโหลดบอก 100%
 
 > สถานะ: แก้แล้ว รอ review · วันที่: 2026-09-04 · repo ที่กระทบ: `zyra-app`
-> Branch: `fix/vo-preload-assets-on-loading`
+> Branch: `fix/vo-preload-assets-on-loading` · PR: [zyra-app#257](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/257)
 
 ## อาการที่ผู้ใช้รายงาน
 
