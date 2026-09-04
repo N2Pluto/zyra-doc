@@ -66,7 +66,7 @@
 |---|---|
 | แก้ F1 / F2 | **17 หรือ 20 slots** — โค้ดใช้ 20 (Egg 2 + Baby/Adult/Evolved ละ 6 โดยเพิ่ม `Idle`) แต่ [§RequiredSlots(stage)](#requiredslotsstage--ค่าที่ใช้-ยึด-figma) ในเอกสารนี้เขียน 17 (ละ 5) — ตอบก่อนไม่งั้นแก้ progress bar เสร็จต้องแก้อีกรอบ |
 | แก้ F3 | **metadata ต่อ animation** — เปิดให้ตั้งเองตาม spec หรือรับค่า fixed 50/24/4 อย่างเป็นทางการ (คำตอบกำหนดว่าจะยกเพดาน หรือปลดล็อกฟอร์ม) |
-| merge PR 6 / 8 | 1 room = 1 pet บังคับไหม (`uq_room_pet_one_per_zone` ยังไม่เปิด) · วาง pet ใน Workspace Template แล้ว workspace ที่สร้างไปก่อนหน้าได้ pet ด้วยไหม |
+| merge PR 6 / 8 | ~~1 room = 1 pet บังคับไหม~~ ✅ **PM 2026-09-04: บังคับ** (`uq_room_pet_one_per_zone` เปิดแล้ว) + วางได้เฉพาะ `room` zone, จุดวางห้ามตกใน meeting/private แม้ซ้อนใน room · **ยังค้าง:** วาง pet ใน Workspace Template แล้ว workspace ที่สร้างไปก่อนหน้าได้ pet ด้วยไหม |
 | merge PR 9 | mood ช่วง 48–72 ชม. เป็น state อะไร · activity ตัวไหน per-user ตัวไหน per-room · `xp_play_with_pet` คือ interaction แบบไหนใน VO (ยังไม่มี spec member-side) |
 | F15 | เจตนาของ `NEXT_PUBLIC_PET` — ปิดแค่เมนู หรือต้องปิด route + API ด้วย |
 

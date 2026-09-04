@@ -246,7 +246,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_pet_xp_config_current
 
 ### 4. `tb_room_pet` — pet instance ในห้อง (SC-PM-05)
 
-> ✅ **ลงจริงแล้ว 2026-09-04** — `zyra-api/migrations/88_room_pet.sql` (+ `.down.sql`) apply บน dev DB แล้ว · ต่างจากร่างด้านล่าง 3 จุด: เพิ่ม `created_by` / `updated_by` (VARCHAR → `tb_user`, pattern เดียวกับ `tb_pet_type`) · เพิ่ม `idx_room_pet_pet_type` (partial, ใช้เช็ก `PET_TYPE_IN_USE`) · `last_seen_stage` มี CHECK 4 ค่า · `uq_room_pet_one_per_zone` ยังคง comment ไว้ตามเดิม
+> ✅ **ลงจริงแล้ว 2026-09-04** — `zyra-api/migrations/88_room_pet.sql` (+ `.down.sql`) apply บน dev DB แล้ว · ต่างจากร่างด้านล่าง 3 จุด: เพิ่ม `created_by` / `updated_by` (VARCHAR → `tb_user`, pattern เดียวกับ `tb_pet_type`) · เพิ่ม `idx_room_pet_pet_type` (partial, ใช้เช็ก `PET_TYPE_IN_USE`) · `last_seen_stage` มี CHECK 4 ค่า · `uq_room_pet_one_per_zone` **เปิดใช้แล้ว** (PM เคาะ 1 room = 1 pet 2026-09-04 — apply บน dev แล้ว)
 
 ```sql
 CREATE TABLE IF NOT EXISTS tb_room_pet (
@@ -275,6 +275,7 @@ CREATE INDEX IF NOT EXISTS idx_room_pet_map ON tb_room_pet (map_id) WHERE is_del
 --     ON tb_room_pet (zone_id) WHERE is_deleted = FALSE;
 ```
 
+- **1 room = 1 pet บังคับแล้ว** (PM 2026-09-04) — `uq_room_pet_one_per_zone` เปิดใช้ใน migration 88 · ห้องที่วางได้ = `zone_type = 'room'` เท่านั้น และจุดวางห้ามตกใน meeting/private (กฎอยู่ใน service ดู §Placement)
 - `map_id` **เก็บซ้ำ**กับที่ derive ได้จาก `zone_id` โดยตั้งใจ — VO client โหลด pet ทั้งชั้นด้วย `WHERE map_id = ?` ครั้งเดียว ถ้าไม่เก็บต้อง JOIN `tb_map_zone` ทุกครั้งที่เข้าห้อง
 - `ON DELETE RESTRICT` ที่ `pet_type_id` — pet type ที่ถูกวางใช้งานอยู่ต้องลบไม่ได้ (soft delete เท่านั้น) ป้องกัน pet หายจาก map ของ user โดยที่ admin ไม่รู้ตัว
 - **ไม่มีคอลัมน์ `stage` และ `mood`** — derive (ดูหัวข้อถัดไป)
@@ -407,7 +408,7 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 > - HTTP status = ค่าใน body (404/400/423/500) ต่างจาก `/api/admin/pets*` เดิมที่ตอบ HTTP 200 เสมอ — `authFetch` อ่าน body ทั้ง 2 แบบ
 > - เพิ่ม code: 404 `MAP_NOT_FOUND` · 404 `ZONE_NOT_FOUND` (zone ไม่ได้อยู่บน map นี้) · 404 `ROOM_PET_NOT_FOUND` · 400 `INVALID_NAME` (> 30 rune) · 400 `INVALID_POSITION` · 423 `WORKSPACE_LOCKED`
 > - `DELETE /api/admin/pets/:id` ตอบ 409 `PET_TYPE_IN_USE` แล้วเมื่อยังมี placement ที่ `is_deleted = FALSE` · `workspace_usage_count` = `COUNT(DISTINCT workspace)` ของ placement สด recompute ใน tx เดียวกับ place/remove (F7 ปิด)
-> - ยังไม่จำกัด `zone_type` ที่วางได้ (วางใน `block`/`spawn` ได้ในทางเทคนิค) — รอ PM/Map Editor ตัดสิน · `ZONE_ALREADY_HAS_PET` ยังไม่เปิดตามเดิม
+> - **PM เคาะ 2026-09-04:** วางได้เฉพาะ `zone_type = 'room'` (400 `ZONE_NOT_ROOM`) · จุดวางห้ามตกใน `meeting` / `private` แม้ซ้อนใน room (400 `POSITION_BLOCKED_BY_ZONE` — เช็กทุก zone ประเภทนั้นบน map ทั้งตอน place และ move) · 1 room = 1 pet (409 `ZONE_ALREADY_HAS_PET` — pre-check ใน tx + unique index รับ race; ลบแล้ววางใหม่ได้เพราะ index นับเฉพาะ `is_deleted = FALSE`)
 
 ### Member — `/api/user/*` (UserGuard)
 
@@ -491,7 +492,11 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 | 400 | `PET_NOT_READY` | วาง pet type ที่ sprite ยังไม่ครบทุก stage |
 | 400 | `POSITION_OUTSIDE_ZONE` | จุดที่วางอยู่นอก `zone_id` ที่ส่งมา |
 | 409 | `PET_TYPE_IN_USE` | DELETE pet type ที่ยังถูกวางในห้อง |
-| 409 | `ZONE_ALREADY_HAS_PET` | วาง pet ตัวที่ 2 ในห้องเดิม — **ยังไม่เปิดใช้** รอ PM ยืนยันกฎ 1 room = 1 pet |
+| 409 | `ZONE_ALREADY_HAS_PET` | วาง pet ตัวที่ 2 ในห้องเดิม — ✅ **เปิดใช้แล้ว 2026-09-04** (PM เคาะ 1 room = 1 pet) pre-check + partial unique index `uq_room_pet_one_per_zone` |
+| 400 | `ZONE_NOT_ROOM` | วางใน zone ที่ `zone_type != 'room'` (meeting / private / block / spawn / teleport / spotlight) — PM 2026-09-04 |
+| 400 | `POSITION_BLOCKED_BY_ZONE` | จุดวางตกใน zone `meeting` / `private` ของ map เดียวกัน **แม้ zone นั้นจะซ้อนอยู่ใน room** — PM 2026-09-04 (เช็กทั้งตอน place และ move) |
+| 404 | `MAP_NOT_FOUND` · `ZONE_NOT_FOUND` · `ROOM_PET_NOT_FOUND` | map ไม่มี · zone ไม่ได้อยู่บน map นี้ · pet ไม่มี/ถูกลบแล้ว |
+| 423 | `WORKSPACE_LOCKED` | เขียน placement โดยไม่ถือ workspace edit lock |
 | 422 | `INVALID_XP_CONFIG` | validate config ไม่ผ่าน — แนบ `{field, reason}` |
 
 > **transparency ไม่มี error code** — ตาม PM (ข้อ 6) ส่งกลับเป็น `data.warnings: ["NO_TRANSPARENCY"]` พร้อม HTTP 200 upload สำเร็จปกติ
