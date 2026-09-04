@@ -246,6 +246,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_pet_xp_config_current
 
 ### 4. `tb_room_pet` — pet instance ในห้อง (SC-PM-05)
 
+> ✅ **ลงจริงแล้ว 2026-09-04** — `zyra-api/migrations/88_room_pet.sql` (+ `.down.sql`) apply บน dev DB แล้ว · ต่างจากร่างด้านล่าง 3 จุด: เพิ่ม `created_by` / `updated_by` (VARCHAR → `tb_user`, pattern เดียวกับ `tb_pet_type`) · เพิ่ม `idx_room_pet_pet_type` (partial, ใช้เช็ก `PET_TYPE_IN_USE`) · `last_seen_stage` มี CHECK 4 ค่า · `uq_room_pet_one_per_zone` ยังคง comment ไว้ตามเดิม
+
 ```sql
 CREATE TABLE IF NOT EXISTS tb_room_pet (
     id               UUID             PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -397,6 +399,16 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 - service ต้อง validate ว่าจุดที่วางอยู่ภายใน `zone_id` ที่ส่งมาจริง (ใช้ `lib/zone-utils` ฝั่ง FE + ตรวจซ้ำฝั่ง service เพราะ zone เป็น tiles JSONB ไม่ใช่ AABB)
 - pet type ที่วางได้ต้อง `status = active` **และ** `stage_ready` ครบทุก stage
 
+> ✅ **implement แล้ว 2026-09-04** (`feat/room-pet-placement`, `handler/room_pet_handler.go` + `service/room_pet_service.go`) — รายละเอียดที่ contract ไม่ได้เขียนไว้แล้วตัดสินตอนทำ:
+> - **ต้องถือ workspace lock** สำหรับ POST/PATCH/DELETE เหมือน objects/zones ใน group เดียวกัน → ไม่มี lock = **423 `WORKSPACE_LOCKED`** (GET ไม่ต้อง)
+> - response `RoomPet`: `name` = ชื่อที่แสดงจริงเสมอ (custom หรือชื่อ pet type) + `is_custom_name` · มี `pet_type_name` / `thumbnail_url` join มาให้ palette · **ไม่มี** `stage` / `mood` (derive ฝั่ง client จาก `xp` + `/api/user/pet-xp-config`)
+> - PATCH `name: ""` = ล้างชื่อ custom กลับไปใช้ชื่อ pet type · PATCH ส่ง `tile_x` หรือ `tile_y` ตัวเดียวได้ (อีกตัวใช้ค่าเดิม) · ย้ายได้**ภายใน zone เดิมเท่านั้น** (ไม่มี `zone_id` ใน PATCH ตาม contract) · body ว่าง → 400 `INVALID_REQUEST` · tile ติดลบ → 400 `INVALID_POSITION`
+> - กฎ inside-zone = `zoneContainsTile` ฝั่ง FE: floor anchor เป็น tile (57.5 → 57) · tiles JSONB ชนะ rect · rect ใช้ `zoneTilePx = 32`
+> - HTTP status = ค่าใน body (404/400/423/500) ต่างจาก `/api/admin/pets*` เดิมที่ตอบ HTTP 200 เสมอ — `authFetch` อ่าน body ทั้ง 2 แบบ
+> - เพิ่ม code: 404 `MAP_NOT_FOUND` · 404 `ZONE_NOT_FOUND` (zone ไม่ได้อยู่บน map นี้) · 404 `ROOM_PET_NOT_FOUND` · 400 `INVALID_NAME` (> 30 rune) · 400 `INVALID_POSITION` · 423 `WORKSPACE_LOCKED`
+> - `DELETE /api/admin/pets/:id` ตอบ 409 `PET_TYPE_IN_USE` แล้วเมื่อยังมี placement ที่ `is_deleted = FALSE` · `workspace_usage_count` = `COUNT(DISTINCT workspace)` ของ placement สด recompute ใน tx เดียวกับ place/remove (F7 ปิด)
+> - ยังไม่จำกัด `zone_type` ที่วางได้ (วางใน `block`/`spawn` ได้ในทางเทคนิค) — รอ PM/Map Editor ตัดสิน · `ZONE_ALREADY_HAS_PET` ยังไม่เปิดตามเดิม
+
 ### Member — `/api/user/*` (UserGuard)
 
 ตาม `.claude/rules/15-member-api-separation.md` — member **ห้าม**เรียก `/api/admin/*`
@@ -498,6 +510,8 @@ publish ผ่าน `ZoneEventPublisher` ที่มีอยู่ (Redis cha
 | `pet_removed` | `{map_id, pet_id}` | admin ลบ |
 | `pet_stage_changed` | `{map_id, pet_id, from, to}` | XP ข้าม threshold (เล่น `Evolution`) |
 | `pet_xp_changed` | `{map_id, pet_id, xp, mood}` | ได้ XP (throttle ฝั่ง service) |
+
+> ✅ **4 event ฝั่ง admin (`pet_spawned` / `pet_moved` / `pet_renamed` / `pet_removed`) publish จริงแล้ว 2026-09-04** — ยืนยันด้วย `redis-cli SUBSCRIBE vo:zone` ระหว่าง live-test (envelope `{workspace_id, type, payload}` เหมือน event เดิม) · `pet_spawned.pet` คือ `RoomPet` เต็มตัว · `pet_renamed.name` = ชื่อที่แสดงจริงหลังเปลี่ยน (ล้าง custom แล้วได้ชื่อ pet type) · publish เป็น best-effort หลัง commit — Redis ล่ม placement ยังสำเร็จ (log warn) · อีก 2 event (`pet_stage_changed` / `pet_xp_changed`) รอ PR 9
 
 **สิ่งที่ต้องทำใน zyra-ws**: เพิ่ม 6 type นี้ใน handler ที่ subscribe `vo:zone` — ปัจจุบันรู้จักแค่ `zone_claim_changed`, `map_object_changed`, `map_updated` type ที่ไม่รู้จักจะถูกทิ้งเงียบ ๆ
 

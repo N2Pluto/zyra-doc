@@ -5,6 +5,20 @@
 
 ---
 
+## 2026-09-04 (รอบ 12) — PR 6 api: `tb_room_pet` + placement `/api/admin/maps/:mapId/pets` + 4 realtime event
+
+- **ทำอะไร:** zyra-api branch `feat/room-pet-placement` (แตกจาก `develop` @ `3439242` หลัง #63 merge) — ตัวที่บล็อกทุก scenario SC-PET (ไม่มี pet ในห้อง = ไม่มีอะไร render)
+  - `migrations/88_room_pet.sql` + `.down.sql` — ตาราง `tb_room_pet` ตาม [db-schema-api-contract.md §4](../PetManagement/db-schema-api-contract.md) + `created_by/updated_by` + index `idx_room_pet_map` / `idx_room_pet_pet_type` (partial `is_deleted = FALSE`) · `uq_room_pet_one_per_zone` ยัง comment (PM ยังไม่เคาะ 1 room = 1 pet) · **apply บน dev DB แล้ว** (16 คอลัมน์ 3 index)
+  - `model/room_pet.go` — `RoomPet` (`name` = ชื่อแสดงจริง + `is_custom_name`, join `pet_type_name`/`thumbnail_url`, ไม่มี stage/mood) · request `PlaceRoomPetRequest` / `UpdateRoomPetRequest` (pointer ทุก field) · payload 4 event
+  - `service/room_pet_service.go` — `List` / `Get` / `Place` / `Update` / `Remove` · gate: map มีจริง → zone อยู่บน map → anchor อยู่ใน zone (`roomPetPointInZone` = `zoneContainsTile` ฝั่ง FE: floor anchor, tiles JSONB ชนะ rect, `zoneTilePx` 32) → pet type `active` + `stageReadiness` ครบ 4 stage · ชื่อ trim/≤ 30 rune/ว่าง = NULL · place/remove อยู่ใน tx เดียวกับ `refreshPetTypeUsageCount` (`COUNT(DISTINCT workspace)`) · publish `pet_spawned/moved/renamed/removed` ผ่าน `zoneEventPublisher` เดิม best-effort หลัง commit
+  - `handler/room_pet_handler.go` — interface แคบ `roomPetPlacementService` + `mapLockVerifier` (ทดสอบได้ไม่ต้องมี DB) · POST/PATCH/DELETE ต้องถือ **workspace lock** (423 `WORKSPACE_LOCKED`) เหมือน objects/zones · HTTP status = body status · 500 ไม่รั่ว error text
+  - `pet_service.go` `Delete` → 409 `PET_TYPE_IN_USE` เมื่อยังมี placement สด (F7 ของ PR 1 ปิด) · `router.go` 4 route ใต้ `admin.Group("/maps")` · `main.go` wire + `SetPublisher`
+  - tests: `room_pet_handler_test.go` (List / Place 12 เคส / Update 7 / Remove 3 / nil lock) · `room_pet_service_test.go` (point-in-zone rect 9 เคส + tiles list + nil, normalize name 6 เคส รวม Thai 30/31 rune, effective name)
+- **verify ถึงไหน:** gofmt สะอาดทุกไฟล์ที่แตะ (main.go มี format เพี้ยนเดิมอยู่ก่อนแล้ว ไม่ได้แตะ) · `go vet` + `go build ./...` ผ่าน · `go test ./internal/handler/ ./internal/service/` ผ่าน · **live-test 20 เคสกับ api local :3012 ต่อ dev DB ผ่านทั้งหมด**: 401 ไม่มี token · 403 member · 423 ไม่มี lock · acquire lock → วางนอก zone 400 · pet type ไม่มี 404 · zone ของ map อื่น 404 · ชื่อ 31 ตัว 400 · วางสำเร็จ anchor 57.5/0.25 ชื่อ "  Golden  " → trim · ลบ pet type "Pie" ระหว่างวาง → **409 PET_TYPE_IN_USE ไม่ถูกลบ** · ย้าย 57,1 + ล้างชื่อ → `name` กลับเป็น "Pie" · ย้ายออก zone 400 · body ว่าง 400 · list 1 → remove → 404 ซ้ำ → list ว่าง · release lock · map ไม่มี 404 — DB หลังจบ: row soft-deleted (`name NULL`, `created_by/updated_by` = admin), `workspace_usage_count` กลับ 0, pet type ยัง active ไม่ถูกลบ, lock ปล่อยแล้ว · **Redis `vo:zone` ได้ครบ 4 event** (`redis-cli SUBSCRIBE`) payload ตรง contract (`pet_renamed.name` = "Pie" หลังล้าง custom)
+- **PR:** **[zyra-api #65](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/65)** `feat/room-pet-placement` → `develop` (commit `acaf76d`, ใหม่ 7 แก้ 4) — เปิด 2026-09-04 รอ CI/merge
+- **ต่อจากนี้:** commit + PR → develop (dev deploy อัตโนมัติ; migration 88 อยู่บน dev แล้ว **uat/prod ต้องรันเองก่อน deploy**) → PR 7 zyra-ws forward `pet_*` → PR 8 Map Editor palette/drag-drop → PR 10 member `GET /api/user/workspaces/:id/pets` → wire VO
+- **ติดอะไร:** ยังไม่จำกัด `zone_type` ที่วางได้ (วางใน `block`/`spawn`/`teleport` ได้ในทางเทคนิค) รอเคาะกับ Map Editor · PATCH ย้ายข้าม zone ไม่ได้ตาม contract (ต้อง remove + place) — ถ้า UX drag ข้ามห้องต้องเพิ่ม `zone_id` ใน PATCH · 1 room = 1 pet ยังไม่บังคับ
+
 ## 2026-09-02 (รอบ 11) — member endpoint `GET /api/user/pet-xp-config`
 
 - **ทำอะไร:** branch `feat/room-pet-user-xp-config` ทั้ง 2 repo (แตกจาก `develop`) — endpoint แรกฝั่ง member ของ Room Pet

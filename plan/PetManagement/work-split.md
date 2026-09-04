@@ -20,7 +20,7 @@
 | 3 | `feat(api): pet xp config + version history` | ✅ merged | ตรง contract ครบ |
 | 4 | `feat(app): pet library + stage manager UI` | ✅ merged | 4a/4b/4d ครบ · **4c ยังไม่ครบ** (F8) · เก็บ F1, F2, F9 |
 | 5 | `feat(app): xp config form` | ✅ merged | เก็บ F13 |
-| 6 | `feat(api): room pet placement + realtime` | ⬜ ยังไม่เริ่ม | Dev A |
+| 6 | `feat(api): room pet placement + realtime` | 🟡 โค้ดเสร็จ 2026-09-04 บน branch `feat/room-pet-placement` (zyra-api) — live-test ผ่านกับ dev DB · PR [zyra-api #65](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/65) เปิดแล้ว รอ merge | AI (ดู [Roompet/progress.md รอบ 12](../Roompet/progress.md)) — migration ใช้เลข **88** · เก็บ 409 `PET_TYPE_IN_USE` + `workspace_usage_count` (F7) ครบในรอบนี้ |
 | 7 | `feat(ws): forward pet_* events` | ⬜ ยังไม่เริ่ม | Dev A |
 | 8a | `feat(app): pet palette + popup ตั้งชื่อ` | ⬜ ยังไม่เริ่ม | Dev B |
 | 8b | `feat(app): pet drag-drop ใน Pixi scene` | ⬜ ยังไม่เริ่ม | Dev A |

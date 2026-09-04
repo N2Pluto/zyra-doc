@@ -428,7 +428,7 @@ Evolve   (2000+ XP)    → รูปแบบสมบูรณ์ มี specia
 |---|---|---|
 | Sprite ต่อ stage / animation slot ที่ pet เล่น | SC-PM-03 — `tb_pet_animation` (slot `Wobbling` `Walking` `Sitting` `Happy` `Sad` `Evolution`) | เสร็จบางส่วน (FE ล็อก metadata) |
 | Threshold ที่ทำให้ stage เปลี่ยน + XP ต่อ activity + mood rate | SC-PM-04 — `tb_pet_xp_config` (version history) | เสร็จ แต่**ยังไม่มี consumer** ที่จ่าย XP จริง |
-| Pet instance ในห้อง (`tb_room_pet`: ตำแหน่ง, ชื่อ, xp) | SC-PM-05 — วางผ่าน Map Editor drag-drop | **ยังไม่เริ่ม** |
+| Pet instance ในห้อง (`tb_room_pet`: ตำแหน่ง, ชื่อ, xp) | SC-PM-05 — วางผ่าน Map Editor drag-drop | **api เสร็จ 2026-09-04** (migration 88 + `/api/admin/maps/:mapId/pets` + 4 event, branch `feat/room-pet-placement` ยังไม่ merge) · ws forward (PR 7) + Map Editor UI (PR 8) ยังไม่เริ่ม |
 | Realtime bus ที่ pet event วิ่ง | `ZoneEventPublisher` → Redis `vo:zone` → zyra-ws | มีอยู่แล้ว แต่ zyra-ws ยังไม่รู้จัก `pet_*` |
 | Member endpoint | `GET /api/user/workspaces/:id/pets` · `POST …/pets/:petId/play` (design แล้ว) | ยังไม่มีโค้ด |
 | Feature flag | admin: `NEXT_PUBLIC_PET` (ปิดแค่เมนู) · **member: `NEXT_PUBLIC_ROOM_PET`** (`lib/room-pet-feature.ts`, เพิ่ม 2026-09-02) — **default false** เปิดเฉพาะ `"true"`; ทุก component Room Pet คืน null และห้ามเรียก API เมื่อปิด · Dockerfile + `deploy-gitops.yml` รับจาก `secrets.NEXT_PUBLIC_ROOM_PET` (ยังไม่ตั้ง = ปิดทุก env) | ปิดอยู่ทั้งคู่ |
