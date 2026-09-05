@@ -49,6 +49,21 @@ Evolve   (2000+ XP)    → รูปแบบสมบูรณ์ มี specia
 
 > ตารางนี้มี 4 แหล่ง — ฝั่ง Admin ([PetManagement SC-PM-04](../PetManagement/spec.md)) เคาะเป็น **10 activities ที่ admin ตั้งค่าได้** แล้ว ดู [§จุดที่ขัดกัน ข้อ 2](#จุดที่ขัดกับ-petmanagement-ต้องเคาะก่อน-implement)
 
+### Scenarios (Client Feature) — ตารางใน parent card ตามต้นฉบับ
+
+| ID | Scenario (ชื่อตาม parent) | Type |
+|---|---|---|
+| SC-PET-01 | ดู Pet บน Virtual Office Map | Happy Path |
+| SC-PET-02 | Pet AI Movement — เดิน / Idle / **นั่งบน Object** | Happy Path |
+| SC-PET-03 | Interact กับ Pet **(ป้อน / pet)** | Happy Path |
+| SC-PET-04 | Pet Growth — Egg → Hatch | Happy Path |
+| SC-PET-05 | Pet Growth — Hatch → Grow → Evolve | Happy Path |
+| SC-PET-06 | ดู Pet Status และ XP Progress | Happy Path |
+| SC-PET-07 | Pet Notification — Growth Event | Happy Path |
+| SC-PET-08 | **Pet Hungry /** Neglected State | Alternate Path |
+
+> ชื่อตัวหนาคือส่วนที่ parent เขียนแต่ **subtask ตัวจริงตัดออกแล้ว** (SC-02 ไม่มี "นั่งบน Object", SC-03 ไม่มี "(ป้อน / pet)", SC-08 ไม่มี "Hungry") — ตาราง §2 ด้านล่างใช้ชื่อตาม subtask · ตรวจสดจาก ClickUp 2026-09-05: parent ยังเขียนแบบนี้อยู่
+
 ---
 
 ## 2. Scenarios
