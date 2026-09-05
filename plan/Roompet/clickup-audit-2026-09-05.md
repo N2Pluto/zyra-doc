@@ -157,3 +157,5 @@
 | D12 | มีคนใกล้ = pet **หยุดนิ่ง** หันหาคนที่มาถึงก่อน คนแรกออกค่อยไปคนถัดไป (แทน nearest/random ของ card) | ws #35 |
 | D13 | เดิน = ท่า Walking เสมอ ท่าอื่นเล่นตอนนิ่งเท่านั้น | app #269 |
 | D14 | capsule แบบ chat space เชื่อม pet ↔ resident ที่อยู่ในระยะ (เขียวเรา/ขาวคนอื่น เห็นเฉพาะ resident) | api #83 · app #270 |
+| D15 | **owner/admin เป็น resident ทุกห้อง** · editor เตือนห้องไม่มี desk · pet สนใจเฉพาะ resident · nameplate icon ตาม stage | api #85 · ws #36 · app #272 |
+| D16 | pet เดิน 900 ms/tile · ws บอก `moving:false` ตอนถึง | ws #36 |

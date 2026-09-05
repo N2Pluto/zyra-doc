@@ -16,7 +16,29 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#84 audit) · ws (#35 attention) · app (#271 audit) — รอบ 26–30 · migration ล่าสุดบน dev: 93
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85 residents v2) · ws (#36 residents/arrival/900ms) · app (#272) — รอบ 26–31 · migration ล่าสุดบน dev: 93
+
+---
+
+## 2026-09-05 (รอบ 31) — user เคาะ A/B/C/E จาก audit + แก้ท่านั่ง/เดินสลับ + เดินช้าลง
+
+| decision | ทำ | PR |
+|---|---|---|
+| **A** owner/admin = resident ทุกห้อง | `loadRoomResidents` = desk holders ∪ owner ∪ member role owner/admin → มีผลกับ quest / ลูบ / reminder / `is_resident` ทุกที่ | [api #85](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/85) |
+| **B** เตือนใน editor | `RoomPet.desk_resident_count` (นับเฉพาะ desk ไม่นับ staff) → ตอนวาง toast เตือน + marker menu มีโน้ตส้ม "ห้องนี้ยังไม่มีใครมี private zone" | api #85 · [app #272](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/272) |
+| **C** pet สนใจเฉพาะ resident | `resident_user_ids` ใน seed + `pet_spawned` → ws attention กรอง resident · คนนอกยืนข้าง ๆ = ไม่หัน ไม่หยุด · `zone_claim_changed` → refresh เฉพาะ resident list (ไม่ re-seed ทั้งก้อน ไม่งั้น pet วาร์ปกลับจุดวาง) | api #85 · [ws #36](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/36) |
+| **E** icon บน nameplate ตาม stage | `ScenePet.iconSheet` = still sheet ของ stage → PetLayer ตัดเฟรมแรก · thumbnail เป็น fallback | app #272 |
+
+### "ท่าทางนั่งวน เดินสลับไปๆ" — 3 สาเหตุซ้อน
+
+| ที่ | สาเหตุ | แก้ |
+|---|---|---|
+| ws | client รู้ว่าเดินจบก็ต่อเมื่อ idle heartbeat มาถึง (ช้าสุด 2 วิ) → client ต้องเดา | tick หลังก้าวสุดท้าย "ถึง" broadcast `moving:false` ทันที 1 ครั้ง (`arriveAt`) — ws #36 |
+| client | เดาว่าหยุดหลัง `step_ms + 150ms` แต่ step มาถึงห่างกัน ~step_ms ผ่าน flush 250ms → แพ้ race → หล่นเป็น Sitting ระหว่างก้าว | grace = 1 step เต็ม (900ms) เป็น backstop อย่างเดียว — app #272 |
+| client | ทุกครั้งที่สลับ sheet (Walking↔Sitting) sprite **หาย 1–2 เฟรม** ระหว่างตัดเฟรมใหม่ | โชว์เฟรมเดิมค้างไว้จนเฟรมใหม่พร้อม — app #272 |
+
+- **เดินช้าลง:** `petStepMs` 600 → **900 ms/tile** (ws #36) — client tween ตาม `step_ms` อัตโนมัติ
+- **verify:** api/ws `go test` ✅ · app vitest **1658** ✅ · merge develop ครบ 3 repo · **ยังไม่ได้เห็นในเบราว์เซอร์**
 
 ---
 
