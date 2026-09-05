@@ -142,7 +142,7 @@
 | # | เคาะว่า | ผล |
 |---|---|---|
 | D1 | Daily quest โชว์แค่ 5 ตัวที่ Figma มี | config v12 ปิดอีก 5 activity (รวม `xp_play_with_pet`) |
-| D2 | quest ทำได้เฉพาะ **คนที่มี private zone อยู่ในห้องของ pet** | `roomResidents` (api #80) · non-resident เห็น progress แต่ไม่มี Go to (app #264) |
+| D2 | quest ทำได้เฉพาะ **คนที่มี private zone อยู่ในห้องของ pet** | `roomResidents` (api #80) · non-resident **ไม่เห็น section quest เลย** (app หลัง #265 — เดิม #264 โชว์ progress+โน้ต) |
 | D3 | quest **เป็นของห้อง** ใครทำแล้วนับให้ทุกคน | quota ต่อ pet/วัน ไม่แยก user (api #80) |
 | D4 | Daily quest รีเซ็ตทุกเที่ยงคืน (ไทย) | `day_key` UTC+7 อยู่แล้ว · panel poll ทุก 1 นาที (app #264) |
 | D5 | pet เดินได้เฉพาะใน zone ที่วาง ห้ามออก | ws fail-closed (#34) + api backfill snapshot (#80) |

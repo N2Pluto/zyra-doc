@@ -30,6 +30,7 @@
   - **บั๊กที่เจอระหว่างทำ:** ระยะและตำแหน่ง overlay ใช้ `tile_x/tile_y` ที่วางไว้ ไม่ใช่ตำแหน่งจริงจาก `pet_state` → ตั้งแต่ #254 ที่ pet เดินได้ ปุ่มจึงลอยอยู่ที่จุดวางและวัดระยะผิดจุด — แก้ให้ตาม `petLivePositions` ทั้งคู่
 - **SC-PET-08 ตอนนี้ (สรุปที่อธิบาย user):** mood derive จาก `last_activity_at` ตอนอ่าน (happy ≤12h · neutral ≤72h · sad >72h · ค่าปรับได้ใน XP config) ไม่มี cron/column · sad = เล่น sheet Sad + ws หยุด wander + ไม่ react คน + XP ×50% · **การลูบ 1 ครั้งคือ recovery** (reset `last_activity_at` → happy ทันที + เล่น Happy) — เฉพาะ stroke ที่ reset mood (login/office/chat ไม่ reset ไม่งั้นทีมที่ active จะไม่มีวัน sad) · ลูบไม่ได้ XP จนกว่าจะเปิด `xp_play_with_pet`
 - **verify:** api `go test ./...` ✅ · app vitest **1651 ผ่าน** (ใหม่ 5) · merge develop ทั้งคู่ → dev · ยังไม่ได้เห็นในเบราว์เซอร์
+- **เพิ่ม (user สั่งต่อ):** "pet ของ zone ที่ไม่ใช่ของเรา กดแล้วต้องไม่มี quest ขึ้นมาบอกว่าให้ทำอะไร" → panel ของ pet ที่เราไม่ใช่ resident **ไม่มี section Daily quest เลย** (ไม่มี divider/หัวข้อ/แถว/ปุ่ม) เหลือ ชื่อ · XP · mood · stage — ใช้ `is_resident` จาก pet list ตั้งแต่เปิด panel จะได้ไม่แวบขึ้นมาก่อน status โหลด (app PR ถัดจาก #265) · แทนแบบเดิมใน #264 ที่โชว์ progress + โน้ต
 
 ---
 
