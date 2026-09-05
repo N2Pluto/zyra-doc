@@ -16,7 +16,21 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#81 is_resident) · ws (#34 stay in zone) · app (#265 proximity stroke) — รอบ 26–28
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#83 resident ids) · ws (#35 attention) · app (#270 pet link capsule) — รอบ 26–29
+
+---
+
+## 2026-09-05 (รอบ 29) — user เทสรอบ 3: pet ต้องหยุดหันหาคนแรก · UI บอกว่าลูบได้ · เดิน = ท่าเดินเสมอ · capsule เชื่อมคน-สัตว์
+
+| user บอก | root cause | แก้ | PR |
+|---|---|---|---|
+| "เดินเข้าไปใกล้ สัตว์เลี้ยงอยู่ไม่นิ่งเลย ต้องหยุดแล้วหันมา ถ้าหลายคนหันหาคนแรกเสมอ คนแรกไปค่อยไปคนถัดไป" | ws #32 ทำให้ "notice เป็นแค่ moment" แล้ว fall through ไป wander ต่อ → pet เดินหนีขณะยืนข้าง ๆ · เลือกคนใกล้สุด (random ถ้าเท่ากัน) ไม่ใช่คนแรก | `attention []userID` เรียงตามลำดับมาถึง · มีคนใน 3 tile = **หยุดนิ่ง** หันหา `attention[0]` · คนแรกออก → คนถัดไป · ก้าวเข้าหา 1 tile หลังยืนนิ่ง 3 วิ ยังอยู่ · ไม่มีใคร → wander ต่อ · ลบ `nearestPlayer` + test random tie | [ws #35](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/35) |
+| "ตอนจะลูบหัว ไม่มี UI ขึ้นแจ้งเลยว่าลูบหัวได้" | ปุ่ม walk-up (#265) เป็นไอคอน 🤚 เปล่า ๆ + pet เดินหนีทำให้ปุ่มกระโดด | `Press [P] pet` โชว์คู่กับปุ่ม walk-up (ไม่ต้อง hover) + pet หยุดนิ่ง (ws #35) | [app #269](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/269) |
+| "ถ้ามันเดินต้องเล่นท่าเดิน ต่อให้ลูบแล้ว happy ท่าอื่นเล่นตอนนิ่งเท่านั้น" | ลำดับเดิม: override(Happy) > sad > moving | **moving → Walking ชนะทุกท่า** · Happy/Sad/Sitting เฉพาะตอนนิ่ง (♥/+XP tooltip ยังเล่น) | app #269 |
+| "ทำ UI คล้ายตอนเชื่อม pop chat space แต่เชื่อมกับสัตว์ เขียวของเรา ขาวคนอื่น เห็นแต่คนที่มี private zone ในห้อง" | ไม่มี | api [#83](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/83): `resident_user_ids` ต่อ pet · app: `scene.setPetLinks` + `_drawPetLinks` ใช้ `_drawChatCircleShape` เดิม (capsule เดียวกับ chat space) จาก tile ของ pet (`PetLayer.petGround`) ไปยัง resident ที่อยู่ในระยะ 2 tile · เขียว = ตัวเรา · ขาว = room-mate · hero ส่งเฉพาะ pet ที่เราเป็น resident → คนนอกห้องไม่เห็นเส้นเลย | [app #270](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/270) |
+
+- **verify:** ws `go test` ✅ (ใหม่ 2: ยืนนิ่งขณะมีคนข้าง ๆ 200 รอบ · หันหาคนแรกแล้วสลับเมื่อคนแรกออก) · api ✅ · app vitest **1652** ✅ · merge develop ครบ 3 repo · **ยังไม่ได้เห็นในเบราว์เซอร์**
+- **สิ่งที่ควรดูบน dev:** เดินเข้าหาเจ้าปรื๊ด → มันหยุด หันมา → ปุ่ม 🤚 + `Press [P] pet` + capsule เขียวจากเท้าเราถึงตัวมัน → กด P → ♥ (ไม่ได้ XP เพราะ v12) · ให้เพื่อนที่มี private zone ในห้อง `test` เดินเข้าไป → เห็น capsule ขาวของเขา
 
 ---
 

@@ -44,7 +44,7 @@
 | Walk animation 4 direction เหมือน avatar | Walking sheet + facing row 0–3 (app #259, #263) | ✅ |
 | Idle "อยู่มุมห้อง/จุด favorite" เล่น idle loop หาว/เงย/กระดิก | นิ่ง = **Sitting** (spec PetManagement ไม่มี slot Idle) · ไม่มี "จุด favorite" — พักตรงที่เดินถึง | 🔀 slot spec |
 | Egg: wobble เท่านั้น ไม่เดิน | ✅ | ✅ |
-| React: หันหา (radius 3) · "notice animation หูตั้งตาเบิก" · เข้าหา 1 tile หลังยืนนิ่ง 3 วิ · random เมื่อหลายคน | หันหา / เข้าหา / random ✅ · **notice animation ❌** (ไม่มี slot ให้) | ⚠️ |
+| React: หันหา (radius 3) · "notice animation หูตั้งตาเบิก" · เข้าหา 1 tile หลังยืนนิ่ง 3 วิ · random เมื่อหลายคน | หันหา / เข้าหา ✅ · **หยุดนิ่ง + หันหาคนแรก ไม่ random** (D12, user เคาะ) · **notice animation ❌** (ไม่มี slot ให้) | 🔀 user · ⚠️ |
 | Hatch เดิน**ช้า** / Grow เดิน / Evolve ทุก behavior + special | ความเร็วเดียว ไม่มี special | ❌ |
 | ไม่เดินทับ collision / ไม่ออกนอก room | ✅ (หลัง ws #34 เช็คทุก tile ของ path) | ✅ |
 | broadcast 200 ms ขณะเดิน / 2 วิ ขณะ idle | tick 200 ms · step 600 ms · idle heartbeat 2 วิ | ✅ |
@@ -153,4 +153,7 @@
 | D8 | ไม่มีปุ่มตาย ทุกปุ่มต้องพาไปทำได้จริง | app #262 |
 | D9 | resident เดินเข้าใกล้ pet → หันหน้ามา + ปุ่มลูบขึ้นเอง | ws AI (มีอยู่แล้ว) + api #81 + app #265 |
 | D10 | pet ของห้องอื่น: กดแล้วไม่มี quest เลย · **ลูบได้เฉพาะ resident** | app #266 · api #82 + app #267 |
-| D11 | รูปใน Pet panel = stage ปัจจุบันจริง (ไข่เห็นไข่) ไม่ใช่ thumbnail ตัวโต | app (ถัดจาก #267) |
+| D11 | รูปใน Pet panel = stage ปัจจุบันจริง (ไข่เห็นไข่) ไม่ใช่ thumbnail ตัวโต | app #268 |
+| D12 | มีคนใกล้ = pet **หยุดนิ่ง** หันหาคนที่มาถึงก่อน คนแรกออกค่อยไปคนถัดไป (แทน nearest/random ของ card) | ws #35 |
+| D13 | เดิน = ท่า Walking เสมอ ท่าอื่นเล่นตอนนิ่งเท่านั้น | app #269 |
+| D14 | capsule แบบ chat space เชื่อม pet ↔ resident ที่อยู่ในระยะ (เขียวเรา/ขาวคนอื่น เห็นเฉพาะ resident) | api #83 · app #270 |
