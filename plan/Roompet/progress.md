@@ -14,9 +14,43 @@
 > - pet **เจ้าปรื๊ด** (ws `34ffa741`, ของ user) = baby / 150 XP ที่ Floor 1 → ห้อง `test` → (60,39)
 > - โฟลเดอร์ปลายทางของภาพ: `zyra-new/storage/preview/` · แผนเก็บภาพ 9 ไฟล์อยู่ในรอบ 21
 >
-> **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'`
+> **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#83 resident ids) · ws (#35 attention) · app (#270 pet link capsule) — รอบ 26–29
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#84 audit) · ws (#35 attention) · app (#271 audit) — รอบ 26–30 · migration ล่าสุดบน dev: 93
+
+---
+
+## 2026-09-05 (รอบ 30) — audit ทั้งฟีเจอร์ตามที่ user สั่ง: "หาช่องโหว่ทั้งหมด ตรงไหนผิด ตรงไหนควรเพิ่ม ปุ่มตายตรงไหน"
+
+### บั๊กที่เจอและแก้แล้ว (merge develop ครบ)
+
+| # | ช่องโหว่ | ทำไมถึงเกิด | แก้ | PR |
+|---|---|---|---|---|
+| 1 | **ลูบแล้ว pet ที่ Sad ไม่ฟื้น** ถ้า `xp_play_with_pet` ปิด (v12 ปิดอยู่!) หรือโควตาวันหมด | `Award` return ก่อน UPDATE ทันทีที่ reason = disabled / daily-limit → `last_activity_at` ไม่ถูก reset → SC-PET-08 recovery ไม่เกิดเลยบน dev ตอนนี้ | touch-only path: UPDATE `last_activity_at` + commit + publish `pet_xp_changed` (xp_awarded 0) โดยไม่เขียน ledger | [api #84](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/84) |
+| 2 | **reminder 09:00 ส่งหาทุก member** รวมคนที่ไม่มี private zone ในห้อง → ถูกเตือนทุกวันเรื่อง pet ที่ตัวเองแตะไม่ได้ | เขียนก่อนกฎ resident | กรอง recipient ด้วย `loadRoomResidents` | api #84 |
+| 3 | **กด notification ของ pet แล้วไม่ไปไหน** (แค่ mark read) — card SC-PET-07 บอกต้อง navigate ไปห้อง | `tb_notification` ไม่มีข้อมูล pet | migration 93 `room_pet_id` (+ embedded DDL, รันบน dev แล้ว) · client: กด → เปิด panel + เดินไปหา ถ้าอยู่ชั้นอื่น → `/loading?zone_id=` ชั้นนั้น · pet ถูกลบแล้ว → toast | api #84 · [app #271](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/271) |
+| 4 | **Go to "Join a meeting" ตาย** ถ้ากลาง meeting room เป็นโต๊ะ | เล็ง tile กลาง zone · `walkToTile` คืน false เงียบ ๆ เมื่อ tile ถูกบล็อก | `nearestWalkableZoneTile` เล็ง tile ที่เดินได้ใกล้กลางสุด · ไม่มีเลย → toast | app #271 |
+| 5 | **residency ค้าง** หลัง claim/ปลด private zone (list pets stale 60 วิ) | ไม่ invalidate | invalidate `workspace-pets` ตอน `zone_claim_changed` | app #271 |
+
+### ตรวจแล้วไม่พบปัญหา
+
+ปุ่ม/ทางออกทุกจุดที่ไล่ดู: Pet panel (X · Go to ทุกแถว · Complete เป็น chip ไม่ใช่ปุ่ม) · 🤚 + `Press [P]` (resident เท่านั้น) · evolution modal (Confirm · Share) · Share modal (X · 3 tab · grid · Clear all · Send · empty state) · pet card ในแชท (realtime ส่ง `content_type` ครบ — `ChatMessageWire = Message`) · notification cards · Setting → Notifications `pet_activity` · Map Editor marker menu (rename / remove) · minimap dot (ไม่มี click ตาม Figma) · ws: attention/idle-out/zone fail-closed · quota room-wide + ledger actor · `xp_*` hooks 5 ตัวที่เปิด
+
+### ที่ควรเพิ่ม / ต้องเคาะ (ยังไม่ทำ)
+
+| # | เรื่อง | ทำไมสำคัญ | ทางเลือก |
+|---|---|---|---|
+| A | **owner ของ workspace ที่ไม่มี private zone** — วาง pet ได้แต่ทำอะไรกับมันไม่ได้ (ไม่ใช่ resident) | owner คือคนที่เทสก่อนใคร | (ก) owner/admin เป็น resident ทุกห้องโดยอัตโนมัติ (ข) ต้อง claim private zone เหมือนคนอื่น |
+| B | **วาง pet ในห้องที่ไม่มีใครมี private zone** → ไม่มีใครลูบ/ทำ quest ได้เลย และ Sad แล้วไม่มีทางฟื้น | editor ไม่เตือน | เตือนใน marker menu / ตอนวาง ว่า "ห้องนี้ยังไม่มี resident" (editor ต้องรู้ claims) |
+| C | **คนนอกห้องยืนข้าง pet ได้ไม่จำกัด** → pet หยุดนิ่งหันหาเขาตลอด (attention ไม่รู้ resident) | pet ของห้อง "ถูกกักตัว" โดยคนที่ทำอะไรมันไม่ได้ | ส่ง `resident_user_ids` เข้า `RoomPetAIView` ให้ ws สนใจเฉพาะ resident |
+| D | **ลูบแล้วไม่ได้ XP** (`xp_play_with_pet` ปิด) — ตอนนี้ลูบ = แค่ฟื้น mood | card ให้ +1 XP max 5/วัน | เปิดกลับ (จะโชว์เป็น quest แถว 6) หรือ flag "จ่าย XP แต่ไม่โชว์ quest" |
+| E | **icon บน nameplate ยังเป็น thumbnail ตัวโต** (spoiler เหมือน panel เดิม) | ขัดกับ "ลุ้น" (D11) | ให้ตาม stage เหมือน panel |
+| F | **Hover ปุ่มลูบสำหรับ non-resident**: hover pet ของห้องอื่นได้ขอบเขียว (คลิกได้ดูข้อมูล) — ตั้งใจ แต่ควรยืนยัน | consistency กับ "ไม่มีปุ่มตาย" | ok หรือ เปลี่ยนเป็นขอบขาว |
+| G | pet บนแมพยัง**ไม่มี "notice animation"** / ความเร็วเดินต่าง stage / นั่ง object (`pet_sittable`) | card เขียนไว้ ไม่มี slot/asset | ดู audit ข้อ 2–5 |
+
+### verify
+
+api `go test ./...` ✅ · app vitest **1656 ผ่าน** (ใหม่ 4) · migration 93 รันบน dev แล้ว · **ยังไม่ได้เห็นในเบราว์เซอร์** · live check ที่ควรทำหลัง deploy: ตั้ง `last_activity_at` ของ Mochi Live ถอย 4 วัน → ลูบ → mood กลับ happy ทั้งที่ `xp_awarded: 0`
 
 ---
 

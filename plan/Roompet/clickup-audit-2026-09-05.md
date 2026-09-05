@@ -107,9 +107,9 @@
 
 | card | ของจริง | สถานะ |
 |---|---|---|
-| Stage change: in-app + **banner** · กด → navigate ไปห้อง | in-app ✅ · banner → modal (Figma) · **กด notification navigate ไปห้อง ❓ ยังไม่ได้ตรวจ** | ⚠️ ต้องเช็ค |
+| Stage change: in-app + **banner** · กด → navigate ไปห้อง | in-app ✅ · banner → modal (Figma) · **กด notification → เปิด panel + เดินไปหา pet / ข้ามชั้นผ่าน /loading** (api #84 + app #271) | ✅ |
 | Milestone 50/75/90% in-app ไม่มี banner · "เหลืออีก 150 XP" | ✅ `pet_milestone` ไม่ยิงซ้ำ (`last_milestone`) | ✅ |
-| Daily reminder 09:00 ICT · 1 ครั้ง/วัน/user · เฉพาะ user login แต่ยังไม่ interact | ✅ ยิงจริง 09-05 09:00 (8 แถว) | ✅ |
+| Daily reminder 09:00 ICT · 1 ครั้ง/วัน/user · เฉพาะ user login แต่ยังไม่ interact | ✅ ยิงจริง 09-05 09:00 (8 แถว) · **ส่งเฉพาะ resident ของห้อง** (api #84) | ✅ |
 | **Hungry alert** ครั้งเดียวต่อ mood cycle | ❌ ไม่มี Hungry state → ไม่มี alert | 🔀 PM (ไม่มี Hungry) |
 | user ปิดได้ใน settings | ✅ `pet_activity` toggle | ✅ |
 
@@ -120,7 +120,7 @@
 | Happy ≤12h / Neutral 12–48h / Sad >72h (48–72 ไม่ระบุ) | Neutral ยืดถึง 72h (config `mood`) | ✅ (ตีความ) |
 | Sad: sprite เศร้า นอนซม หยุด wander ไม่ react | Sad sheet + หยุดเดิน + ไม่ react | ✅ |
 | XP จาก team activity −50% | mood multiplier (config `sad.xp_rate_percent`) | ✅ |
-| Recovery: **feed** 1 ครั้ง → Happy ทันที + recovery animation | **stroke** 1 ครั้ง → Happy + เล่น Happy sheet | 🔀 PM (ไม่มี Feed) |
+| Recovery: **feed** 1 ครั้ง → Happy ทันที + recovery animation | **stroke** 1 ครั้ง → Happy + เล่น Happy sheet · **ฟื้นได้แม้ XP ปิด/โควตาหมด** (บั๊กแก้ api #84) | 🔀 PM (ไม่มี Feed) |
 | mood อัปเดตโดย **cron ทุก 1 ชม.** | derive ตอนอ่านจาก `last_activity_at` ไม่มี cron ไม่มี column mood | 🔀 design (ผลเท่ากัน) |
 | ไม่มี pet ตาย | ✅ | ✅ |
 
@@ -136,7 +136,7 @@
 4. **"pet เดินผ่านมา bubble โชว์เอง 3 วิ"** — ยังไม่ทำ จะเอาไหม
 5. **`pet_sittable`** — ต้องเคาะ 2 ข้อ (ดู progress รอบ 25) และเป็นงาน 4 repo
 6. **`xp_play_with_pet`**: card บอก 5 ครั้ง/วัน · seed = 1 · ตอนนี้ **ปิด** (v12) และ quota เป็นของห้อง → ลูบไม่ได้ XP เลย — ตกลงจะให้ลูบได้ XP ไหม ถ้าใช่ต้องเปิด + ตั้ง times
-7. **กด notification แล้ว navigate ไปห้อง** — ยังไม่ได้ตรวจว่า card notification ทำ
+7. ~~กด notification แล้ว navigate ไปห้อง~~ ✅ ทำแล้ว (api #84 + app #271)
 8. **streak "Together for N days"** ของ Figma — ไม่มี field ใน schema
 
 ## PM/user decision ที่เคาะวันนี้ (2026-09-05) — บันทึกให้ card ตามแก้
