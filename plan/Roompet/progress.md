@@ -16,7 +16,20 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85 residents v2) · ws (#36 residents/arrival/900ms) · app (#272) — รอบ 26–31 · migration ล่าสุดบน dev: 93
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#38) · app (#273) — รอบ 26–32 · migration ล่าสุดบน dev: 93
+
+---
+
+## 2026-09-05 (รอบ 32) — "รีโหลดแล้ว pet กลับที่เดิม" + ทุกคนต้องเห็นเหมือนกัน
+
+| อาการ | root cause | แก้ | PR |
+|---|---|---|---|
+| รีโหลดหน้าแล้ว pet กลับไปจุดที่วาง | (1) ws **ลบ room ทิ้งทันทีที่คนสุดท้ายออก** และ pet AI อยู่ใน room → คนเดียวรีโหลด = state หาย seed ใหม่ที่ anchor · (2) client ที่เพิ่ง join วาด pet ที่ anchor จนกว่า AI จะ broadcast ครั้งถัดไป (ช้าสุด 2 วิ ถ้า pet พัก) → เห็นกระโดดกลับบ้านแล้วกลับมา | (1) เก็บ tile+facing ลง Redis `vo:pets:pos:<ws>` (TTL 10 นาที — store ที่ card ขอไว้) ทุก tick ที่เปลี่ยน · seed ใหม่ overlay ตำแหน่งที่เก็บไว้ (ยอมรับเฉพาะ tile ที่ยังยืนได้ — admin อาจย้าย pet/แก้ zone) · (2) หลัง `welcome` ส่ง `pet_state` ของทุกตัวให้ client ที่ join ทันที (`step_ms:0` = snap) | [ws #37](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/37) |
+| คนอื่นลูบแล้วเราไม่เห็นท่า Happy | มีแค่ client ของคนลูบที่สลับ sheet (จาก response `/play`) | `pet_xp_changed` มี `activity`+`user_id` อยู่แล้ว → activity = play และไม่ใช่เรา → เล่น Happy เท่ากัน (ผ่าน ref เพราะ ws handler ประกาศก่อน state) | [app #273](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/273) |
+| test flaky บน ws | test "stranger ไม่ทำให้หัน" ปล่อยให้ wander วิ่ง (50%) → ก้าวเปลี่ยน facing | pin ห้อง = tile เดียว · แยก "ยังเดินเล่นเมื่อมีแต่ stranger" เป็นอีก test | [ws #38](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/38) |
+
+- **สิ่งที่ทุกคนเห็นเหมือนกันตอนนี้:** ตำแหน่ง/ทิศ (ws authoritative + Redis + snapshot) · ท่าเดิน/นั่ง (จาก `moving` ของ ws) · Sad (derive จาก `last_activity_at` ที่ทุกคนได้เท่ากัน) · Happy ตอนถูกลูบ (broadcast) · egg/stage (จาก xp)
+- **verify:** ws/app tests เขียว (ws test ที่ flaky แก้แล้ว รัน 3 รอบผ่าน) · merge develop · **ยังไม่ได้เห็นในเบราว์เซอร์** — ลอง: เดินให้ pet ขยับ → รีโหลด → ต้องอยู่ที่เดิม ไม่วาร์ป
 
 ---
 

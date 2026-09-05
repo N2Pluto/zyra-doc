@@ -48,7 +48,7 @@
 | Hatch เดิน**ช้า** / Grow เดิน / Evolve ทุก behavior + special | ความเร็วเดียว ไม่มี special | ❌ |
 | ไม่เดินทับ collision / ไม่ออกนอก room | ✅ (หลัง ws #34 เช็คทุก tile ของ path) | ✅ |
 | broadcast 200 ms ขณะเดิน / 2 วิ ขณะ idle | tick 200 ms · step 600 ms · idle heartbeat 2 วิ | ✅ |
-| position เก็บ Redis `pet:position:{room}` TTL 5 นาที | อยู่ใน memory ของ ws (แหล่งจริงคือ ws) — ไม่มี Redis key | 🔀 design ws #31 |
+| position เก็บ Redis `pet:position:{room}` TTL 5 นาที | ✅ `vo:pets:pos:<ws>` TTL 10 นาที (ws #37) — ก่อนหน้านี้อยู่แต่ใน memory ทำให้รีโหลดแล้ว pet กลับ anchor | ✅ |
 | Sittable objects `pet_sittable: true` | ❌ ยังไม่มี (แผนใน progress รอบ 25) | ❌ |
 | AI หยุดเมื่อไม่มีคนในห้อง > 5 นาที | ✅ (ws #32) | ✅ |
 
