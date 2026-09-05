@@ -51,6 +51,19 @@ user ให้ย้อนอ่าน PetManagement/spec.md — slot vocabulary
 
 ลำดับ: stroke > sad > moving > resting · vitest **1642 ผ่าน** · ค้างฝั่ง PetManagement: ฟอร์ม upload ยังมี slot Idle (20 ≠ 17) — spec.md § ผลต่อโค้ด ระบุให้ถอดอยู่แล้ว
 
+### เพิ่ม: config v11 → **v12** — ปิด activity ที่ไม่มีใน Figma ให้ Daily quest เหลือ 5 แถว (user สั่ง)
+
+ทำผ่าน `PUT /api/admin/pet-xp-config` (admin-a) เหมือนรอบ 23 — ไม่แตะ SQL
+
+| activity | v11 | v12 | เหตุผล |
+|---|---|---|---|
+| `xp_login_per_day` · `xp_office_10min` · `xp_team_meeting` · `xp_first_message_fo_day` · `xp_react_message_fo_day` | on | **on** | ตรงกับ 5 quest ใน Figma (Daily login / Stay 10 min / Join a meeting / Send message / React) |
+| `xp_office_30min` · `xp_team_meeting_10min` · `xp_team_meeting_30min` · `xp_10_message_fo_day` | on | **off** | ไม่มีใน Figma |
+| `xp_play_with_pet` | on | **off** | ไม่มีใน Figma — **ผลข้างเคียง: การลูบ (SC-PET-03) ไม่ได้ XP แล้ว** (animation + ♥ ยังเล่น, API ตอบ `awarded:false`) · ถ้าต้องการให้ลูบได้ XP ต้องเปิดกลับในหน้า XP Configuration |
+
+- "Send message" ใน Figma (1/5) map เป็น `xp_first_message_fo_day` (ตีความว่า "ส่งข้อความ" ไม่ใช่ "ครบ 10 ข้อความ") — ถ้า PM ต้องการอีกตัวสลับได้ในหน้า config
+- panel กรอง `enabled` อยู่แล้ว (`buildPetDailyQuests`) → เหลือ 5 แถวทันทีไม่ต้อง deploy · Max XP/Day ลดจาก 59 → 18
+
 ### หลักที่ user ย้ำ (บันทึกเป็น feedback)
 
 > "ต้องไม่มีปุ่มที่มันตาย กดแล้วไปไหนต่อไม่ได้ แบบนี้ไม่เอา มันต้องทำงานได้จริงทุกอย่าง" — ปุ่มทุกปุ่มต้องพาไปทำสิ่งนั้นได้จริง ถ้าไม่มีทางไปให้ซ่อนปุ่ม

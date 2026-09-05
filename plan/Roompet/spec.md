@@ -546,7 +546,7 @@ card ชุด Room Pet เขียนก่อนที่ PM จะเคา�
 | 1 | secret `NEXT_PUBLIC_ROOM_PET=true` บน dev | ✅ ตั้งแล้ว 2026-09-04 |
 | 2 | deploy zyra-api + zyra-ws (pet AI + notification) | ✅ ขึ้น dev แล้ว |
 | 3 | `Award()` ต้องมี caller ครบ 10 activity | ✅ เสร็จ ([api #75](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/75)/[#76](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/76)) |
-| 4 | เปิด activity ทั้ง 10 ใน XP config | ✅ config **v11** enabled ครบ ไม่มีตัวไหนเกิน cap |
+| 4 | เปิด activity ใน XP config | ✅ config **v12** (2026-09-05) — เปิด **5 ตัวที่ตรง Figma** (login / office 10min / meeting / first message / react) ปิดอีก 5 รวม `xp_play_with_pet` → ลูบไม่ได้ XP จนกว่าจะเปิดกลับ |
 | 5 | ตั้ง `xp_play_with_pet.times` = **5** (ตอนนี้ 1 แต่ SC-PET-03 เขียน 5) | ⬜ **ยังไม่ทำ** — เป็นค่านโยบาย รอ PM |
 | 6 | อัป GIF slot `Evolution` ของ pet type ที่จะเทส (baby/adult ต้องอัปเอง · egg มี prefill กลาง) | ⬜ **ยังไม่ทำ** — ไม่มีแล้ว flow จะข้าม GIF ไป flash เลย |
 
