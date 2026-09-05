@@ -3,19 +3,101 @@
 > log ต่อรอบ (entry ใหม่ไว้บนสุด) · รูปแบบตาม [zyra-doc/README.md § อัปเดตความคืบหน้า](../../README.md)
 > สถานะรวมอยู่ที่ blockquote หัว [spec.md](spec.md) · ความพร้อมของ dependency ดู [spec.md § ความพร้อม](spec.md)
 >
-> ## 🔖 มาทำต่อตรงนี้ (หยุดไว้ 2026-09-04)
+> ## 🔖 มาทำต่อตรงนี้ (อัปเดต 2026-09-05 รอบ 25)
 >
-> **งานที่ค้างอยู่งานเดียว: เทส UI ในเบราว์เซอร์** — โค้ดครบทุก scenario แล้ว deploy dev แล้ว verify ผ่าน REST/WebSocket แล้ว เหลือแค่ยังไม่ได้ดูด้วยตา
+> **จาก 7 งานที่เหลือ ปิดไป 5 · ค้าง 2** (office-time re-verify ผ่านแล้ว 20:01):
+> 1. **เทส UI ในเบราว์เซอร์** — ยังติดเรื่องเดิม: AI พิมพ์รหัสผ่านลงฟอร์มไม่ได้ · session เป็น httpOnly `refresh_token` cookie ฉีด token ไม่ได้ · **Browser pane เป็นคนละ browser กับ Chrome ปกติ** ต้อง login ใน pane นั้น
+> 2. **`pet_sittable`** — ไม่ได้เริ่ม กระทบ 4 repo + ต้องเคาะ design 2 ข้อก่อน (ดูรอบ 25 § ไม่ได้ทำ)
 >
-> **ติดตรงไหน:** AI พิมพ์รหัสผ่านลงฟอร์มไม่ได้ และ session ของแอปเป็น httpOnly `refresh_token` cookie จึงฉีด token แทนไม่ได้ · **Browser pane เป็นคนละ browser กับ Chrome ปกติ** → ต้อง login ใน pane นั้นเท่านั้น login ที่อื่นไม่ carry over
->
-> **ของที่ตั้งค้างไว้ให้แล้ว (ตั้งใจ ไม่ใช่ขยะ):**
-> - pet **Mochi Live** (ws `256893ae`, member-a) = **baby / 150 XP / mood happy** ที่ tile (60,3) — ตั้งไว้ให้เดินได้ทันทีตอนเทส · เดิมเป็น egg/0 ถ้าจะคืนค่าให้ `UPDATE tb_room_pet SET xp=0,last_seen_stage='egg',last_milestone=0`
+> **ของที่ตั้งค้างไว้ให้ (ตั้งใจ ไม่ใช่ขยะ):**
+> - pet **Mochi Live** (ws `256893ae`, member-a) = baby ที่ tile (60,3) — XP ดูใน DB (ขยับตามการเทส office-time รอบ 25) · คืนค่าเดิม: `UPDATE tb_room_pet SET xp=0,last_seen_stage='egg',last_milestone=0`
 > - pet **เจ้าปรื๊ด** (ws `34ffa741`, ของ user) = baby / 150 XP ที่ Floor 1 → ห้อง `test` → (60,39)
-> - โฟลเดอร์ปลายทางของภาพ: `zyra-new/storage/preview/`
-> - แผนเก็บภาพ 9 ไฟล์ (01 map → 09 notification) อยู่ในรอบ 21
+> - โฟลเดอร์ปลายทางของภาพ: `zyra-new/storage/preview/` · แผนเก็บภาพ 9 ไฟล์อยู่ในรอบ 21
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api `9ad7733` · ws `44a9616` · app `eda36ae` (= image บน dev ทั้งหมด)
+> **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'`
+>
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api `76a3561` · ws `44a9616` · app `fb27870`
+
+---
+
+## 2026-09-05 (รอบ 25) — ไล่ปิด 7 งานที่เหลือ: ปิด 5 · เจอบั๊ก office clock 1 · ค้าง 2
+
+> user สั่ง "ยังเหลืออีก 7 อย่าง ช่วยทำ แล้วส่งรายงานผล" — ลำดับตามตาราง [spec.md § งานที่เหลือ](spec.md) ของรอบก่อน
+
+### ผลรวม
+
+| # | งาน | ผล | PR |
+|---|---|---|---|
+| 1 | เทส UI ในเบราว์เซอร์ | ⛔ **ติดเหมือนเดิม** (login) | — |
+| 2 | Share your friends | ✅ ทำครบ api + app | [api #79](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/79) · [app #260](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/260) |
+| 3 | pet facing | ✅ ทำแล้ว — spec มีอยู่แล้วในโค้ดเรา | [app #259](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/259) |
+| 4 | `pet_sittable` | ⬜ **ไม่ได้ทำ** — มีแผนด้านล่าง | — |
+| 5 | achievement log | ✅ migration 91 + insert ตอนข้าม stage | [api #77](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/77) |
+| 6 | cron 09:00 ICT | ✅ **ยิงจริงแล้วเช้านี้** | — (โค้ดเดิม #71) |
+| 7 | `xp_office_10/30min` | ✅ live-test เจอบั๊ก → แก้ → **re-verify ผ่าน** (10min จ่ายที่ +10:06 · 30min ไม่จ่าย) | [api #78](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/78) |
+
+### #3 pet facing — ไม่ต้องถาม design เพราะ spec อยู่ในโค้ดเราเอง
+
+- รอบ 18 ตัดสินใจ "ไม่ทำ facing เพราะไม่มี spec ว่า sprite row ไหนคือทิศไหน" — **ผิด**: หน้า admin Pet Management preview (`pet-preview-modal.tsx`) ระบุ row ไว้แล้ว **Down / Left / Right / Up = 0 / 1 / 2 / 3** และทุก sheet ที่ artist เคยตรวจใน preview ก็ยืนยันลำดับนี้ไปแล้ว
+- ย้ายตารางไป `lib/pet-sprite-direction.ts` แล้วให้ **ทั้ง preview และ `PetLayer` อ่านจากที่เดียว** → สิ่งที่ admin เห็นใน preview = สิ่งที่ member เห็นบนแมพ โดยโครงสร้าง drift กันไม่ได้
+- `PetLayer` ตัด **ทุก row** (`frames[row][frame]`) แล้วเลือก row ตาม `facing` ที่ ws ส่งมากับ `pet_state` ตั้งแต่ #254 · sheet ที่ row น้อยกว่าที่ต้องใช้ (egg กลางมี 1 row) → fallback เป็น down ไม่ตัดเลย row ที่ไม่มี
+- test 26 ตัว (`pet-sprite-direction.test.ts` + PetLayer suite) รวมเคส 1-row / 3-row / facing ไม่รู้จัก และเคส animate ภายใน row เดียวโดย row ไม่เปลี่ยนกลางคัน
+
+### #5 achievement log — `tb_room_pet_achievement` (migration 91)
+
+- card SC-PET-04/05 บอก "🐣 First Hatch!" ให้คนที่ทำ egg→baby · "🏆 Fully Evolved!" ให้ทั้งห้อง · **"เก็บ logs ไว้ ยังไม่แสดง"** → นี่คือ log ยังไม่มี endpoint อ่าน
+- `petAchievementFor(prev, next)` pure function ตัดสินว่าได้ badge ไหนและเป็นของคน (`first_hatch`, user_id = คนที่ award) หรือของห้อง (`fully_evolved`, user_id NULL) · insert **หลัง commit แบบ best-effort** — pet ต้องโตได้แม้ log เขียนไม่ได้
+- **unique `(room_pet_id, achievement)` + `ON CONFLICT DO NOTHING`** = admin ขยับ threshold จน demote แล้วกลับมา hatch ใหม่ ไม่ได้ First Hatch ซ้ำ · demote เองไม่ได้อะไร · table-driven test 8 เคส
+- **mirror ใน embedded DDL แล้ว** (`postgres.go`) ตามบทเรียน #72 — migration ใน `migrations/*.sql` ไม่รันตอน deploy
+- ยังไม่มีแถวจริงบน dev (เจ้าปรื๊ดเป็น baby อยู่ · แถวแรกจะเกิดตอนไข่ตัวใหม่ hatch หรือตัวไหนถึง evolved)
+
+### #6 cron 09:00 ICT — ยิงจริงแล้ว ไม่ต้องเรียกตรง
+
+- `tb_notification` type `pet_reminder` มี **8 แถว `created_at = 2026-09-05 09:00:00 ICT` เป๊ะ** — สร้างโดย job ที่ deploy อยู่ (`runPetReminderLoop` ใน main.go) ไม่ใช่ probe
+- probe เรียก `SendPetDailyReminders` ซ้ำหลังจากนั้นได้ `sent: 0` → dedupe รายวันทำงาน · member-a ได้ reminder (ไม่มี XP event ก่อน 09:00) ตรงตามเงื่อนไข
+- โฟลเดอร์ probe (`cmd/petremind-probe`) ลบแล้ว ไม่มีอะไรค้างใน repo
+
+### #7 office time — live-test เจอบั๊ก "นาฬิกาค้าง"
+
+- heartbeat member-a เข้า ws `256893ae` ทุก 30 วิ: 19:17:07 ได้ `xp_login_per_day` ถูกต้อง แต่ **19:17:08 ได้ `xp_office_10min` และ `_30min` พร้อมกัน** ทั้งที่ session เพิ่งเริ่ม 1 วินาที
+- **root cause:** `PetActivityTracker` เริ่มนาฬิกาที่ heartbeat แรก และล้างเฉพาะตอนได้ leave · tab ที่หายไปเฉย ๆ (ปิด/crash/พับจอ) ไม่ส่ง leave → start time ค้างอยู่ในหน่วยความจำ → พอกลับมาอีกกี่ชั่วโมงก็ "อยู่ office มา 14 ชม." ทันที (member-a เคย heartbeat ตอนเทสช่วงบ่ายแล้วไม่เคย leave)
+- **แก้ ([api #78](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/78)):** tracker จำ `lastBeat` ต่อ session · ถ้าห่างเกิน **`presenceTTL` (65 วิ)** ให้ลืมทั้งนาฬิกา office และ meeting ก่อนอ่าน — ใช้ threshold เดียวกับ presence ตั้งใจ: วินาทีที่ roster เห็นว่า offline นาฬิกาก็หยุดด้วย · heartbeat ปกติ 30 วิ อยู่ในกรอบสบาย มี test ยืนยันว่า 10 นาทีของ heartbeat ต่อเนื่องยังจ่าย
+- **Before/After** (ตาม rule 18):
+
+  | Metric | Before (#75) | After (#78) |
+  |---|---|---|
+  | เวลาจาก heartbeat แรก → `xp_office_10min` | **1 วินาที** (ledger 19:17:07 → 19:17:08) | **10 นาที 6 วินาที** (heartbeat แรก 19:51:02 → ledger 20:01:08) |
+  | `xp_office_30min` ใน session 11 นาที | **จ่าย** (19:17:08) | **ไม่จ่าย** (session 11 นาที ไม่มีแถว `_30min`) ✅ |
+
+  วัดจาก `tb_room_pet_xp_event` ของ pet `1922ecc1` (Mochi Live) · before = loop 19:17–19:28 · after = loop 19:51–20:02 บน api `dev-76a3561` · 2 แถวที่บั๊กจ่ายถูกลบและหัก XP คืนก่อน re-run (test data ของผมเอง)
+
+### #2 Share your friends — ทำใหม่ทั้งชุด (api + app)
+
+- **api ([#79](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/79)):** migration 92 ขยาย `tb_message.content_type` CHECK ให้มี `'pet_card'` (รันบน dev แล้ว · `tb_message` ไม่อยู่ใน embedded DDL จึงไม่มีอะไรมาทับตอน boot) · `SendMessageRequest.content_type` รับค่าเดียว = `"pet_card"` · `validatePetCard` ตรวจ JSON strict ก่อน insert (unknown field ไม่รับ, stage ต้องอยู่ใน `model.PetStages`, sprite url ต้อง https, frame geometry อยู่ในกรอบ) → 400 `ErrInvalidPetCard` · **ตั้งใจไม่เช็คว่า pet ยังอยู่** — การ์ดต้องอยู่ได้แม้ pet ถูกลบ · test 14 เคส
+- **app ([#260](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/260)):**
+  - `PetShareModal` ตาม Figma `4354:866488` (ดึง spec ผ่าน Figma MCP): search · tab DM/Group/Channel · grid 4 คอลัมน์ · Clear all/Send พร้อม disabled state สี Figma · DM = สมาชิก confirm จาก cache `useWorkspaceMembers` เดียวกับ picker อื่น ลบตัวเอง · Group/Channel = conversation ที่อยู่แล้ว · การเลือกคงอยู่ข้าม tab/search
+  - Send = ส่ง `pet_card` เดิมเข้าทุกปลายทาง (DM สร้างระหว่างทางถ้ายังไม่มี) → toast "Share successfully." ตาม §5.5 แล้วปิด · fail หมด = error toast ค้างไว้ · fail บางส่วน = warning
+  - การ์ด = JSON (`lib/pet-share-card.ts`): pet_id / pet_name / stage + **geometry ของ sheet เท่านั้น** → ฝั่งอ่านตัด frame ด้วย `petAnimationFrameDataUrl` ตัวเดียวกับ pet บนแมพ (ขยาย param type เป็น 3 field ที่มันอ่านจริง) · `PetCardMessage` ใน stream · sidebar preview จำการ์ดจาก shape ("Shared a pet card") เพราะ `MessagePreview` ไม่มี `content_type`
+  - ปุ่ม "Share your friends" ใน evolution modal (ghost, flex-1 คู่กับ Confirm ตาม §5.3) โผล่เฉพาะเมื่อมี workspace ให้แชร์
+- **ตัดสินใจเองที่ spec เว้นไว้:** §5.4 บอกว่าแชร์แล้ว "เปิด Direct message full view" — เลือกได้หลายคน จึงไม่มี chat เดียวให้กระโดดไป → จบที่ toast ไม่พาออกจาก VO · **ไม่มี Figma ของการ์ดในแชท** (ux-ui เอ่ยชื่ออย่างเดียว) ใช้ palette ของ modal
+- **verify:** `tsc` สะอาด · `eslint` สะอาด · `vitest run` **1624 ผ่าน** (ใหม่ 25 ตัว) · `go test ./...` ผ่าน · **ยังไม่ได้เห็นในเบราว์เซอร์** (login) · ยังไม่ได้ยิง end-to-end จริงว่า card เด้งเข้าแชทของอีกฝั่ง
+
+### #4 `pet_sittable` — ไม่ได้ทำ · แผนที่สำรวจไว้แล้ว
+
+กระทบ 4 repo และมี design ที่ต้องเคาะก่อน จึงไม่เริ่มในรอบนี้:
+
+| ชั้น | ต้องทำ | ที่สำรวจไว้ |
+|---|---|---|
+| DB / api | `tb_object.pet_sittable BOOLEAN NOT NULL DEFAULT false` (migration 93 + embedded DDL) · admin PUT/POST object รับ field · publish "sittable tiles ต่อ workspace" ลง Redis แบบเดียวกับ obstacle grid | obstacle publish อยู่ที่ `workspace_service.go:1253/1374` + `obstacle_grid_builder.go:222` ผ่าน `cache.ObstacleCache.SetWorkspaceObstacles` · `tb_map_object` มี `tile_x/tile_y/grid_width/grid_height/facing` ครบ |
+| admin UI | toggle "Pet can sit here" ใน `object-add-form.tsx` / `object-detail-content.tsx` | icon map อยู่ใน `object-add-form-constants.ts` |
+| ws | pet AI อ่าน sittable tiles ของห้อง · state ใหม่ `sitting` (เดินไปถึง → นั่ง N วิ → ลุก) · ส่ง `pet_state.sitting` | `internal/hub/pets.go` ตอนนี้ไม่รู้จัก map object เลย รู้แค่ obstacle grid |
+| client | `PetLayer` เล่น slot `Sitting` เมื่อ `sitting=true` | slot `Sitting` มีใน 17 slot ของ PetManagement อยู่แล้ว |
+
+**ต้องเคาะก่อน:** (1) object กว้างหลาย tile นั่ง tile ไหน / หันทางไหน (2) pet นั่งบน object ที่ avatar นั่งอยู่ได้ไหม (ที่นั่งเดียวกับคน?)
+
+### ไม่ได้ทำ #1 — เทส UI
+
+เหตุผลเดิมทั้ง 3 ข้อ (พิมพ์รหัสผ่านไม่ได้ / cookie httpOnly / Browser pane คนละ browser) · ทางออกที่เหลือคือ user login ใน Browser pane ให้ แล้วสั่ง "go" เหมือนรอบ 20
 
 ---
 

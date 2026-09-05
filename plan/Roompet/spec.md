@@ -531,12 +531,12 @@ card ชุด Room Pet เขียนก่อนที่ PM จะเคา�
 | ID | ทำแล้ว | ไม่ได้ทำ (พร้อมเหตุผล) |
 |---|---|---|
 | SC-PET-01 ดู Pet บน map | sprite + nameplate + mood emoji + XP bar + minimap dot + คลิกเปิด panel · sheet 404 → ไม่แสดงอะไร (LOAD-03) | — |
-| SC-PET-02 AI movement | wander (สุ่มจุดใกล้จุดวาง, พัก 3–8 วิ, ~50/50) · ไม่ออกนอกห้อง ไม่ทะลุ obstacle · หันหาคนใน 3 tiles · เดินเข้าหาเมื่อยืนนิ่ง 3 วิ · หลายคนเท่ากัน = สุ่ม · egg ไม่เดิน · sad ไม่เดิน · หยุดเมื่อไม่มีคน 5 นาที · client interpolate ให้ลื่น | **นั่งบน object** — ต้องมี `pet_sittable` ใน Object Management ก่อน (คนละโมดูล) · **facing (หันซ้าย/ขวา/บน/ล่าง)** — ws ส่ง direction มาแล้ว แต่ไม่มี spec ว่า sprite row ไหนคือทิศไหน เดาแล้วจะวาดผิด |
+| SC-PET-02 AI movement | wander (สุ่มจุดใกล้จุดวาง, พัก 3–8 วิ, ~50/50) · ไม่ออกนอกห้อง ไม่ทะลุ obstacle · หันหาคนใน 3 tiles · เดินเข้าหาเมื่อยืนนิ่ง 3 วิ · หลายคนเท่ากัน = สุ่ม · egg ไม่เดิน · sad ไม่เดิน · หยุดเมื่อไม่มีคน 5 นาที · client interpolate ให้ลื่น · **facing** ตาม row Down/Left/Right/Up = 0/1/2/3 (ตารางเดียวกับ admin preview, [app #259](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/259)) | **นั่งบน object** — ต้องมี `pet_sittable` ใน Object Management ก่อน (คนละโมดูล · แผนอยู่ใน [progress รอบ 25](progress.md)) |
 | SC-PET-03 Interact | marker มือ (คลิกถึงจะขึ้น) · tooltip `Press [P] pet` ตอน hover ในระยะ 2 tiles · คีย์ลัด P · ลำดับ `+N XP` → ♥ · Happy animation 2.5 วิ · rate limit 3 วิ (429) · ครบโควตา = ยังเล่นได้แต่ไม่ได้ XP | **Feed** — card ตัดชื่อออกแล้ว เหลือ Stroke อย่างเดียว |
-| SC-PET-04 Egg → Baby | prompt คลิกไข่ → GIF → แสงวาบ → reveal → modal · เฉพาะคนที่ทำให้ XP เต็มเห็น animation คนอื่นได้ modal · GIF อ่านจาก API ไม่ hardcode · GIF 404 → ข้ามไป flash · Esc ข้ามไป modal · ไม่เด้งใส่คน away / ในห้องประชุม / ใน Bubble | **Share your friends** — modal ที่ ux-ui §5.4 บอกว่ามีอยู่แล้ว จริง ๆ ไม่มีในโค้ด · **achievement badge** — ยังไม่มี table |
+| SC-PET-04 Egg → Baby | prompt คลิกไข่ → GIF → แสงวาบ → reveal → modal · เฉพาะคนที่ทำให้ XP เต็มเห็น animation คนอื่นได้ modal · GIF อ่านจาก API ไม่ hardcode · GIF 404 → ข้ามไป flash · Esc ข้ามไป modal · ไม่เด้งใส่คน away / ในห้องประชุม / ใน Bubble · **Share your friends** → picker DM/Group/Channel → `pet_card` message ([api #79](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/79) / [app #260](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/260)) · **achievement log** `tb_room_pet_achievement` first_hatch/fully_evolved ([api #77](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/77)) | **แสดง achievement** — card บอก "เก็บ logs ไว้ ยังไม่แสดง" จึงยังไม่มี endpoint/UI อ่าน |
 | SC-PET-05 Baby → Adult → Evolved | flow เดียวกับ 04 ทุกประการ · bar ไหลลงจาก 100% พร้อมตัวเลขนับ · demote (admin ขยับ threshold) = ไม่เล่น animation | เหมือน 04 |
 | SC-PET-06 Pet Status | panel เปิดจากคลิก pet · stage badge · mood · XP bar แบบ relative · Daily quest นับจริงจาก `GET …/status` · MAX XP variant | **Top 3 carers** — Figma แทนด้วย Daily quest (ยึด Figma) · ข้อมูลมีใน response แล้ว |
-| SC-PET-07 Notification | 3 ชนิด (`pet_growth` / `pet_milestone` / `pet_reminder`) · เคารพ setting `pet_activity` · milestone 50/75/90 ไม่ยิงซ้ำ · reminder 09:00 ICT วันละครั้ง · card แปลภาษาฝั่ง client | **HUD banner 5 วิ** — Figma แทนด้วย modal เต็มจอ ซึ่งทุกคนได้อยู่แล้ว ทำทั้งคู่ = ประกาศซ้ำ |
+| SC-PET-07 Notification | 3 ชนิด (`pet_growth` / `pet_milestone` / `pet_reminder`) · เคารพ setting `pet_activity` · milestone 50/75/90 ไม่ยิงซ้ำ · reminder 09:00 ICT วันละครั้ง — **ยิงจริงแล้ว 2026-09-05 09:00 (8 แถว, dedupe ผ่าน)** · card แปลภาษาฝั่ง client | **HUD banner 5 วิ** — Figma แทนด้วย modal เต็มจอ ซึ่งทุกคนได้อยู่แล้ว ทำทั้งคู่ = ประกาศซ้ำ |
 | SC-PET-08 Neglected | mood derive จาก `last_activity_at` (3 state) · sad = แสดง sheet `Sad` + หยุดเดิน + ไม่ react · XP ลด 50% ผ่าน mood multiplier · stroke 1 ครั้ง = กลับ Happy ทันที | — |
 
 ### ต้องทำก่อนส่ง QA
@@ -550,15 +550,14 @@ card ชุด Room Pet เขียนก่อนที่ PM จะเคา�
 | 5 | ตั้ง `xp_play_with_pet.times` = **5** (ตอนนี้ 1 แต่ SC-PET-03 เขียน 5) | ⬜ **ยังไม่ทำ** — เป็นค่านโยบาย รอ PM |
 | 6 | อัป GIF slot `Evolution` ของ pet type ที่จะเทส (baby/adult ต้องอัปเอง · egg มี prefill กลาง) | ⬜ **ยังไม่ทำ** — ไม่มีแล้ว flow จะข้าม GIF ไป flash เลย |
 
-### งานที่เหลือทั้งหมด เรียงตามความสำคัญ
+### งานที่เหลือทั้งหมด เรียงตามความสำคัญ (อัปเดต 2026-09-05 รอบ 25)
 
-1. **เทส UI ในเบราว์เซอร์** — งานหลักที่เหลือ · ยังไม่เคยเปิด VO ดูของจริง
-2. **Share your friends** ใน evolution modal — ux-ui §5.4 บอกว่ามี component อยู่แล้ว แต่ `grep` ไม่เจอในโค้ด ต้องทำ member picker + card message type ใน chat ใหม่
-3. **pet facing rows** — ws ส่ง direction มาแล้ว แต่ไม่มี spec ว่า sprite row ไหนคือทิศไหน (บาง sheet มีแถวเดียว) → ต้องถาม design
-4. **`pet_sittable`** บน object (คนละโมดูล) — ไม่มีอันนี้ pet นั่งบนเฟอร์นิเจอร์ไม่ได้ตาม SC-PET-02
-5. **achievement badge** ("First Hatch!" / "Fully Evolved!") — ยังไม่มี table
-6. **daily reminder cron 09:00 ICT** — โค้ดมีแล้วแต่ยังไม่ได้เทสจริง (ต้องรอเวลา หรือเรียก `SendPetDailyReminders` ตรง)
-7. **`xp_office_10min` / `_30min`** — ยังไม่ได้ live-test (ต้องอยู่ใน VO จริง 10/30 นาที) · logic มี unit test ครอบแล้ว
+1. **เทส UI ในเบราว์เซอร์** — งานหลักที่เหลือ · ยังไม่เคยเปิด VO ดูของจริง (ติด login — ดู progress pin)
+2. **`pet_sittable`** บน object (คนละโมดูล · 4 repo) — แผน + คำถาม design 2 ข้ออยู่ใน [progress รอบ 25](progress.md)
+3. **แสดง achievement** — log มีแล้ว (migration 91) รอ design ว่าจะโชว์ที่ไหน
+4. **`xp_play_with_pet.times` = 5** และ **GIF slot Evolution** (ตาราง "ต้องทำก่อนส่ง QA" ข้อ 5–6) — รอ PM / content
+
+ปิดแล้วในรอบ 25: Share your friends · pet facing · achievement log · cron 09:00 (ยิงจริง) · `xp_office_10/30min` (live-test + แก้บั๊ก stale clock [api #78](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/78))
 
 ## Reference
 
