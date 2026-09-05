@@ -2,8 +2,8 @@
 
 > ดึงข้อมูลจาก ClickUp — Space: Zyra World, List: `901614367195`
 > Parent Task: [[Feature] Room Pet — Virtual Office](https://app.clickup.com/t/86d3dc92c) (`86d3dc92c`) · tag `client` · status **in progress** · priority normal · ไม่มี assignee · creator Moss Pm
-> Subtask: SC-PET-01 ~ 08 ทุกใบ status **pending** · SC-PET-01~05 priority **high** · SC-PET-06~08 priority normal
-> Card สร้าง 2026-06-19 · parent แก้ล่าสุด 2026-09-02 · subtask แก้ล่าสุด 2026-08-13 ~ 2026-08-18
+> Subtask: SC-PET-01 ~ 08 ทุกใบ status **in progress** (เปลี่ยนจาก pending 2026-09-03/04 — เนื้อหา description ไม่เปลี่ยน) · SC-PET-01~05 priority **high** · SC-PET-06~08 priority normal · parent มี assignee แล้ว
+> Card สร้าง 2026-06-19 · **อ่านใหม่ทั้งชุด 2026-09-05 → ตารางเทียบ card กับของจริงทุกข้ออยู่ที่ [clickup-audit-2026-09-05.md](clickup-audit-2026-09-05.md)** (พร้อม 8 ข้อที่ยังไม่มีใครเคาะ + 8 decision ที่ user เคาะวันนี้)
 > ใน ClickUp **ไม่มี** comment / attachment / checklist / dependency / linked task เลยแม้แต่ใบเดียว — เนื้อหาทั้งหมดอยู่ใน description
 >
 > **สถานะเอกสาร: implement ครบทั้ง 8 scenario + deploy dev แล้ว 2026-09-04** — verify ผ่าน REST/WebSocket ครบทุก scenario · **ยังไม่ได้เทส UI ในเบราว์เซอร์** (ติด login) · **สรุปส่งต่ออยู่ที่ [progress.md รอบ 21](progress.md)** อ่านอันนั้นก่อนถ้าจะมาทำต่อ

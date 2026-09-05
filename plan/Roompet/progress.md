@@ -16,7 +16,36 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api `76a3561` · ws `44a9616` · app `c29e68f` (รอบ 26: #261 background/walk/z-index · #262 pet panel · #263 pose by state)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#80 shared quests) · ws (#34 stay in zone) · app (#264 hover + residents) — รอบ 26–27
+
+---
+
+## 2026-09-05 (รอบ 27) — user เทสต่อ: quest ต้องทำได้จริง / รีเซ็ตเที่ยงคืน / pet ห้ามออกนอกห้อง / hover ขอบเขียว + เคาะ quest เป็นของห้อง · อ่าน ClickUp ใหม่ทั้งชุด
+
+### ที่เจอและแก้
+
+| อาการ | root cause | แก้ | PR |
+|---|---|---|---|
+| quest โชว์ **0/1 ทุกแถว** ทั้งที่ ledger มี login ของ user แล้ว (20:01) | `Status` คืน quota **ตัวเดียว** (`xp_play_with_pet`) และนับต่อ user | คืน 1 แถวต่อ activity ที่ enabled ตาม `PetXPActivityOrder` นับทั้งห้อง | [api #80](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/80) |
+| pet **เดินออกนอกห้อง** ไปหาคนในทางเดิน | ws `tileAllowed` **fail open** เมื่อไม่มี zone snapshot · ws `34ffa741` (ของ user) **ไม่มี key `vo:zones`** ใน Redis เพราะ zone ถูกเซฟก่อนมี cache (07-17) · path A* ไม่ถูกเช็คทุก tile | ws fail-**closed** + เช็คทุก tile ของ path · api backfill snapshot ตอน ws seed pets (`EnsureWorkspaceZonesPublished`) | [ws #34](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/34) · api #80 |
+| hover pet ไม่มีขอบ | ไม่เคยทำ | `OutlineSlot` ต่อ pet ใน `PetLayer` สีเขียว 1px เหมือน avatar · scene เรียก `setHovered` | [app #264](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/264) |
+| quest รีเซ็ตเที่ยงคืน | server `day_key` UTC+7 อยู่แล้ว · panel ที่เปิดค้างไม่ refetch | `usePetStatus` poll ทุก 1 นาทีขณะเปิด | app #264 |
+
+### decision ที่ user เคาะ (บันทึกเต็มใน [clickup-audit-2026-09-05.md § decision](clickup-audit-2026-09-05.md))
+
+- **D2 quest ทำได้เฉพาะคนที่มี private zone อยู่ในห้องของ pet** → `roomResidents` = claim ใน `tb_private_zone_claim` ที่ zone แชร์ tile กับห้อง (แชร์ 1 tile ก็นับ — สี่เหลี่ยมวาดมือเกยกำแพงได้) · `AwardWorkspaceActivity` ข้าม pet ที่ actor ไม่ใช่ resident · `Status.is_resident` → panel ซ่อน Go to + ขึ้นโน้ตให้ non-resident (ไม่มีปุ่มตาย)
+- **D3 quest เป็นของห้อง ใครทำแล้วนับให้ทุกคน** → `usedToday` นับต่อ pet/วัน ไม่แยก user · ledger ยังบันทึก actor ทุก activity (office time เดิมเป็น NULL → contributors มองไม่เห็น)
+- **ไม่แตะ stroke** — decision พูดถึง quest และ stroke ไม่ใช่ quest แล้ว (v12) → ลูบได้ทุก member แต่ไม่ได้ XP จนกว่าจะเปิด `xp_play_with_pet` กลับ (ถาม PM ข้อ 6 ใน audit)
+- บน dev: user (Private 45 @55,36) และอีก 1 คน (Private 44) เป็น resident ของห้อง `test` ที่เจ้าปรื๊ดอยู่ → quest ของ user ควรขึ้น 1/1 หลัง deploy
+
+### อ่าน ClickUp ใหม่ทั้งชุด
+
+- description ทุกใบ **ไม่เปลี่ยน** จากที่ spec.md §1–§3 ลอกไว้ · เปลี่ยนแค่ status → in progress · ที่ "ไม่ตรง" คือ card vs ของจริง → ทำตารางเทียบทุก AC/BL 8 card + parent ที่ [clickup-audit-2026-09-05.md](clickup-audit-2026-09-05.md) พร้อม **8 ข้อที่ card สั่งแต่ยังไม่มีใครเคาะ** (bonus ทีม 5 คน · ความเร็วเดินต่าง stage · notice animation · bubble 3 วิ · pet_sittable · stroke XP · notification navigate · streak)
+
+### verify
+
+- api `go test ./...` ✅ (ใหม่: `TestResidentsOf` 5 เคส, `PetXPActivityOrder`, tracker บันทึก actor) · ws `go test ./...` ✅ (ใหม่ 3: ไม่มี geometry = ไม่เดิน · ห้อง 3×3 ไม่หลุด 400 รอบ · ไม่ตามคนออกนอกห้อง) · app vitest **1646 ผ่าน**
+- merge เข้า develop ครบ 3 repo → dev deploy · **ยังไม่ได้เห็นหลังแก้ในเบราว์เซอร์** — ให้ user ดู: quest 1/1 · pet ไม่ออกนอกห้อง test · hover ขอบเขียว
 
 ---
 
