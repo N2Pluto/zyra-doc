@@ -16,7 +16,7 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api `76a3561` · ws `44a9616` · app `810bde8` (รอบ 26: #261 background/walk/z-index · #262 pet panel)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api `76a3561` · ws `44a9616` · app `c29e68f` (รอบ 26: #261 background/walk/z-index · #262 pet panel · #263 pose by state)
 
 ---
 
@@ -35,6 +35,21 @@
 | Pet panel ยาวเกินจอ เลื่อนไม่ได้ | ไม่มี max-height · Figma มี quest 5 แถว แต่ config เปิด 10 | panel `max-h-[calc(100vh-48px)]` + list `overflow-y-auto` | [app #262](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/262) |
 | ปุ่ม **Go to ตายทุกปุ่ม** (แค่ปิด panel) | hero ผูก `onGoTo={() => setClickedPetId(null)}` | ตาราง `PET_QUEST_GO_TO_TARGET`: chat quest → เปิด chat · meeting quest → เดินไป meeting zone ที่ใกล้สุดบนชั้นนี้ (ไม่มี = toast) · play with pet → เดินไปหา pet · **login / office 10-30 นาที ไม่มีปุ่ม** (ทำอะไรไม่ได้นอกจากอยู่ที่นี่ — ปุ่มตายแย่กว่าไม่มี) | #262 |
 | รูปบน quest tile ผิด | ใช้ lucide glyph ต่อ quest · Figma `4331:343228` ใช้ **XP medal เดียวกันทุกแถว** + เลข +N ข้างล่าง (asset เดียวกับที่ user ให้เปลี่ยนใน #258) | ใช้ `PET_XP_ICON_URL` ทุก tile | #262 |
+
+### เพิ่ม: ท่าตามสถานการณ์จาก 17 slot ที่ Pet Management อัป ([app #263](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/263))
+
+user ให้ย้อนอ่าน PetManagement/spec.md — slot vocabulary คือ `Wobbling / Walking / Sitting / Happy / Sad / Evolution` (17 slot, **ไม่มี Idle** — แถว Idle ใน DB มาจาก build 20 slot เดิม) แต่ renderer ใช้แค่ "idle" (Idle→Walking) ไม่เคยแสดง Sitting เลย · ตอนนี้:
+
+| สถานการณ์ | sheet | fallback |
+|---|---|---|
+| egg | Wobbling | — |
+| AI กำลังก้าว | Walking | rest |
+| ยืนนิ่ง (AI พัก 3–8 วิ ระหว่าง wander) | **Sitting** | Idle → Walking |
+| เหงา (sad) | Sad | rest |
+| ถูกลูบ | Happy | rest |
+| ภาพนิ่ง (modal / share card / editor marker) | Walking frame 0 (กฎ thumbnail ของ spec) | Idle → Sitting |
+
+ลำดับ: stroke > sad > moving > resting · vitest **1642 ผ่าน** · ค้างฝั่ง PetManagement: ฟอร์ม upload ยังมี slot Idle (20 ≠ 17) — spec.md § ผลต่อโค้ด ระบุให้ถอดอยู่แล้ว
 
 ### หลักที่ user ย้ำ (บันทึกเป็น feedback)
 
