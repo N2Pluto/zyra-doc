@@ -522,9 +522,11 @@ card ชุด Room Pet เขียนก่อนที่ PM จะเคา�
 
 ---
 
-## สถานะ implement ต่อ scenario (2026-09-04) — สำหรับ QA
+## สถานะ implement ต่อ scenario (อัปเดต 2026-09-05) — สำหรับ QA
 
-> อ้างอิง PR ในตารางของ [progress.md รอบ 18](progress.md) · **build เขียวทุกตัว · live-test ผ่านเฉพาะ XP engine** ที่เหลือยังไม่ได้ทดสอบจริงบน dev เพราะ `NEXT_PUBLIC_ROOM_PET` ยังไม่ถูกตั้ง
+> อ้างอิง PR ในตารางของ [progress.md รอบ 18](progress.md) · **build เขียวทุกตัว · deploy dev ครบทั้ง 3 repo · live-test ผ่าน REST + WebSocket ครบทั้ง 8 scenario** (รายละเอียดต่อ scenario อยู่ใน [รอบ 19](progress.md)) · `NEXT_PUBLIC_ROOM_PET=true` ตั้งแล้วบน dev
+>
+> **ยังไม่ได้ทดสอบด้วยตาในเบราว์เซอร์** — ยังไม่มีใครเปิด VO ดูของจริงสักครั้ง ทุกอย่างข้างล่างนี้ยืนยันผ่าน API/WS เท่านั้น
 
 | ID | ทำแล้ว | ไม่ได้ทำ (พร้อมเหตุผล) |
 |---|---|---|
@@ -539,14 +541,24 @@ card ชุด Room Pet เขียนก่อนที่ PM จะเคา�
 
 ### ต้องทำก่อนส่ง QA
 
-1. ตั้ง secret **`NEXT_PUBLIC_ROOM_PET=true`** ใน GitHub Environment `dev` ของ zyra-app — ไม่ตั้ง = ไม่เห็นอะไรเลย
-2. ตั้ง `xp_play_with_pet.times` = **5** ในหน้า XP Configuration (seed เป็น 1 แต่ SC-PET-03 เขียน 5)
-3. อัป GIF slot `Evolution` ของ pet type ที่จะเทส (egg มี prefill กลางให้แล้ว แต่ baby/adult ต้องอัปเอง ไม่งั้น flow จะข้าม GIF ไป flash เลย)
-4. deploy zyra-api + zyra-ws ใหม่ (pet AI กับ notification อยู่ในนั้น)
+| # | สิ่งที่ต้องทำ | สถานะ |
+|---|---|---|
+| 1 | secret `NEXT_PUBLIC_ROOM_PET=true` บน dev | ✅ ตั้งแล้ว 2026-09-04 |
+| 2 | deploy zyra-api + zyra-ws (pet AI + notification) | ✅ ขึ้น dev แล้ว |
+| 3 | `Award()` ต้องมี caller ครบ 10 activity | ✅ เสร็จ ([api #75](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/75)/[#76](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/76)) |
+| 4 | เปิด activity ทั้ง 10 ใน XP config | ✅ config **v11** enabled ครบ ไม่มีตัวไหนเกิน cap |
+| 5 | ตั้ง `xp_play_with_pet.times` = **5** (ตอนนี้ 1 แต่ SC-PET-03 เขียน 5) | ⬜ **ยังไม่ทำ** — เป็นค่านโยบาย รอ PM |
+| 6 | อัป GIF slot `Evolution` ของ pet type ที่จะเทส (baby/adult ต้องอัปเอง · egg มี prefill กลาง) | ⬜ **ยังไม่ทำ** — ไม่มีแล้ว flow จะข้าม GIF ไป flash เลย |
 
-### ยังไม่มีคนเรียก — pet จะโตช้ามาก
+### งานที่เหลือทั้งหมด เรียงตามความสำคัญ
 
-`Award()` ถูกเรียกจาก **`POST …/play` ที่เดียว** ตอนนี้ อีก 9 activity (`xp_login_per_day`, `xp_office_*`, `xp_team_meeting*`, `xp_*_message_fo_day`) ยังไม่มีใครแทรกเข้า flow เดิม — เป็นงานถัดไป
+1. **เทส UI ในเบราว์เซอร์** — งานหลักที่เหลือ · ยังไม่เคยเปิด VO ดูของจริง
+2. **Share your friends** ใน evolution modal — ux-ui §5.4 บอกว่ามี component อยู่แล้ว แต่ `grep` ไม่เจอในโค้ด ต้องทำ member picker + card message type ใน chat ใหม่
+3. **pet facing rows** — ws ส่ง direction มาแล้ว แต่ไม่มี spec ว่า sprite row ไหนคือทิศไหน (บาง sheet มีแถวเดียว) → ต้องถาม design
+4. **`pet_sittable`** บน object (คนละโมดูล) — ไม่มีอันนี้ pet นั่งบนเฟอร์นิเจอร์ไม่ได้ตาม SC-PET-02
+5. **achievement badge** ("First Hatch!" / "Fully Evolved!") — ยังไม่มี table
+6. **daily reminder cron 09:00 ICT** — โค้ดมีแล้วแต่ยังไม่ได้เทสจริง (ต้องรอเวลา หรือเรียก `SendPetDailyReminders` ตรง)
+7. **`xp_office_10min` / `_30min`** — ยังไม่ได้ live-test (ต้องอยู่ใน VO จริง 10/30 นาที) · logic มี unit test ครอบแล้ว
 
 ## Reference
 

@@ -19,6 +19,21 @@
 
 ---
 
+## 2026-09-05 (รอบ 24) — เปลี่ยน XP icon จาก emoji เป็น asset จริงของ Figma
+
+- **ทำอะไร:** user ส่งไฟล์ `storage/xp-icon.png` (50×50 RGBA, 3233 B) มาให้ใช้แทน 🏅 ที่เป็น placeholder
+  - อัปขึ้น R2 ที่ **`static/pet/shared/xp-icon.png`** — วางไว้ข้าง `egg-evolution.gif` เพราะเป็น asset ชุดเดียวกัน คือ **เหมือนกันทุก pet type** (ต่างจาก sprite ของ pet ที่ admin อัปแยกต่อ type) · ตั้ง `Cache-Control: public, max-age=31536000, immutable`
+  - `lib/pet-interaction.ts`: `PET_XP_MEDAL_EMOJI` (🏅) → `PET_XP_ICON_URL` · เป็น const ไม่ใช่ config เพราะไม่มีอะไรให้ admin ปรับ
+  - `pet-tooltip.tsx` variant `xp`: `<span>` ที่มี emoji → `<Image width={16} height={16} unoptimized>` ตาม ux-ui §4.3 ที่ระบุว่าเป็น PNG 16px
+- **ไม่แตะ ♥** — Figma export เป็น PNG เหมือนกัน แต่ VO ใช้ธรรมเนียม emoji-as-text (`MEETING_EMOJIS`) และ user ขอมาแค่ XP icon · เขียน comment ในไฟล์ไว้ว่าอันไหนเป็นอะไร จะได้ไม่มีใครมา "แก้" ให้เหมือนกันทีหลัง
+- **PR:** [app #258](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/258)
+- **verify:**
+  - upload ยืนยันแล้ว: `curl` ได้ `200 image/png` · sha256 ตรงกับไฟล์ต้นทางเป๊ะ (`ea3ff6c8…`)
+  - `next.config` มี `remotePatterns: hostname "**"` อยู่แล้ว → `<Image>` โหลดจาก R2 ได้ ไม่ต้องแก้ config
+  - `tsc` / `eslint` สะอาด · `vitest run` **1588 ผ่าน**
+  - test เดิมที่ assert ว่า medal **ไม่ใช่** asset path ถูกแทน (มันตรงข้ามกับความจริงใหม่แล้ว) ด้วย 3 ข้อ: ♥ ยังเป็น unicode · XP icon ต้องเป็น absolute `https://…png` (ถ้าเป็น `/path` เปล่า ๆ จะ 404 เพราะ VO คนละ origin กับ asset) · element ที่ render เป็น `<img>` ชี้ไป `xp-icon.png` ขนาด 16px `alt=""`
+  - **ยังไม่ได้เห็นในเบราว์เซอร์** — tooltip นี้โผล่ตอน stroke เท่านั้น และงานเทส UI ยังติด login อยู่
+
 ## 2026-09-04 (รอบ 23) — เปิด activity ครบ 10 ตัว + แก้ค่า office ที่กรอกสลับช่อง (config v9 → v11)
 
 > งาน config ล้วน ไม่มีการแก้โค้ด · ทำผ่าน **admin API** (`PUT /api/admin/pet-xp-config`) ทั้งหมด ไม่ใช่ SQL ตรง เพื่อให้ version history ถูกต้องและ restore ได้
