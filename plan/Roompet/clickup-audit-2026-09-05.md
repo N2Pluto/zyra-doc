@@ -56,7 +56,7 @@
 
 | card | ของจริง | สถานะ |
 |---|---|---|
-| กด 🤚 หรือ P → happy animation → +1 XP → ♥ → mood happy | ✅ (app #251) · XP = config `xp_play_with_pet` · **ตอนนี้ปิดอยู่ (config v12) → ลูบได้แต่ไม่ได้ XP** | ⚠️ config |
+| กด 🤚 หรือ P → happy animation → +1 XP → ♥ → mood happy | ✅ (app #251) · **ปุ่ม 🤚 ขึ้นเองเมื่อ resident เดินเข้าใกล้ ≤2 tile** (app #265, user 09-05) · XP = config `xp_play_with_pet` · **ตอนนี้ปิดอยู่ (config v12) → ลูบได้แต่ไม่ได้ XP** | ⚠️ config |
 | bubble เมื่ออยู่ใน radius 2 | ✅ | ✅ |
 | "pet เดินผ่านมา: bubble โชว์เอง 3 วิ" | ❌ ไม่ทำ — bubble โชว์ตอน hover/ใกล้เท่านั้น | ❌ |
 | **Feed** 3/วัน | card ตัดชื่อ "(ป้อน / pet)" ทิ้งแล้ว แต่ AC ยังมี Feed | 🔀 PM (ไม่มี Feed) |
@@ -149,3 +149,4 @@
 | D6 | hover pet = ขอบเขียวเหมือนตัวละคร | app #264 |
 | D7 | ใช้ท่าที่อัปโหลดตามสถานการณ์ (Walking/Sitting/Sad/Happy/Wobbling) | app #263 |
 | D8 | ไม่มีปุ่มตาย ทุกปุ่มต้องพาไปทำได้จริง | app #262 |
+| D9 | resident เดินเข้าใกล้ pet → หันหน้ามา + ปุ่มลูบขึ้นเอง | ws AI (มีอยู่แล้ว) + api #81 + app #265 |

@@ -16,7 +16,20 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#80 shared quests) · ws (#34 stay in zone) · app (#264 hover + residents) — รอบ 26–27
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#81 is_resident) · ws (#34 stay in zone) · app (#265 proximity stroke) — รอบ 26–28
+
+---
+
+## 2026-09-05 (รอบ 28) — SC-PET-08: ปุ่มลูบหัวขึ้นเองเมื่อ room-mate เดินเข้าใกล้ (user สั่ง)
+
+- **user ถาม:** SC-PET-08 ทำงานยังไง / ลูบหัวต้องไปลูบยังไง มีไหม → ของเดิม: ปุ่ม 🤚 ขึ้น**เฉพาะตอนคลิก pet** (และอยู่ในระยะ 2 tile) · hover ในระยะได้แค่ `Press [P] pet` · pet หันหน้าหาคนใน 3 tile อยู่แล้ว (ws AI)
+- **user สั่ง:** คนที่มี private zone ในห้องเดินเข้าใกล้ → pet หันมา → มีปุ่มขึ้นบนหัวให้ลูบ
+- **ทำ:**
+  - api [#81](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/81): `GET /api/user/workspaces/:id/pets` ใส่ `is_resident` ต่อ pet (กฎเดียวกับ quest #80 — `loadRoomResidents` เป็น helper ใช้ร่วม 2 service)
+  - app [#265](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/265): `nearestStrokeablePet` เลือก pet ที่ resident เดินเข้าใกล้ (≤2 tile ที่ **ตำแหน่งจริง**) → ปุ่ม 🤚 ขึ้นเอง ไม่ต้องคลิก/hover · เดินออก = หาย · non-resident ยังใช้ทางเดิม (คลิกถึงขึ้น)
+  - **บั๊กที่เจอระหว่างทำ:** ระยะและตำแหน่ง overlay ใช้ `tile_x/tile_y` ที่วางไว้ ไม่ใช่ตำแหน่งจริงจาก `pet_state` → ตั้งแต่ #254 ที่ pet เดินได้ ปุ่มจึงลอยอยู่ที่จุดวางและวัดระยะผิดจุด — แก้ให้ตาม `petLivePositions` ทั้งคู่
+- **SC-PET-08 ตอนนี้ (สรุปที่อธิบาย user):** mood derive จาก `last_activity_at` ตอนอ่าน (happy ≤12h · neutral ≤72h · sad >72h · ค่าปรับได้ใน XP config) ไม่มี cron/column · sad = เล่น sheet Sad + ws หยุด wander + ไม่ react คน + XP ×50% · **การลูบ 1 ครั้งคือ recovery** (reset `last_activity_at` → happy ทันที + เล่น Happy) — เฉพาะ stroke ที่ reset mood (login/office/chat ไม่ reset ไม่งั้นทีมที่ active จะไม่มีวัน sad) · ลูบไม่ได้ XP จนกว่าจะเปิด `xp_play_with_pet`
+- **verify:** api `go test ./...` ✅ · app vitest **1651 ผ่าน** (ใหม่ 5) · merge develop ทั้งคู่ → dev · ยังไม่ได้เห็นในเบราว์เซอร์
 
 ---
 
