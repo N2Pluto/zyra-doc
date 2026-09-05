@@ -16,7 +16,38 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api `76a3561` · ws `44a9616` · app `fb27870`
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api `76a3561` · ws `44a9616` · app `810bde8` (รอบ 26: #261 background/walk/z-index · #262 pet panel)
+
+---
+
+## 2026-09-05 (รอบ 26) — user เทสบน dev เอง: background หาย · pet ไม่เล่นท่าเดิน · z-index · panel เลื่อนไม่ได้ / ปุ่ม Go to ตาย / รูป quest ผิด
+
+> user เปิด VO บน dev เองแล้วส่ง screenshot 2 ใบ — นี่คือการเห็นด้วยตาครั้งแรกของฟีเจอร์นี้
+
+### สิ่งที่เจอและแก้
+
+| อาการ | root cause | แก้ | PR |
+|---|---|---|---|
+| **ฉากหลังแมพหายทั้งแมพ** (เห็นแต่สี canvas) | commit `3dd45b6` (2026-09-04, งาน preload textures — คนละ session กับ Room Pet) เปลี่ยน `mapBgUrl:` เป็น `...mapBackgroundUrls(mainMap)` แต่ helper return key `bgUrl/bgThumbUrl` ไม่ใช่ `mapBgUrl/mapBgThumbUrl` ที่ scene อ่าน · TypeScript ไม่จับเพราะ spread ไม่มี excess-property check | helper return key ตามชื่อ field ของ `MapConfig` (type เป็น `Pick<MapConfig,…>` ให้ rename ครั้งหน้าเป็น compile error) + test pin ชื่อ key | [app #261](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/261) |
+| pet เดินแต่ใช้ท่า Idle | ws ส่ง `moving` มาแล้ว ทุก type มี slot Walking แต่ renderer ไม่เคยเลือก | `buildScenePets` เลือก Walking ตอน `moving` · client หยุดเองหลัง `step_ms + 150ms` (`PET_WALK_STOP_GRACE_MS`) เพราะ ws บอก "หยุด" ช้าสุด 2 วิ (idle heartbeat) | #261 |
+| pet ทับ object ผิดจากตัวละคร | pet sort ที่ก้นสไปรต์ แต่ avatar sort ที่ `py + PLAYER_FOOT_OFFSET_Y` (−10) → pet อยู่ "ต่ำกว่า" ตัวละครบน tile เดียวกัน 10px | `petZIndex` ใช้ offset เดียวกัน · test ยืนยันว่าต่างจาก avatar บน tile เดียวกันแค่ tie-break | #261 |
+| "เดินต้องเดิน 1 tile เหมือนตัวละคร" | **เป็นอยู่แล้ว** — ws ก้าวทีละ tile / 600ms และ client tween ทีละ `pet_state` | — | — |
+| Pet panel ยาวเกินจอ เลื่อนไม่ได้ | ไม่มี max-height · Figma มี quest 5 แถว แต่ config เปิด 10 | panel `max-h-[calc(100vh-48px)]` + list `overflow-y-auto` | [app #262](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/262) |
+| ปุ่ม **Go to ตายทุกปุ่ม** (แค่ปิด panel) | hero ผูก `onGoTo={() => setClickedPetId(null)}` | ตาราง `PET_QUEST_GO_TO_TARGET`: chat quest → เปิด chat · meeting quest → เดินไป meeting zone ที่ใกล้สุดบนชั้นนี้ (ไม่มี = toast) · play with pet → เดินไปหา pet · **login / office 10-30 นาที ไม่มีปุ่ม** (ทำอะไรไม่ได้นอกจากอยู่ที่นี่ — ปุ่มตายแย่กว่าไม่มี) | #262 |
+| รูปบน quest tile ผิด | ใช้ lucide glyph ต่อ quest · Figma `4331:343228` ใช้ **XP medal เดียวกันทุกแถว** + เลข +N ข้างล่าง (asset เดียวกับที่ user ให้เปลี่ยนใน #258) | ใช้ `PET_XP_ICON_URL` ทุก tile | #262 |
+
+### หลักที่ user ย้ำ (บันทึกเป็น feedback)
+
+> "ต้องไม่มีปุ่มที่มันตาย กดแล้วไปไหนต่อไม่ได้ แบบนี้ไม่เอา มันต้องทำงานได้จริงทุกอย่าง" — ปุ่มทุกปุ่มต้องพาไปทำสิ่งนั้นได้จริง ถ้าไม่มีทางไปให้ซ่อนปุ่ม
+
+### verify
+
+- `tsc` / `eslint` สะอาด · `vitest run` **1630 ผ่าน** ทั้งสอง PR (ใหม่ 12) · merge เข้า develop แล้ว → dev deploy อัตโนมัติ
+- **ยังไม่ได้เห็นผลหลังแก้ในเบราว์เซอร์** — ต้องให้ user reload dev ดู: พื้นหลัง School 3 กลับมา · pet เล่น Walking ตอนเดิน · panel เลื่อนได้ · Go to พาไปจริง
+
+### ต่อจากนี้
+
+- เทส UI รอบถัดไปตามที่ user เห็นจริง · `pet_sittable` ยังค้าง (รอบ 25)
 
 ---
 
