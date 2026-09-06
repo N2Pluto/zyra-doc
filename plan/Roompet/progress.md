@@ -16,8 +16,18 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#40) · app (#278) — รอบ 26–37 · migration ล่าสุดบน dev: 93
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#40) · app (#279) — รอบ 26–38 · migration ล่าสุดบน dev: 93
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-06 (รอบ 38) — "ป้ายชื่อ pet เอาออกทุก zoom เลย เหลือแต่วงกลม"
+
+- ตอบข้อสมมติของรอบ 37 (ป้ายอยู่ที่ zoom ≥ 3): **ไม่เอา — เอาออกทุก zoom**
+- `PetLayer` ไม่สร้างป้ายชื่อแล้ว · **resident** เห็นวงกลมโปรไฟล์ (รูป stage · hover ขึ้นชื่อ · ขอบเขียว + z เหมือนวงตัวละคร) ลอยเหนือ sprite **ทุก zoom** · 🤚 เป็น badge มุมขวาล่างของวง ตอนลูบได้ (ติด 1 ช่อง + 1 วิ หรือ hover ในระยะ) กดที่วง = ลูบ ไม่งั้นกด = เปิด panel · `[P]` เหมือนเดิม · non-resident เห็นแค่ sprite (กดยังเปิด panel ได้) · วงคู่ตอน pop ที่ซูมออกเหมือนรอบ 37
+- `makePetNameTag`/`layoutPetNameTag` ยังอยู่ใน utils เพราะหน้า dev preview (`views/dev/room-pet-preview`) ใช้ — ไม่ได้ลบ
+- PR: [app #279](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/279) merge develop แล้ว · tsc ✅ · vitest pet-layer/scene/pet-scene 378 ✅ · eslint/prettier ✅ · **ยังไม่ได้เห็นในเบราว์เซอร์**
+- ลอง: ห้องเรา → วงกลมเหนือ pet ทุก zoom hover ขึ้นชื่อ · ยืนติด 1 วิ → 🤚 โผล่บนวง กดวง = ลูบ · ห้องคนอื่น → ไม่มีวง
 
 ---
 
