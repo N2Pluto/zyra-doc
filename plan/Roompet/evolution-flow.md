@@ -1,6 +1,6 @@
 # Room Pet — Evolution flow (XP เต็ม → ข้าม stage) ใครเห็นอะไร แจ้งเตือนใคร
 
-> สถานะ: **implement แล้วบน develop** (api #77/#79/#85 · ws #29+ · app #252/#260/#287) · เขียน 2026-09-06 จากโค้ดจริง ไม่ใช่ spec · ลองกดดูได้ที่ `/dev/room-pet-preview` → section "Evolution flow" · หน้า preview อ่านง่าย: [Room Pet Evolution Flow (artifact)](https://claude.ai/code/artifact/31179fdf-e705-49fb-aef5-5440bf0c18b8)
+> สถานะ (อัปเดต 2026-09-06 รอบ 47 · app #288): **implement แล้วบน develop** (api #77/#79/#85 · ws #29+ · app #252/#260/#287) · เขียน 2026-09-06 จากโค้ดจริง ไม่ใช่ spec · ลองกดดูได้ที่ `/dev/room-pet-preview` → section "Evolution flow" · หน้า preview อ่านง่าย: [Room Pet Evolution Flow (artifact)](https://claude.ai/code/artifact/31179fdf-e705-49fb-aef5-5440bf0c18b8)
 
 ## 1. จุดเริ่ม
 
@@ -18,7 +18,8 @@ ws `BroadcastZoneEvent` ส่ง `pet_stage_changed` ให้**ทุก clien
 
 | | คนที่ XP ทำให้ข้าม (`triggered_by === me`) | คนอื่นที่เปิด VO อยู่ | คนที่ไม่ออนไลน์ |
 |---|---|---|---|
-| หน้าจอ | `PetEvolutionOverlay` เต็มจอ: **prompt** (คลิกก่อน) → **playing** GIF Evolution ของ stage ที่ออกจาก (ไม่มี GIF → ข้าม) → **flash** 0.9 วิ → **reveal** (คลิก) → **modal** | **modal** ทันที | ไม่มี |
+| หน้าจอ | `PetEvolutionOverlay` เต็มจอ: **prompt** (คลิกก่อน · รูป 320px) → **playing** GIF ไข่แตก 3.6 วิ (เฉพาะ egg → baby) → **flash** 0.9 วิ → **arriving** GIF ของ stage ใหม่โผล่ 1.2 วิ (ไม่มี GIF → ข้าม) → **reveal** (คลิก) → **modal** | **modal** ทันที | ไม่มี |
+| ขนาด/รูป | รูปนิ่ง = Happy เฟรมแรก (นั่งหันหน้ามา · ไข่ = Wobbling) 320px · GIF ทั้งสองวาดในกรอบ 1088px = `PET_EVOLUTION_GIF_SCALE` 3.4× (ตัวสัตว์ใน GIF 960² กินแค่ ~26–32 % ของผืน) ตัดส่วนล้น → ตัวสัตว์ขนาดเท่ากันตลอด | modal รูป Happy 112px | — |
 | Esc | ข้ามไป modal (ไม่ปิด) | — | — |
 | บนแมพ | sprite/ป้าย/วง/panel เปลี่ยนเป็น stage ใหม่ทันที (จาก `pet_xp_changed` → XP) | เหมือนกัน | เห็นตอนเข้าครั้งหน้า |
 
@@ -52,14 +53,16 @@ sequenceDiagram
   API-->>N: pet_growth ทุกคน (+ push)
   WS-->>A: pet_stage_changed
   WS-->>B: pet_stage_changed
-  A->>A: prompt → GIF → flash → reveal → modal
+  A->>A: prompt → GIF ไข่แตก (egg เท่านั้น) → flash → GIF stage ใหม่โผล่ → reveal → modal
   B->>B: modal ทันที
   A->>API: (optional) share → pet_card
 ```
 
 ## 5. ช่องว่าง / ต้องเคาะ
 
-- **GIF Evolution มีเฉพาะ egg** ของ type จริง (Pie/POP) → baby→adult, adult→evolved ข้ามไป flash · ต้องอัป GIF ใน Pet Management slot Evolution ของ stage นั้นถ้าต้องการ
+- ~~GIF Evolution มีเฉพาะ egg~~ **ผิด (แก้รอบ 47):** ทุก type จริงมี GIF ครบ 4 stage แต่คนละความหมาย — egg = ท่าออก (ไข่โยก→ร้าว→ระเบิด, 24 เฟรม) · baby/adult/evolved = ท่าเข้า (แสง→เงา→ตัวจริง, 8 เฟรม) → โค้ดเล่น GIF ออกเฉพาะ egg แล้วต่อด้วย GIF เข้าของ stage ใหม่ทุกขั้น · ถ้าอยากมี "ท่าออก" ของ baby/adult ต้องเพิ่ม slot ใหม่ใน Pet Management
+- **ขนาด GIF เทียบรูปนิ่ง** เป็นค่าคงที่ 3.4× จากการวัด asset จริง — GIF ใหม่ที่วางตัวสัตว์ต่างสัดส่วนมากจะเพี้ยน ควรเขียนข้อกำหนดผืน 960² / ตัวสัตว์ ~30 % ไว้ใน Pet Management
+- **หน้าโชว์** `/dev/preview/room-pat` เป็น public (ไม่ต้อง login, fixture ล้วน) — บน dev/uat ต้อง build ด้วย `NEXT_PUBLIC_ROOM_PET=true` ไม่งั้น overlay ไม่แสดง (หน้าจะขึ้นแถบเตือน)
 - คนไม่ออนไลน์เห็นแค่กระดิ่ง ไม่มี replay animation — ตามดีไซน์ §6 แต่ PM ยังไม่ได้ยืนยัน
 - ไม่มีเสียง/effect บนแมพสำหรับคนที่ไม่ได้ดู modal
 - ยังไม่ได้เทส end-to-end ในเบราว์เซอร์ (login ติด) — harness เล่นได้ทั้ง 2 มุมมองด้วยชีทจริง

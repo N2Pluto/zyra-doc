@@ -16,10 +16,27 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#287) — รอบ 26–46 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#288) — รอบ 26–47 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-06 (รอบ 47) — ขนาดไม่เท่ากันตอนเล่น GIF · อยากเห็น animation ทุกช่วง · ใช้รูป Happy · หน้าโชว์ `/dev/preview/room-pat`
+
+**user บอก:** "ตอนเล่น animation มันเล็ก แล้วกลับมาเป็นรูป pet ใหญ่อีก ไม่เท่ากัน" · "อยากเห็น animation ตอน evo ช่วงต่างๆ ด้วย" · "เอารูป happy มา เพราะมันนั่งหันหน้ามาตรงเลย" · "ไม่ได้ให้แก้ใน preview อย่างเดียว ต้องแก้ของจริงด้วย" · "สร้าง path /dev/preview/room-pat จะเอาไปโชว์"
+
+- **พบ (แก้ความเข้าใจรอบ 46):** `tb_pet_animation` มี slot Evolution **ครบ 4 stage ของทุก type จริง** (Pie/POP/ปรื๊ด…) แต่ความหมายต่างกัน — egg = ท่าออก (24 เฟรม ไข่โยก→ร้าว→ระเบิดเต็มผืน) · baby/adult/evolved = ท่าเข้า (8 เฟรม เริ่มจากแสงเต็มผืน→เงา→ตัวจริง) → กฎเดิม "เล่น GIF ของ stage ที่ออก" ทำให้ baby→adult เล่นภาพ baby โผล่ (ผิด)
+- **สาเหตุขนาดไม่เท่า:** GIF 960² วางตัวสัตว์แค่ ~26–32 % ของผืน (ที่เหลือเผื่อแสงระเบิด) แต่รูปนิ่งตัดชิดเต็มกรอบ 320 · overlay เดิมวาด GIF `max-h-[100vh]` → ตัวสัตว์เหลือ ~1/3 แล้วกลับมาใหญ่ตอน reveal และขึ้นกับความสูงจอ
+- **ทำ (app #288 → develop):**
+  - `lib/pet-evolution.ts`: phase ใหม่ `prompt → playing (GIF ไข่ เฉพาะ egg) → flash → arriving (GIF stage ใหม่ 1.2 วิ) → reveal → modal` · `pickPetEvolutionAnimation` คืนเฉพาะ egg · เพิ่ม `pickPetArrivalAnimation` · `PET_EVOLUTION_GIF_SCALE = 3.4` → GIF ทั้งสองวาดในกรอบ 1088px, overlay `overflow-hidden`
+  - `lib/pet-scene.ts`: `PET_STAGE_IDLE_SLOT` baby/adult/evolved = **Happy** (fallback Sitting → Idle → Walking) → กระทบรูปนิ่ง overlay, modal, การ์ด `pet_card`, ไอคอนป้ายชื่อ/วงกลม และหน้า admin (pet-marker-menu, object-library)
+  - `PetEvolutionEvent.arrivalGifUrl` + hero ส่งค่า · harness: fixture ปรื๊ด เพิ่ม Happy + GIF ทุก stage, ปุ่ม "แชร์ให้เพื่อน" เปิด `PetShareModal` จริงบน query cache ที่ seed ไว้ (`staleTime ∞` กัน refetch → 401 → เด้ง login), section ใหม่ `PetSharePreview` = การ์ดในแถวแชทแบบ message-item
+  - **`/dev/preview/room-pat`** (public ใน `PUBLIC_PATHS` ของ proxy.ts + auth-guard.tsx, ไม่ผูก NODE_ENV) = overlay ทั้ง 3 ขั้น 2 มุมมอง + share picker + การ์ด + วงกลม/ป้ายชื่อ PixiJS · ถ้า build ไม่มี `NEXT_PUBLIC_ROOM_PET=true` หน้าจะขึ้นแถบเตือนและ overlay ไม่แสดง
+- **verify:** vitest ทั้งชุด 1702 ✅ · tsc เหลือแค่ 3 error เดิมของ develop (`pet-creation-wizard.test.tsx`, `pixi-game-scene.test.ts` — ไม่เกี่ยว) · **ถ่ายภาพจริงด้วย headless Chromium** (`playwright` ใน node_modules + chromium-1228) บน :3200 `/dev/preview/room-pat`: egg→baby ไข่ prompt ≈ 260×320 · ไข่ใน GIF ≈ 226×250 · เงา baby ≈ 170×260 · reveal ≈ 160×250 → ขนาดเดียวกัน · baby→adult = flash → GIF adult → reveal · share DM/กลุ่ม/แชนเนล + เลือกแล้ว · การ์ด 3 แบบ (ปกติ / ไม่มีรูป → รอยเท้า / body เพี้ยน → ข้อความ) — ยังไม่ได้เทสใน VO จริง (login)
+- **artifact** "Room Pet Evolution Flow" อัปเดต: เดโมเล่นได้ทั้ง 3 ช่วงด้วย geometry เดียวกับโค้ด + ข้อ 2c ภาพจริงจาก component · [evolution-flow.md](evolution-flow.md) แก้ §2/§4/§5
+- **ติด/ต่อจากนี้:** ค่า 3.4× เป็นค่าคงที่จาก asset ปัจจุบัน → ควรเขียนข้อกำหนดผืน GIF ใน Pet Management · ถ้าดีไซน์ต้องการ "ท่าออก" ของ baby/adult ต้องเพิ่ม slot · dev/uat ต้องตั้ง `NEXT_PUBLIC_ROOM_PET=true` ถึงจะโชว์ overlay บน room-pat
 
 ---
 
