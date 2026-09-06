@@ -16,9 +16,29 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#41) · app (#281) — รอบ 26–40 · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#41) · app (#282) — รอบ 26–41 · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-06 (รอบ 41) — "pet ขึ้นตั้งแต่เฟรมแรกแล้ว แต่ยังยืนค้างก่อนถึงขยับ ต้องเข้ามาแล้วเห็นขยับต่อได้เลย"
+
+- **สาเหตุ:** มี 2 สถานะที่เป็นภาพนิ่ง**โดยดีไซน์**เดิม — ช่วง "ยืน" 8 วิแรกหลังหยุด = Walking frame 0 ค้าง · pet ที่นั่งแล้วและ mood neutral = ค้างที่ frame สุดท้ายของ Sitting ตลอด (Happy loop มีเฉพาะ mood happy)
+- **ดูชีทจริงของ Pie/POP ทุก stage:** `Idle` = ยืนหายใจ/ขยับ · `Sitting` = ท่ากำลังนั่งลง (transition) · `Happy` = **นั่งอยู่**แล้วกระดิก · `Sad` = loop เศร้า
+- **ท่าใหม่ (`petPose`):**
+
+| สถานะ | เดิม | ใหม่ |
+|---|---|---|
+| หยุด < 8 วิ | Walking frame 0 นิ่ง | **Idle loop** |
+| นั่งแล้ว + happy | Sitting 1 รอบ → Happy loop | เหมือนเดิม (Happy = loop ตอนนั่ง) |
+| นั่งแล้ว + neutral | Sitting 1 รอบ → ค้าง frame สุดท้าย | **ยืน Idle loop ต่อ** (ไม่มีชีท "นั่งแบบ neutral") |
+| sad | Sad loop | เหมือนเดิม |
+| type ที่ไม่มี Idle | — | ใช้ chain เดิม |
+
+- `petIsSeated()` เป็นที่เดียวที่ตัดสินว่า pet นั่งอยู่ → hero เล่นท่าลุก (Sitting ถอยหลัง) เฉพาะตัวที่นั่งจริง ตัวที่ยืน Idle เดินออกได้เลย (ผ่าน `petSeatedRef` ให้ handler ของ ws เห็น pets/config ปัจจุบัน)
+- PR: [app #282](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/282) merge develop แล้ว · tsc ✅ · vitest **1692** ✅ · eslint/prettier ✅ · local prod build :3000
+- **ข้อที่ตัดสินเอง (บอก user แล้ว):** neutral ไม่นั่ง เพราะไม่มีชีทนั่งแบบ neutral — ถ้าอยากให้นั่งแล้วใช้ Happy loop ทุก mood ที่ไม่ sad เปลี่ยนบรรทัดเดียว
 
 ---
 
