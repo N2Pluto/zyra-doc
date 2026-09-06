@@ -16,10 +16,24 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#43) · app (#294) — รอบ 26–54 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#44) · app (#295) — รอบ 26–55 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 55) — พฤติกรรม pet v2 + overlay ขนาดเดียวกันจริง
+
+**user บอก (พฤติกรรม):** ไม่เดินผ่าน meeting zone · ไม่ออกนอก room zone · ไม่ pop กับคนใน meeting zone · happy สุ่มวิ่งเล่น 10 % / วิ่งวงกลมไล่งับหาง 5 % · ไม่ยืนซ้อนตัวละคร · sad ไม่วิ่ง เดินน้อยลงมากๆ animation ช้าลง · เดินให้ทั่ว room zone ไปหาทุกคน
+**user บอก (overlay):** "รูปยังมั่วๆ ความใหญ่ไม่เท่ากันบ้าง animation เล่นผิด step ต้องเป็น loop จนกด → evo → ท่านั่งของช่วงวัยใหม่ → happy วน · ขนาดรูปต้องเท่ากัน"
+
+- **ws [#44](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/44) → develop:** `tileAllowed` ตัด tile ใน zone type `meeting` (เป้าเดินเล่น/ก้าวเข้าหา/ทุก step) · `updateAttention` ข้าม resident ที่ยืนใน meeting · sad: ไม่สนใจใคร เดินอย่างเดียว (`petSadStepMs` 1400) 10 % ของ decision พัก 10–40 วิ ไม่วิ่ง · happy: 5 % วิ่งวง 2×2 รอบตัว 2 รอบ (ไล่งับหาง) / 10 % วิ่งไปเป้าที่ห่าง ≥ 3 ช่อง ที่ `petRunStepMs` 450 (`pet_state.step_ms` บอกจังหวะ) · เดินเล่นสุ่มทั่วทั้งห้อง (ตัดรัศมี 4 ช่องรอบจุดวาง) และครึ่งหนึ่งเดินไปช่องข้าง resident ทีละคนวน · ถ้ามีคนเดินมายืนช่องถัดไประหว่างเดิน → หยุดตรงนั้น · ไม่ออกนอกห้อง: เดิมอยู่แล้ว (zone tiles)
+- **app [#295](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/295) → develop:**
+  - `_drawPetLinks` ไม่ pop กับคนที่ยืนใน meeting zone (area zones มี `zoneType` แล้ว) · `petPaceFrameRateScale` ชีท Walking เร็วขึ้นตาม step_ms ตอนวิ่ง (450 → 2×, cap 2.5)
+  - **overlay สเกลเดียว:** ทุกชีท (loop ก่อนคลิก, นั่งลง, Happy วน, และ section ทุกท่า) วาดที่ `PET_EVOLUTION_SHEET_SCALE` 1.6 px/px เท้าอยู่ขอบล่างกรอบ 240 — เลิก fit-to-box ทีละชีท (ท่านั่ง Happy เคยถูกขยายจนเต็ม 240 ขณะที่ท่ายืนไม่เต็ม = "ใหญ่บ้างเล็กบ้าง") · GIF วาดในกรอบ 768 = 960 × 1.6 ÷ 2 (โลกใน GIF ใหญ่กว่าชีท 2 เท่า: ไข่ 250 vs 131, baby 260 vs 129, adult 310 vs 140 px) และวาง GIF ในคอลัมน์เดียวกับกรอบชีท เท้าจึงตรงกัน · `petSheetFrameCount` ชีทที่คอลัมน์น้อยกว่า frame_count (ไข่ Wobbling 4×3) เล่นตามจริง ไม่ replay เฟรม (เคยดู "มั่ว") · ลำดับยังเป็น loop → GIF ไข่แตก (egg เท่านั้น) → flash → GIF โผล่ → นั่งลง → Happy วน → modal
+- **verify:** ws `go test ./internal/hub` ✅ (เทสใหม่ 6: ไม่เข้า meeting 600 ครั้ง, ข้ามคนใน meeting, sad เดินช้าและน้อย, happy วิ่งบ้าง, ไล่งับหางจบที่เดิม/ไม่วิ่งทับคน, เดินถึงปลายห้อง 20 ช่อง + ไปข้างคน) · app vitest 1726 ✅ tsc/eslint สะอาด · **วัดจาก pixel จริงใน headless Chromium** (อ่าน canvas / วาด GIF ลง canvas) บน `/dev/preview/room-pat`: ไข่ก่อนคลิก 210 px · ไข่ใน GIF 200 px · เท้าห่างกัน 8 px · baby ท่า Happy 155 px ทั้งใน prompt ของ baby→adult และ reveal ของ egg→baby · adult นั่งลง 210 → Happy 190 บน baseline เดียว — ยังไม่ได้ทดสอบพฤติกรรม ws ใน VO จริง (ต้อง rebuild ws + app บน local)
+- **หมายเหตุ:** flash สีฟ้า 0.9 วิ ยังอยู่ระหว่าง GIF ออกกับ GIF เข้า (Figma §5.2) — ถ้าไม่ต้องการบอกได้ ตัดค่าคงที่เดียว · ค่า 1.6 / 3.2 อิงสัดส่วน asset ปัจจุบัน ถ้าศิลปินวาดโลก GIF ไม่ใช่ 2× ของชีท จะเพี้ยน ควรเขียนเป็นข้อกำหนดใน Pet Management
 
 ---
 
