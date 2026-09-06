@@ -16,10 +16,21 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#285) — รอบ 26–44
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#286) — รอบ 26–45
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-06 (รอบ 45) — pop กับ pet เชื่อมได้หลายคนพร้อมกัน → ต้องทีละคน
+
+**user บอก:** "ระบบ pop pet เชื่อมกันมากกว่าหนึ่งคนได้ ต้องเชื่อมได้ทีละคนเท่านั้น" (screenshot: 2 คนติด pet แล้วเกิด capsule ทั้งคู่)
+
+- **สาเหตุ:** `_drawPetLinks` วาด capsule ให้**ทุกคู่** (pet, member) ที่ dwell ครบ · ฝั่ง hero มี poll 200ms ของตัวเองตัดสินปุ่มมือแยกจาก scene อีกชุด
+- **ทำ:** `_drawPetLinks` 2 pass — เก็บนาฬิกา dwell/หลุดของทุกคู่ตามเดิม แล้วเลือก **คนเดียวต่อ pet** = `pickPetPopPartner` (คนที่มายืนติดก่อนสุด · เสมอตัดที่ id ให้ทุก client ตรงกัน · ตรงกับ attention list ของ AI) → capsule + หันหน้า + report เฉพาะคู่นั้น · คนอื่นยังนับเวลาต่อ พอคนแรกเดินออก คนถัดไปได้ pop · callback `(petId, memberId|null, isSelf)` → hero ตั้ง `proximityPetId` (ปุ่มมือ) จากนี้แทน poll เดิม (ลบทิ้ง) → ปุ่มกับ capsule ใช้ source เดียว คนที่สองไม่ได้ทั้งคู่
+- PR: [app #286](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/286) merge develop แล้ว · tsc ✅ · vitest **1695** ✅ · eslint/prettier ✅ · **ไม่ได้เห็นในเบราว์เซอร์**
+- ลอง (2 คน): คนแรกยืนติด 1 วิ → capsule+ปุ่ม · คนที่สองมายืนติด → ไม่มี capsule ไม่มีปุ่ม pet ยังหันหาคนแรก · คนแรกเดินออก → capsule ย้ายไปคนที่สองภายใน ~0.1 วิ
 
 ---
 
