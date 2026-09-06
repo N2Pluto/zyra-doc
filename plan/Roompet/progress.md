@@ -16,10 +16,23 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#288) — รอบ 26–47 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#289) — รอบ 26–48 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 48) — reveal ไม่ smooth (ค้างเป็นรูปนิ่ง) · รูปใหญ่เกิน
+
+**user บอก:** "animation ตอนเล่นมันไม่ smooth เล่น evo ก่อน แล้วค่อยๆ นั่งก่อน แล้วเล่น happy วนไป · รูปมันขนาดใหญ่มาก ลดลงหน่อย"
+
+- **ทำ (app #289 → develop):**
+  - reveal เล่นจริง: ชีท **Sitting 1 รอบ** (ยืน → นั่ง 0.75 วิ) แล้ว **Happy วน** จนกว่าจะคลิก — component ใหม่ `PetSheetPlayer` (canvas, row 0) ตัดเฟรมด้วย grid detection ตัวเดียวกับ VO · `lib/pet-sheet-player.ts` = จังหวะเฟรม + layout สเกลเดียว/baseline เดียว (Sitting สูงกว่า Happy ถ้า fit แยกกันตัวจะกระตุกตอนสลับ) · โหลดชีทไม่ได้ → กลับเป็นรูปนิ่ง
+  - `PET_EVOLUTION_STILL_PX` 320 → **240**, กรอบ GIF 1088 → **816** (ยัง 3.4×) · `PetEvolutionEvent.toRestAnimation` = Sitting ของ stage ใหม่ (hero + harness)
+- **verify:** vitest ทั้งชุด 1708 ✅ · tsc/eslint/prettier สะอาด (ยกเว้น 3 error เดิม) · headless Chromium บน `/dev/preview/room-pat`: prompt → GIF ไข่ → โผล่ → ยืน → กำลังนั่ง → Happy วน ในกรอบ 240 ขนาดเท่ากันตลอด — ยังไม่ได้เทสใน VO จริง (login)
+- **artifact** เดโมอัปเดตตาม (240/816 + นั่งลง → Happy วน) · ภาพในข้อ 2c ยังเป็นชุดรอบ 47 (ก่อนลดขนาด)
+- **ต่อจากนี้:** ถ้าอยากให้ prompt เคลื่อนไหวด้วย (ไข่โยก / Happy วน ก่อนคลิก) ใช้ `PetSheetPlayer` ตัวเดียวกันได้เลย — ยังไม่ทำเพราะไม่ได้ขอ
 
 ---
 
