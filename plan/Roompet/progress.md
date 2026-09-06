@@ -16,10 +16,25 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#283) — รอบ 26–42
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#284) — รอบ 26–43
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-06 (รอบ 43) — pop แล้วนั่งเลย · ป้ายคนบังป้าย pet · กรอบความคิดตอนลูบหัว
+
+**user บอก:** "ตอนเกิด pop กับ pet อยากให้มันนั่งลงเร็วขึ้น ตอนนี้ยืนเล่นพักแล้วค่อยนั่ง" · "ชื่อตัวละครไปบังป้ายชื่อ pet ถ้า hover แล้วต้องไม่บัง" · "กดลูบหัว อยากให้เป็นกรอบความคิดขึ้นบนป้ายชื่อ แสดงหน้า pet ตามช่วงวัย มี animation ลูบหัว ขึ้นหัวใจ แล้วหายไป เห็นแค่เราคนเดียว เอาหัวใจเดิมออก"
+
+| เรื่อง | ทำ |
+|---|---|
+| pop → นั่งเลย | scene แจ้ง pop เกิด/หลุด (`setOnPetPopChange`) → hero ตั้ง `popSince` ใน live position → `petSettleAt()` = เร็วสุดระหว่าง "หยุด + 8 วิ" กับ "pop เกิด" → นั่ง (Sitting 1 รอบ) แล้วเล่น loop attention (Happy = ชีทนั่ง) **ทุก mood** · `petIsSeated()` ตามด้วย → ลุกก่อนเดินยังทำงาน · walk เคลียร์ popSince |
+| ป้ายบัง | `PET_NAME_TAG_Z_HOVER` → MAX-5 เหนือทุกอย่างของตัวละครใน tag layer (ป้ายตัวเอง MAX-10 เคยเสมอกันแล้วชนะ · ป้าย hover คน MAX-7 · bubble MAX-6) |
+| กรอบความคิดลูบหัว | `PetPatBubble`: กรอบเมฆขาว + หางจุด เหนือป้ายชื่อ · หน้า pet ตาม stage (frame ตัดจากชีท) · มือ lucide ลูบ (keyframes) · หัวใจ 3 ดวงลอยขึ้นจาง · หายใน 2.2 วิ · ตำแหน่งคำนวณเหนือป้ายทุกเฟรม (`--pet-plate-top`) · ลำดับ feedback: `xp` (ถ้าได้) → `pat` · แทน ♥ tooltip เดิม · อยู่บน state ของคนลูบ → **เห็นคนเดียว** (คนอื่นยังเห็น pet เล่น Happy) · harness มี sample |
+
+- PR: [app #284](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/284) merge develop แล้ว · tsc ✅ · vitest **1694** ✅ · eslint/prettier ✅ · **ยังไม่ได้เห็นในเบราว์เซอร์** (user รัน stack เองจาก checkout หลัก — ต้อง pull develop + build)
+- ลอง: เดินติด pet 1 วิ → capsule + pet หันมา + นั่งลงทันที · hover pet → ป้าย pet อยู่หน้าป้ายทุกคน · กดมือ → กรอบความคิดหน้า pet + มือลูบ + หัวใจลอย 2 วิ แล้วหาย · เปิดอีกแท็บด้วยอีกคน → คนนั้นไม่เห็นกรอบ
 
 ---
 
