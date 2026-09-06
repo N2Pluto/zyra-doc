@@ -486,7 +486,7 @@ Max evolution within = ceil(Total XP needed ÷ Max XP / Day)  วัน
 - **การวาง pet ต้องอัปเดต `workspace_usage_count` ของ pet type นั้น** — badge และ sort `usage_count` ใน SC-PM-01 พึ่งค่านี้
 - ✅ **PM เคาะ 2026-09-04: 1 room = 1 pet บังคับ** (`uq_room_pet_one_per_zone` เปิดแล้ว) · วางได้เฉพาะ `zone_type = 'room'` · จุดวางห้ามตกใน meeting/private แม้ซ้อนอยู่ใน room
   - modal "Replace this pet" ใช้จริง: วางซ้ำห้อง → 409 → confirm → `replace: true` → pet ใหม่รับ XP/stage ต่อจากตัวเดิม (sticky Figma)
-  - ✅ **stage row ใน marker menu (Figma 4387:121093) ตัดออกจาก v1** (user/PM เคาะ 2026-09-04) — ใช้ Replace แทน ดู [ux-ui.md § สิ่งที่ Figma มีเพิ่ม](ux-ui.md)
+  - ✅ **stage row ใน marker menu (Figma 4387:121093) ทำแล้ว 2026-09-07** (user เคาะกลับ) — `PATCH …/pets/:petId {stage}` รีเซ็ต XP ไปต้นช่วง + ถามยืนยันถ้ามี XP แล้ว (api #87 / app #291, Roompet/progress.md รอบ 50)
 
 ### Business Logic / Rules
 - วาง pet = สร้าง `tb_room_pet` record: `xp = 0`, `last_activity_at = NOW()`, `last_seen_stage = 'egg'`

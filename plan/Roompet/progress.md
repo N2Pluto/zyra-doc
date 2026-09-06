@@ -16,10 +16,23 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#290) — รอบ 26–49 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#87) · ws (#42) · app (#291) — รอบ 26–50 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 50) — คนเห็น animation/modal · ปรับช่วงวัยจาก Workspace editor
+
+**user บอก:** "คนที่ขึ้น animation คือคนที่ทำ quest จน xp เต็มเท่านั้น คนอื่นขึ้นแบบทั่วไป และขึ้นคนที่เป็นสมาชิกเท่านั้น" · "workspace editor ตอนวาง pet ให้ปรับช่วงวัยได้จากเมนูอันแรก (icon เท้า) เปลี่ยนเป็นช่วงวัยจริง กดแล้วเปิดให้เลือก · ถ้า xp เปลี่ยนไปแล้ว/มีคนทำ quest แล้วให้ถามยืนยัน · เปลี่ยนช่วงวัยแล้ว xp เริ่มนับใหม่ตามค่าเริ่มต้นของช่วงนั้น · hover ให้แสดงภาพตามช่วงวัย"
+
+- **ทำ api ([#87](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/87) → develop):** `PATCH /api/{admin,user}/maps/:mapId/pets/:petId` รับ `stage` → set `last_seen_stage`, **xp = threshold ต้นช่วง** (egg 0 / baby xp_baby / adult xp_adult / evolved xp_evolve จาก tb_pet_xp_config ปัจจุบัน), `last_milestone = 0` · stage ไม่รู้จัก → 400 `INVALID_STAGE` · publish `pet_xp_changed` + `pet_stage_changed` **ไม่มี triggered_by** (ไม่มีใครได้ animation, ไม่ส่ง notification/achievement) · `RoomPet.xp_event_count` (นับ tb_room_pet_xp_event) บน editor list/get · `RoomPetService.SetXPConfig` wire ใน main.go · ไม่มี migration
+- **ทำ app ([#291](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/291) → develop):**
+  - marker menu: icon แรก = รูป **ช่วงวัยปัจจุบัน** กดแล้วเปิดแถว 4 stage ตาม Figma 4387:121093 (ปัจจุบัน opacity 100 อื่น 50 %) · hover แต่ละ stage ขึ้น preview 80px + ชื่อช่วงวัย · เลือกแล้วเรียก `setStage` → ถ้า `petHasEarnedXP` (xp ≠ ต้นช่วง หรือ `xp_event_count > 0`) ขึ้น modal ยืนยัน (shell เดียวกับ Replace this pet — เพิ่ม props title/body/confirmLabel ไม่ fork) · toast บอกช่วงวัยใหม่ · `PetStageIcon` แยกออกจาก palette hover card มาใช้ร่วม
+  - VO: `pet_stage_changed` เปิด overlay/modal เฉพาะ **สมาชิกในห้องของ pet** (`is_resident`) — คนที่ XP ทำให้ข้ามได้ลำดับเต็ม คนอื่นในห้องได้ modal คนนอกห้องไม่เห็นอะไร (ตีความ "สมาชิก" = residents เหมือน quest/ลูบ/วงกลม)
+- **verify:** api `go build/vet/test` ✅ (เทสใหม่ start-XP table + สอดคล้อง `derivePetStageFromXP`, handler stage-only/invalid) · app vitest ทั้งชุด 1715 ✅ (pet-marker-menu +7) · tsc/eslint สะอาด · **ยังไม่ได้ live-test ใน editor** (admin login ในเบราว์เซอร์ทดสอบติด) — ทดสอบจริง: เปิด Workspace editor → คลิก pet → กดรูปช่วงวัย → เลือก → ดู XP bar ใน VO เปลี่ยน
+- **ติด/ต่อจากนี้:** ถ้า "สมาชิก" ที่ user หมายถึงคือสมาชิก workspace ทุกคน (ไม่ใช่แค่คนในห้อง) ให้ถอด gate `is_resident` บรรทัดเดียวใน hero · override ไป stage ที่สูงกว่าจะทำให้คนในห้องที่ออนไลน์เห็น modal "สัตว์เลี้ยงของคุณเติบโตแล้ว" (ตั้งใจ — pet โตจริง) · undo/redo ของ editor ยังไม่ครอบ pet
 
 ---
 

@@ -16,7 +16,7 @@
 
 ws `BroadcastZoneEvent` ส่ง `pet_stage_changed` ให้**ทุก client ที่ต่ออยู่กับ workspace** (ทุกชั้น) · client เช็ค `isPetStageAdvance` (admin ยก threshold จน stage ถอย → เงียบ)
 
-| | คนที่ XP ทำให้ข้าม (`triggered_by === me`) | คนอื่นที่เปิด VO อยู่ | คนที่ไม่ออนไลน์ |
+| | คนที่ XP ทำให้ข้าม (`triggered_by === me`) | สมาชิกในห้องคนอื่นที่เปิด VO อยู่ (`is_resident` — รอบ 50: คนนอกห้องไม่เห็น) | คนที่ไม่ออนไลน์ |
 |---|---|---|---|
 | หน้าจอ | `PetEvolutionOverlay` เต็มจอ: **prompt** (คลิกก่อน · ตัวปัจจุบันเคลื่อนไหววน: ไข่ Wobbling / Happy · กรอบ 240px) → **playing** GIF ไข่แตก 3.6 วิ (เฉพาะ egg → baby) → **flash** 0.9 วิ → **arriving** GIF ของ stage ใหม่โผล่ 1.2 วิ (ไม่มี GIF → ข้าม) → **reveal** ตัวใหม่นั่งลง (Sitting 1 รอบ) แล้ว Happy วน จนคลิก → **modal** | **modal** ทันที | ไม่มี |
 | ขนาด/รูป | รูปนิ่ง = Happy เฟรมแรก (นั่งหันหน้ามา · ไข่ = Wobbling) 240px (รอบ 48 ลดจาก 320) · GIF ทั้งสองวาดในกรอบ 816px = `PET_EVOLUTION_GIF_SCALE` 3.4× (ตัวสัตว์ใน GIF 960² กินแค่ ~26–32 % ของผืน) ตัดส่วนล้น → ตัวสัตว์ขนาดเท่ากันตลอด | modal รูป Happy 112px | — |
