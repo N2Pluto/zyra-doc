@@ -16,10 +16,20 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#87) · ws (#42) · app (#291) — รอบ 26–50 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#42) · app (#292) — รอบ 26–51 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 51) — "รูปไม่ขึ้นเลย" ใน Workspace editor ของ owner
+
+**user บอก:** screenshot editor ฝั่ง owner — ไอคอน stage ทุกที่ (marker menu, แถวช่วงวัย, hover card ใน palette) เป็นรอยเท้าหมด รวมทั้งไข่
+
+- **สาเหตุ:** `usePetTypeAnimations` ดึงชีทของ pet type ผ่าน `GET /api/admin/pets/:id` — owner เรียกไม่ได้ (403) → hook cache `[]` → `pickStageIdleAnimation` คืน null ทุก stage → fallback รอยเท้า (ผิด rule 15 มาตั้งแต่รอบ 12 แต่ทดสอบกันมาในหน้า admin ตลอด)
+- **ทำ:** api [#88](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/88) เพิ่ม `GET /api/user/pets/:id` (UserGuard, GetDetail เดิม, ไม่กรอง status เพื่อให้ pet ที่วางแล้วของ type ที่ถูก hide ทีหลังยังวาดได้) · app [#292](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/292) `getPetForUser` + hook ใช้ route นี้ทั้งโหมด admin และ owner
+- **verify:** api `go test ./internal/handler` ✅ (เทส GetDetail 200/404) · app vitest ทั้งชุด 1715 ✅ tsc/eslint/prettier สะอาด · **ยังไม่ได้ลองใน editor จริง** — ต้อง pull + build ทั้ง api และ app แล้วเปิด Workspace editor ใหม่ (รูปควรขึ้นทั้ง marker menu / แถวช่วงวัย / hover card)
 
 ---
 
