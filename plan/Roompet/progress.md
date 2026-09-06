@@ -16,9 +16,25 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#40) · app (#280) — รอบ 26–39 · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#41) · app (#281) — รอบ 26–40 · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-06 (รอบ 40) — โหลดเข้าแล้วไม่เห็น pet ทันที / เห็นแล้วยืนค้าง → พร้อมตั้งแต่หน้าโหลด
+
+**user บอก:** "โหลดเข้าไปจะไม่เห็นสัตว์ทันที และเมื่อเห็น สัตว์เลี้ยงยืนท่าค้างอยู่ก่อน อยากให้โหลดให้เสร็จตั้งแต่หน้าโหลด"
+
+| สาเหตุ | แก้ | ที่ |
+|---|---|---|
+| snapshot ตำแหน่ง pet (`pet_state` ×N หลัง welcome) มาถึงตอนอยู่หน้า `/loading` **ก่อน** hero ของ `/play` จะมี handler → pet รอ heartbeat ถัดไป (≤ 2 วิ) ถึงจะโผล่ | `vo-session-store` เก็บ `pet_state` ล่าสุดต่อ pet (`pets`, เคลียร์พร้อม session, `pet_removed` ลบ) · hero seed `petLiveBufferRef` จาก store ตอน mount (`moveMs: 0` = วางเลย ไม่ glide) | app #281 |
+| sheet โหลด+ตัด frame **หลัง** office ขึ้นจอ ทีละ entity (ตัด grid บนรูป 1000×1000 = ช้า) | cutter ของ `PetLayer` memo ต่อ sheet (`makeCachedCutter` — ตัดครั้งเดียวต่อ session, ตัดพังไม่จำ) · `/loading` prefetch pet list + XP config เข้า React Query key เดียวกับ hook แล้ว warm sheet rest/walk/Happy/Sad ของ stage ปัจจุบันทุกตัว (`vo-preload.preloadPetSheets`) เป็น asset wave C · จำกัด 6 วิ ไม่ค้างหน้าโหลด | app #281 |
+| state แรกของ pet ถูกนับเป็น "เพิ่งหยุด" → ยืนค้าง 8 วิ ก่อนนั่ง ทุกครั้งที่เข้า | ws ส่ง **`stopped_for_ms`** ใน `pet_state` (petAI จำ `stoppedAt`: seed / ก้าวสุดท้ายลง / ถูกตัดเดิน) · client ตั้ง `stoppedAt = now − stopped_for_ms` → pet ที่นั่งอยู่แล้วเปิดมาก็นั่ง/เล่นท่า mood เลย | ws #41 · app #281 |
+
+- PR: [ws #41](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/41) · [app #281](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/281) — merge develop แล้ว
+- verify: ws `go test ./...` ✅ (test ใหม่ `ReportsHowLongThePetHasBeenStanding`) · app tsc ✅ · vitest **1688** ✅ (ใหม่: memo cutter + retry เมื่อพัง · `collectPetSheets` ต่อ stage/dedupe/egg · `preloadPetSheets`) · eslint/prettier ✅ · local: prod build :3000 + ws build ใหม่บน 3003 พร้อมให้ user ลอง — **ยังไม่ได้เห็นเองว่า pet ขึ้นตั้งแต่เฟรมแรก** (ต้อง login)
+- ลอง: reload หน้า VO → pet ควรอยู่ตำแหน่งจริง + ท่าจริง (นั่ง/mood) ตั้งแต่เฟรมแรก ไม่ยืนค้าง ไม่ pop ทีละตัว · หน้าโหลดอาจนานขึ้นเล็กน้อย (โหลด sheet ≤ 6 วิ)
 
 ---
 
