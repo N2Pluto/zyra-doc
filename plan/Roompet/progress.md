@@ -16,9 +16,25 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#41) · app (#282) — รอบ 26–41 · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#283) — รอบ 26–42
+> **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-06 (รอบ 42) — pop กับ pet ไม่หันหน้าทันที · ตัว pet ชนขอบล่าง tile
+
+**user บอก:** "ตอนเชื่อม pop กับ pet มันไม่หันหน้ามาทันที ต้องรอ delay … ถ้าเกิด pop ให้หันหน้าหาคนที่เกิด pop ทันที" · "ขยับตำแหน่งตัว pet ขึ้นไปนิดหน่อย มันชนขอบล่างมากเกินไป"
+
+| เรื่อง | สาเหตุ | แก้ | ที่ |
+|---|---|---|---|
+| หันช้า (ฝั่ง ws) | `updateAttention` อยู่**หลัง** rest gate → pet ที่พักอยู่ (4–20 วิ) หันหลังพักจบ | ย้ายบล็อก attention ไว้ก่อน gate: หัน (และก้าวเข้าหาเมื่อยืนนิ่งพอ) ใน tick ที่คนมาถึง · wander ยังรอพักจบ | [ws #42](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/42) |
+| หันช้า (ฝั่ง client) | ต้องรอ `pet_state` จาก ws (tick 200ms + network) | scene ตั้ง **facing override** บน `PetLayer` ตอน pop เกิด (คู่ที่เกิดก่อนชนะ · `petFacingTowards` กฎเดียวกับ AI) → หันเฟรมเดียวกับ capsule · ws ยืนยันตามมา · ตอนเดินใช้ facing ของ AI | [app #283](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/283) |
+| ชนขอบล่าง | frame ของ pet ถูก crop ชิดขอบด้วย grid detector ส่วน sheet ตัวละครมี margin → วางบน foot line เดียวกันแล้ว pet เตี้ยลงไปชนขอบ tile | `PET_DRAW_LIFT_Y = 5` ยกเฉพาะตอนวาด (sprite/outline/ป้าย/วง/hit rect) · foot line, depth sort, tile maths เหมือนเดิม | app #283 |
+
+- verify: ws `go test ./...` ✅ · app tsc ✅ · vitest **1693** ✅ (ใหม่: facing override ยืน/เดิน/เคลียร์ · anchor/rect ตาม lift) · eslint/prettier ✅ · **ยังไม่ได้เห็นบน local** — user รัน stack เองจาก checkout หลักที่ยังเก่า (ดู blockquote บน)
+- ลอง (หลัง pull + build ใหม่ทั้ง 3 repo): เดินไปติด pet 1 ช่อง หยุด 1 วิ → capsule + pet หันมาพร้อมกันทันที · ตัว pet ยกขึ้นจากขอบล่าง ~5px
 
 ---
 
