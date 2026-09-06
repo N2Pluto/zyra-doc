@@ -16,7 +16,16 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#39) · app (#276) — รอบ 26–35 · migration ล่าสุดบน dev: 93
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#39) · app (#277) — รอบ 26–36 · migration ล่าสุดบน dev: 93
+
+---
+
+## 2026-09-06 (รอบ 36) — "ไหนปุ่ม??" — 🤚 ถูกวาดอยู่**หลัง**แมพมาตลอด
+
+- **สาเหตุจริง:** canvas container เป็น `absolute inset-0 z-1` · wrapper ของ `PetInteractionOverlay` เป็น sibling แบบ absolute **ไม่มี z-index** → อยู่ใต้แมพ · React render ทุกครั้งแต่ไม่มีใครเห็น ตั้งแต่ #251 (6 รอบ) · capsule เห็นเพราะวาด**ใน** canvas — จึงเป็น "ครึ่งเดียวของ pop" ที่โผล่มาให้เห็น (logic proximity ที่แก้ในรอบ 28/35 ไม่ใช่ตัวปิดกั้น)
+- **แก้:** `z-30` (เหนือ HUD z-20 · ใต้ pet panel z-40) — [app #277](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/277) · test ใหม่ pin class + ปุ่มกดแล้วลูบ + hint ขึ้นคู่กัน
+- บันทึกเป็น memory: overlay DOM ที่เป็น sibling ของ canvas ต้องมี z เสมอ
+- vitest **1668** ✅ · **ยังไม่ได้เห็นในเบราว์เซอร์** — ครั้งนี้เป็น stacking ล้วน reload dev แล้วควรเห็น 🤚 + `Press [P]` ทันทีที่ยืนติด pet ~1 วิ
 
 ---
 
