@@ -16,7 +16,18 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#39) · app (#275) — รอบ 26–34 · migration ล่าสุดบน dev: 93
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#39) · app (#276) — รอบ 26–35 · migration ล่าสุดบน dev: 93
+
+---
+
+## 2026-09-06 (รอบ 35) — pet pop ใช้กฎเดียวกับ pop chat space · 🤚 ไม่ขึ้น
+
+| user บอก | ทำ |
+|---|---|
+| pop กับสัตว์ให้เกิดแบบเดียวกับตัวละคร: เดินไปหยุด รอนิดหน่อย · **1 ช่องเท่านั้น** · หลุดแบบเดียวกัน | ระยะ `PET_STROKE_RANGE_TILES` 2→**1** (Chebyshev เท่า `chatProximityRadius`) · เกิดหลังยืนนิ่งข้าง pet **1 วิ** (`PET_LINK_DWELL_MS` = 500 stop grace + 500 form debounce ของ ws) โดยทั้งคู่ tile ไม่เปลี่ยน · หลุดหลังห่างเกิน **100 ms** (`chatEndDebounce`) · เดินผ่านไม่ pop |
+| เข้าไปใกล้แล้วไม่เห็น UI ลูบ | สาเหตุที่น่าจะเป็น: 🤚/`Press [P]` อิง `settledTile` ที่ commit เฉพาะตอน path จบ/snap ส่วน capsule อ่านตำแหน่งจาก engine ตรง → อันหนึ่งขึ้นอันหนึ่งไม่ขึ้น · ตอนนี้ poll `getPlayerTile()` ทุก 200ms ด้วยนาฬิกา dwell เดียวกัน → 🤚 + hint + capsule ขึ้น/หายพร้อมกัน |
+
+- PR: [app #276](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/276) · vitest **1665** ✅ · **ยังไม่ได้เห็นในเบราว์เซอร์** — ลอง: เดินไปติด pet 1 ช่อง หยุด ~1 วิ → capsule เขียว + 🤚 + `Press [P]` พร้อมกัน · ถอยออก 2 ช่อง → หายทันที
 
 ---
 

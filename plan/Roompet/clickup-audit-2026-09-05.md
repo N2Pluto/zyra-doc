@@ -57,7 +57,7 @@
 | card | ของจริง | สถานะ |
 |---|---|---|
 | กด 🤚 หรือ P → happy animation → +1 XP → ♥ → mood happy | ✅ (app #251) · **ปุ่ม 🤚 ขึ้นเองเมื่อ resident เดินเข้าใกล้ ≤2 tile** (app #265, user 09-05) · XP = config `xp_play_with_pet` · **ตอนนี้ปิดอยู่ (config v12) → ลูบได้แต่ไม่ได้ XP** | ⚠️ config |
-| bubble เมื่ออยู่ใน radius 2 | ✅ | ✅ |
+| bubble เมื่ออยู่ใน radius 2 | **radius 1 + ยืนนิ่ง 1 วิ** (กฎเดียวกับ pop chat space — user 09-06, app #276) | 🔀 user |
 | "pet เดินผ่านมา: bubble โชว์เอง 3 วิ" | ❌ ไม่ทำ — bubble โชว์ตอน hover/ใกล้เท่านั้น | ❌ |
 | **Feed** 3/วัน | card ตัดชื่อ "(ป้อน / pet)" ทิ้งแล้ว แต่ AC ยังมี Feed | 🔀 PM (ไม่มี Feed) |
 | Stroke 5/วัน/user | config `times` = 1 (ค่า seed) · **ตอนนี้ quota เป็นของห้อง ไม่ใช่ต่อ user** (user เคาะ 09-05) | 🔀 user decision · ❓ ตั้ง times=5 |
