@@ -16,8 +16,30 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#40) · app (#279) — รอบ 26–38 · migration ล่าสุดบน dev: 93
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#40) · app (#280) — รอบ 26–39 · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
+> **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-06 (รอบ 39) — ลองบน local จริง (build+start :3000) → 6 จุด + คูลดาวน์ลูบ 30 นาที
+
+**user บอกเป็นชุด (ลองบน local ทีละรอบ):** "วงกลมไม่มีพื้นหลังของสัตว์เลี้ยง" · "จาก emoji เป็น icon และแสดงให้เป็นปุ่ม" · "การรันต้อง build ก่อนและ start run ที่ port 3000" · "วางสัตว์เลี้ยงใน ฟหกฟหก" / "ไม่เห็นเลย" · "ผิด เอาชื่อกลับมาตอนที่ซูมเข้าไป" · "ซูมออกกดรูปมือแล้วขึ้นเหมือนให้กดเดิน" · "hover ป้ายชื่อแล้วขึ้นชื่อ zone ของคนนั้น ต้องไม่ขึ้น" · "ลูบหัวได้ 30 นาทีต่อคน · เพิ่ม hover ให้ปุ่มลูบ"
+
+| เรื่อง | สาเหตุ / ทำ | ที่ |
+|---|---|---|
+| pet ไม่ขึ้นบน local เลย | **flag ไม่เปิด**: โค้ดอ่าน `NEXT_PUBLIC_ROOM_PET` แต่ `.env` มีแค่ `NEXT_PUBLIC_PET` (เมนู admin คนละตัว) → build ใหม่ด้วย flag · **ws/api บน local เป็น build 4 ก.ย.** (ws ยังไม่มี pet AI → ไม่มี `pet_state` → client ไม่วาด) → rebuild จาก develop + restart 3003/3002 · วาง pet เพิ่ม 1 ตัว (Pie, กลุ่ม Room 1, tile 47,10) ใน dev DB — ห้อง test ทั้งสองมี pet อยู่แล้ว | local เท่านั้น |
+| วงกลมโปร่ง | รูปในวงเป็น frame ตัดจาก spritesheet มีมุมโปร่ง → วางพื้นทึบสีป้าย (#141420) ไว้หลังเสมอ | app #280 |
+| 🤚 → ปุ่มจริง | disc เขียว #58D68D ขอบขาว + icon มือ lucide (rule 12) วาดด้วย `Graphics.svg` · **hover**: #4dc47d + 1.15× + cursor pointer (`PetLayer.petButtonAt/setButtonHovered`, scene ตั้ง `canvas.style.cursor`) ทั้งปุ่มในป้ายและบนวง | app #280 |
+| เอาป้ายกลับมา | รอบ 38 เอาป้ายออกทุก zoom → **ผิด** · ตอนนี้: zoom ≥ 3 ป้าย (ปุ่มอยู่ท้ายป้าย) · level 1–2 วงกลม (ปุ่มที่ขอบวง) | app #280 |
+| ซูมออกกดมือแล้วขึ้น "Double click to move here" | ปุ่มคร่อมขอบวง hit-test เช็คแค่วง → กดครึ่งนอกหลุดถึงพื้น → hit นับวง+ปุ่ม (test pin ขอบนอกสุดของปุ่ม) | app #280 |
+| hover ป้ายขึ้นชื่อ zone | `scene.nameplateAt(worldX, worldY)` (ป้าย/วงของคน + ป้าย/วง/ตัว pet) → hero ไม่ตั้ง hoveredZone / claim chip / lock overlay ตอน pointer อยู่บนป้าย | app #280 |
+| ลูบได้ 30 นาทีต่อคน | ตาราง **`tb_room_pet_stroke`** (mig 94 + embedded DDL) บันทึกทุกครั้งที่ลูบแม้ไม่ได้ XP (ledger มีแถวเฉพาะตอนได้ XP ใช้คุมไม่ได้ตอน activity ปิด) · `/play` → **429 `STROKE_COOLDOWN` + `detail.next_at`** · response `next_stroke_at` · list/status `stroke_available_at` ของผู้เรียก · client ซ่อนปุ่มจนถึงเวลา กลับมาเอง · `[P]` เงียบตอนคูลดาวน์ · **ตีความ: ต่อคนต่อ pet** | api #86 · app #280 |
+
+- PR: [app #280](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/280) · [api #86](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/86) — merge develop แล้วทั้งคู่ · mig 94 รันบน dev DB แล้ว
+- verify: api `go test ./...` ✅ (test ใหม่ 3) · app tsc ✅ · vitest **1684** ✅ · eslint/prettier ✅ · **เห็นจริงบน local**: prod build :3000 + api/ws develop ล่าสุด user เดินทดสอบเอง (screenshot 3 รอบ) + raster จาก PixiJS harness (`/dev/room-pet-preview` มี section วงกลม/ป้าย ปุ่ม hover)
+- **วิธี verify บน local ที่ใช้ได้จริง (จดไว้):** dev harness หน้า `/dev/room-pet-preview` expose `__harness = {app, tick}` บน host div → ตอน Browser pane ซ่อน rAF ไม่เดิน ให้เรียก `tick()` เองแล้ว `renderer.extract.base64()` → เขียน PNG ดูได้ · หน้า VO จริงยังต้อง login (พิมพ์รหัสไม่ได้)
+- ค้าง: tooltip บอกเวลาที่เหลือตอนกด `[P]` ระหว่างคูลดาวน์ (ยังไม่ทำ ต้องเพิ่ม i18n) · ถ้าคูลดาวน์ต้องเป็น "ต่อคนรวมทุก pet" แก้ query เดียวใน `lastStrokeAt`
 
 ---
 
