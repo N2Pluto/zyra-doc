@@ -16,10 +16,21 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#289) — รอบ 26–48 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#290) — รอบ 26–49 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 49) — ก่อนคลิกต้องเคลื่อนไหววนไปก่อน
+
+**user บอก:** "ก่อนจะกด click มันต้องเล่น animation วนไปเรื่อยๆ ก่อน" (screenshot prompt ที่เป็นรูปนิ่ง Happy)
+
+- **ทำ (app #290 → develop):** phase prompt ใช้ `PetSheetPlayer` ตัวเดียวกับ reveal — ไข่เล่น Wobbling วน, baby/adult เล่น Happy วน ในกรอบ 240 จนกว่าจะคลิก · โหลดชีทไม่ได้ → รูปนิ่งเหมือนเดิม
+- **verify:** vitest ทั้งชุด ✅ · headless Chromium บน `/dev/preview/room-pat`: มี canvas 1 ตัวใน prompt ทั้ง egg→baby และ baby→adult, ภาพ 3 ช็อตห่างกัน 90–260 ms ต่างกันทุกคู่ = เคลื่อนไหวจริง — ยังไม่ได้เทสใน VO จริง (login)
+- **artifact** เดโมอัปเดต: prompt วน (ไข่โยก 4 เฟรม @16 fps / Happy @8 fps) แล้วต่อด้วยลำดับเดิม
+- ตอนนี้ทั้งลำดับไม่มีเฟรมนิ่งเหลือแล้ว: วน → GIF ออก (egg) → flash → GIF เข้า → นั่งลง → Happy วน → modal (รูปใน modal ยังนิ่ง 160px ตาม Figma)
 
 ---
 
