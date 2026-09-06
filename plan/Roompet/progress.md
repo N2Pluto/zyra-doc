@@ -16,10 +16,18 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#42) · app (#293) — รอบ 26–52 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#42) · app (#294) — รอบ 26–53 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 53) — วงกลม pet ตอนซูมออกพื้นดำ → เขียว Zyra (และ avatar ใน panel)
+
+- **user บอก:** "ซูมออกมาแล้วเห็นเป็นวงกลมของ pet ตอนนี้พื้นหลังสีดำ อยากให้แก้เป็นสีเขียว zyra เมนูตอน click ด้วย"
+- **ทำ (app [#294](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/294) → develop):** `PET_CIRCLE_BG` จากสีป้ายคน (`0x141420`) → `0x58D68D` · avatar วงกลมใน `VOPetPanel` จากชมพู `#FFA8A8` → `#58D68D`
+- **verify:** vitest ทั้งชุด 1719 ✅ (เทส panel อัปเดตสี) tsc/eslint สะอาด · ภาพจาก harness ส่วนวงกลม PixiJS — ยังไม่ได้ดูใน VO จริง
 
 ---
 
