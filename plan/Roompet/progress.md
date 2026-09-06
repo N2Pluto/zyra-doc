@@ -16,10 +16,24 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#42) · app (#292) — รอบ 26–51 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#42) · app (#293) — รอบ 26–52 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 52) — ท่าเศร้าช้าลง + กรอบเศร้า · ลูบได้เฉพาะใน pop · ปุ่มลูบชนตัวละคร · หน้าโชว์เล่นได้ทุกท่า
+
+**user บอก:** "ตอน mood sad อยากให้ animation ช้าลง เหมือน pet กำลังเศร้า แล้วขึ้นกรอบข้อความเหมือนตอนลูบหัวว่าเศร้า 3 นาทีครั้ง เฉพาะสมาชิก" · "/dev/preview/room-pat เพิ่ม animation ให้กดเล่นครบทุกท่า" · "ปุ่มลูบหัวตรงกับตัวละครคนอื่นจะกดโดนตัวละครแทน" · "คนที่จะลูบหัวได้ต้องอยู่ใน pop เท่านั้น"
+
+- **ทำ (app [#293](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/293) → develop):**
+  - **เศร้า:** `buildScenePets` คูณ frame rate ด้วย `PET_SAD_FRAME_RATE_SCALE` 0.5 ทุกชีทที่เล่นตอน mood sad (รวมเดิน) · ทุก 3 นาที (`PET_SAD_BUBBLE_INTERVAL_MS`, ครั้งแรกหลังเข้า 8 วิ) ขึ้นกรอบความคิดแบบเดียวกับตอนลูบ (`PetPatBubble variant="sad"`: หน้าจากชีท Sad + น้ำตา 2 หยด, keyframe `pet-sad-tear`) นาน 2.6 วิ **เฉพาะ resident ของห้อง** (`is_resident`) · หลายตัวเศร้าพร้อมกันขึ้นทีละตัว (`petSadBubbleSchedule`) · ถ้ากำลังเล่น feedback ของการลูบอยู่ข้ามรอบนั้น
+  - **ลูบได้เฉพาะใน pop:** ปุ่มมือ/[P] ใช้ `proximityPetId` (pop link จาก engine) อย่างเดียว ถอด `strokeablePetId`/`hoveredPetId` (เดินมาใกล้/hover ไม่พอแล้ว)
+  - **ลำดับคลิก** ใน `scene.ts`: ปุ่มมือของ pet → ตัวละครคนอื่น → ตัว pet → zone/เดิน (เดิมตัวละครมาก่อน คนใน pop ยืนทับปุ่มพอดีเลยกดโดนคน)
+  - **หน้าโชว์** `/dev/preview/room-pat` เพิ่ม section "ทุกท่า": stage × slot (Happy/Idle/Sad/Sitting/Walking/Wobbling/Evolution) × แถวทิศ 0–3 × ความเร็วปกติ/เศร้า · fixture เพิ่ม Idle + Sad · `PetSheetPlayer` รับ `directionRow`/`speed`
+- **verify:** vitest ทั้งชุด 1719 ✅ (เทสใหม่: สเกล fps ตอนเศร้า, ตารางเวลากรอบเศร้า, bubble variant sad) · tsc/eslint สะอาด · headless Chromium บนหน้าโชว์: section ทุกท่าเล่นได้ (Sad 2 ช็อตต่างกัน = ขยับจริง, แถวซ้าย, Evolution GIF, ไข่) · **ยังไม่ได้ทดสอบใน VO จริง** (login): กรอบเศร้าทุก 3 นาที, ปุ่มมือเฉพาะใน pop, คลิกปุ่มมือทับตัวละคร — ต้องลองบน local
+- **ต่อจากนี้:** ถ้าอยากให้กรอบเศร้าขึ้นถี่/นานกว่านี้ แก้ค่าคงที่ใน `lib/pet-interaction.ts` · การลูบเดิมที่ทำได้จากการเดินมาใกล้ถูกตัดตามที่ขอ — ถ้า pop ไม่เกิด (pet เดินอยู่) จะลูบไม่ได้จนกว่าจะหยุดและเชื่อม pop
 
 ---
 
