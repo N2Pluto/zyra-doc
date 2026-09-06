@@ -16,10 +16,21 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#284) — รอบ 26–43
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#285) — รอบ 26–44
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-06 (รอบ 44) — XP medal บน quest tile ไม่ตรง Figma
+
+**user บอก:** "รูป xp icon มันแปลก ไม่ตรงตาม Figma" (Pet menu `4381:424480` → quest tile `4331:343228`)
+
+- **สาเหตุ:** `xp-icon.png` บน R2 (รอบ 20 กว่า) เป็นภาพ 50×50 ที่ย่อจากศิลป์ต้นฉบับ → เบลอทุกขนาด และเรา render medal แค่ 24px กลาง tile ส่วน Figma ใช้ image fill 1024² ของเหรียญเต็ม tile + "+N" pixel font หนาขอบดำทับริบบิ้น
+- **ทำ:** ดึง image fill จาก Figma (1024²) → trim ให้เหลือเหรียญ → ย่อเป็น 192² → อัป R2 **`static/pet/shared/xp-medal.png`** (key ใหม่ เพราะ key เก่า cache immutable 1 ปี) · `PET_XP_ICON_URL` ชี้ไฟล์ใหม่ (tooltip +XP 16px คมขึ้นด้วย) · tile 50×50 radius 8 white/10 · medal 34px ชิดบน · "+N" Pixelify 15px bold ขอบดำ 1px
+- PR: [app #285](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/285) merge develop แล้ว · tsc ✅ · vitest **1694** ✅ · eslint/prettier ✅ · **ไม่ได้เห็นในเบราว์เซอร์** (เทียบจาก Figma export crop กับ geometry ที่วัด)
+- asset เก่า `xp-icon.png` ยังอยู่บน R2 (ไม่มีใครใช้แล้ว) — ลบได้ถ้าต้องการ
 
 ---
 
