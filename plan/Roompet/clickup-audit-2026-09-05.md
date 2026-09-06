@@ -42,7 +42,7 @@
 |---|---|---|
 | Wander จุดสุ่มใน room boundary · รอ 3–8 วิ · A* หลีก collision · 50% | ครบ · **วันนี้เจอเดินออกนอกห้องบน dev** เพราะ workspace เก่าไม่มี zone snapshot ใน Redis → แก้ fail-closed ([ws #34](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/34)) + backfill snapshot ([api #80](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/80)) | ✅ (แก้แล้ววันนี้) |
 | Walk animation 4 direction เหมือน avatar | Walking sheet + facing row 0–3 (app #259, #263) | ✅ |
-| Idle "อยู่มุมห้อง/จุด favorite" เล่น idle loop หาว/เงย/กระดิก | นิ่ง = **Sitting** (spec PetManagement ไม่มี slot Idle) · ไม่มี "จุด favorite" — พักตรงที่เดินถึง | 🔀 slot spec |
+| Idle "อยู่มุมห้อง/จุด favorite" เล่น idle loop หาว/เงย/กระดิก | หยุด = ยืนนิ่ง 8 วิ → **Sitting เล่น 1 รอบ (ท่ากำลังนั่งลง) แล้วค้างนั่ง** → happy เล่น Happy loop (app #275) · ไม่มี "จุด favorite" — พักตรงที่เดินถึง | 🔀 slot spec |
 | Egg: wobble เท่านั้น ไม่เดิน | ✅ | ✅ |
 | React: หันหา (radius 3) · "notice animation หูตั้งตาเบิก" · เข้าหา 1 tile หลังยืนนิ่ง 3 วิ · random เมื่อหลายคน | หันหา / เข้าหา ✅ · **หยุดนิ่ง + หันหาคนแรก ไม่ random** (D12, user เคาะ) · **notice animation ❌** (ไม่มี slot ให้) | 🔀 user · ⚠️ |
 | Hatch เดิน**ช้า** / Grow เดิน / Evolve ทุก behavior + special | ความเร็วเดียว ไม่มี special | ❌ |

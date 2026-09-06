@@ -16,7 +16,19 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#39) · app (#274) — รอบ 26–33 · migration ล่าสุดบน dev: 93
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#39) · app (#275) — รอบ 26–34 · migration ล่าสุดบน dev: 93
+
+---
+
+## 2026-09-06 (รอบ 34) — user เจอสาเหตุจริงของ "นั่งแล้วลุก": sheet Sitting คือท่ากำลังนั่งลง
+
+- **user ชี้:** เฟรมของ slot `Sitting` = การเคลื่อนไหวจากยืน→นั่ง ดังนั้น loop = นั่งลง-ลุก-นั่งลง ตลอด → "เล่นรอบเดียว แล้วไปเล่นท่าของ mood แทน"
+- **ทำ ([app #275](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/275)):**
+  - `PetLayer` มี playback 3 แบบ: `loop` · `still` (ค้างเฟรม 0 = ยืน) · **`once`** (เล่นจากตอนที่รับ sheet มาจนจบแล้ว**ค้างเฟรมสุดท้าย** = นั่งอยู่)
+  - `petPose`: เดิน→Walking loop · ลูบ→Happy · sad→Sad · egg→Wobbling · หยุด <8 วิ→ยืน (Walking เฟรม 0) · นิ่งครบ 8 วิ→**Sitting once** แล้วค้างนั่ง → mood happy เล่น **Happy loop** ต่อ · neutral นั่งนิ่ง
+  - hero ตั้ง timer ที่ 2 จุด (เริ่มนั่ง / นั่งเสร็จ = +ความยาว sheet) เพราะไม่มี event
+- ตารางท่าฉบับสุดท้าย (แทนของรอบ 33): เดิน=Walking · หยุด<8วิ=ยืนนิ่ง · นั่งลง=Sitting 1 รอบ · นั่งแล้ว: happy=Happy loop / neutral=ค้างท่านั่ง · egg=Wobbling · sad=Sad · ลูบ=Happy
+- **verify:** vitest **1665** ✅ · merge develop · **ยังไม่ได้เห็นในเบราว์เซอร์**
 
 ---
 
