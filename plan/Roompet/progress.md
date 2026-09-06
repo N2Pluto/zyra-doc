@@ -16,10 +16,19 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#44) · app (#295) — รอบ 26–55 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#44) · app (#297) — รอบ 26–56 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 56) — หน้าโชว์เปลี่ยนเป็น type "Pie"
+
+- **user บอก:** "/dev/preview/room-pat เปลี่ยน pet เป็นตัวที่ชื่อ Pie เพราะตัวนี้ไฟล์ถูกต้องทุกรูป"
+- **ทำ (app [#296](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/296) + format #297 → develop):** `real-pet-fixture.ts` ชี้ไป Pie (`7117ac29`, active, 20 แถว animation) แทน ปรื๊ด (`1e77b16b` ถูก soft-delete แล้ว บางชีทเพี้ยน) ทุก section ของหน้าโชว์/harness ตามไป (evo flow, ทุกท่า, sprite strip, วงกลม, ป้ายชื่อ, การ์ดแชร์)
+- **verify:** vitest 1726 ✅ tsc/eslint สะอาด · headless Chromium: section ทุกท่าเล่นได้ · ขนาด overlay ยังสเกลเดียว (ไข่ 210 vs GIF 200 px, Happy baby 163 px เท่ากันทั้ง prompt และ reveal, adult Happy 189)
+- **หมายเหตุ:** type ที่ active บน dev ตอนนี้มีแค่ POP กับ Pie — pet ที่วางไว้ด้วย type ที่ถูกลบยังวาดได้ผ่าน `/api/user/pets/:id` (ไม่กรอง status)
 
 ---
 
