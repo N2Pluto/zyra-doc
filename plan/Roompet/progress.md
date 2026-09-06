@@ -16,10 +16,19 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#286) — รอบ 26–45
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#86) · ws (#42) · app (#287) — รอบ 26–46 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-06 (รอบ 46) — "ยังไม่รู้ UI/flow ตอน XP เต็มแล้ว evo ช่วยทำ preview มาให้ดู"
+
+- **ทำอะไร:** ไล่โค้ดจริง (api `Award`/`notify`, `notification_pet.go`, ws relay, `lib/pet-evolution.ts`, overlay/modal/share) แล้วสรุปเป็น [evolution-flow.md](evolution-flow.md) + artifact อ่านง่าย [Room Pet Evolution Flow](https://claude.ai/code/artifact/31179fdf-e705-49fb-aef5-5440bf0c18b8) (ใครเห็นอะไร · แจ้งเตือนจริงถึงใคร · sequence diagram · ช่องว่าง) · เพิ่ม section **Evolution flow** ใน `/dev/room-pet-preview` กดเล่น overlay จริงได้ทั้งมุมคนที่ทำให้ข้าม (prompt → GIF → flash → reveal → modal) และมุมคนอื่น (modal) ด้วยชีทจริงของปรื๊ด — [app #287](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/287)
+- **สรุปสั้น:** ws ส่ง `pet_stage_changed` ให้ทุกคนที่เปิด VO ของ workspace · คนที่ XP ทำให้ข้ามได้ animation เต็มจอ (คลิกก่อนเล่น, Esc = ไป modal) · คนอื่นได้ modal ทันที · แจ้งเตือน **จริง** 3 แบบเข้ากระดิ่ง (ไม่มี toast ไม่มีอีเมล): `pet_growth` ทุกสมาชิก+owner · `pet_milestone` 50/75/90% ทุกสมาชิก+owner · `pet_reminder` 09:00 ICT เฉพาะ resident ที่ยังไม่เล่นวันนี้ · ปิดได้ที่ Setting → Notifications → กิจกรรมสัตว์เลี้ยง
+- **ช่องว่างที่เห็น:** GIF Evolution มีแค่ egg ของ type จริง (stage อื่นข้ามไป flash) · คนไม่ออนไลน์ไม่มี replay · ไม่มีเสียง/effect บนแมพ · ยังไม่ได้เทส e2e ในเบราว์เซอร์
+- verify: harness tsc/eslint ✅ · vitest pet-evolution 31 ✅ · artifact เผยแพร่แล้ว (private)
 
 ---
 
