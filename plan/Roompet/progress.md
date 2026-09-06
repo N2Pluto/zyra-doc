@@ -3,7 +3,7 @@
 > log ต่อรอบ (entry ใหม่ไว้บนสุด) · รูปแบบตาม [zyra-doc/README.md § อัปเดตความคืบหน้า](../../README.md)
 > สถานะรวมอยู่ที่ blockquote หัว [spec.md](spec.md) · ความพร้อมของ dependency ดู [spec.md § ความพร้อม](spec.md)
 >
-> ## 🔖 มาทำต่อตรงนี้ (อัปเดต 2026-09-05 รอบ 25)
+> ## 🔖 มาทำต่อตรงนี้ (อัปเดต 2026-09-06 รอบ 33 — รายละเอียดล่าสุดอยู่รอบ 30–33)
 >
 > **จาก 7 งานที่เหลือ ปิดไป 5 · ค้าง 2** (office-time re-verify ผ่านแล้ว 20:01):
 > 1. **เทส UI ในเบราว์เซอร์** — ยังติดเรื่องเดิม: AI พิมพ์รหัสผ่านลงฟอร์มไม่ได้ · session เป็น httpOnly `refresh_token` cookie ฉีด token ไม่ได้ · **Browser pane เป็นคนละ browser กับ Chrome ปกติ** ต้อง login ใน pane นั้น
@@ -16,7 +16,22 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#38) · app (#273) — รอบ 26–32 · migration ล่าสุดบน dev: 93
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#39) · app (#274) — รอบ 26–33 · migration ล่าสุดบน dev: 93
+
+---
+
+## 2026-09-06 (รอบ 33) — ยังรีโหลดแล้ววาร์ป + "สัตว์เป็นโรคลมบ้าหมู"
+
+> user เทสหลัง deploy รอบ 32 (ws fc9d9d3 / app e08c22b — ยืนยันจาก gitops ว่าเป็น develop ล่าสุด) แล้วยังเห็น 2 อาการ
+
+| อาการ | root cause ที่เหลือ | แก้ | PR |
+|---|---|---|---|
+| รีโหลด → แมวเริ่มที่จุดวางแล้ว**วาร์ป**ไปจุดจริง | รอบ 32 แก้ฝั่ง ws (Redis + snapshot) แล้ว แต่ **client วาด pet จาก REST list ที่ anchor ก่อน** แล้วค่อยขยับตาม snapshot → เห็นวาร์ป | วาด pet (และ minimap dot / overlay) **เฉพาะตัวที่รู้ตำแหน่งจริงแล้ว** — กฎเดียวกับตัวละคร: ไม่วาดจนกว่า server จะบอกว่ายืนอยู่ไหน (snapshot มาหลัง welcome ไม่กี่เฟรม) | [app #274](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/274) |
+| นั่งบ้างยืนบ้าง "โรคลมบ้าหมู" | rest pose = Sitting ทันทีที่หยุด + wander พัก 3–8 วิ → นั่ง-ลุก-เดิน 1 tile-นั่ง ทุกไม่กี่วิ | **หยุด = ยืน** (Walking frame 0 ค้าง หันทางที่หยุด) · **นิ่งครบ 8 วิค่อยนั่ง** (`PET_SIT_AFTER_MS`, hero ตั้ง timer สลับให้เพราะไม่มี event) · ws พักนานขึ้น **4–20 วิ** ไม่งั้นตัวที่อยู่คนเดียวจะไม่มีวันได้นั่ง | app #274 · [ws #39](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/39) |
+
+ตารางท่าตอนนี้: เดิน = Walking เล่น · หยุด <8 วิ = Walking เฟรม 0 นิ่ง · นิ่ง ≥8 วิ = Sitting เล่น · egg = Wobbling · sad = Sad · ลูบ = Happy
+
+- **verify:** vitest **1662** ✅ · ws go test ✅ · merge develop · **ยังไม่ได้เห็นในเบราว์เซอร์** — ลอง: รีโหลด → แมวโผล่ที่จุดจริงเลย ไม่มีวาร์ป · หยุดเดิน = ยืนนิ่ง ~8 วิแล้วค่อยนั่ง
 
 ---
 
