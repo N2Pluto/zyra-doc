@@ -16,7 +16,27 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#39) · app (#277) — รอบ 26–36 · migration ล่าสุดบน dev: 93
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#85) · ws (#40) · app (#278) — รอบ 26–37 · migration ล่าสุดบน dev: 93
+> **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-06 (รอบ 37) — pet เดินทะลุกล่อง · ลุกก่อนเดิน · 🤚 ย้ายเข้าป้ายชื่อ · ซูมออกแล้วป้ายบังตา → วงกลมแบบตัวละคร
+
+**user บอก (2 ข้อความ):** (1) "box ไหนที่ผ่านไม่ได้ สัตว์ต้องผ่านไม่ได้ด้วย · หยุดเดิน → นั่ง 1 รอบ → ท่า mood วน · ก่อนเดินเล่นท่านั่งกลับหลังเหมือนกำลังลุก · ui บังกันไปหมด ย้าย press p pat ออก เหลือแค่รูปมือแล้วย้ายไปอยู่ในชื่อของสัตว์ · hover สัตว์ต้องขึ้นของสัตว์มาด้านหน้ากดได้" (2) ส่ง screenshot ตอนซูมออก: "เอาชื่อทั้งหมดของสัตว์เลี้ยงออก (บังตา) · แสดงวงกลมเหมือนของตัวละคร เฉพาะสัตว์ที่เรามี private zone ใน room zone นั้น · hover แล้วบอกชื่อ · อยู่ใน pop กับสัตว์ตอนซูมให้ขึ้นวงคู่กันเหมือนคนอยู่ใน meeting"
+
+| ข้อ | ทำ | ที่ไหน |
+|---|---|---|
+| pet ทะลุกล่อง | `tileBlocked` ถือว่า grid = nil คือ "ไม่มีอะไรบล็อก" → ห้องที่ snapshot `vo:obstacles` ยังไม่มา pet เดินทะลุโต๊ะ · ตอนนี้ `tileAllowed` **fail closed** เมื่อไม่มี grid (กฎเดียวกับ zone ใน #34) · test ใหม่ 2 ตัว (ไม่มี grid = ไม่เดิน · 300 decision ไม่เคยเหยียบ tile ที่บล็อก) | [ws #40](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/40) |
+| ลุกก่อนเดิน | pet ที่**นั่งอยู่แล้ว** (ยืนนิ่ง ≥ 8 วิ) พอ `pet_state` มา `moving:true` → client ตั้ง `standUpFrom` → `petPose` เล่น Sitting **ถอยหลัง** (`playback:"once-reverse"`) sprite ค้างที่เดิม (`holdMotion`) จนจบชีท แล้วค่อย glide + Walking · `petPoseTransitionsAt` นัดเวลาสลับชีท · หยุด → Sitting 1 รอบ → mood loop มีอยู่แล้วจากรอบ 33 | app |
+| 🤚 เข้าป้ายชื่อ | ลบปุ่มมือ DOM + tooltip `Press [P]` (ไฟล์ `pet-stroke-marker.tsx` ออก · overlay เหลือแค่ +XP/♥ หลังลูบ) · ป้ายชื่อ pet มี slot `action` = 🤚 ท้ายป้าย ขึ้นเฉพาะ pet ที่ resident เดินไปติด (1 ช่อง + 1 วิ) หรือ hover ตอนอยู่ในระยะ · ซ่อนตอนกำลังลูบ (ไม่มีปุ่มตาย) · ป้ายนับเป็นตัว pet ตอน hover/click · pet ที่ hover ป้ายเด้งมา `MAX-10` (เหนือป้ายคน `MAX-11`) · คลิก 🤚 = ลูบ (`setOnPetStrokeClick` เช็คก่อน click เปิด panel) · `[P]` ยังใช้ได้ | app |
+| ซูมออก (level 1–2) | ป้าย pet **ซ่อนทั้งหมด** · **resident** เห็นวงกลมโปรไฟล์แบบตัวละคร (รูป stage ปัจจุบัน · ชื่อขึ้นตอน hover · hit-test ที่วง) — non-resident เห็นแค่ sprite ไม่มีอะไรให้ hover · `ScenePet.viewerIsResident` ← `is_resident` · pop ที่เกิดแล้ว (ติดกัน + dwell) → วงคน + วง pet วาดเป็น**คู่ซ้อนกัน** กึ่งกลางระหว่างสองตัว (คนซ้าย pet ขวา · ซ้อน 8px เท่า `-space-x-2` ของ facepile) hover ตามตำแหน่งคู่ · 1 คนต่อ pet (pop ที่เกิดก่อนได้ที่) | app |
+
+- PR: [app #278](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/278) · [ws #40](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/40) — merge develop แล้วทั้งคู่
+- verify: ws `go test ./...` ✅ · app tsc ✅ (3 error เดิมใน test file อื่นบน develop ไม่เกี่ยว) · vitest **1678** ✅ (130 ไฟล์) · eslint/prettier ✅ · **ยังไม่ได้เห็นในเบราว์เซอร์**
+- **สมมติที่ตั้งไว้ (บอก user แล้ว):** ป้ายชื่อ pet ยังอยู่ที่ zoom level ≥ 3 (ข้อความก่อนหน้าให้ย้ายมือ**เข้า**ป้าย) — หายเฉพาะตอนซูมออก · ถ้าจะให้หายทุก zoom บอกได้
+- **พบระหว่างทาง (ให้ PM):** obstacle grid เป็น**ต่อ workspace** สร้างจาก main floor (`obstacle_grid_builder.go` เรียง `is_main DESC`) — pet (และคน) บน floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · เป็นมาก่อน Room Pet · ยังไม่ได้แก้
+- ลอง: (ก) ยืนติด pet 1 ช่อง 1 วิ → 🤚 โผล่ท้ายป้ายชื่อ กดแล้วลูบ · hover pet → ป้ายมาหน้าสุด (ข) ปล่อย pet นั่ง > 8 วิ แล้วรอมันเดิน → เห็นลุกก่อน (ค) ซูมออกสุด → ป้าย pet หาย · ห้องเรา: วงกลม+hover ชื่อ · ห้องคนอื่น: ไม่มี · ยืนติด pet ตอนซูมออก → วงคู่
 
 ---
 

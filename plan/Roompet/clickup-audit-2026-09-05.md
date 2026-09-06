@@ -138,6 +138,8 @@
 6. **`xp_play_with_pet`**: card บอก 5 ครั้ง/วัน · seed = 1 · ตอนนี้ **ปิด** (v12) และ quota เป็นของห้อง → ลูบไม่ได้ XP เลย — ตกลงจะให้ลูบได้ XP ไหม ถ้าใช่ต้องเปิด + ตั้ง times
 7. ~~กด notification แล้ว navigate ไปห้อง~~ ✅ ทำแล้ว (api #84 + app #271)
 8. **streak "Together for N days"** ของ Figma — ไม่มี field ใน schema
+- **(เพิ่ม 2026-09-06 รอบ 37)** obstacle grid เป็นต่อ *workspace* สร้างจาก main floor (`is_main DESC`) — pet และคนบน floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · card บอกแค่ "ไม่ทะลุ obstacle" · ต้องทำ grid ต่อ floor ไหม (กระทบ zyra-api builder + ws key `vo:obstacles:<ws>`)
+
 
 ## PM/user decision ที่เคาะวันนี้ (2026-09-05) — บันทึกให้ card ตามแก้
 
