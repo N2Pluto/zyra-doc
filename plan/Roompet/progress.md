@@ -16,10 +16,19 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#42) · app (#294) — รอบ 26–53 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#43) · app (#294) — รอบ 26–54 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 54) — pet ยืนซ้อนตัวละคร
+
+- **user บอก:** "pet จะชอบไปยืนตรงกับตัวละคร" (screenshot pet ถูกตัวละคร Tester Ten บังทั้งตัว)
+- **ทำ (ws [#43](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/43) → develop):** pet AI ถือ tile ที่มีคนยืน (ทุกคน ไม่ใช่แค่ resident) เป็นที่ห้ามเหยียบ — เป้าเดินเล่น, ก้าวเข้าหาคน และทุก step ใน path · ถ้ามีคนเดินมายืนทับ pet จะขยับหลบ 1 ช่องทันที (4 ทิศตรงก่อน แล้วทแยง ภายในห้อง) ไม่รอ rest และแม้กำลังเศร้า
+- **verify:** `go test ./internal/hub` ✅ (เทสใหม่ 4: หลบตอนถูกยืนทับแม้กำลังพัก, เลือกช่องว่างในห้อง 2×2, เดินเล่น 400 ครั้งไม่เหยียบคน 4 คน, ก้าวเข้าหาคนไม่เหยียบคนที่ยืนคั่น) · ยังไม่ได้ดูใน VO จริง — dev deploy อัตโนมัติจาก develop; local ต้อง rebuild ws
+- **หมายเหตุ:** ถ้าคนเดินทับตอน pet กำลังเดินอยู่ มันเดินต่อตาม path เดิม (ไม่หลบกลางทาง) แล้วค่อยหลบเมื่อหยุด · pet ที่ล้อมรอบด้วยคน/ของทั้ง 8 ช่องจะยังยืนที่เดิม
 
 ---
 
