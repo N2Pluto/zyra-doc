@@ -16,10 +16,21 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#93) · ws (#54) · app (#313) — รอบ 26–71 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#93) · ws (#54) · app (#315) — รอบ 26–73 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **95** (`tb_pet_animation.frame_rate` 8 → 6)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 73) — ลำดับ evo ต้องเป็น 4 สเต็ป ไม่มีอย่างอื่นแทรก
+
+- **user ถาม/สั่ง:** "/dev/preview/room-pat ตรงกับของจริงมั้ยตอนที่ pat evo เพราะถ้าตรง เท่ากับผิด · ต้องเป็น 1 ร่างต้นเล่น happy วนจนกว่าจะกด → 2 animation ตอน evo (ไฟล์ที่มีอยู่แล้ว) → 3 ท่านั่งของช่วงวัยที่ evo ไป → 4 happy ของช่วงวัยใหม่ วนไป"
+- **ตอบ: ตรงกัน** — หน้า preview เรียก `PetEvolutionOverlay` ตัวเดียวกับ VO ผ่าน helper เดียวกัน ผิดทั้งคู่ แก้ที่ component เดียวจบทั้งสองที่
+- **ผิดตรงไหน:** flow เดิม 6 phase — `prompt → playing (GIF ไข่) → flash 0.9 วิ → arriving (GIF ที่สองของ stage ปลายทาง) → reveal → modal`
+- **ทำ app [#315](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/315):** เหลือ 4 phase `prompt → evolving → reveal → modal` · ลบ `flash` + keyframes ทิ้ง · รวม `pickPetEvolutionAnimation` + `pickPetArrivalAnimation` เป็น `pickPetTransitionAnimation(animations, from, to)` ที่คืน **GIF เดียว** (hatch = GIF ของ **ไข่** 3.6 วิ · สเต็ปอื่น = GIF ของ **stage ปลายทาง** 1.2 วิ เพราะ GIF ของ stage ต้นทางเป็นภาพ "ตัวนั้นโผล่มา" เอามาเล่นจะจบที่ร่างเดิม) · แถมแก้เคส growth ใบที่สองมาระหว่าง overlay เปิดอยู่ (เดิมค้าง phase ของใบเก่า)
+- **verify: ดูของจริงในเบราว์เซอร์แล้ว** (dev server 3200 → `/dev/preview/room-pat`) ไล่ทีละ phase ทั้ง egg → baby และ baby → adult: prompt วนรอคลิก · evolving GIF โหลดจริง 960×960 หมดเวลา 3.51 วิ / ~1.2 วิ · reveal นั่งแล้ว Happy วน ค้างรอคลิกจริง (เช็คถึง 5 วิ) · ไม่มี element flash แล้ว · vitest 1750 เขียว
+- **แก้เอกสาร:** [evolution-flow.md](evolution-flow.md) เขียนลำดับใหม่ให้ตรง
 
 ---
 
