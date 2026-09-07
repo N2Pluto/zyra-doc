@@ -51,7 +51,7 @@ static/pet/sound/
    }
    ```
 
-3. **เปิดให้ admin เลือก** — เพิ่ม id ลง `PET_SELECTABLE_CATEGORIES` ใน `zyra-app/views/admin/pet-management/pet-options.ts` (ถ้า category นั้นยังไม่มีใน `model.PetCategories` ของ zyra-api ต้องเพิ่มพร้อม migration ที่ขยาย CHECK ของ `tb_pet_type.category` ด้วย — ดู `94_pet_category_chicken.sql`)
+3. **เปิดให้ admin เลือก** — เพิ่ม id ลง `PET_SELECTABLE_CATEGORIES` ใน `zyra-app/views/admin/pet-management/pet-options.ts` (ถ้า category นั้นยังไม่มีใน `model.PetCategories` ของ zyra-api ต้องเพิ่มพร้อม migration ที่ขยาย CHECK ของ `tb_pet_type.category` ด้วย — ดู `96_pet_category_chicken.sql`)
 
 category ที่ยังไม่มีเสียง = สัตว์เงียบ ไม่พัง ไม่มี error
 
