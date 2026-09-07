@@ -16,10 +16,20 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#93) · ws (#54) · app (#315) — รอบ 26–73 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#93) · ws (#54) · app (#316) — รอบ 26–74 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **95** (`tb_pet_animation.frame_rate` 8 → 6)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 74) — จอเต็มตอน pet โต ต้องไม่เด้งใส่คนที่อยู่ในห้องประชุม
+
+- **user:** "เอาแบบนี้ก็ได้ แต่ห้องไม่ขึ้นมาตอนที่อยู่ใน meeting zone ตอนที่กำลัง in meeting" (ตอบรับสรุปว่า คนทำ XP เต็ม = เห็น animation · สมาชิกห้องคนอื่น = เห็นการ์ด · คนนอกห้อง = กระดิ่งอย่างเดียว → คงไว้ตามนี้)
+- **ปัญหา:** เงื่อนไขเดิมกันเฉพาะตอน panel ประชุม**ขยาย** (`meetingExpanded`) คนที่นั่งประชุมแต่ย่อ panel ไว้ยังโดนจอเต็มทับ
+- **ทำ app [#316](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/316):** กันทั้ง **meeting zone** ด้วย (`inMeeting`) · ย้ายเงื่อนไขออกมาเป็น `petGrowthCanInterrupt({meetingExpanded, inMeetingZone, away, inCircle})` ให้เทสได้
+- **เงื่อนไขครบของจอเต็มตอนนี้:** เป็นสมาชิกห้องนั้น + สวิตช์ Pet activity เปิด + ไม่อยู่ใน meeting zone + panel ประชุมไม่ขยาย + ไม่ away + ไม่อยู่ใน pop — ถ้าติดข้อใดข้อหนึ่ง ลำดับถูกพักไว้แล้วเล่นเมื่อหน้าจอว่าง (CLASH-02) ส่วนกระดิ่งส่งตามปกติ
+- **verify:** vitest 1753 เขียว (เทสใหม่ 3 เคส) · eslint/prettier/tsc สะอาด · ยังไม่ได้ดูใน VO จริง
 
 ---
 
