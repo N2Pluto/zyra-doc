@@ -16,10 +16,30 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#45) · app (#299) — รอบ 26–58 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#89) · ws (#47) · app (#301) — รอบ 26–60 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 60) — quest ให้เฉพาะสมาชิกที่มีโต๊ะในห้อง (owner/admin ไม่นับ)
+
+- **user บอก:** "ไม่ว่า admin หรือ owner map ไม่สามารถทำ quest ให้ pet ของ zone อื่นได้ถ้าไม่ใช่สมาชิก และรายการ quest ต้องตามการเปิดปิดใน /admin/pet-management XP Configuration"
+- **ทำ api [#89](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/89):** `AwardWorkspaceActivity` (login / อยู่ office / meeting / chat) นับให้ pet เฉพาะเมื่อคนทำมี private zone ในห้องนั้น (`loadRoomDeskResidents`) — owner/admin ยังเป็น resident ทุกห้องสำหรับลูบ/พาเดิน/วงกลม/modal โต แต่ไม่ได้ quest ของห้องที่ตัวเองไม่มีโต๊ะ · เพิ่ม `is_quest_resident` บน workspace pet list + status · การเปิด/ปิด quest ตาม XP Configuration มีอยู่แล้ว (server `activity.Enabled` → ACTIVITY_DISABLED, client `buildPetDailyQuests` กรอง enabled) ไม่ต้องแก้
+- **ทำ app [#301](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/301):** panel แสดง Daily quest เมื่อ `is_quest_resident` (fallback `is_resident` กับ server เก่า)
+- **verify:** api go test service/handler ✅ · app vitest 1732 ✅ · ยังไม่ได้ลองใน VO จริง — ทดสอบ: owner เปิด panel pet ในห้องที่ตัวเองไม่มี private zone → ไม่มีรายการ quest, ทำ login/chat แล้ว XP ของ pet นั้นไม่ขึ้น
+
+---
+
+## 2026-09-07 (รอบ 59) — พา pet ไปเดินเล่นนอก zone (follow) + กลับบ้านเมื่อปล่อย/คนออก
+
+**user บอก:** "อยากพา pet ไปเดินเล่นนอก zone ได้ แต่ต้องกดเพื่อพาไปเท่านั้น เพิ่มปุ่มข้างปุ่มลูบหัว กดแล้ว pet เดินตามหลังตลอดจนกว่าจะยกเลิก ขึ้นสถานะติดตามแบบ zyra มีปุ่มยกเลิก ยกเลิกแล้วกลับจุดวาง เช็คติด box/meeting ดีๆ ถ้าคนนั้นออกจาก workspace ให้กลับทันที"
+
+- **ws [#46](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/46) (+ gofmt #47):** ข้อความใหม่ `pet_follow {pet_id, follow}` — resident ที่ยืนห่าง ≤ 3 ช่องพาไปได้ ปล่อยได้เฉพาะคนที่พา · broadcast `pet_follow_changed {pet_id, user_id?}` และ `pet_state.following_user_id` สำหรับคนที่เข้ามาทีหลัง · ตอนตาม: อยู่ห่างผู้นำ ≤ 1 ช่อง วิ่งเมื่อห่าง ≥ 4 วางเส้นทางใหม่ทุก 3 ก้าว ไม่เหยียบ tile ที่ block / meeting zone / มีคนยืน ไม่ติดขอบห้อง (ออกนอก zone ได้) ไม่สนใจ attention/pop/เดินเล่นระหว่างนั้น · ปล่อย หรือคนพาหลุดจาก office / ย้ายชั้น → `pet_follow_changed` (ไม่มี user) แล้วเดินกลับจุดวาง (หรือช่องข้าง ๆ ถ้ามีคนยืน) ก่อน AI ห้องกลับมาทำงาน
+- **app [#300](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/300):** ปุ่มที่ 2 (lucide Footprints, จานเขียวแบบเดียวกับมือ) ซ้ายปุ่มลูบ ทั้งบนป้ายชื่อและวงกลมตอนซูมออก — ขึ้นเฉพาะ pet ที่เรา pop อยู่ ไม่มีคนพาอยู่ และเราไม่ได้พาตัวอื่น · กด → `pet_follow true` · แถบสถานะแบบเดียวกับ follow bar ของ zyra ตรงกลางเหนือ HUD "กำลังพา {pet} เดินเล่น" + ปุ่ม "ส่งกลับบ้าน" → `pet_follow false` · PetLayer `petButtonKindAt`/`petWalkActionAt`, scene `setPetWalkable`/`setOnPetWalkClick`
+- **verify:** ws go test ✅ (ตามออกนอกห้องแล้วหยุดข้างผู้นำ, อ้อม meeting zone, ผู้นำย้ายชั้น → ปล่อย+กลับบ้าน, บ้านมีคนยืน → หยุดข้าง ๆ, guard ของ handler) · app vitest 1732 ✅ (slot ปุ่มเดินบนป้าย, hit/hover ปุ่มเดินใน layer) · **ยังไม่ได้ทดสอบใน VO จริง** — ต้อง rebuild ws + app
+- **หมายเหตุ:** "บน minimap" — ใช้ตำแหน่ง/หน้าตาเดียวกับ follow bar ของ zyra (กลางล่างเหนือ HUD) ถ้าต้องการวางไว้บน minimap จริง ๆ บอกได้ · ตำแหน่ง pet นอกห้องไม่ persist: ถ้า ws restart pet จะเกิดที่บ้าน
 
 ---
 
