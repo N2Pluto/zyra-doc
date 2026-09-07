@@ -16,10 +16,32 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#90) · ws (#53) · app (#307) — รอบ 26–68 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#90) · ws (#54) · app (#309) — รอบ 26–69 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 69) — ยืนซ้อนตัวละครตอนนั่ง · หันหน้าตามจากไกล · สไลด์ไปกับพื้น · สวิตช์ notification
+
+- **user บอก (3 เรื่อง + 1 คำถาม):** "ตอนที่นั่งอยู่บนเก้าอี้ แล้วมี pat ตามมา มันจะยืนซ้อนตัวกัน" · "อยู่ไกลมากแต่ pat หันหน้าตาม ต้องเกิด pop pat ก่อนถึงจะหันหน้าตาม" · "ยังเห็น pat แสดงท่าทางอื่นแล้วเคลื่อนที่ เหมือนสไลด์ไปกับพื้น" · "ปิด Notification ของสัตว์เลี้ยง … ทำงานได้ปกติมั้ย"
+
+### 1. ยืนซ้อนตัวละคร (ws [#54](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/54))
+คนไม่หลบ pet — มีแต่ pet หลบคน กฎ "มีคนยืนทับ → ขยับหลบ" มีตั้งแต่รอบ 55 แต่ใช้ `startWalk` ที่บังคับให้ปลายทาง**อยู่ในห้องของ pet** ตอนพาเดินเล่น pet อยู่นอกห้องเสมอ ทุกช่องรอบตัวจึงถูกปฏิเสธ → ติดใต้คนที่มานั่งทับถาวร · แก้: ตอน follow/returning ใช้ `walkTo` + `tileFree` (ไม่ผูกกับห้อง) maxSteps 2 เพื่อไม่ให้เดินเฉียง
+
+### 2. หันหน้าตามจากไกล (ws [#54](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/54))
+`petNoticeRadius` 3 ช่องถูกใช้ทั้ง "สังเกตเห็น" และ "หันหน้า" · แยกออกเป็น `petFaceRadius` 1 + `petFaceDwell` 1 วิ = กฎเดียวกับ pop ฝั่ง client (`PET_STROKE_RANGE_TILES` / `PET_LINK_DWELL_MS`) · dwell รีเซ็ตเมื่อใครเปลี่ยนช่อง เหมือน client · การ "สังเกตเห็น" (หยุดเดินเล่น / เดินเข้าหาคนที่ยืนนิ่ง) ยังเป็น 3 ช่อง
+
+### 3. สไลด์ไปกับพื้น (app [#309](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/309))
+ผลข้างเคียงของ interpolation buffer รอบ 67: engine เดินตามหลัง server 1 จังหวะ state "หยุด" (พร้อม sheet ท่านั่ง) จึงมาถึงตอน sprite ยังมีช่องเหลือให้เดิน · แก้ด้วย `petVisualHold` — ระหว่าง glide คงใช้ sheet ที่ออกเดินมา คงเฉพาะ "หน้าตา" ช่องปลายทาง/mood ยังใช้ค่าล่าสุด
+
+### 4. สวิตช์ Notification ของสัตว์เลี้ยง (app [#309](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/309))
+ตรวจทั้งเส้นทาง: แถวกระดิ่ง + push + เตือน 09:00 **เคารพสวิตช์อยู่แล้ว** (กรองใน SQL `COALESCE(notification_settings->>'pet_activity','true') <> 'false'` ที่ `notification_pet.go:104`, `:240`) · อีเมล digest ไม่เกี่ยว (แถว pet insert เป็น `email_suppressed = true`) · pet ไม่มี toast · **แต่หน้าจอ "Your Pet Evolved" เต็มจอไม่เคารพเลย** เพราะขี่มากับ broadcast `pet_stage_changed` ที่ยิงทั้ง workspace ไม่มี hook รายคน → กรองฝั่ง server ไม่ได้ · แก้ด้วย `petGrowthMayInterrupt({isResident, notificationsOn})` ที่ client + เรียก `hydrate()` ตอนเข้า VO (เดิม store โหลดค่าจริงเฉพาะตอนเปิดหน้า Settings จึงเสิร์ฟ default = เปิด ตลอด)
+
+**เจอระหว่างตรวจ ยังไม่แก้ (นอกขอบเขต):** คีย์อื่นทั้งหมดในแท็บ Notifications (`thread_replies`, `joining_circle`, `hide_chat_in_meeting`, `event_*` 5 ตัว) บันทึกลง DB แต่**ไม่มีโค้ดไหนอ่านเลย** — `pet_activity` เป็นคีย์เดียวที่มีการบังคับใช้จริงในทั้งสองโค้ดเบส · และแถวกระดิ่ง pet ส่งให้สมาชิก workspace ทุกคน ขณะที่หน้าจอ growth เห็นเฉพาะสมาชิกห้อง (คนที่ไม่ใช่สมาชิกห้องได้แถวกระดิ่งเรื่อง pet ที่ตัวเองยุ่งด้วยไม่ได้)
+
+- **verify:** ws go build/vet/test เขียว — เทสใหม่ `TestPetFollow_ShufflesAsideWhenSomeoneSitsOnIt` (ยืนยันว่า fail จริงบนโค้ดเก่า) และ `TestPetStep_TurnsToFaceOnlyOnceAPopHasFormed` + ปรับเทสเดิม 4 ตัวที่ยึดกฎหันหน้าแบบเก่า · app vitest 1751 เขียว (เทสใหม่ `petVisualHold` 4 กรณี + `petGrowthMayInterrupt` 3 กรณี) · eslint/prettier สะอาด · **ยังไม่ได้ดูใน VO จริง**
 
 ---
 
