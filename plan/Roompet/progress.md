@@ -16,10 +16,20 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#89) · ws (#47) · app (#301) — รอบ 26–60 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#89) · ws (#48) · app (#302) — รอบ 26–61 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 61) — ท่าเดินตามแปลก เดินช้า หันหน้าผิดทาง
+
+- **user บอก:** "ท่าตอน pet เดินตามแปลกมาก เดินช้าๆ ยังไงไม่รู้ แถมตอนเดินทิศทางไปทิศหนึ่งแต่หันหน้าไปอีกทาง"
+- **สาเหตุ:** (1) `beginWalk` ใส่ดีเลย์ท่าลุก 750 ms ทุกครั้งที่ `stoppedAt` เก่าเกิน 8 วิ — pet ที่เดินตามไม่เคยหยุด `stoppedAt` จึงค้างค่าเก่า ทำให้ทุกการวางเส้นทางใหม่ (ทุก 3 ก้าว) รอ 750 ms = เดินช้าเป็นจังหวะ (2) ทุก 3 ก้าว leg จบแล้ว broadcast `moving:false` 1 tick ก่อนวางเส้นทางใหม่ → client สลับท่าพัก/เดินตลอด (3) client วาดแถวทิศจาก `facing` ของ server (= ทิศก้าวล่าสุด) แต่ตอน catch-up ไถลตามเส้นทาง x ก่อน y → ตัวไปทางหนึ่ง หน้าหันอีกทาง
+- **ทำ ws [#48](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/48):** `followStep` ต่อ leg ใน tick เดียวกันเมื่อยังห่างผู้นำ (ไม่มี stop ระหว่าง leg, ถ้ามีคนก้าวมาขวางให้วางเส้นทางใหม่แทนหยุด) · จังหวะตามระยะ: 900 ข้างตัว / 450 เมื่อห่าง ≥ 2 / **300** เมื่อห่าง ≥ 4 (`petFollowSprintMs`, คนเดิน ~200 ms/ช่อง) · ท่าลุกใช้เมื่อไม่ได้ก้าวมา ≥ 8 วิจริง ๆ (`lastStepAt`) ไม่ใช่แค่ `stoppedAt` เก่า
+- **ทำ app [#302](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/302):** `PetLayer.glideFacing` — ขณะสไปรต์ไถลบนจอ แถวทิศมาจากทิศของ segment ที่กำลังไถล (x-first แล้ว y) ไม่ใช่ facing ของ server; หยุดแล้วค่อยกลับไปใช้ facing/pop override
+- **verify:** ws go test ✅ (ไล่ตาม 12 ช่อง: ไม่มี stop ระหว่างทาง + sprint ตอนห่าง; ก้าวเมื่อ 1 วิก่อน → ออกตัวทันทีแม้ stop clock เก่า) · app vitest 1733 ✅ (ก้าวเฉียงที่ server บอก "up" → วาดแถว right ตอนไถลแกน x แล้ว up ตอนแกน y) · ยังไม่ได้ดูใน VO จริง — rebuild ws + app แล้วลองพาเดิน
 
 ---
 
