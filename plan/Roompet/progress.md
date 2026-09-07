@@ -16,10 +16,22 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#89) · ws (#49) · app (#302) — รอบ 26–62 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#90) · ws (#49) · app (#303) — รอบ 26–63 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 63) — เสียงสัตว์เลี้ยงขึ้น R2 + เอามาใช้จริง
+
+- **user บอก:** "ใน storage/sound เพิ่มเสียงของสัตว์แต่ละตัว ช่วยเอาไปเก็บใน s3 แล้วนำมาใช้ ให้ตรงกับ Category ของ pet ตัวนั้น ๆ เปลี่ยนชื่อไฟล์ได้ จัดตำแหน่งให้ด้วย เพราะอนาคตจะมีเสียงของแต่ละ Category เพิ่ม ตอนนี้มีแค่ 3 ก่อน"
+- **อัปขึ้น R2 แล้ว 20 ไฟล์** (2.7 MB) ที่ `static/pet/sound/` — โครงตั้งใจให้ขยายทีละโฟลเดอร์: `<category>/<baby|adult>/NN.mp3` + `shared/evolution.mp3` · ตั้งชื่อใหม่เป็นเลข 2 หลักเรียงจากคลิปสั้นไปยาว · `audio/mpeg`, `max-age=86400` · **ผูกกับ category ไม่ใช่ type** (แมวทุกตัวเสียงเดียวกัน type ใหม่ได้เสียงทันที) · ไก่ = category `bird` · ไข่ไม่มีเสียง · adult ใช้ร่วมกับวัยวิวัฒน์ · ตอนนี้ cat 6+3, dog 2+2, bird 2+4
+- **ทำ api [#90](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/90):** `RoomPet.pet_type_category` (join `pt.category`) ทุก payload — VO ต้องรู้ category ถึงจะเลือกเสียงได้
+- **ทำ app [#303](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/303):** `lib/pet-sound.ts` (registry + ตัวเลือกคลิป) · `lib/pet-sound-player.ts` (cache element, ระดับเสียงตาม Notification volume — 0 = ปิดจริง, ตัดที่ 2.5 วิแล้ว fade เพราะคลิปต้นทางบางไฟล์ยาว 8–15 วิ) · ลูบสำเร็จ → เสียงตาม category+ช่วงวัย (คนลูบได้ยินคนเดียว) · ลำดับการเติบโต → `evolution.mp3` ครั้งเดียวตอนเริ่ม (เฉพาะคนที่ XP ทำให้ข้าม) · `/dev/preview/room-pat` เพิ่มส่วนกดฟังทุกคลิป
+- **verify:** URL ทั้ง 20 ตอบ 200 (`audio/mpeg`) · vitest 1740 ✅ (เทสใหม่ `pet-sound.test.ts`) · tsc/eslint สะอาด · headless: section แสดงผลและคลิกแล้ว resolve เป็น `…/cat/baby/03.mp3` — **เสียงจริงยังไม่ได้ฟัง** (headless ไม่มีเสียง) รบกวนฟังที่ `/dev/preview/room-pat`
+- **เอกสาร:** [guides/pet-sounds.md](../../guides/pet-sounds.md) — โครง R2, วิธีเพิ่ม category ใหม่ (อัปไฟล์ + แก้ 1 บรรทัด), เล่นตอนไหน ใครได้ยิน
+- **ยังไม่ได้ทำ (ตั้งใจ):** สวิตช์เปิด/ปิดเสียง pet แยกใน Settings (ตอนนี้ใช้ Notification volume ร่วม) · เสียงตอนเศร้า/เดินตาม · ให้ admin อัปเสียงเองผ่าน Pet Management (ตอนนี้เป็น asset กลางตาม category)
 
 ---
 
