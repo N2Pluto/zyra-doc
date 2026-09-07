@@ -16,10 +16,20 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#90) · ws (#50) · app (#305) — รอบ 26–65 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#90) · ws (#51) · app (#305) — รอบ 26–66 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 66) — click เดินแล้ว pet ไม่ตาม / ว้าปเป็นช่วง ๆ ยิ่งวิ่งยิ่งหนัก
+
+- **user บอก:** "ยังมีบัคเยอะมาก โดยเฉพาะตอน click เดิน pat ไม่ยอมเดินตาม เดินตามแล้วว้าปเป็นช่วง ๆ ยิ่งตอนวิ่งยิ่งว้าปหนัก"
+- **ต้นตอ (ws, ตัวใหญ่ที่สุดของทั้งเรื่อง):** `handleMoveTo` ตั้ง `c.TileX/TileY` เป็น**ปลายทาง**ทันทีที่เริ่มเดิน แล้วเก็บ `MovePath` ไว้ให้ interpolate (ถูกสำหรับ AOI แต่เป็น teleport สำหรับอะไรก็ตามที่อ่านตำแหน่ง) · `playerTiles()` ที่ป้อนให้ pet AI จึงเห็นคน**วาร์ปไปปลายทาง**ทุกครั้งที่คลิกเดิน → trail ได้เส้นทางทั้งเส้นในทีเดียว, pet วางแผนทางยาวแล้ววิ่งไล่แบบ burst 3 ช่อง/tick, และระยะห่างที่วัดได้คือระยะถึง**ปลายทาง** ไม่ใช่ถึงตัวคน · วิ่ง = กระโดดไกลกว่า = ยิ่งหนัก · เรื่องนี้ยังทำให้ attention/pop วัดระยะจากปลายทางด้วย
+- **ทำ ws [#51](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/51):** `playerTiles()` อ่านช่องจริงกลางทาง (`currentPathTile`) ตอนกำลังเดิน · `petFollowMinStepMs` 120 → **90** (คนเดิน 267 ms/ช่อง วิ่ง ~89 ms — pet ตามทันตอนวิ่งได้พอดี และเท่ากับเพดานความเร็วฝั่ง client) · `petFollowMaxTrail` = 24 รอย (~10 วิ) กัน pet ที่ติดสิ่งกีดขวางไล่ตามรอยเก่าเป็นนาที — ตัดทางลัดแต่ยัง**เดิน**ไม่ใช่วาร์ป
+- **verify:** go test ✅ (playerTiles คืนช่องกลางทางตอนเดิน / ช่องจริงตอนยืน · click เดิน 8 ช่องใน 2 วิ pet ตามตลอด ห่างสุด ≤ 3 ช่องแล้วมาอยู่ข้าง ๆ · trail ไม่เกินเพดานตอน pet ถูกกำแพงขวางขณะผู้นำเดิน 60 ช่อง) · **ยังไม่ได้ดูใน VO จริง** — ต้อง rebuild ws (+ app จากรอบ 65)
+- **สรุปเหตุวาร์ปทั้งหมดที่เจอ 3 รอบ:** (1) client หารเวลา 1 ก้าวให้ทุกช่อง + ทิ้งคิวเมื่อได้เป้าใหม่ (รอบ 64) · (2) client ถือ `step_ms = 0` ว่า teleport (รอบ 65) · (3) **server ป้อนตำแหน่งปลายทางแทนตำแหน่งจริง (รอบ 66)**
 
 ---
 
