@@ -595,7 +595,7 @@ Max evolution within = ceil(Total XP needed ÷ Max XP / Day)  วัน
 | error detail (`internal/handler/pet_handler.go`) | ส่งแค่ `{code}` | แนบตัวเลขตามตาราง copy ใน SC-PM-07 |
 | `ValidatePetXPConfig` (`internal/service/pet_xp_config_service.go`) | `happy.within < neutral.within < sad.after` | `happy.within < sad.after` และ **`neutral.within == sad.after`** + เพดาน hours ≤ 720, rate ≤ 300, threshold ≤ 1,000,000, `times` ≤ 50 |
 | seed config v1 (migration 85 + bootstrap DDL) | `neutral.within_hours = 48` | **72** (ปิดช่องว่าง 48–72 ชม.) |
-| `DELETE /api/admin/pets/:id` | ลบได้เสมอ | คืน `409 PET_TYPE_IN_USE` ถ้ายังถูกวางในห้อง (ทำพร้อม SC-PM-05) |
+| `DELETE /api/admin/pets/:id` | ลบได้เสมอ | soft delete ได้แม้ยังถูกวางในห้อง; placement และข้อมูลสัตว์เดิมยังอยู่ |
 | `workspace_usage_count` | ไม่มีใครเขียน | อัปเดตตอนวาง/ลบ pet ใน SC-PM-05 |
 | `allowedMimeTypesBySlot[Evolution]` (`pet_service.go`) — **2026-09-02** | `{PNG, GIF}` | **`{GIF}` เท่านั้น** |
 | GIF path ใน `UploadAnimation` — **2026-09-02** | ผ่าน `validatePetSpriteDimensions` + เก็บ `frame_width = width/frame_count` | ข้าม grid validation · เช็คแค่จัตุรัส ≤ 1000 · เก็บ width/height จริง · `frame_count/frame_rate/direction_rows = NULL` |

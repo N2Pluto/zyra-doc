@@ -246,7 +246,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_pet_xp_config_current
 
 ### 4. `tb_room_pet` — pet instance ในห้อง (SC-PM-05)
 
-> ✅ **ลงจริงแล้ว 2026-09-04** — `zyra-api/migrations/88_room_pet.sql` (+ `.down.sql`) apply บน dev DB แล้ว · ต่างจากร่างด้านล่าง 3 จุด: เพิ่ม `created_by` / `updated_by` (VARCHAR → `tb_user`, pattern เดียวกับ `tb_pet_type`) · เพิ่ม `idx_room_pet_pet_type` (partial, ใช้เช็ก `PET_TYPE_IN_USE`) · `last_seen_stage` มี CHECK 4 ค่า · `uq_room_pet_one_per_zone` **เปิดใช้แล้ว** (PM เคาะ 1 room = 1 pet 2026-09-04 — apply บน dev แล้ว)
+> ✅ **ลงจริงแล้ว 2026-09-04** — `zyra-api/migrations/88_room_pet.sql` (+ `.down.sql`) apply บน dev DB แล้ว · ต่างจากร่างด้านล่าง 3 จุด: เพิ่ม `created_by` / `updated_by` (VARCHAR → `tb_user`, pattern เดียวกับ `tb_pet_type`) · เพิ่ม `idx_room_pet_pet_type` (partial, รองรับ lookup/usage ของ placement) · `last_seen_stage` มี CHECK 4 ค่า · `uq_room_pet_one_per_zone` **เปิดใช้แล้ว** (PM เคาะ 1 room = 1 pet 2026-09-04 — apply บน dev แล้ว)
 
 ```sql
 CREATE TABLE IF NOT EXISTS tb_room_pet (
@@ -277,7 +277,7 @@ CREATE INDEX IF NOT EXISTS idx_room_pet_map ON tb_room_pet (map_id) WHERE is_del
 
 - **1 room = 1 pet บังคับแล้ว** (PM 2026-09-04) — `uq_room_pet_one_per_zone` เปิดใช้ใน migration 88 · ห้องที่วางได้ = `zone_type = 'room'` เท่านั้น และจุดวางห้ามตกใน meeting/private (กฎอยู่ใน service ดู §Placement)
 - `map_id` **เก็บซ้ำ**กับที่ derive ได้จาก `zone_id` โดยตั้งใจ — VO client โหลด pet ทั้งชั้นด้วย `WHERE map_id = ?` ครั้งเดียว ถ้าไม่เก็บต้อง JOIN `tb_map_zone` ทุกครั้งที่เข้าห้อง
-- `ON DELETE RESTRICT` ที่ `pet_type_id` — pet type ที่ถูกวางใช้งานอยู่ต้องลบไม่ได้ (soft delete เท่านั้น) ป้องกัน pet หายจาก map ของ user โดยที่ admin ไม่รู้ตัว
+- `ON DELETE RESTRICT` ที่ `pet_type_id` ป้องกัน hard delete ขณะที่ยังมี placement อ้างอิงอยู่; `DELETE /api/admin/pets/:id` เป็น soft delete จึงทำได้แม้ยังถูกวาง และไม่ลบ placement เดิม
 - **ไม่มีคอลัมน์ `stage` และ `mood`** — derive (ดูหัวข้อถัดไป)
 
 ### 5. `tb_room_pet_xp_event` — XP ledger + กัน XP ซ้ำ
@@ -380,7 +380,7 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 | POST | `/api/admin/pets` | สร้าง pet type → `status=hidden` (SC-PM-02) |
 | GET | `/api/admin/pets/:id` | detail + animation ทุก stage + `stage_ready` |
 | PUT | `/api/admin/pets/:id` | แก้ name/category/description/status |
-| DELETE | `/api/admin/pets/:id` | soft delete — 409 ถ้ายังถูกวางในห้องอยู่ |
+| DELETE | `/api/admin/pets/:id` | soft delete ได้เสมอ แม้ยังถูกวางในห้อง; ไม่ลบ placement เดิม |
 | POST | `/api/admin/pets/:id/stages/:stage/animations/:slot` | upload spritesheet (multipart) (SC-PM-03) |
 | DELETE | `/api/admin/pets/:id/stages/:stage/animations/:slot` | ลบ animation ออกจาก slot |
 | POST | `/api/admin/pets/:id/thumbnail` | upload thumbnail (optional) |
@@ -420,7 +420,7 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 > - กฎ inside-zone = `zoneContainsTile` ฝั่ง FE: floor anchor เป็น tile (57.5 → 57) · tiles JSONB ชนะ rect · rect ใช้ `zoneTilePx = 32`
 > - HTTP status = ค่าใน body (404/400/423/500) ต่างจาก `/api/admin/pets*` เดิมที่ตอบ HTTP 200 เสมอ — `authFetch` อ่าน body ทั้ง 2 แบบ
 > - เพิ่ม code: 404 `MAP_NOT_FOUND` · 404 `ZONE_NOT_FOUND` (zone ไม่ได้อยู่บน map นี้) · 404 `ROOM_PET_NOT_FOUND` · 400 `INVALID_NAME` (> 30 rune) · 400 `INVALID_POSITION` · 423 `WORKSPACE_LOCKED`
-> - `DELETE /api/admin/pets/:id` ตอบ 409 `PET_TYPE_IN_USE` แล้วเมื่อยังมี placement ที่ `is_deleted = FALSE` · `workspace_usage_count` = `COUNT(DISTINCT workspace)` ของ placement สด recompute ใน tx เดียวกับ place/remove (F7 ปิด)
+> - `DELETE /api/admin/pets/:id` soft delete pet type ได้แม้ยังมี placement ที่ `is_deleted = FALSE`; placement และข้อมูลสัตว์เดิมยังคงอยู่ · `workspace_usage_count` = `COUNT(DISTINCT workspace)` ของ placement สด recompute ใน tx เดียวกับ place/remove (F7 ปิด)
 > - **PM เคาะ 2026-09-04:** วางได้เฉพาะ `zone_type = 'room'` (400 `ZONE_NOT_ROOM`) · จุดวางห้ามตกใน `meeting` / `private` แม้ซ้อนใน room (400 `POSITION_BLOCKED_BY_ZONE` — เช็กทุก zone ประเภทนั้นบน map ทั้งตอน place และ move) · 1 room = 1 pet (409 `ZONE_ALREADY_HAS_PET` — pre-check ใน tx + unique index รับ race; ลบแล้ววางใหม่ได้เพราะ index นับเฉพาะ `is_deleted = FALSE`)
 
 ### Member — `/api/user/*` (UserGuard)
@@ -504,7 +504,6 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 | 400 | `INVALID_SLOT` | `slot` ไม่อยู่ใน 6 ตัว (`Wobbling`/`Walking`/`Sitting`/`Happy`/`Sad`/`Evolution`) หรือไม่ valid สำหรับ stage นั้น |
 | 400 | `PET_NOT_READY` | วาง pet type ที่ sprite ยังไม่ครบทุก stage |
 | 400 | `POSITION_OUTSIDE_ZONE` | จุดที่วางอยู่นอก `zone_id` ที่ส่งมา |
-| 409 | `PET_TYPE_IN_USE` | DELETE pet type ที่ยังถูกวางในห้อง |
 | 409 | `ZONE_ALREADY_HAS_PET` | วาง pet ตัวที่ 2 ในห้องเดิม — ✅ **เปิดใช้แล้ว 2026-09-04** (PM เคาะ 1 room = 1 pet) pre-check + partial unique index `uq_room_pet_one_per_zone` |
 | 400 | `ZONE_NOT_ROOM` | วางใน zone ที่ `zone_type != 'room'` (meeting / private / block / spawn / teleport / spotlight) — PM 2026-09-04 |
 | 400 | `POSITION_BLOCKED_BY_ZONE` | จุดวางตกใน zone `meeting` / `private` ของ map เดียวกัน **แม้ zone นั้นจะซ้อนอยู่ใน room** — PM 2026-09-04 (เช็กทั้งตอน place และ move) |

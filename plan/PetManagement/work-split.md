@@ -15,12 +15,12 @@
 
 | # | PR | สถานะ | หมายเหตุ |
 |---|---|---|---|
-| 1 | `feat(api): pet type CRUD + migration` | ✅ merged | migration ใช้เลข **83** ไม่ใช่ 77 · ยังขาด 409 `PET_TYPE_IN_USE` + `workspace_usage_count` (ไปกับ PR 6) |
+| 1 | `feat(api): pet type CRUD + migration` | ✅ merged | migration ใช้เลข **83** ไม่ใช่ 77 · `workspace_usage_count` ไปกับ PR 6 · กฎ `PET_TYPE_IN_USE` เดิมถูกยกเลิกภายหลัง ให้ soft delete ได้เสมอ |
 | 2 | `feat(api): pet animation upload + grid validation` | ✅ merged | เก็บ F3, F4, F5, F10, F11 |
 | 3 | `feat(api): pet xp config + version history` | ✅ merged | ตรง contract ครบ |
 | 4 | `feat(app): pet library + stage manager UI` | ✅ merged | 4a/4b/4d ครบ · **4c ยังไม่ครบ** (F8) · เก็บ F1, F2, F9 |
 | 5 | `feat(app): xp config form` | ✅ merged | เก็บ F13 |
-| 6 | `feat(api): room pet placement + realtime` | ✅ **merged 2026-09-04** [zyra-api #65](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/65) (`ce62893`, 3 commit: placement · PM rules · replace) | AI (ดู [Roompet/progress.md รอบ 12](../Roompet/progress.md)) — migration ใช้เลข **88** · เก็บ 409 `PET_TYPE_IN_USE` + `workspace_usage_count` (F7) ครบในรอบนี้ |
+| 6 | `feat(api): room pet placement + realtime` | ✅ **merged 2026-09-04** [zyra-api #65](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/65) (`ce62893`, 3 commit: placement · PM rules · replace) | AI (ดู [Roompet/progress.md รอบ 12](../Roompet/progress.md)) — migration ใช้เลข **88** · เก็บ `workspace_usage_count` (F7) ครบ; กฎ 409 `PET_TYPE_IN_USE` ถูกยกเลิกภายหลัง |
 | 7 | `feat(ws): forward pet_* events` | ✅ **merged 2026-09-04** [zyra-ws #29](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/29) (6 type, pure relay) | AI |
 | 8a | `feat(app): pet palette + popup ตั้งชื่อ` | 🟡 โค้ดเสร็จ 2026-09-04 บน branch `feat/room-pet-map-editor` (zyra-app) live-test ผ่าน · ✅ **merged** [zyra-app #246](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/246) `20d6db6` 2026-09-04 | AI — รวม 8a+8b ใน PR เดียว ดู [Roompet/progress.md รอบ 13](../Roompet/progress.md) |
 | 8b | `feat(app): pet drag-drop ใน Map Editor` | 🟡 เสร็จพร้อม 8a — marker เป็น DOM overlay ไม่ใช่ Pixi (Map Editor เป็น 2D canvas) · **stage row ยังไม่ทำ** รอ PM | AI |
@@ -30,7 +30,7 @@
 
 | PR | เจ้าของ | งานย่อย |
 |---|---|---|
-| **6** | Dev A | migration `tb_room_pet` (ยังไม่มีในรีโป — 83 สร้างแค่ 3 ตาราง) · 4 endpoint `/api/admin/maps/:mapId/pets` (GET/POST/PATCH/DELETE) · validate จุดวางอยู่ใน `zone_id` จริง (tiles JSONB ไม่ใช่ AABB — ใช้ `lib/zone-utils` ฝั่ง FE + ตรวจซ้ำใน service) · gate `status=active` + `stage_ready` ครบ → `PET_NOT_READY` · `POSITION_OUTSIDE_ZONE` · publish 4 event ผ่าน `ZoneEventPublisher` · **เก็บของค้างจาก PR 1**: `DELETE /pets/:id` คืน 409 `PET_TYPE_IN_USE` + เขียน `workspace_usage_count` (F7) |
+| **6** | Dev A | migration `tb_room_pet` (ยังไม่มีในรีโป — 83 สร้างแค่ 3 ตาราง) · 4 endpoint `/api/admin/maps/:mapId/pets` (GET/POST/PATCH/DELETE) · validate จุดวางอยู่ใน `zone_id` จริง (tiles JSONB ไม่ใช่ AABB — ใช้ `lib/zone-utils` ฝั่ง FE + ตรวจซ้ำใน service) · gate `status=active` + `stage_ready` ครบ → `PET_NOT_READY` · `POSITION_OUTSIDE_ZONE` · publish 4 event ผ่าน `ZoneEventPublisher` · เขียน `workspace_usage_count` (F7) · หมายเหตุ: กฎเดิมที่ให้ `DELETE /pets/:id` คืน 409 `PET_TYPE_IN_USE` ถูกยกเลิกภายหลัง |
 | **7** | Dev A | เพิ่ม 6 type (`pet_spawned` / `pet_moved` / `pet_renamed` / `pet_removed` / `pet_stage_changed` / `pet_xp_changed`) ใน subscriber `vo:zone` — ปัจจุบัน ws รู้จักแค่ `zone_claim_changed`, `map_object_changed`, `map_updated` type อื่นถูกทิ้งเงียบ |
 | **8a** | Dev B | pet palette panel ใน Map Editor + popup ตั้งชื่อตอนวาง — **ไม่แตะ Pixi scene** |
 | **8b** | Dev A | drag-drop + render pet บน scene · อ่าน skill `vo-desync-debug` ก่อนแตะ |
