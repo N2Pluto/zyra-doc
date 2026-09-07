@@ -16,10 +16,36 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#90) · ws (#52) · app (#306) — รอบ 26–67 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#90) · ws (#53) · app (#307) — รอบ 26–68 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 68) — ยังสะดุดตอนกดวิ่ง: pet เดิน 1 ช่องต่อ 2 tick มาตลอด
+
+- **user บอก:** "ลองใหม่แล้ว ยังสะดุดอยู่ตอนกดเพื่อวิ่งไว ให้มัน smooth กว่านี้ ไม่มีแบบสะดุดเลย"
+- **ต้นตอจริง (เพิ่งเจอรอบนี้ — รอบ 64–67 แก้ถูกทางแต่ไม่ถึงราก):** `followStep` คิวทีละ 1 ช่อง เดินจบแล้ว `stepNow` ตั้ง `arriveAt` → **tick ถัดไปทั้ง tick ถูกใช้ไปกับการรายงาน "arrived"** ไม่เดินเลย → pet ขยับจริง **1 ช่อง / 2 tick = 400 ms ต่อช่อง** แต่บอก client ว่าช่องละ ~80 ms · client จึงเดิน 80 ms แล้ว**ยืน 320 ms** ทุกช่อง = อาการสะดุด และตอนวิ่งยิ่งหนักเพราะระยะห่างที่ไล่ไม่ทันโตขึ้นจนชน trail cap แล้วลัดทาง
+- **ต้นตอรอง:** วัด pace ผู้นำต่อ **tick** ไม่ใช่ต่อ **ช่อง** — คนวิ่งข้าม 2–3 ช่องใน 1 tick จึงถูกอ่านว่าเดินช่องละ 200 ms (จริง ~89) · และ `petFollowMinStepMs` 90 > ความเร็ววิ่ง 89 → ต่อให้รู้ความเร็วก็ไล่ไม่มีวันทัน
+- **ทำ ws [#53](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/53):** เติมเส้นทางจาก trail **ในลูป step** (การเดินตาม = การเดินต่อเนื่องครั้งเดียว) · ไม่รายงาน "หยุด" ระหว่างที่ผู้นำยังเดิน (grace 400 ms — เดิมทำให้ client สลับเป็นท่ายืนและเริ่ม glide ใหม่ทุกสองสามช่อง) · วัด pace ต่อช่อง · `petFollowMinStepMs` 90 → 70 · `petFollowMaxStepsPerTick` 3 → 4 · เก็บเศษเวลา 1 step แทนทิ้งทุก tick
+- **ทำ app [#307](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/307):** `PET_GLIDE_MIN_STEP_MS` 90 → 70 (ให้ตรงกับ ws) · การเร่งไล่คิวเดิมเป็น "ขั้น" (เกิน 3 ช่องกระโดดไปเพดานทันที) เปลี่ยนเป็นทางลาด 8 % ต่อช่อง เพดาน 1.35×
+
+### Before/After
+
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| เฟรมที่ sprite ยืนนิ่งระหว่างเดินตาม | 76.2 % | 3.9 % | −95 % |
+| ความแปรปรวนความเร็วบนจอ (CV) | 1.87 | 0.21 | −89 % |
+| ระยะที่เดินได้ใน 8 วินาที | 19 ช่อง | 97 ช่อง | ×5.1 |
+| ระยะห่างสูงสุดจากคนที่วิ่ง (30 tick) | 86 ช่อง | 1 ช่อง | −98 % |
+| pace ที่บอก client เทียบ pace จริง | 80 ms vs 400 ms | ต่างกัน < 25 % | — |
+
+**วัดยังไง**: 3 แถวแรก = replay harness ใน vitest ป้อน state stream ของ ws (tick 200 ms) ผ่าน React beat 250 ms เข้า `PetLayer` จริง 8 วินาที แล้ว sample ตำแหน่ง sprite ทุก 16 ms · 2 แถวหลัง = go test จำลอง 30 tick ตามคนวิ่ง 89 ms/ช่อง
+**ช่วงเวลาที่วัด**: จำลอง ไม่ใช่ prod — ยังไม่มี metric ของ pet บน Grafana
+
+- **verify:** ws `go build` / `go vet` / `go test ./internal/hub` ✅ (เทสใหม่ 3 ตัว: ตามคนวิ่งทัน, วัด sprint ต่อช่อง, ไม่มี "หยุด" ระหว่างขาเดิน) · app vitest 1747 ✅ (เทสใหม่: สตรีมตามคนวิ่ง 6 วิ ยืนนิ่ง < 10 % ของเฟรม) · eslint/prettier สะอาด · `tsc --noEmit` มี error เดิม 3 ตัวในไฟล์เทสที่ไม่ได้แตะ (pet-creation-wizard, pixi-game-scene) · **ยังไม่ได้ดูใน VO จริง** — rebuild ws + app
+- **ต่อจากนี้:** ถ้ายังรู้สึกสะดุด ให้ดูฝั่ง client ก่อน — `PET_GLIDE_BUFFER_MS` (260) กับ React beat `PET_SCENE_PUSH_MS` (250) เป็นตัวถัดไป (ทางเลือกที่ยังไม่ทำ: ส่งตำแหน่ง pet เข้า engine ตรงจาก ws handler ข้าม React beat)
 
 ---
 
