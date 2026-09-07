@@ -5,6 +5,10 @@
 > Migration ถัดไปที่ว่าง: **77** (ล่าสุดในโปรเจกต์คือ `76_user_security_sessions.sql`)
 >
 > **อัปเดต 2026-08-17 — ✅ ข้อ 2 กับ ข้อ 5 ปิดแล้ว** schema ข้างล่างแก้ตามคำตอบจริงแล้ว ไม่มีจุด 🔴 เหลือ
+>
+> **อัปเดต 2026-09-01 — แก้ตาม [spec.md](spec.md) ที่ล็อกกฎ sprite จาก asset จริง** 5 จุด: สูตร frame (เซลล์จัตุรัส), ยกเลิกกฎหารลงตัว 2 แกน, ขนาดชีทต้อง = 1000×1000, `direction_rows` ปิดแล้ว (`1`/`4` เรียงตาม `AVATAR_DIR_ROW`), mood Neutral ยืดถึง 72 ชม.
+>
+> **อัปเดต 2026-09-02 — slot `Evolution` เป็น GIF เท่านั้น (PM เคาะ)** → `frame_count/frame_rate/direction_rows` ต้อง nullable สำหรับ row GIF · egg → baby ใช้ GIF กลางบน R2 ไม่ใช่ slot ต่อ pet type · ดู [§ GIF ที่ slot Evolution](#gif-ที่-slot-evolution--pm-เคาะ-2026-09-02)
 
 ## ข้อควรรู้ก่อนอ่าน
 
@@ -99,9 +103,9 @@ CREATE TABLE IF NOT EXISTS tb_pet_animation (
     frame_count    INT       NOT NULL CHECK (frame_count    BETWEEN 1 AND 64),
     frame_rate     INT       NOT NULL CHECK (frame_rate     BETWEEN 4 AND 24),
     direction_rows INT       NOT NULL DEFAULT 1
-                             CHECK (direction_rows >= 1),  -- ⏸ ค่าที่ยอมรับจริงรอดู sprite จาก artist
-    frame_width  INT         NOT NULL,          -- = sprite_width  / frame_count    (คำนวณตอน upload)
-    frame_height INT         NOT NULL,          -- = sprite_height / direction_rows (คำนวณตอน upload)
+                             CHECK (direction_rows IN (1, 4)),  -- ✅ ปิดแล้ว 2026-09-01 (เห็น sprite จริงแล้ว)
+    frame_width  INT         NOT NULL,          -- = floor(sprite_width / frame_count)  เซลล์จัตุรัส
+    frame_height INT         NOT NULL,          -- = frame_width (จัตุรัส) ไม่ใช่ sprite_height / direction_rows
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (pet_type_id, stage, slot)
@@ -110,35 +114,69 @@ CREATE TABLE IF NOT EXISTS tb_pet_animation (
 CREATE INDEX IF NOT EXISTS idx_pet_animation_type ON tb_pet_animation (pet_type_id);
 ```
 
-- **spritesheet เป็น grid** (ข้อ 2 — ยึด Figma): คอลัมน์ = frame, แถว = direction → ต้องหารลงตัวทั้ง 2 แกน
-  - `frame_width  = sprite_width  / frame_count`
-  - `frame_height = sprite_height / direction_rows`
+- **spritesheet เป็น grid ของเซลล์จัตุรัส** (ข้อ 2 — ยึด Figma; ล็อกค่าจาก asset จริง 2026-09-01): คอลัมน์ = frame, แถว = direction
+  - ชีทต้องเป็น **1000 × 1000 px เท่านั้น** (เหมือน avatar — `requiredSpritesheetDim` ใน `avatar_service.go`)
+  - `frame_width = frame_height = floor(sprite_width / frame_count)`
+  - อ่าน `direction_rows` แถวจากด้านบน **พื้นที่ที่เหลือด้านล่าง/ขวาปล่อยว่างได้**
+  - ❌ **ไม่มีกฎหารลงตัวแล้ว** — asset จริง (`Cat_Adult_Happy.png`, 6 คอลัมน์ × 4 แถว) มี `1000 % 6 = 4` และแถวจริงสูง ~166 ไม่ใช่ 250 กฎเดิมจึง reject ไฟล์และตัดสไปรต์กลางตัว ดูผลวัดใน [spec.md § Sprite Grid](spec.md)
+  - ตรวจแทนด้วย: `frame_size ≥ 16px` และ `direction_rows × frame_size ≤ sprite_height`
 
-### ⏸ ค่า `direction_rows` + ลำดับแถว — รอดู sprite จริงจาก artist ก่อน
+### ✅ ค่า `direction_rows` + ลำดับแถว — ปิดแล้ว 2026-09-01
 
-**ยังไม่ล็อก** — ตั้งใจจะให้เป็น `1` หรือ `4` (VO orthogonal-only) และเรียงแถวตาม avatar เดิม แต่ต้องเห็นไฟล์จริงก่อนว่า artist ทำมาแบบไหน
-
-สมมติฐานที่ตั้งไว้ (ยังไม่ยืนยัน):
+ยืนยันจาก asset จริงของ artist (`zyra-app/public/image/petdemo/Cat_Adult_Happy.png` — 1000×1000, 6 ท่า × 4 ทิศ, ล่างว่าง ~1/3):
 
 | row | ทิศ | ที่มา |
 |---|---|---|
-| 0 | `down` (ใต้) | `AVATAR_DIR_ROW` ใน `zyra-app/zyra-engine/avatar-frames.ts:26` |
+| 0 | `down` (ใต้) | `AVATAR_DIR_ROW` ใน `zyra-app/zyra-engine/avatar-frames.ts:26` — ตรงกับไฟล์จริงเป๊ะ |
 | 1 | `left` (ตก) | |
 | 2 | `right` (ออก) | |
 | 3 | `up` (เหนือ) | |
 
-| slot | คาดว่า direction_rows |
+| slot | direction_rows ที่ใช้ |
 |---|---|
 | `Walking`, `Sitting` | 4 |
-| `Wobbling`, `Evolution` | 1 |
-| `Happy`, `Sad` | 1 |
+| `Wobbling`, `Happy`, `Sad` | 1 หรือ 4 (แล้วแต่ไฟล์ที่ artist ส่ง — `Cat_Adult_Happy.png` เป็น 4) |
+| `Evolution` | **ไม่มี** — เป็น GIF (2026-09-02) ดูหัวข้อถัดไป |
 
-**สิ่งที่ยังทำได้เลยโดยไม่ต้องรอ** — คอลัมน์ `direction_rows INT` เข้า migration 77 ได้เลยไม่ว่าคำตอบจะเป็นอะไร เพราะสิ่งที่เปลี่ยนคือ **CHECK constraint กับ const ลำดับแถวใน Go เท่านั้น**:
+### GIF ที่ slot `Evolution` — PM เคาะ 2026-09-02
 
-- ใส่ CHECK แบบหลวม (`>= 1`) ไปก่อน → รัดให้แคบทีหลังด้วย `ALTER TABLE … DROP CONSTRAINT … ADD CONSTRAINT …` หนึ่งบรรทัด
-- **อย่าใส่ `CHECK (direction_rows IN (1, 4))` ตั้งแต่แรก** — ถ้า artist ส่ง 8 ทิศมาจะ insert ไม่เข้าและต้อง migration แก้ ขณะที่การรัดทีหลังไม่มีความเสี่ยง (ข้อมูลที่มีอยู่ผ่าน constraint ใหม่แน่นอนถ้าค่าจริงแคบกว่า)
-- ลำดับแถว: เขียนเป็น const ที่ **import จาก `AVATAR_DIR_ROW`** ตั้งแต่แรก ถ้า artist ทำมาไม่ตรง ค่อยตัดสินว่าจะขอให้แก้ไฟล์ หรือเพิ่ม mapping แยก
-- `frame_width`/`frame_height` **เก็บ** ไม่ derive — client ต้องใช้ทุกเฟรมเพื่อ slice spritesheet ถ้าไม่เก็บต้อง decode PNG ใหม่ทุก request (ค่าถูก validate ให้หารลงตัวตอน upload อยู่แล้ว จึงไม่ขัดกัน)
+`Evolution` ไม่ใช่ spritesheet อีกต่อไป: อัปโหลดเป็น **GIF จบในตัว** เล่นตอน pet ข้าม threshold (สถานะ evo ของช่วงวัยนั้น) — ดูกฎเต็มใน [spec.md § Evolution slot = GIF](spec.md)
+
+ผลต่อ schema `tb_pet_animation`:
+
+| คอลัมน์ | row PNG (slot อื่น) | row GIF (`Evolution`) |
+|---|---|---|
+| `sprite_url` | `.../{stage}/{slot}_{uuid}.png` | `.../{stage}/evolution_{uuid}.gif` (โค้ดตั้ง ext/content-type ตาม GIF อยู่แล้ว) |
+| `frame_count` / `frame_rate` / `direction_rows` | NOT NULL + CHECK | **NULL** → ต้องปลด `NOT NULL` เป็น `CHECK ((slot = 'Evolution' AND frame_count IS NULL AND frame_rate IS NULL AND direction_rows IS NULL) OR (slot <> 'Evolution' AND frame_count BETWEEN 1 AND 64 AND ...))` — migration ใหม่ + แก้ bootstrap DDL ใน `internal/database/postgres.go` |
+| `frame_width` / `frame_height` | `floor(1000 ÷ frame_count)` | **width × height ของ GIF** (เช่น 960 × 960) — ใช้เป็นขนาดตอน render |
+
+Validation ฝั่ง Go สำหรับ GIF: magic `GIF87a`/`GIF89a` (มีแล้ว) · `gif.DecodeConfig` แล้วเช็ค **`width == height && width ≤ 1000`** เท่านั้น · **ห้าม**เรียก `validatePetSpriteDimensions` (โค้ดปัจจุบันยังเรียก — ต้องแก้) · ไม่ตรวจ transparency · ขนาดไฟล์ ≤ 1 MB เท่าเดิม
+
+API response ของ animation GIF: `{ sprite_url, frame_width, frame_height, frame_count: null, frame_rate: null, direction_rows: null, mime_type: "image/gif" }` — เพิ่ม `mime_type` (หรือ FE ดูจากนามสกุล) เพื่อให้ client เลือก renderer ถูก
+
+**`RequiredSlots` ไม่เปลี่ยน — PM ยืนยัน 2026-09-02 ว่า egg และ evolved ยังต้องมี `Evolution`** (17 slot): egg = `{Wobbling, Evolution}` · baby/adult/evolved = `{Walking, Sitting, Happy, Sad, Evolution}`
+
+**Prefill egg `Evolution` (เคาะ 2026-09-02) — fallback ตอนอ่าน ไม่มี row:**
+
+```
+GET /api/admin/pets/:id  →  animations.egg.Evolution
+  มี row       → { sprite_url: <ของ type>, frame_width, frame_height, ..., is_default: false }
+  ไม่มี row    → { sprite_url: cfg.PetEggEvolutionDefaultURL, frame_width: 960, frame_height: 960,
+                   frame_count: null, frame_rate: null, direction_rows: null,
+                   mime_type: "image/gif", is_default: true }
+stage_ready.egg = has(Wobbling)            // Evolution ถือว่าพร้อมเสมอ (default หรือของเอง)
+DELETE .../stages/egg/animations/Evolution → ลบ row แล้วคืน 200 พร้อม object default (ไม่ใช่ 404 / ไม่ใช่ว่าง)
+```
+
+- config ใหม่ใน `zyra-api/internal/config`: `PET_EGG_EVOLUTION_DEFAULT_URL` (default `${AWS_PUBLIC_URL}/static/pet/shared/egg-evolution.gif`) — ไฟล์จริงอยู่บน R2 แล้ว 960×960 · 24 เฟรม · 159 KB
+- ไม่ insert row ตอน `POST /api/admin/pets` และไม่ backfill type เก่า — default มีผลกับทุก type รวมที่สร้างไปแล้ว
+- `is_default` ปรากฏใน animation object **ทุกตัว** (false สำหรับ slot อื่น) เพื่อให้ FE ไม่ต้อง special-case ชื่อ slot
+- member endpoint `GET /api/user/workspaces/:id/pets` ใช้ fallback เดียวกัน — client VO ไม่รู้จัก URL กลางเอง
+- **ไม่ต้องแก้ schema** — เป็น logic ใน service + config อย่างเดียว
+
+- `CHECK (direction_rows IN (1, 4))` ใส่ได้เลยแล้ว ไม่ต้องรออีก
+- ลำดับแถว: ต้อง **import จาก `AVATAR_DIR_ROW`** ไม่ใช่พิมพ์เลข 0-3 ใหม่ (engine มี single source อยู่แล้ว)
+- `frame_width`/`frame_height` **เก็บ** ไม่ derive ตอน read — client ต้องใช้ทุกเฟรมเพื่อ slice spritesheet ถ้าไม่เก็บต้อง decode PNG ใหม่ทุก request
 - `CHECK` ของ `frame_count`/`frame_rate`/`direction_rows` = ค่าเดียวกับ SC-PM-07 — validate 2 ชั้น (Go ให้ error code สวย, DB กัน bug)
 
 **Slot vocabulary — const ใน Go ไม่ใช่ CHECK** (เพิ่มท่าใหม่ไม่ต้อง migration):
@@ -196,7 +234,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_pet_xp_config_current
   },
   "mood": {
     "happy":   { "within_hours": 12, "xp_rate_percent": 150 },
-    "neutral": { "within_hours": 48, "xp_rate_percent": 100 },
+    "neutral": { "within_hours": 72, "xp_rate_percent": 100 },
     "sad":     { "after_hours":  72, "xp_rate_percent": 50  }
   }
 }
@@ -207,6 +245,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_pet_xp_config_current
 - prune history: หลัง insert version ใหม่ ลบ version ที่เก่ากว่า 10 ล่าสุดใน tx เดียวกัน
 
 ### 4. `tb_room_pet` — pet instance ในห้อง (SC-PM-05)
+
+> ✅ **ลงจริงแล้ว 2026-09-04** — `zyra-api/migrations/88_room_pet.sql` (+ `.down.sql`) apply บน dev DB แล้ว · ต่างจากร่างด้านล่าง 3 จุด: เพิ่ม `created_by` / `updated_by` (VARCHAR → `tb_user`, pattern เดียวกับ `tb_pet_type`) · เพิ่ม `idx_room_pet_pet_type` (partial, ใช้เช็ก `PET_TYPE_IN_USE`) · `last_seen_stage` มี CHECK 4 ค่า · `uq_room_pet_one_per_zone` **เปิดใช้แล้ว** (PM เคาะ 1 room = 1 pet 2026-09-04 — apply บน dev แล้ว)
 
 ```sql
 CREATE TABLE IF NOT EXISTS tb_room_pet (
@@ -235,6 +275,7 @@ CREATE INDEX IF NOT EXISTS idx_room_pet_map ON tb_room_pet (map_id) WHERE is_del
 --     ON tb_room_pet (zone_id) WHERE is_deleted = FALSE;
 ```
 
+- **1 room = 1 pet บังคับแล้ว** (PM 2026-09-04) — `uq_room_pet_one_per_zone` เปิดใช้ใน migration 88 · ห้องที่วางได้ = `zone_type = 'room'` เท่านั้น และจุดวางห้ามตกใน meeting/private (กฎอยู่ใน service ดู §Placement)
 - `map_id` **เก็บซ้ำ**กับที่ derive ได้จาก `zone_id` โดยตั้งใจ — VO client โหลด pet ทั้งชั้นด้วย `WHERE map_id = ?` ครั้งเดียว ถ้าไม่เก็บต้อง JOIN `tb_map_zone` ทุกครั้งที่เข้าห้อง
 - `ON DELETE RESTRICT` ที่ `pet_type_id` — pet type ที่ถูกวางใช้งานอยู่ต้องลบไม่ได้ (soft delete เท่านั้น) ป้องกัน pet หายจาก map ของ user โดยที่ admin ไม่รู้ตัว
 - **ไม่มีคอลัมน์ `stage` และ `mood`** — derive (ดูหัวข้อถัดไป)
@@ -295,12 +336,16 @@ xp >= xp_evolve  → evolved
 
 ```
 ≤ 12 ชม.       → happy   (×150%)
-≤ 48 ชม.       → neutral (×100%)
-> 48 ชม.       → ???  ⚠️ ช่วง 48–72 ชม. ไม่มี state ใน card
+12–72 ชม.      → neutral (×100%)
 > 72 ชม.       → sad     (×50%)
 ```
 
-**ตอนนี้ implement เป็น `> 48 ชม. = sad`** (Sad เริ่มที่ 48 ไม่ใช่ 72) เพราะเป็นการตีความเดียวที่ไม่มีช่องว่าง — แต่ถ้า PM ตอบว่า Neutral ยืดถึง 72 ชม. ก็แก้เลขเดียวใน Go const **ต้องถามก่อน merge**
+**✅ ปิดแล้ว 2026-09-01 — Neutral ยืดถึง 72 ชม.** (ช่องว่าง 48–72 ที่เคยไม่มี state หายไป)
+
+- ค่าที่ admin ตั้งได้จริงมี 2 ค่า: `mood.happy.within_hours` (ขอบบนของ Happy) และ `mood.sad.after_hours` (ขอบที่เข้า Sad)
+- `mood.neutral.within_hours` **ต้องเท่ากับ** `mood.sad.after_hours` เสมอ (เป็นค่า mirror ไม่ใช่ค่าอิสระ) — ฟอร์มแสดงช่อง Neutral เป็น read-only
+- ⚠️ **validation ฝั่ง Go ต้องแก้**: จาก `happy.within < neutral.within < sad.after` เป็น `happy.within < sad.after` **และ** `neutral.within == sad.after`
+- seed ของ migration 85 + bootstrap DDL ต้องเปลี่ยน `neutral.within_hours` จาก 48 → 72
 
 ### `stage_ready` — จากจำนวน animation ที่ upload ครบ
 
@@ -355,13 +400,24 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 - service ต้อง validate ว่าจุดที่วางอยู่ภายใน `zone_id` ที่ส่งมาจริง (ใช้ `lib/zone-utils` ฝั่ง FE + ตรวจซ้ำฝั่ง service เพราะ zone เป็น tiles JSONB ไม่ใช่ AABB)
 - pet type ที่วางได้ต้อง `status = active` **และ** `stage_ready` ครบทุก stage
 
+> ✅ **implement แล้ว 2026-09-04** (`feat/room-pet-placement`, `handler/room_pet_handler.go` + `service/room_pet_service.go`) — รายละเอียดที่ contract ไม่ได้เขียนไว้แล้วตัดสินตอนทำ:
+> - **ต้องถือ workspace lock** สำหรับ POST/PATCH/DELETE เหมือน objects/zones ใน group เดียวกัน → ไม่มี lock = **423 `WORKSPACE_LOCKED`** (GET ไม่ต้อง)
+> - response `RoomPet`: `name` = ชื่อที่แสดงจริงเสมอ (custom หรือชื่อ pet type) + `is_custom_name` · มี `pet_type_name` / `thumbnail_url` join มาให้ palette · **ไม่มี** `stage` / `mood` (derive ฝั่ง client จาก `xp` + `/api/user/pet-xp-config`)
+> - PATCH `name: ""` = ล้างชื่อ custom กลับไปใช้ชื่อ pet type · PATCH ส่ง `tile_x` หรือ `tile_y` ตัวเดียวได้ (อีกตัวใช้ค่าเดิม) · ย้ายได้**ภายใน zone เดิมเท่านั้น** (ไม่มี `zone_id` ใน PATCH ตาม contract) · body ว่าง → 400 `INVALID_REQUEST` · tile ติดลบ → 400 `INVALID_POSITION`
+> - กฎ inside-zone = `zoneContainsTile` ฝั่ง FE: floor anchor เป็น tile (57.5 → 57) · tiles JSONB ชนะ rect · rect ใช้ `zoneTilePx = 32`
+> - HTTP status = ค่าใน body (404/400/423/500) ต่างจาก `/api/admin/pets*` เดิมที่ตอบ HTTP 200 เสมอ — `authFetch` อ่าน body ทั้ง 2 แบบ
+> - เพิ่ม code: 404 `MAP_NOT_FOUND` · 404 `ZONE_NOT_FOUND` (zone ไม่ได้อยู่บน map นี้) · 404 `ROOM_PET_NOT_FOUND` · 400 `INVALID_NAME` (> 30 rune) · 400 `INVALID_POSITION` · 423 `WORKSPACE_LOCKED`
+> - `DELETE /api/admin/pets/:id` ตอบ 409 `PET_TYPE_IN_USE` แล้วเมื่อยังมี placement ที่ `is_deleted = FALSE` · `workspace_usage_count` = `COUNT(DISTINCT workspace)` ของ placement สด recompute ใน tx เดียวกับ place/remove (F7 ปิด)
+> - **PM เคาะ 2026-09-04:** วางได้เฉพาะ `zone_type = 'room'` (400 `ZONE_NOT_ROOM`) · จุดวางห้ามตกใน `meeting` / `private` แม้ซ้อนใน room (400 `POSITION_BLOCKED_BY_ZONE` — เช็กทุก zone ประเภทนั้นบน map ทั้งตอน place และ move) · 1 room = 1 pet (409 `ZONE_ALREADY_HAS_PET` — pre-check ใน tx + unique index รับ race; ลบแล้ววางใหม่ได้เพราะ index นับเฉพาะ `is_deleted = FALSE`)
+
 ### Member — `/api/user/*` (UserGuard)
 
 ตาม `.claude/rules/15-member-api-separation.md` — member **ห้าม**เรียก `/api/admin/*`
 
 | Method | Path | คำอธิบาย |
 |---|---|---|
-| GET | `/api/user/workspaces/:workspaceId/pets` | pet ในชั้นที่กำลังเข้า + derived `stage`/`mood` + animation URL ครบ (VO client) |
+| GET | `/api/user/pet-xp-config` | ✅ **ทำแล้ว 2026-09-02** (branch `feat/room-pet-user-xp-config`) — config ปัจจุบันแบบ member: `{ version, config: { thresholds, activities (ทุกตัวพร้อม `enabled`), mood } }` **ไม่มี** `id` / `is_current` / `created_by*` / `constraints` · 404 `PET_XP_CONFIG_NOT_FOUND` ถ้ายังไม่มี version · VO ใช้ derive stage / progress / mood + Daily quest (`buildPetDailyQuests`) |
+| GET | `/api/user/workspaces/:workspaceId/pets` | ✅ **ทำแล้ว 2026-09-04** ([zyra-api #66](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/66)) — pet **ทุกชั้น** ของ workspace ในครั้งเดียว (client filter `map_id`) แต่ละตัว = `RoomPet` + `animations[]` ครบทุก stage/slot · **ไม่ส่ง `stage`/`mood`** ให้ client derive จาก `xp` + `/api/user/pet-xp-config` · owner/member เท่านั้น ไม่ใช่ = 403 (workspace ไม่มีจริงก็ 403 ไม่ leak) |
 | POST | `/api/user/workspaces/:workspaceId/pets/:petId/play` | activity "Play with your pet" → บวก XP (idempotent วันละครั้ง/คน) |
 
 ---
@@ -401,9 +457,9 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 
 | field | ค่า |
 |---|---|
-| `file` | PNG spritesheet (≤ 1 MB, ≤ 1000×1000, `width % frame_count = 0`, `height % direction_rows = 0`) |
-| `frame_count` | `1`–`64` (จำนวนคอลัมน์) |
-| `frame_rate` | `4`–`24` |
+| `file` | PNG spritesheet — **1000 × 1000 px เท่านั้น**, ≤ 1 MB (ไม่มีกฎหารลงตัวแล้ว) |
+| `frame_count` | `1`–`64` (จำนวนคอลัมน์) — default **6** · ต้องได้ `frame_size = floor(1000 / frame_count) ≥ 16px` |
+| `frame_rate` | `4`–`24` — default **8** (= `AVATAR_WALK_FPS`) |
 | `direction_rows` | `1` หรือ `4` เท่านั้น (`4` = down/left/right/up ตามลำดับ `AVATAR_DIR_ROW`) |
 
 ```json
@@ -412,7 +468,7 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
   "message": "success",
   "data": {
     "sprite_url": "https://pub-b74ca….r2.dev/static/pet/9f3c…/adult/Sitting_7c1e….png",
-    "frame_width": 96, "frame_height": 128, "direction_rows": 4,
+    "frame_width": 166, "frame_height": 166, "direction_rows": 4,
     "stage_ready": true
   }
 }
@@ -426,17 +482,21 @@ required slot list เป็น const ใน Go (`RequiredSlots(stage) []string`
 |---|---|---|
 | 400 | `INVALID_FILE_TYPE` | ไม่ใช่ PNG (นามสกุล + magic bytes `89 50 4E 47`) |
 | 400 | `FILE_TOO_LARGE` | > 1 MB |
-| 400 | `INVALID_DIMENSIONS` ⚠️ | width หรือ height > 1000 (ชื่อ code รอ PM ยืนยัน) |
+| 400 | `INVALID_DIMENSIONS` | ขนาดชีทไม่ใช่ 1000 × 1000 px พอดี |
 | 400 | `INVALID_FRAME_COUNT` | นอกช่วง 1–64 |
 | 400 | `INVALID_FRAME_RATE` | นอกช่วง 4–24 |
 | 400 | `INVALID_DIRECTION_ROWS` ⚠️ | ไม่ใช่ `1` หรือ `4` |
-| 400 | `FRAME_SIZE_MISMATCH` | `width % frame_count ≠ 0` — แนบ `{width, frame_count}` ให้ FE ขึ้นข้อความพร้อมเลข |
-| 400 | `FRAME_ROW_MISMATCH` ⚠️ | `height % direction_rows ≠ 0` — แนบ `{height, direction_rows}` |
+| 400 | `FRAME_SIZE_MISMATCH` | `floor(width / frame_count) < 16px` (frame_count มากเกินไป) — แนบ `{width, frame_count, frame_size}` ให้ FE ขึ้นข้อความพร้อมเลข |
+| 400 | `FRAME_ROW_MISMATCH` | `direction_rows × frame_size > height` (grid ล้นภาพ) — แนบ `{height, direction_rows, frame_size}` |
 | 400 | `INVALID_SLOT` | `slot` ไม่อยู่ใน 6 ตัว (`Wobbling`/`Walking`/`Sitting`/`Happy`/`Sad`/`Evolution`) หรือไม่ valid สำหรับ stage นั้น |
 | 400 | `PET_NOT_READY` | วาง pet type ที่ sprite ยังไม่ครบทุก stage |
 | 400 | `POSITION_OUTSIDE_ZONE` | จุดที่วางอยู่นอก `zone_id` ที่ส่งมา |
 | 409 | `PET_TYPE_IN_USE` | DELETE pet type ที่ยังถูกวางในห้อง |
-| 409 | `ZONE_ALREADY_HAS_PET` | วาง pet ตัวที่ 2 ในห้องเดิม — **ยังไม่เปิดใช้** รอ PM ยืนยันกฎ 1 room = 1 pet |
+| 409 | `ZONE_ALREADY_HAS_PET` | วาง pet ตัวที่ 2 ในห้องเดิม — ✅ **เปิดใช้แล้ว 2026-09-04** (PM เคาะ 1 room = 1 pet) pre-check + partial unique index `uq_room_pet_one_per_zone` |
+| 400 | `ZONE_NOT_ROOM` | วางใน zone ที่ `zone_type != 'room'` (meeting / private / block / spawn / teleport / spotlight) — PM 2026-09-04 |
+| 400 | `POSITION_BLOCKED_BY_ZONE` | จุดวางตกใน zone `meeting` / `private` ของ map เดียวกัน **แม้ zone นั้นจะซ้อนอยู่ใน room** — PM 2026-09-04 (เช็กทั้งตอน place และ move) |
+| 404 | `MAP_NOT_FOUND` · `ZONE_NOT_FOUND` · `ROOM_PET_NOT_FOUND` | map ไม่มี · zone ไม่ได้อยู่บน map นี้ · pet ไม่มี/ถูกลบแล้ว |
+| 423 | `WORKSPACE_LOCKED` | เขียน placement โดยไม่ถือ workspace edit lock |
 | 422 | `INVALID_XP_CONFIG` | validate config ไม่ผ่าน — แนบ `{field, reason}` |
 
 > **transparency ไม่มี error code** — ตาม PM (ข้อ 6) ส่งกลับเป็น `data.warnings: ["NO_TRANSPARENCY"]` พร้อม HTTP 200 upload สำเร็จปกติ
@@ -456,7 +516,11 @@ publish ผ่าน `ZoneEventPublisher` ที่มีอยู่ (Redis cha
 | `pet_stage_changed` | `{map_id, pet_id, from, to}` | XP ข้าม threshold (เล่น `Evolution`) |
 | `pet_xp_changed` | `{map_id, pet_id, xp, mood}` | ได้ XP (throttle ฝั่ง service) |
 
-**สิ่งที่ต้องทำใน zyra-ws**: เพิ่ม 6 type นี้ใน handler ที่ subscribe `vo:zone` — ปัจจุบันรู้จักแค่ `zone_claim_changed`, `map_object_changed`, `map_updated` type ที่ไม่รู้จักจะถูกทิ้งเงียบ ๆ
+> ✅ **4 event ฝั่ง admin (`pet_spawned` / `pet_moved` / `pet_renamed` / `pet_removed`) publish จริงแล้ว 2026-09-04** — ยืนยันด้วย `redis-cli SUBSCRIBE vo:zone` ระหว่าง live-test (envelope `{workspace_id, type, payload}` เหมือน event เดิม) · `pet_spawned.pet` คือ `RoomPet` เต็มตัว · `pet_renamed.name` = ชื่อที่แสดงจริงหลังเปลี่ยน (ล้าง custom แล้วได้ชื่อ pet type) · publish เป็น best-effort หลัง commit — Redis ล่ม placement ยังสำเร็จ (log warn) · อีก 2 event (`pet_stage_changed` / `pet_xp_changed`) รอ PR 9
+
+> ✅ **zyra-ws relay ทำแล้ว** [zyra-ws #29](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/29) (2026-09-04) — 6 type ผ่าน `BroadcastZoneEvent` แบบ pure relay ไม่มี mirror
+
+**สิ่งที่ต้องทำใน zyra-ws** (ทำแล้ว ดูด้านบน): เพิ่ม 6 type นี้ใน handler ที่ subscribe `vo:zone` — ปัจจุบันรู้จักแค่ `zone_claim_changed`, `map_object_changed`, `map_updated` type ที่ไม่รู้จักจะถูกทิ้งเงียบ ๆ
 
 ⚠️ gotcha ที่เคยเจอ: ถ้า zyra-api start ผิด CWD จะไม่ได้ `INTERNAL_API_SECRET` แล้ว ws join 401 ทั้งหมด — event จะดูเหมือน "ไม่ถูก publish" ทั้งที่ publish ปกติ ([[vo-realtime-redis-bus]])
 
@@ -498,6 +562,7 @@ updateMapPet(mapId: string, petId: string, body: UpdateMapPetBody): Promise<MapP
 removeMapPet(mapId: string, petId: string): Promise<BaseResponse>
 
 // member — ห้ามชี้ /api/admin/*
+getPetXPConfigForUser(): Promise<PetResponse<PetXPConfigPublic>>   // ✅ มีแล้ว (lib/api/pets.ts)
 listWorkspacePets(workspaceId: string): Promise<WorkspacePetListResponse>
 playWithPet(workspaceId: string, petId: string): Promise<PlayWithPetResponse>
 ```
@@ -532,12 +597,12 @@ playWithPet(workspaceId: string, petId: string): Promise<PlayWithPetResponse>
 2. วาง pet ใน Workspace **Template** แล้ว workspace ที่สร้างไปก่อนหน้าได้ pet ด้วยไหม
 
 **ต้องได้ก่อน merge PR 9**
-3. mood ช่วง 48–72 ชม. เป็น state อะไร (ตอนนี้ตีความว่า sad เริ่มที่ 48)
+3. ~~mood ช่วง 48–72 ชม. เป็น state อะไร~~ — ✅ **ปิดแล้ว 2026-09-01: Neutral ยืดถึง 72 ชม.** (Sad เริ่ม > 72)
 4. activity ตัวไหนนับ per-user ตัวไหนนับ per-room (ตารางที่เสนอไว้ข้างบน)
 5. `xp_play_with_pet` — "เล่นกับ pet" คือ interaction แบบไหนใน VO (คลิก? emoji? เดินเข้าใกล้?) ยังไม่มี spec member-side
 
 **ไม่บล็อก แต่ควรรู้**
-6. ยืนยันชื่อ error code ที่เราตั้งเอง: `INVALID_DIMENSIONS`, `INVALID_DIRECTION_ROWS`, `FRAME_ROW_MISMATCH`
+6. ยืนยันชื่อ error code ที่เราตั้งเอง: `INVALID_DIMENSIONS`, `INVALID_DIRECTION_ROWS`, `FRAME_ROW_MISMATCH` (ความหมายของ 2 ตัวหลังเปลี่ยนแล้วตาม spec 2026-09-01)
 7. `Max` ใน card = เพดานที่ admin ตั้งได้ (ตีความแบบนี้) หรือเพดาน XP ต่อวัน?
 8. activity toggle เปิด/ปิด ที่เห็นใน Figma ต้องมีจริงไหม (เผื่อ `enabled` ไว้แล้ว)
 9. Adult / Evolved required slots — อนุมานว่าเหมือน Baby (Figma ไม่มี frame ที่โชว์ตรง ๆ)

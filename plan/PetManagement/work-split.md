@@ -20,10 +20,10 @@
 | 3 | `feat(api): pet xp config + version history` | ✅ merged | ตรง contract ครบ |
 | 4 | `feat(app): pet library + stage manager UI` | ✅ merged | 4a/4b/4d ครบ · **4c ยังไม่ครบ** (F8) · เก็บ F1, F2, F9 |
 | 5 | `feat(app): xp config form` | ✅ merged | เก็บ F13 |
-| 6 | `feat(api): room pet placement + realtime` | ⬜ ยังไม่เริ่ม | Dev A |
-| 7 | `feat(ws): forward pet_* events` | ⬜ ยังไม่เริ่ม | Dev A |
-| 8a | `feat(app): pet palette + popup ตั้งชื่อ` | ⬜ ยังไม่เริ่ม | Dev B |
-| 8b | `feat(app): pet drag-drop ใน Pixi scene` | ⬜ ยังไม่เริ่ม | Dev A |
+| 6 | `feat(api): room pet placement + realtime` | ✅ **merged 2026-09-04** [zyra-api #65](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/65) (`ce62893`, 3 commit: placement · PM rules · replace) | AI (ดู [Roompet/progress.md รอบ 12](../Roompet/progress.md)) — migration ใช้เลข **88** · เก็บ 409 `PET_TYPE_IN_USE` + `workspace_usage_count` (F7) ครบในรอบนี้ |
+| 7 | `feat(ws): forward pet_* events` | ✅ **merged 2026-09-04** [zyra-ws #29](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/29) (6 type, pure relay) | AI |
+| 8a | `feat(app): pet palette + popup ตั้งชื่อ` | 🟡 โค้ดเสร็จ 2026-09-04 บน branch `feat/room-pet-map-editor` (zyra-app) live-test ผ่าน · ✅ **merged** [zyra-app #246](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/246) `20d6db6` 2026-09-04 | AI — รวม 8a+8b ใน PR เดียว ดู [Roompet/progress.md รอบ 13](../Roompet/progress.md) |
+| 8b | `feat(app): pet drag-drop ใน Map Editor` | 🟡 เสร็จพร้อม 8a — marker เป็น DOM overlay ไม่ใช่ Pixi (Map Editor เป็น 2D canvas) · **stage row ยังไม่ทำ** รอ PM | AI |
 | 9 | `feat(api): xp earning engine + ledger` | ⬜ ยังไม่เริ่ม | Dev A |
 
 ### ยังไม่เริ่มเลย — 4 PR
@@ -42,7 +42,7 @@
 
 | PR ใหม่ | เจ้าของ | งาน | หลักฐานว่าตกหล่น |
 |---|---|---|---|
-| **10** `feat(api): member pet endpoints` | Dev A | `GET /api/user/workspaces/:workspaceId/pets` (+ derived `stage`/`mood` + animation URL ครบ) · `POST /api/user/workspaces/:workspaceId/pets/:petId/play` (idempotent วันละครั้ง/คน) | อยู่ใน [db-schema-api-contract.md §Member](db-schema-api-contract.md) แต่ไม่ปรากฏใน PR 1–9 เลย |
+| **10** `feat(api): member pet endpoints` | AI — 🟡 GET ทำแล้ว [zyra-api #66](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/66) (2026-09-04, animations ครบ, stage/mood derive ฝั่ง client) · `POST …/play` ย้ายไป PR 9 | `GET /api/user/workspaces/:workspaceId/pets` (+ animation URL ครบ) · `POST /api/user/workspaces/:workspaceId/pets/:petId/play` (idempotent วันละครั้ง/คน) | อยู่ใน [db-schema-api-contract.md §Member](db-schema-api-contract.md) แต่ไม่ปรากฏใน PR 1–9 เลย |
 | **11** `feat(app): render pet ใน VO` | Dev A | render pet บน VO scene ฝั่ง member · เล่น animation ตาม stage/mood · ลำดับแถว direction ต้อง import จาก `AVATAR_DIR_ROW` | "เกณฑ์ก่อนเปิด Feature Flag" ระบุ "render ตาม stage/mood" แต่ PR 8 คือ Map Editor เท่านั้น · ข้อสมมติลำดับแถว (`0=down 1=left 2=right 3=up`) **ยังไม่มีใครใช้ = ยังไม่เคยพิสูจน์กับ sprite จริง** |
 
 ### ของที่ต้องเก็บใน PR ที่ merge แล้ว
@@ -66,7 +66,7 @@
 |---|---|
 | แก้ F1 / F2 | **17 หรือ 20 slots** — โค้ดใช้ 20 (Egg 2 + Baby/Adult/Evolved ละ 6 โดยเพิ่ม `Idle`) แต่ [§RequiredSlots(stage)](#requiredslotsstage--ค่าที่ใช้-ยึด-figma) ในเอกสารนี้เขียน 17 (ละ 5) — ตอบก่อนไม่งั้นแก้ progress bar เสร็จต้องแก้อีกรอบ |
 | แก้ F3 | **metadata ต่อ animation** — เปิดให้ตั้งเองตาม spec หรือรับค่า fixed 50/24/4 อย่างเป็นทางการ (คำตอบกำหนดว่าจะยกเพดาน หรือปลดล็อกฟอร์ม) |
-| merge PR 6 / 8 | 1 room = 1 pet บังคับไหม (`uq_room_pet_one_per_zone` ยังไม่เปิด) · วาง pet ใน Workspace Template แล้ว workspace ที่สร้างไปก่อนหน้าได้ pet ด้วยไหม |
+| merge PR 6 / 8 | ~~1 room = 1 pet บังคับไหม~~ ✅ **PM 2026-09-04: บังคับ** (`uq_room_pet_one_per_zone` เปิดแล้ว) + วางได้เฉพาะ `room` zone, จุดวางห้ามตกใน meeting/private แม้ซ้อนใน room · **ยังค้าง:** วาง pet ใน Workspace Template แล้ว workspace ที่สร้างไปก่อนหน้าได้ pet ด้วยไหม |
 | merge PR 9 | mood ช่วง 48–72 ชม. เป็น state อะไร · activity ตัวไหน per-user ตัวไหน per-room · `xp_play_with_pet` คือ interaction แบบไหนใน VO (ยังไม่มี spec member-side) |
 | F15 | เจตนาของ `NEXT_PUBLIC_PET` — ปิดแค่เมนู หรือต้องปิด route + API ด้วย |
 

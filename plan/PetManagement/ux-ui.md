@@ -549,6 +549,27 @@ Node [4114:199428](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-desi
 **Marker menu** (คลิก pet ที่วางแล้วบน map):
 - Popover เล็ก (bg `#242B32`, radius 8px): แสดงชื่อ pet (เช่น `Golden dog`) → Divider → ปุ่มไอคอน `🗑 Trash` (ลบ pet ออกจาก room ทันที — ตรงกับ spec.md's "สามารถลบ Pet ออกจาก Room ที่ต้องการได้")
 
+### สิ่งที่ Figma มีเพิ่มจากที่เคยดึง (ตรวจซ้ำ 2026-09-04 ด้วย get_metadata + get_design_context ทุก frame)
+
+> ครั้งแรก (08-17) ดึงมา 9 frame + 3 sticky — ตอนนี้ section มี **12 frame + 5 sticky** (เพิ่ม 4387:120740, 4688:562208, sticky 4387:121500, 4387:121470)
+
+| Node | อะไร | spec ที่ได้ | สถานะ |
+|---|---|---|---|
+| 4141:760560 Object card | การ์ด pet ใน palette: bg `#242B32` radius 8 p-2 gap-2 · sprite 80×80 · เส้นคั่น `rgba(255,255,255,0.2)` · ชื่อ Caption 12/15 ขาว · footprint "1x1" `#8C99A6` · แถว swatch 24×24 gap-2 = pet type อื่น | ทำได้ — sprite = thumbnail/เฟรมจริงของ pet type (ไม่ใช่ asset จาก Figma) |
+| 4114:282533 marker บน map | กรอบ zone highlight `rgba(45,182,255,0.1)` + border `#2DB6FF` (Blue/500) · pet icon 24×24 · "Object drag" handle 40×40 p-2 ทับมุมขวา | ทำได้ — ใช้ตัวแทน object drag ของ editor เดิม |
+| 4114:281993 Marker menu | popover `#242B32` radius 8 p-1 gap-1 w-253: แถวชื่อ (Body 14/18 ขาว, px-2 py-1) → Divider → แถว [pet icon 24] [Trash 16 ใน p-1] | ทำได้ — Trash = `lucide Trash2` ตาม rule 12 · **ไม่มีปุ่ม rename ใน Figma** แต่ PM ให้แก้ชื่อทีหลังได้ → คลิกชื่อเพื่อแก้ (inline) เหมือน rename ห้อง |
+| 4387:121093 Marker menu (stage row) | แถวไอคอน 4 stage (egg / baby / adult / evolved) 24×24 gap-2 ใน `#242B32` radius 8 p-1 — stage ปัจจุบัน opacity 100 ที่เหลือ 50 % | ⚠️ **scope ใหม่** ดูข้างล่าง |
+| 4114:282877 General modal "Replace this pet" | panel 458×188 `#242B32` radius 16 p-4 gap-6 backdrop-blur 4 · title Sub/Medium 16/22 + ปุ่ม X 24 · Divider · body 14/18 `#8C99A6` · ปุ่ม `Cancel` (ขาว, text `#1A1B1E`) / `Replace` (`#58D68D`) h-32 px-4 radius 6 | ทำได้ — **มีผลแล้ว** เพราะ PM เคาะ 1 room = 1 pet |
+| 4688:562222 General modal "Stage change unavailable" | โครงเดียวกัน · body: "All new pets begin at **Egg Stage(1)** and evolve as the workspace earns XP." · ปุ่มเดียว `Comfirm` (typo ใน Figma → ใช้ "Confirm") | ⚠️ ผูกกับ stage row |
+| 4141:49687 Toast error | `#1A1B1E` radius 16 p-4 shadow `0 4px 8px rgba(255,255,255,0.08)` · icon box 40 `rgba(240,58,58,0.2)` radius 8 + X แดง 24 · title Body/Bold "Unable to place pet" + body "Pet cannot be placed in this area. Choose another location." · ปุ่ม X 16 | ทำได้ — reuse toast ของ editor |
+
+**Sticky notes ใหม่ (ข้อความเต็มจาก node name):**
+1. `4387:121500` — "Pet เป็น Stage 1 เสมอ แล้วถ้าจะเปลี่ยนเป็น Stage อื่นต้องมีประวัติว่าทีมนี้เคยเลี้ยงสัตว์เลี้ยง + XP สัตว์เลี้ยงไปถึง Stage ไหน"
+2. `4114:282959` (replace) — "สัตว์เลี้ยงเดิมอยู่ Stage ไหน สัตว์เลี้ยงใหม่คง Stage นั้นไว้ เช่น สุนัข Stage 4 เปลี่ยนเป็นแมวก็ต้อง Stage 4" → ✅ **api รองรับแล้ว** `POST …/pets {replace: true}` ตัวใหม่รับ `xp` / `last_activity_at` / `last_seen_stage` จากตัวเดิม (zyra-api #65 commit 3)
+3. `4387:121470` — "กรณีเลือกสัตว์ Stage ที่สูงกว่า แต่ทีมยังไม่เคยเลี้ยงสัตว์ หรือพัฒนาสัตว์เลี้ยงถึง Stage นั้น / กรณีเลือกสัตว์ Stage ที่ต่ำกว่าแต่สัตว์เลี้ยงยังไม่ Stage 4 → ไม่อนุญาตให้ทำได้" (→ modal "Stage change unavailable")
+
+**⚠️ Stage row = scope ที่ contract ไม่มี** — Figma ให้ admin เลือก stage ของ pet จาก marker menu โดยมีเงื่อนไข "ทีมเคยถึง stage นั้นแล้ว" (ต้องมีประวัติ XP ของ workspace) · `stage` เป็นค่า derive จาก `xp` ตาม [db-schema-api-contract.md](db-schema-api-contract.md) จึงต้องนิยามว่า "เลือก stage" = set `xp` เป็น threshold ของ stage นั้น? และ "เคยถึง" อ่านจากอะไร (pet ตัวเดิมในห้อง? ทุกห้องใน workspace? ต้องมี ledger PR 9) → **ยังไม่ทำใน PR 8 รอ PM ตอบ** — UI ที่ทำก่อนได้: palette card, drag-drop, ตั้งชื่อ, marker menu (ชื่อ + trash), Replace modal, toast
+
 ### สิ่งที่ขัดกับ spec.md เดิม
 
 | หัวข้อ | spec.md เดิม | Figma จริง |
@@ -567,7 +588,7 @@ Node [4114:199428](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-desi
 2. ✅ **ตัด Tab "Assign to Room" ออกจาก Pet Management ทั้งหมด** — placement อยู่ใน Map Editor ที่เดียว
 3. Zone validation ("Pet วางได้แค่ Room zone เท่านั้น") ต้องเช็คว่า room zone เป็น zone_type เดียวกับที่ระบบมีอยู่แล้ว ([[vo-block-zone-collision]] มี pattern การ forward blockZones→MapConfig ที่ใกล้เคียง) — zone เป็น tiles JSONB ไม่ใช่ AABB ให้ใช้ `lib/zone-utils.ts` และตรวจซ้ำฝั่ง service (`POSITION_OUTSIDE_ZONE`)
 4. **ตั้งชื่อ pet ตอนวาง** — Figma ไม่มี mockup ของ UI นี้ ให้ทำ popup หลังวาง (optional, max 30 chars, default = ชื่อ Pet Type) และแก้ชื่อทีหลังได้จาก marker menu
-5. ⚠️ **"Replace this pet" modal (เคส 2) ยังไม่ actionable** — ขึ้นกับกฎ 1 room = 1 pet ที่ PM ยังไม่เคาะ default ปัจจุบันคือวางได้หลายตัวต่อห้อง = ยังไม่ต้องทำ modal นี้
+5. ✅ **"Replace this pet" modal (เคส 2) ต้องทำแล้ว** — PM เคาะ 1 room = 1 pet (2026-09-04) · api: POST ซ้ำห้องเดิมได้ 409 `ZONE_ALREADY_HAS_PET` → เปิด modal → ยืนยันแล้วส่ง `replace: true` (ตัวใหม่รับ XP/stage ต่อจากตัวเดิม)
 
 ---
 

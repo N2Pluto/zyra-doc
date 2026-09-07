@@ -26,6 +26,7 @@
 | 8   | Max dimension                     | **1,000 × 1,000 px**                              | ตรง (แต่ยังไม่มี error code)                     | 🟡 เกือบปิด   |
 | 9   | Count badge บน pet card           | **workspace_usage_count**                         | ตรง                                              | ✅ ปิด         |
 | 10  | Pagination                        | **10 / page**                                     | ❌ card ยังเขียน 20/หน้า                          | 🟡 ต้อง sync  |
+| 11  | ไฟล์ของ slot `Evolution`          | **GIF เท่านั้น** (สถานะ evo ต่อช่วงวัย) · egg → baby ใช้ GIF กลางบน R2 | ❌ SC-PM-03 card ยังเขียนเป็น spritesheet | ✅ ปิด (09-02) · 17 slot เท่าเดิม · egg `Evolution` prefill ไฟล์กลาง + อัปทับได้ |
 
 
 ---
@@ -80,6 +81,22 @@
 → default ที่ใช้ไปก่อน: **ยังไม่เปิด** `uq_room_pet_one_per_zone` (วางได้หลายตัว) เพราะเพิ่ม unique index ทีหลังทำได้ถ้ายังไม่มีข้อมูลซ้ำ แต่ถ้าเปิดไปแล้วปลดยากกว่า
 
 **ยังค้างอีกข้อ (ไม่บล็อก)** — **Workspace Template vs Workspace จริง**: ชื่อ card คือ "Room ของ Workspace **Template**" แต่ criteria พูดถึง broadcast ให้ user ที่ online (= workspace จริง) → วาง pet ใน template แล้ว workspace ที่สร้างไปก่อนหน้าได้ pet ด้วยไหม
+
+---
+
+## ✅ ปิดล่าสุด 2026-09-02
+
+### ข้อ 11 — slot `Evolution` = GIF เท่านั้น
+
+**เคาะแล้ว (PM ผ่าน user):** เมื่อ pet ถึง threshold ของช่วงวัย จะเข้า **สถานะ evo** ของช่วงวัยนั้น และ animation ที่เล่นต้อง **อัปโหลดเป็น GIF** แทน PNG spritesheet · เดิมโค้ดรับทั้ง PNG/GIF ที่ slot นี้ (finding F11) ตอนนี้ต้องเหลือ GIF อย่างเดียว และไม่มี `frame_count/frame_rate/direction_rows`
+
+**ผลพวง:** ไข่แตก (egg → baby) ใช้ **GIF กลางตัวเดียว** ทุก pet type — อัปขึ้น R2 แล้ว `static/pet/shared/egg-evolution.gif` (960×960, 24 เฟรม, 159 KB) ดู [Roompet/ux-ui.md §5.2](../Roompet/ux-ui.md)
+
+**ปิดเพิ่ม (09-02 รอบสอง):** PM ยืนยัน **egg และ evolved ยังต้องมี slot `Evolution`** → required slot คง **17** ไม่กระทบ `RequiredPetSlots` / `pet-upload-config.ts` / `stage_ready` (นอกจากการถอด `Idle` ที่ค้างอยู่แล้ว) · evolved อัปไว้สำรองแม้ยังไม่มี consumer
+
+**ปิดเพิ่ม (09-02 รอบสาม):** ไฟล์ไข่แตกกลางบน R2 → **ระบบ prefill ให้ทุก pet type อัตโนมัติ และ admin ยังอัปเองทับได้** — ทำเป็น fallback ตอนอ่าน (ไม่มี row, `is_default: true`, ลบของเอง = กลับ default) ดู [spec.md § Prefill egg Evolution](spec.md) · [db-schema-api-contract.md](db-schema-api-contract.md) · **ข้อ 11 ไม่มีอะไรค้างแล้ว**
+
+รายละเอียด schema/validation: [db-schema-api-contract.md § GIF ที่ slot Evolution](db-schema-api-contract.md) · กฎเต็ม: [spec.md § Evolution slot = GIF](spec.md)
 
 ---
 
@@ -178,6 +195,7 @@ PM เคาะ **10 / page** ตาม Figma แต่ [SC-PM-01](https://app.c
 - [ ] SC-PM-03 — animation slots ต่อ stage (ข้อ 2) ยังเป็นโมเดลเดิม
 - [ ] SC-PM-05 — flow assign pet (ข้อ 5) ยังเป็นฟอร์มเดิม
 - [ ] SC-PM-01 — pagination 20 → 10
+- [ ] SC-PM-03 — slot `Evolution` เป็น GIF (ข้อ 11) card ยังเขียนเป็น spritesheet
 - [ ] SC-PM-07 — เพิ่ม error code ของเคส dimension เกิน
 - [ ] [[Module] Pet Management](https://app.clickup.com/t/86d3dcbra) — ช่อง Scope ยังเขียน stage เก่า "(Egg/Hatch/Grow/Evolve)" ควรเป็น "(Egg/Baby/Adult/Evolved)"
 

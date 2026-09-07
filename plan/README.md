@@ -15,6 +15,7 @@
 | [Private-Zone-Claim](Private-Zone-Claim/) | จอง private zone ใน VO + in-place zone editor บน Pixi scene | plan.md: ClickUp `pending` |
 | [Real-time-Engine](Real-time-Engine/) | SC-RTE-01 ~ 09 — position sync, room state, mute/camera, screen share + `technical-design/00–09`, capacity, tick overhaul | in progress · tick overhaul: Phase 0+A implemented (flag off by default) |
 | [Refactor-ZyraApp](Refactor-ZyraApp/) | จัดโครงสร้าง zyra-app / ลดขนาดไฟล์ยักษ์ แบบ no-behavior-change | Phase 1 analysis · 2026-08-06 · `refactor/project-structure` |
+| [Roompet](Roompet/) | SC-PET-01 ~ 08 — Room Pet ฝั่ง member ใน VO (render, AI movement, interact, growth, status panel, notification, neglected) — spec + ux-ui จาก Figma 8 node ผูกกับ component VO เดิม + test-plan · คู่กับ [PetManagement](PetManagement/) ฝั่ง admin | spec + ux-ui + test-plan ถอดจาก ClickUp/Figma 2026-09-02 · **component ล้วน 6 ชิ้น + flag `NEXT_PUBLIC_ROOM_PET` (default off) เสร็จบน `feat/room-pet-ui` ยังไม่ commit/mount** · flow จริงรอ SC-PM-05 / member API / XP engine / ws · 19 จุดขัดกับ PetManagement + 11 คำถาม design + 9 คำถาม PM |
 | [UserGuide](UserGuide/) | SC-UG-01 ~ 08 — onboarding / user guide | Implemented · 2026-07-14 |
 | [UserManagement](UserManagement/) | SC-UM-01 ~ 16 — admin user management + capacity/scaling | 16/16 E2E-verified (Phase 0, 2, 3, 5) · 2026-07-15 |
 | [VirtualOffice](VirtualOffice/) | โมดูล VO หลัก — spec, technical design, task breakdown, test plan, UX/UI + scaling next steps + meeting bug batch | spec: In Progress · meeting-bugs-2026-08-07: planning only |
