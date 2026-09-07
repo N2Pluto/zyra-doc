@@ -16,10 +16,20 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#90) · ws (#50) · app (#304) — รอบ 26–64 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#90) · ws (#50) · app (#305) — รอบ 26–65 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 65) — "ยังว้าปอยู่" — ต้นตอสุดท้าย: step_ms = 0
+
+- **user บอก:** "ลองใหม่แล้ว ยังว้าปอยู่" (หลังรอบ 64)
+- **สาเหตุที่เหลือ:** `pet_state` ส่ง `step_ms: 0` ทั้งตอน**หยุด**และทุก **idle heartbeat** โดยยังบอกช่องที่ AI ไปถึงแล้ว · ฝั่ง hero push เข้า engine ทุก 250 ms แต่ ws tick ทุก 200 ms (และเดินได้ทีละหลายช่องตอนไล่ตาม) ทั้ง buffer เก็บ state ล่าสุดของ pet แค่อันเดียว → สิ่งที่ layer ได้เห็นตอนจบ burst มัก**เป็น state หยุด** ที่อยู่ไกลออกไปหลายช่อง · โค้ดถือว่า "ไม่มี duration = teleport" จึง snap → **ว้าปมาหาตอนที่มันไล่ตามทัน** พอดี ตรงกับที่ user เห็น
+- **ทำ app [#305](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/305):** จำ pace ล่าสุด (`lastStepMs`) แล้วเดินไปหา state ที่ไม่มี pace ด้วยความเร็วนั้น · snap เหลือแค่ 2 กรณีจริง: pet ที่ยังไม่เคยเดินเลย (เฟรมแรก) และกระโดดเกิน 12 ช่อง (admin ลาก / rejoin)
+- **verify:** vitest 1745 ✅ (เทสใหม่: state หยุดที่ไกลออกไป 3 ช่องถูกเดินทีละช่อง วัดที่ 50 ms / 300 ms / จบ · pet ที่ยังไม่เคยเดินยัง snap) tsc/eslint สะอาด · **ยังไม่ได้ดูใน VO จริง** — rebuild app แล้วลองพาเดินอีกครั้ง
+- **กฎที่จดไว้:** `step_ms/moveMs === 0` แปลว่า "ไม่ได้บอกจังหวะมา" ไม่ใช่ "ให้ teleport"
 
 ---
 
