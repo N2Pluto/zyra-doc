@@ -16,10 +16,19 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#44) · app (#297) — รอบ 26–56 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#44) · app (#298) — รอบ 26–57 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 57) — hover pet บน dev ไม่ขึ้นกรอบเขียว / ป้ายชื่อไม่ขึ้นหน้า
+
+- **user บอก:** "บน dev เอาเมาส์ไป hover ตรง pet ทำไมไม่ขึ้นกรอบเขียวแบบตัวละคร และป้ายชื่อถ้า hover อยู่ต้องขึ้นมาด้านหน้า"
+- **สาเหตุ:** รอบ 52 ถอด `setOnPetHover` ฝั่ง React ออก (เลิกใช้ hover เป็นเงื่อนไขลูบ) แต่บล็อก hover ใน `scene.ts` ถูกครอบด้วย `if (this.onPetHoverCallback)` → engine ไม่เรียก `petAt()`/`setHovered()` อีก → ไม่มี outline และป้ายไม่ยกขึ้น (ทั้งสองอย่างผูกกับ `hoveredId` ใน PetLayer)
+- **ทำ (app [#298](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/298) → develop):** บล็อก hover รันเสมอเมื่อมี pet layer, callback ของ React เป็น optional
+- **verify:** vitest ทั้งชุด ✅ tsc/eslint สะอาด · ยังไม่ได้ดูใน VO จริง (login) — dev deploy จาก develop แล้วลอง hover
 
 ---
 
