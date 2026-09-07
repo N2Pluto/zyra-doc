@@ -16,10 +16,24 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#44) · app (#298) — รอบ 26–57 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#88) · ws (#45) · app (#299) — รอบ 26–58 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 58) — ขนาด pet บนแมพไม่เท่ากันตามท่า · เดินเฉียง/ว้าป/ท่านั่งขณะเดิน · pop ใน meeting zone
+
+**user บอก:** "ใน VO ตอน pet เปลี่ยนท่าทาง ขนาดที่แสดงไม่เท่ากัน" · "การเดินต้องไม่เดินเฉียงและว้าป แสดงท่าไม่ถูก เดินอยู่แต่ท่าเป็นท่านั่ง/happy ต้องเล่น animation ให้เสร็จก่อนค่อยเปลี่ยน" · "อยู่ใน meeting zone ยังขึ้น pop"
+
+- **สาเหตุ 1 (ขนาด):** `PetLayer` ยืดทุกเฟรมให้สูง 32 px (`sprite.height = PET_DISPLAY_H`) → เฟรมท่านั่ง (~102 px ต้นฉบับ) ถูกขยายเท่าท่ายืน (~130) ตัวจึงโตขึ้นตอนนั่ง — เรื่องเดียวกับ overlay รอบ 55
+- **สาเหตุ 2 (เฉียง/ว้าป/ท่านั่งขณะเดิน):** client เล่นท่าลุก (Sitting ย้อนกลับ 750 ms) โดยค้างตัวไว้ ขณะที่ AI ก้าวต่อทันที (450–900 ms/ช่อง) → พอปล่อยค้าง ตัวไถลไปช่องที่ห่าง 1–2 ช่องในทีเดียว = เฉียง/ว้าป และเห็น "ท่านั่งอยู่แต่ตัวขยับ"
+- **สาเหตุ 3 (pop ใน meeting):** เช็ค zone ใช้ตัวแรกที่ครอบ tile (`_areaZoneAtTile`) → meeting ที่วาดอยู่ในห้องได้ zone ห้องกลับมา ไม่ใช่ meeting
+- **ทำ ws [#45](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/45):** `beginWalk` — ถ้ายืนนิ่ง ≥ 8 วิ (= นั่งอยู่บนทุก client) ประกาศเดินก่อน (moving, ช่องเดิม, หันไปทางที่จะไป) แล้วก้าวแรกหลัง `petStandUpMs` 750 ms ให้ตรงกับท่าลุกฝั่ง client · ใช้กับเดินเล่น/วิ่ง/เข้าหาคน/ไล่งับหาง
+- **ทำ app [#299](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/299):** `PET_SOURCE_SCALE` = 32/130 px ต่อ px ต้นฉบับ ทุกเฟรมทุกชีท (adult/evolved สูงกว่านิดตามจริง) ป้ายชื่อแขวนจากเฟรมสูงสุดที่เคยเห็น ไม่ขยับลงตอนนั่ง hit-test ใช้ขนาดที่วาดจริง · `petGlideRoute` ถ้า state กระโดด > 1 ช่องหรือเฉียง ให้ไถลผ่าน waypoint ตรง ๆ (x ก่อน y) จากช่องที่ตัวอยู่ใกล้สุด แบ่งเวลาของ step กัน เกิน 12 ช่องถือเป็น teleport (snap) · pop เช็ค `_tileInZoneType("meeting")` ทุก zone
+- **verify:** ws `go test ./internal/hub` ✅ (นั่ง 10 วิ → ประกาศก่อน ก้าวที่ 750 ms ไม่ก้าวที่ 500; ยืน 2 วิ → ก้าวทันที) · app vitest 1730 ✅ (pet-layer: ขนาดจากเฟรม 100×50 × scale, `petGlideRoute` รวมกรณี anchor ทศนิยม 58.25 ที่เคยทำ loop ไม่รู้จบ) · ยังไม่ได้ทดสอบใน VO จริง — ต้อง rebuild ws + app
+- **ยังไม่ได้ทำ (ตั้งใจ):** "เล่น animation ให้เสร็จก่อนค่อยเปลี่ยนท่า" แบบทั่วไปทุกท่า — ตอนนี้ครอบแค่ท่าลุก (ค้าง 750 ms ทั้งสองฝั่ง) และท่านั่งลง→Happy (รอจบก่อนอยู่แล้ว) · ถ้ายังเห็นท่าสลับกลางคัน ให้บอกท่าคู่ไหนจะเพิ่มการรอให้
 
 ---
 
