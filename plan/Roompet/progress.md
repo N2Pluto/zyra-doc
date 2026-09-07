@@ -16,10 +16,21 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#90) · ws (#54) · app (#309) — รอบ 26–69 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
-> **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#92) · ws (#54) · app (#311) — รอบ 26–70 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **95** (`tb_pet_animation.frame_rate` 8 → 6)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 70) — ลดความไวของ animation จาก 8 เป็น 6 เฟรม/วินาที
+
+- **user บอก:** "ลด ความไวหน่อย ได้มั้ย เฟรม จาก 8 เฟรม เป็น 6 เฟรม"
+- **ทำ api [#92](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/92):** `PetFrameRateDefault` 8 → 6 (ค่าตั้งต้นของฟอร์มอัปโหลดใน Pet Management) + **migration 95** ปรับแถวเดิม `UPDATE tb_pet_animation SET frame_rate = 6 WHERE frame_rate = 8 AND stage <> 'egg'` · **ไข่ไม่แตะ** (สั่นที่ 16 ผ่าน `PetFrameRateForStage`) · มี `.down.sql` คู่
+- **ทำ app [#311](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/311):** ค่า fallback ใน `buildScenePets` ย้ายเป็น `PET_DEFAULT_FRAME_RATE = 6` ให้ตรงกับฝั่ง API (ค่าจริงมาจาก DB)
+- **รันบน dev DB แล้ว: `UPDATE 185`** — adult 60 · baby 65 · evolved 60 แถว (egg 8 fps 4 แถว / 16 fps 23 แถว คงเดิม) · **ยังไม่ได้รันบน uat/prod**
+- **verify:** api go build/vet/test ./... เขียว · app vitest 1751 เขียว · eslint/prettier/tsc สะอาด · **ยังไม่ได้ดูใน VO จริง** — ต้อง rebuild app (ค่าอยู่ใน DB แล้ว)
+- **migration ล่าสุดบน dev: 95**
 
 ---
 
