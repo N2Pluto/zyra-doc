@@ -16,10 +16,24 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#90) · ws (#51) · app (#305) — รอบ 26–66 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#90) · ws (#52) · app (#306) — รอบ 26–67 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **94** (`tb_room_pet_stroke`)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 67) — เดินไม่ smooth "ช้า เร็ว ๆ เหมือนโดนดึงขา"
+
+- **user บอก:** "ลองใหม่แล้ว ไม่เชิงว้าป แต่มันกดเดินไม่ smooth มันเป็นช้า เร็ว ๆ เหมือนโดนดึงขา อยากให้เดินเท่ากันทุกช่วง"
+- **ต้นตอ 3 อย่าง (ทั้งหมดคือ "ความเร็วไม่คงที่" คนละชั้น):**
+  1. **ws วัดจังหวะผู้นำแบบ aliasing** — tick ทุก 200 ms แต่คนเดินช่องละ ~267 ms ช่วงห่างที่วัดได้จึงสลับ 200/400 → pet เดินช่องช้าสลับช่องเร็ว
+  2. **ws เร่งความเร็วแบบกระโดด** — `followPace` สลับระหว่าง pace ผู้นำ / 450 / 90 ตามระยะห่าง = กระตุก
+  3. **client ได้ข้อมูลเป็นก้อน** — hero flush ตำแหน่งเข้า engine ทุก 250 ms (เป็น setState จึงลดไม่ได้) ทำให้บางจังหวะได้ 2 ช่อง บางจังหวะ 0 → pet เดิน 1 ช่องแล้ว**ยืนรอ** beat ถัดไป · และ `petGlideStepMs` หารด้วยความยาวคิว = เร่งกระชาก
+- **ทำ ws [#52](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/52):** `leaderPaceMs` เป็นค่าเฉลี่ยเคลื่อนที่ (smoothing 4) · `followPace` เร่งทีละ 12 % ต่อระยะห่าง 1 ช่อง เพดาน 1.8× (ไม่กระโดด) · ผู้นำยืนนิ่ง (ยังไม่มี pace) ใช้ฐาน 280 ms = ความเร็วคนเดิน แทน 900 ms
+- **ทำ app [#306](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/306):** เพิ่ม **interpolation buffer** — การเดินที่เริ่มจากหยุดนิ่งรอ 1 beat (260 ms) ก่อนออกตัว จึงมีช่องสะสมในคิวเสมอและเดินรวดเดียวไม่ต้องยืนรอ (ท่ามาตรฐานของ entity interpolation) · `petGlideStepMs` เร่งได้สูงสุด 1.4× แทนการหารด้วยความยาวคิว
+- **verify:** ws go test ✅ (pace ไม่ช้าลงเมื่อห่างขึ้น, เปลี่ยนไม่เกิน 40 ms ต่อ 1 ช่องของระยะห่าง, ยังปิดช่องว่างได้ ≥ 1.5× · สตรีม 200/400 ที่ aliasing ลู่เข้าค่ากลาง) · app vitest 1746 ✅ (ก้อน 2 ช่องเดินด้วยความเร็วเท่ากันทั้งสองช่อง) · **ยังไม่ได้ดูใน VO จริง** — rebuild ws + app
+- **แลกมาด้วย:** pet ตามหลังเพิ่มอีกประมาณ 1 ช่อง (จาก buffer 260 ms) เพื่อแลกกับความนิ่ง — ถ้าอยากให้ติดกว่านี้ลดค่า `PET_GLIDE_BUFFER_MS` ได้ แต่จะเริ่มเห็นสะดุดตอน beat ไม่ตรง
 
 ---
 
