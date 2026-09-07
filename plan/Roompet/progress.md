@@ -16,10 +16,21 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#92) · ws (#54) · app (#311) — รอบ 26–70 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#93) · ws (#54) · app (#313) — รอบ 26–71 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **95** (`tb_pet_animation.frame_rate` 8 → 6)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 71) — สวิตช์เปิด/ปิดเสียงสัตว์เลี้ยง + ลดความดัง
+
+- **user บอก:** "อยากให้เพิ่ม สามารถเปิดปิดเสียง เกี่ยวกับตอน pat ตัวนั้นส่งเสียงได้ เพราะกลัวคนจะรำคาญ เพิ่ม Notifications setting" · "และให้ลดความดังของเสียง pat ลงอีกหน่อย"
+- **ทำ api [#93](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/93):** `NotificationSettings.PetSound` (`pet_sound`) ค่าเริ่มต้นเปิด · **แยกจาก `pet_activity` โดยตั้งใจ** เพราะเสียงดังไปถึงคนข้างๆ · ไม่ต้อง migration (blob unmarshal ทับ default แถวเก่าจึงได้ค่าเริ่มต้น)
+- **ทำ app [#312](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/312):** แถวใหม่ "Pet sounds / เสียงสัตว์เลี้ยง" ในหมวด PET ของแท็บ Notifications (en/th) · บังคับใช้ที่ `lib/pet-sound-player.ts` จุดเดียว — เสียง pet ทุกเสียงผ่าน `play()` ตัวเดียวกัน (ทักทายตอน pop · ลูบหัว · jingle ตอนโต) · อ่านเป็น "ไม่ใช่ false"
+- **ทำ app [#313](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/313):** ลดความดัง — เสียง pat 0.45 → **0.28** (−38 %) · jingle 0.6 → **0.4** (−33 %) เป็นระดับฐานก่อนคูณด้วย Notification volume
+- **verify:** api go build/vet/test ./... เขียว (เทสใหม่ใน `settings_test.go`: `{"pet_sound": false}` ไม่กระทบคีย์อื่น) · app vitest 1754 เขียว (เทสใหม่ `pet-sound-player-mute.test.ts` 3 เคส: เปิด/ปิด/volume 0 และปรับเทสหมวด PET เป็น 2 แถว) · eslint/prettier/tsc สะอาด · **ยังไม่ได้ดูของจริงในเบราว์เซอร์** (ติด login)
+- **ค้างไว้ให้ PM:** คีย์อื่นในแท็บ Notifications (`thread_replies`, `joining_circle`, `hide_chat_in_meeting`, `event_*`) ยังบันทึกลง DB แต่ไม่มีโค้ดไหนอ่าน — ตอนนี้ `pet_activity` กับ `pet_sound` เป็นสองคีย์เดียวที่บังคับใช้จริง
 
 ---
 
