@@ -16,10 +16,19 @@
 >
 > **migration ที่รันบน dev DB แล้ว (ล่าสุด):** 91 `tb_room_pet_achievement` · 92 `tb_message.content_type` + `'pet_card'` · 93 `tb_notification.room_pet_id`
 >
-> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#93) · ws (#54) · app (#316) — รอบ 26–74 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
+> **ทุก repo อยู่บน develop สะอาด ไม่มี PR ค้าง** — api (#93) · ws (#55) · app (#317) — รอบ 26–75 · flow ตอนข้าม stage อ่านที่ [evolution-flow.md](evolution-flow.md)
 > **⚠️ local ของ user (2026-09-06 กลางคืน):** checkout หลัก `zyra-app` ค้างที่ `eda36ae` (#257 — ก่อน Room Pet รอบ 26–42 ทั้งหมด) และ user รัน api/ws/app เองจาก checkout หลัก → อาการ "ฉากหลังไม่โหลด" ที่เห็นคืนนี้น่าจะเป็นบั๊กเก่าของ commit นั้น (regression 3dd45b6 ที่แก้ไปแล้วรอบ 27) — ต้อง `git pull` develop ทั้ง 3 repo แล้ว build ใหม่ก่อนเทส · migration ล่าสุดบน dev: **95** (`tb_pet_animation.frame_rate` 8 → 6)
 > **local ของ user ตอนนี้:** `.env` ของ zyra-app ต้องมี `NEXT_PUBLIC_ROOM_PET=true` (build-time) ไม่งั้น pet ไม่วาดเลย — ผมเพิ่มไว้ใน worktree ที่ build เท่านั้น ฝาก user เพิ่มใน checkout หลัก
 > **คำถามใหม่ให้ PM (รอบ 37):** obstacle grid เป็นต่อ workspace จาก main floor (`is_main DESC`) — pet (และคน) ที่อยู่ floor อื่นถูกเช็คกับเฟอร์นิเจอร์ของ main floor · ต้องทำ grid ต่อ floor ไหม
+
+---
+
+## 2026-09-07 (รอบ 75) — pop หมดอายุ 5 นาที + เปลี่ยนเป็นเส้นประที่วิ่งมาบรรจบกัน
+
+- **user:** "บางคนไม่ได้อยู่หน้าจอ แล้ว pat เผลอเดินไปเข้าใกล้ จนเกิด pop เอง อยากให้ pop เกิดได้นานสุด 5 นาทีแล้วหายไป แล้ว pat เดินออกมาจากตรงนั้น เพื่อไม่ให้เกิด pop อีกรอบ · เปลี่ยน pop เป็นเส้นประแทน และอยากให้มี animation ตอนเชื่อมแบบค่อย ๆ มาเชื่อมกันทั้งสองฝั่ง"
+- **ทำ ws [#55](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/55):** `petPopMaxDuration` 5 นาที → pet เลิกสนใจคนนั้นแล้ว**เดินออก** เลือกช่องพ้นรัศมี 3 ช่องก่อน (สุ่ม 8 ครั้ง) · จำคนที่เลิกสนใจพร้อม**ช่องที่เขายืน** กลับมาสนใจใหม่เมื่อเขาขยับออกจากช่องนั้น
+- **ทำ app [#317](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/317):** `PET_LINK_MAX_MS` 5 นาที (นาฬิกาเดียวกับ ws) + ไม่ให้ก่อตัวใหม่จนคนขยับ · เปลี่ยนเส้นเชื่อมจากแคปซูลเป็น **เส้นประ** `petLinkDashSegments` ขีด 9 เว้น 11 หนา 3 หัวมน · **วิ่งจากสองปลายมาบรรจบกลางใน 420 ms** `petLinkConnectReach` (ease-out) · **วงกลมคนกับคนไม่แตะ** · เพิ่มกล่อง preview ใน `/dev/preview/room-pat` ที่วาดด้วยฟังก์ชันเดียวกับของจริง
+- **verify:** ws go test เขียว เทสใหม่ครอบ 4 นาทียังอยู่ / เกิน 5 นาทีเลิกสนใจ+เดินออก / 40 tick ไม่กลับมาจับคู่ / คนขยับแล้วสนใจใหม่ได้ · app vitest **1765** เขียว เทสใหม่ 9 ตัวครอบ geometry + easing · **วัด canvas จริงในเบราว์เซอร์** ได้เส้นประ 20 ขีดจริง (ตอนวัดเว้น 7 px ได้ช่องว่าง 3 px จึงขยายเป็น 11) · จังหวะ animation ยืนยันด้วย unit test เพราะ Browser pane ถูกย่อ rAF ไม่เดิน · **ยังไม่ได้ดู pop จริงใน VO**
 
 ---
 
