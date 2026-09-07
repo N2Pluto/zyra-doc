@@ -18,7 +18,7 @@ ws `BroadcastZoneEvent` ส่ง `pet_stage_changed` ให้**ทุก clien
 
 | | คนที่ XP ทำให้ข้าม (`triggered_by === me`) | สมาชิกในห้องคนอื่นที่เปิด VO อยู่ (`is_resident` — รอบ 50: คนนอกห้องไม่เห็น) | คนที่ไม่ออนไลน์ |
 |---|---|---|---|
-| หน้าจอ | `PetEvolutionOverlay` เต็มจอ: **prompt** (คลิกก่อน · ตัวปัจจุบันเคลื่อนไหววน: ไข่ Wobbling / Happy · กรอบ 240px) → **playing** GIF ไข่แตก 3.6 วิ (เฉพาะ egg → baby) → **flash** 0.9 วิ → **arriving** GIF ของ stage ใหม่โผล่ 1.2 วิ (ไม่มี GIF → ข้าม) → **reveal** ตัวใหม่นั่งลง (Sitting 1 รอบ) แล้ว Happy วน จนคลิก → **modal** | **modal** ทันที | ไม่มี |
+| หน้าจอ | `PetEvolutionOverlay` เต็มจอ **4 สเต็ปเท่านั้น** (user 2026-09-07): **prompt** ร่างปัจจุบันเล่น Happy วน (ไข่ = Wobbling) กรอบ 240px จนกว่าจะคลิก → **evolving** GIF Evolution ของสเต็ปนั้น 1 รอบ (hatch = GIF ของ **ไข่** 3.6 วิ · สเต็ปอื่น = GIF ของ **stage ปลายทาง** 1.2 วิ · ไม่มี GIF → ข้ามไป reveal) → **reveal** ตัวใหม่นั่งลง (Sitting 1 รอบ) แล้ว Happy วน จนคลิก → **modal** · **ไม่มี flash และไม่มี GIF ที่สองแล้ว** | **modal** ทันที | ไม่มี |
 | ขนาด/รูป | รูปนิ่ง = Happy เฟรมแรก (นั่งหันหน้ามา · ไข่ = Wobbling) 240px (รอบ 48 ลดจาก 320) · GIF ทั้งสองวาดในกรอบ 768px = `PET_EVOLUTION_GIF_SCALE` 3.2× (ตัวสัตว์ใน GIF 960² กินแค่ ~26–32 % ของผืน) ตัดส่วนล้น → ตัวสัตว์ขนาดเท่ากันตลอด | modal รูป Happy 112px | — |
 | Esc | ข้ามไป modal (ไม่ปิด) | — | — |
 | บนแมพ | sprite/ป้าย/วง/panel เปลี่ยนเป็น stage ใหม่ทันที (จาก `pet_xp_changed` → XP) | เหมือนกัน | เห็นตอนเข้าครั้งหน้า |
@@ -53,7 +53,7 @@ sequenceDiagram
   API-->>N: pet_growth ทุกคน (+ push)
   WS-->>A: pet_stage_changed
   WS-->>B: pet_stage_changed
-  A->>A: prompt → GIF ไข่แตก (egg เท่านั้น) → flash → GIF stage ใหม่โผล่ → reveal → modal
+  A->>A: prompt (Happy วน) → GIF ตอน evo 1 ไฟล์ → reveal (นั่ง → Happy วน) → modal
   B->>B: modal ทันที
   A->>API: (optional) share → pet_card
 ```
