@@ -6,6 +6,7 @@
 > Card สร้าง 2026-06-19 · **อ่านใหม่ทั้งชุด 2026-09-05 → ตารางเทียบ card กับของจริงทุกข้ออยู่ที่ [clickup-audit-2026-09-05.md](clickup-audit-2026-09-05.md)** (พร้อม 8 ข้อที่ยังไม่มีใครเคาะ + 8 decision ที่ user เคาะวันนี้)
 > ใน ClickUp **ไม่มี** comment / attachment / checklist / dependency / linked task เลยแม้แต่ใบเดียว — เนื้อหาทั้งหมดอยู่ใน description
 >
+> **ตรวจ spec ทีละข้อครั้งล่าสุด: [spec-audit-2026-09-07.md](spec-audit-2026-09-07.md)** (รอบ 71 · 185 ข้อ · ✅ 94 · แทนที่แล้ว 31 · บางส่วน 38 · ค้าง 22)
 > **สถานะเอกสาร: implement ครบทั้ง 8 scenario + deploy dev แล้ว 2026-09-04** — verify ผ่าน REST/WebSocket ครบทุก scenario · **ยังไม่ได้เทส UI ในเบราว์เซอร์** (ติด login) · **สรุปส่งต่ออยู่ที่ [progress.md รอบ 21](progress.md)** อ่านอันนั้นก่อนถ้าจะมาทำต่อ
 > **ความพร้อม 2026-09-04: พอแล้ว — dependency ครบทั้ง 6 ข้อ** · `tb_room_pet` + placement (api #65) · member list (api #66) · ws relay `pet_*` 6 ตัว (ws #29) · Map Editor drag-drop (app #246) · VO render (app #248) · XP engine + ledger ([api #68](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/68) รอ merge) → ดู [§ความพร้อม](#ความพร้อม--ข้อมูลพอเริ่ม-room-pet-แล้วหรือยัง-ประเมิน-2026-09-02)
 > **เหลืออะไร (2026-09-04):** ~~จ่าย XP ของอีก 9 activity~~ ✅ เสร็จ ([api #75](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/75) + [#76](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/76)) · ~~เปิด activity ทั้ง 10~~ ✅ เสร็จ (config **v11** enabled ครบ ไม่มีตัวไหนเกิน cap) · ที่เหลือ: **เทส UI ในเบราว์เซอร์** (ติด login) · ตั้ง `xp_play_with_pet.times`=5 · Share flow · pet facing rows · `pet_sittable` · cron 09:00 ICT — รายการเต็มอยู่ใน [progress.md รอบ 21](progress.md)
@@ -538,6 +539,8 @@ card ชุด Room Pet เขียนก่อนที่ PM จะเคา�
 ---
 
 ## สถานะ implement ต่อ scenario (อัปเดต 2026-09-05) — สำหรับ QA
+
+> ⚠️ **ตารางในหัวข้อนี้หยุดอยู่ที่รอบ 25 — ของใหม่กว่าอยู่ที่ [spec-audit-2026-09-07.md](spec-audit-2026-09-07.md)** ซึ่งไล่ตรวจทุกข้อของทุก scenario (185 ข้อ) เทียบโค้ดบน develop รอบ 71 พร้อมรายการงานค้างจริงแยกจากข้อที่ถูก Figma/decision แทนที่ไปแล้ว
 
 > อ้างอิง PR ในตารางของ [progress.md รอบ 18](progress.md) · **build เขียวทุกตัว · deploy dev ครบทั้ง 3 repo · live-test ผ่าน REST + WebSocket ครบทั้ง 8 scenario** (รายละเอียดต่อ scenario อยู่ใน [รอบ 19](progress.md)) · `NEXT_PUBLIC_ROOM_PET=true` ตั้งแล้วบน dev
 >

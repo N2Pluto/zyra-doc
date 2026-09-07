@@ -14,7 +14,7 @@ static/pet/sound/
   <category>/adult/01.mp3 … NN.mp3  ← วัยโตเต็มวัย + วัยวิวัฒน์ (โฟลเดอร์ "Adult & Evolve" ของศิลปิน)
 ```
 
-- `<category>` = ค่าใน `model.PetCategories` ของ zyra-api: `buffalo, bird, cat, dog, elephant, exotic, fish, reptile, small`
+- `<category>` = ค่าใน `model.PetCategories` ของ zyra-api: `buffalo, bird, cat, chicken, dog, elephant, exotic, fish, reptile, small`
 - **ไข่ไม่มีเสียง** — ไม่ต้องมีโฟลเดอร์ `egg`
 - ไฟล์เรียงเลขจาก `01` โดย **เรียงจากคลิปสั้นไปยาว** (01 = สั้นที่สุด = ตอบสนองไวที่สุด)
 - อัปด้วย `Content-Type: audio/mpeg` และ `Cache-Control: public, max-age=86400` (แทนไฟล์เดิมชื่อเดิมได้ กระจายภายใน 1 วัน)
@@ -25,9 +25,11 @@ static/pet/sound/
 |---|---|---|---|
 | `cat` | 6 | 3 | โฟลเดอร์ `Cat/` |
 | `dog` | 2 | 2 | โฟลเดอร์ `Dog/` |
-| `bird` | 2 | 4 | โฟลเดอร์ `Chicken/` (ไก่ = category `bird`) |
+| `bird` | 2 | 4 | โฟลเดอร์ `Chicken/` — category `chicken` (เพิ่ม 2026-09-07) อ่านโฟลเดอร์ `bird/` นี้ผ่าน `PET_SOUND_FOLDER` ไม่ต้องอัปซ้ำ |
 
-## เพิ่ม category ใหม่ (2 ขั้น)
+**category ที่ admin เลือกได้ตอนนี้มีแค่ ไก่ / หมา / แมว** — สามตัวที่มีเสียงแล้ว กำหนดที่ `PET_SELECTABLE_CATEGORIES` (`zyra-app/views/admin/pet-management/pet-options.ts`) ตัวที่เหลือ backend ยังรับอยู่แต่ซ่อนจาก dropdown จนกว่าจะอัปเสียง
+
+## เพิ่ม category ใหม่ (3 ขั้น)
 
 1. **อัปไฟล์** — จากโฟลเดอร์ `zyra-api/` (เพื่อให้ `. ./.env` อ่านคีย์ได้):
 
@@ -48,6 +50,8 @@ static/pet/sound/
      fish: { baby: 2, adult: 3 },   // ← บรรทัดใหม่
    }
    ```
+
+3. **เปิดให้ admin เลือก** — เพิ่ม id ลง `PET_SELECTABLE_CATEGORIES` ใน `zyra-app/views/admin/pet-management/pet-options.ts` (ถ้า category นั้นยังไม่มีใน `model.PetCategories` ของ zyra-api ต้องเพิ่มพร้อม migration ที่ขยาย CHECK ของ `tb_pet_type.category` ด้วย — ดู `94_pet_category_chicken.sql`)
 
 category ที่ยังไม่มีเสียง = สัตว์เงียบ ไม่พัง ไม่มี error
 

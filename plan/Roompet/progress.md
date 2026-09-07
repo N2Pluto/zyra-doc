@@ -23,6 +23,18 @@
 
 ---
 
+## 2026-09-07 (รอบ 72) — ตรวจ spec ทีละข้อ ครบทั้ง 8 scenario
+
+- **user สั่ง:** "ช่วยอ่านไฟล์ spec.md ว่าทำครบทั้งหมดตามแต่ละหัวข้อ Scenario Steps ครบ Acceptance Criteria ครบ Business Logic / Rules ครบ"
+- **ทำ:** ไล่ทุกข้อของ SC-PET-01…08 + ตาราง §4 Realtime/Data เทียบโค้ดบน develop ทั้ง 3 repo (app `fedc993` · ws `eb7c8d0` · api `b3e89de`) และ query dev DB ยืนยันข้อมูลจริง → เขียนผลไว้ที่ **[spec-audit-2026-09-07.md](spec-audit-2026-09-07.md)**
+- **ผล (185 ข้อ):** ✅ ทำแล้ว 94 · 🔄 ถูก Figma/decision แทนที่ 31 · 🟡 บางส่วน 38 · ❌ ค้าง 22
+- **ค้างที่ต้องให้ PM เคาะ 10 เรื่อง:** `pet_sittable` · Feed ยังอยู่ไหม · ลูบได้ XP ไหม (`xp_play_with_pet` ปิดอยู่ ค้างมาตั้งแต่รอบ 25) · animation ตอนโต 2.1 วิ ไม่ถึง 4–8 วิตาม card (ไม่มี GIF ออกจากร่างเดิมของ baby/adult) · ใครเห็นจอเต็มตอนโต (ตอนนี้เฉพาะสมาชิกห้อง ทำให้เหตุผลที่ตัด banner ทิ้งไม่จริงแล้ว) · notice animation · ความเร็วเดินต่าง stage · special animation ของ evolved · streak "Together for N days" (ไม่มี field) · banner เตือนประจำวันของ Figma
+- **ค้างที่แก้ได้เลย 11 เรื่อง:** admin เปลี่ยน stage แล้วไม่มี notification/achievement · sprite บนแผนที่เปลี่ยนก่อน animation จบ · tooltip `Press [P]` ไม่เคยขึ้นในเกมจริง · "+X XP" ไม่มี float/fade · neutral ไม่ช้าลง · rate limit 3 วิ มีรูรั่วเมื่อไม่มีแถว ledger · cooldown อ่านนอก transaction · reminder dedupe ข้าม workspace · Top 3 ผู้ดูแลส่งมาแต่ไม่มีใครใช้ · i18n `petGrowthBannerView` ตกค้าง · idle "มุมห้อง" ไม่เคยทำ
+- **แก้ระหว่างตรวจ:** [evolution-flow.md](evolution-flow.md) เขียน adult → evolved = 1,000 XP (ที่ถูก **2,000**) และ GIF scale 3.4×/816px (ที่ถูก **3.2×/768px**)
+- **verify:** อ่านโค้ด + query dev DB · **ยังไม่ได้ทดสอบด้วยตาในเบราว์เซอร์** — ✅ ทุกข้อหมายถึง "โค้ดทำตามนั้น" ไม่ใช่ "เห็นกับตาแล้ว"
+
+---
+
 ## 2026-09-07 (รอบ 71) — สวิตช์เปิด/ปิดเสียงสัตว์เลี้ยง + ลดความดัง
 
 - **user บอก:** "อยากให้เพิ่ม สามารถเปิดปิดเสียง เกี่ยวกับตอน pat ตัวนั้นส่งเสียงได้ เพราะกลัวคนจะรำคาญ เพิ่ม Notifications setting" · "และให้ลดความดังของเสียง pat ลงอีกหน่อย"

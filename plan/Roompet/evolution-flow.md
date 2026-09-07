@@ -10,7 +10,7 @@
 |---|---|---|
 | egg → baby | 100 XP | SC-PET-04 "ฟัก" · achievement `first_hatch` |
 | baby → adult | 500 XP | SC-PET-05 |
-| adult → evolved | 1,000 XP | SC-PET-05 · `fully_evolved` · หลังจากนี้ MAX/prestige |
+| adult → evolved | 2,000 XP | SC-PET-05 · `fully_evolved` · หลังจากนี้ MAX/prestige |
 
 ## 2. ใครเห็นอะไร (real-time)
 
@@ -19,7 +19,7 @@ ws `BroadcastZoneEvent` ส่ง `pet_stage_changed` ให้**ทุก clien
 | | คนที่ XP ทำให้ข้าม (`triggered_by === me`) | สมาชิกในห้องคนอื่นที่เปิด VO อยู่ (`is_resident` — รอบ 50: คนนอกห้องไม่เห็น) | คนที่ไม่ออนไลน์ |
 |---|---|---|---|
 | หน้าจอ | `PetEvolutionOverlay` เต็มจอ: **prompt** (คลิกก่อน · ตัวปัจจุบันเคลื่อนไหววน: ไข่ Wobbling / Happy · กรอบ 240px) → **playing** GIF ไข่แตก 3.6 วิ (เฉพาะ egg → baby) → **flash** 0.9 วิ → **arriving** GIF ของ stage ใหม่โผล่ 1.2 วิ (ไม่มี GIF → ข้าม) → **reveal** ตัวใหม่นั่งลง (Sitting 1 รอบ) แล้ว Happy วน จนคลิก → **modal** | **modal** ทันที | ไม่มี |
-| ขนาด/รูป | รูปนิ่ง = Happy เฟรมแรก (นั่งหันหน้ามา · ไข่ = Wobbling) 240px (รอบ 48 ลดจาก 320) · GIF ทั้งสองวาดในกรอบ 816px = `PET_EVOLUTION_GIF_SCALE` 3.4× (ตัวสัตว์ใน GIF 960² กินแค่ ~26–32 % ของผืน) ตัดส่วนล้น → ตัวสัตว์ขนาดเท่ากันตลอด | modal รูป Happy 112px | — |
+| ขนาด/รูป | รูปนิ่ง = Happy เฟรมแรก (นั่งหันหน้ามา · ไข่ = Wobbling) 240px (รอบ 48 ลดจาก 320) · GIF ทั้งสองวาดในกรอบ 768px = `PET_EVOLUTION_GIF_SCALE` 3.2× (ตัวสัตว์ใน GIF 960² กินแค่ ~26–32 % ของผืน) ตัดส่วนล้น → ตัวสัตว์ขนาดเท่ากันตลอด | modal รูป Happy 112px | — |
 | Esc | ข้ามไป modal (ไม่ปิด) | — | — |
 | บนแมพ | sprite/ป้าย/วง/panel เปลี่ยนเป็น stage ใหม่ทันที (จาก `pet_xp_changed` → XP) | เหมือนกัน | เห็นตอนเข้าครั้งหน้า |
 
@@ -61,7 +61,7 @@ sequenceDiagram
 ## 5. ช่องว่าง / ต้องเคาะ
 
 - ~~GIF Evolution มีเฉพาะ egg~~ **ผิด (แก้รอบ 47):** ทุก type จริงมี GIF ครบ 4 stage แต่คนละความหมาย — egg = ท่าออก (ไข่โยก→ร้าว→ระเบิด, 24 เฟรม) · baby/adult/evolved = ท่าเข้า (แสง→เงา→ตัวจริง, 8 เฟรม) → โค้ดเล่น GIF ออกเฉพาะ egg แล้วต่อด้วย GIF เข้าของ stage ใหม่ทุกขั้น · ถ้าอยากมี "ท่าออก" ของ baby/adult ต้องเพิ่ม slot ใหม่ใน Pet Management
-- **ขนาด GIF เทียบรูปนิ่ง** เป็นค่าคงที่ 3.4× จากการวัด asset จริง — GIF ใหม่ที่วางตัวสัตว์ต่างสัดส่วนมากจะเพี้ยน ควรเขียนข้อกำหนดผืน 960² / ตัวสัตว์ ~30 % ไว้ใน Pet Management
+- **ขนาด GIF เทียบรูปนิ่ง** เป็นค่าคงที่ 3.2× จากการวัด asset จริง — GIF ใหม่ที่วางตัวสัตว์ต่างสัดส่วนมากจะเพี้ยน ควรเขียนข้อกำหนดผืน 960² / ตัวสัตว์ ~30 % ไว้ใน Pet Management
 - **หน้าโชว์** `/dev/preview/room-pat` เป็น public (ไม่ต้อง login, fixture ล้วน) — บน dev/uat ต้อง build ด้วย `NEXT_PUBLIC_ROOM_PET=true` ไม่งั้น overlay ไม่แสดง (หน้าจะขึ้นแถบเตือน)
 - คนไม่ออนไลน์เห็นแค่กระดิ่ง ไม่มี replay animation — ตามดีไซน์ §6 แต่ PM ยังไม่ได้ยืนยัน
 - ไม่มีเสียง/effect บนแมพสำหรับคนที่ไม่ได้ดู modal
