@@ -23,6 +23,26 @@
 
 ---
 
+## 2026-09-08 (รอบ 76) — ลูบหัวได้ XP จริงแล้ว: 1 XP ต่อคน · cooldown 1 ชั่วโมง
+
+- **user สั่ง:** "pat การลูบหัว เพิ่มไปหน่อย ลูบหัวจะได้ xp ด้วย 1 xp ต่อคน และเพิ่มเวลา เป็น 1 ชั่วโมง" · ถามกลับเรื่องเพดานต่อวัน → **เลือก "ไม่จำกัด — ชม.ละ 1 XP/คน"**
+- **ปิดคำถามที่ค้างมาตั้งแต่รอบ 25** (`xp_play_with_pet` เปิดไหม / `times` เท่าไร — audit ข้อ 3 และ 6)
+- **ของเดิม:** activity **ปิด**อยู่ใน config v13 และโควตาเป็น**ของห้อง** `times: 1` → ต่อให้เปิด ทั้งห้องก็ได้ 1 XP/วัน คนแรกที่ลูบได้คนเดียว · ลูบ = แค่ reset mood
+- **ของใหม่:** ลูบ 1 ครั้ง = **+1 XP เสมอ ทุกคน** · ข้อจำกัดเดียวคือ **cooldown 1 ชั่วโมง/คน/pet** (เดิม 30 นาที) · ไม่มีเพดานรายวัน → ห้องที่มีสมาชิก N คน ได้สูงสุด N XP/ชม. จากการลูบ
+
+| ที่ | เปลี่ยนอะไร |
+|---|---|
+| api [#102](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/102) | `PetStrokeCooldown` 30m → **1h** · `Play()` ส่ง `SkipDailyQuota: true` (ข้ามโควตารายวันของห้อง) · `Status()` ตัด `xp_play_with_pet` ออกจาก Daily quest — ไม่มีเพดานให้แสดง `x / N` · `RoomPetActivityQuota.Limit = 0` แปลว่า "ไม่มีเพดาน" |
+| api migration **97** | patch config ที่ current เป็น **version ใหม่** เปิด `xp_play_with_pet` (`{times:1, xp:1, enabled:true}`) ไม่ทับค่าที่ admin แก้ไว้ตัวอื่น · idempotent · มี `.down.sql` |
+| app [#326](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/326) | `PET_STROKE_COOLDOWN_MS` 30m → **1h** · `buildPetDailyQuests` ข้าม `xp_play_with_pet` (`PET_NON_QUEST_ACTIVITIES`) · หน้า admin → XP Sources แถว "Play with your pet" เปลี่ยนช่อง times เป็นป้าย **"ไม่จำกัด · 1 ครั้ง/ชั่วโมง/คน"** แทน input ที่กรอกแล้วไม่มีผล |
+
+- **`times` ยังคาที่ 1 ใน config** เพราะ validator ฝั่ง api ไม่รับ `times <= 0` สำหรับ activity ที่เปิดอยู่ — โค้ดไม่ได้อ่านค่านี้สำหรับ stroke อีกแล้ว
+- **migration 97 รันบน dev DB แล้ว** → config **v14** current, `xp_play_with_pet.enabled = true` (รันซ้ำ = no-op ยืนยันแล้ว) · ยังไม่ได้รันบน uat/prod
+- **verify:** api `go build` / `go vet` / `go test ./...` เขียว (เทสใหม่ `petXPDailyQuotaSpent` + `petXPQuestActivities`) · app `next build` ผ่าน · `vitest` 1799 เขียว · lint/prettier สะอาด · `tsc` ไม่มี error ใหม่ (เหลือ 3 error เก่าใน `__tests__/pet-creation-wizard.test.tsx` + `__tests__/pixi-game-scene.test.ts` ที่มีอยู่บน develop ก่อนแล้ว) · **merge เข้า develop ทั้งสอง repo แล้ว (dev deploy อัตโนมัติ)**
+- **ยังไม่ได้ทำ:** live-test ใน VO จริง (ลูบแล้วดู XP ขึ้น + ปุ่มหายครบชั่วโมง) และยังไม่มีตัวเลข before/after ของ XP ที่ pet ได้จริงต่อวัน — ต้องวัดหลัง dev deploy จาก `tb_room_pet_xp_event` (`activity = 'xp_play_with_pet'`)
+
+---
+
 ## 2026-09-07 (รอบ 75) — pop หมดอายุ 5 นาที + เปลี่ยนเป็นเส้นประที่วิ่งมาบรรจบกัน
 
 - **user:** "บางคนไม่ได้อยู่หน้าจอ แล้ว pat เผลอเดินไปเข้าใกล้ จนเกิด pop เอง อยากให้ pop เกิดได้นานสุด 5 นาทีแล้วหายไป แล้ว pat เดินออกมาจากตรงนั้น เพื่อไม่ให้เกิด pop อีกรอบ · เปลี่ยน pop เป็นเส้นประแทน และอยากให้มี animation ตอนเชื่อมแบบค่อย ๆ มาเชื่อมกันทั้งสองฝั่ง"
