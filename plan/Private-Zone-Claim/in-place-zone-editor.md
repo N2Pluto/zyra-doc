@@ -24,7 +24,7 @@ overlay นั้น:
 
 - **ไม่ mount `hero-workspace-editor` อีก** — ใช้ VO Pixi scene ที่รันอยู่ + toggle edit mode
 - Reuse ให้มากที่สุด: write API (`lib/api/user-workspace-editor` ผ่าน `use-editor-api` userMode), palette panel (`object-library-panel.tsx`), `applyObjectDelta` ที่มีอยู่
-- ทุก mutation = **write-through** (เขียน API ทันที) → backend broadcast `map_object_changed` → live sync
+- ~~ทุก mutation = **write-through** (เขียน API ทันที) → backend broadcast `map_object_changed` → live sync~~ → **เปลี่ยนแล้ว 2026-09-08**: ทุก mutation แก้ **draft ในเครื่อง** ไม่ยิง request · Done = commit ครั้งเดียวผ่าน `POST /maps/:id/objects/batch` · Cancel = คืน snapshot ฟรี (ดู `plan.md` §Write mode + `issues/zone-unclaim-invisible-collision-2026-09-08.md` สำหรับ obstacle grid ที่เกี่ยวกัน)
 - ทุก edit ถูก clamp ใน `ZoneScope.rect` (client) + server enforce ซ้ำ
 
 ## จุดเชื่อมที่มีอยู่แล้ว (ใช้ได้เลย)
@@ -69,14 +69,13 @@ overlay นั้น:
 
 ### Phase 2 — Stamp placement
 - Scene: `beginPlaceGhost(tileId, tile)` → ghost sprite ตามเมาส์, grid-snap, clamp ใน rect
-- click → `addMapObject` (write-through) + `applyObjectDelta("add", record)` (optimistic)
+- click → เพิ่มลง draft ด้วย temp id + `applyObjectDelta("add", record)` (2026-09-08: **ไม่มี** `addMapObject` ตอน click อีกแล้ว)
 - object count เพิ่ม, เช็ค objectLimit
 
 ### Phase 3 — Select / move / rotate / delete
 - Scene: pointer hit-test object ใน zone → highlight
-- drag → `moveMapObject` + delta "move"
-- rotate → `updateMapObjectMeta(facing)` + delta "update"
-- delete / eraser → `removeMapObject` + delta "remove"
+- drag / rotate / delete — แก้ draft + delta ตรง ๆ (2026-09-08: เลิกยิง `moveMapObject` /
+  `updateMapObjectMeta` / `removeMapObject` ต่อ action; ทั้งหมดรวมไปใน batch commit ตอน Done)
 
 ### Phase 4 — Polish
 - objectLimit UI (disable stamp เมื่อเต็ม), zone-bounds error toast, undo (optional), exit confirm ถ้ามีการเปลี่ยน, cleanup debug console.log ใน scene.ts (525/529/537/539)
@@ -88,3 +87,32 @@ overlay นั้น:
 
 ## Verify plan
 - preview port 3000 (zyra-ws origin check), 2 client ใน VO เดียวกัน, วาง object ฝั่งหนึ่ง อีกฝั่งเห็นทันที (ดู [[vo-realtime-redis-bus]] + [[vo-preview-e2e-verify]])
+
+
+---
+
+## รอบที่ 2 — 2026-09-08 · local-first draft + batch commit
+
+**ทำอะไร**: เลิก write-through ทั้งหมด · Decoration Mode แก้ draft ในเครื่อง กด Done ค่อย commit
+ครั้งเดียว กด Cancel คืน snapshot
+
+**ถึงไหน**: merge เข้า develop แล้วทั้ง 4 PR
+- `zyra-api` [#100](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/100) — batch endpoint + validator (pure, table-tested)
+- `zyra-api` [#101](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/101) — `is_locked` ใน batch contract
+- `zyra-app` [#325](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/325) — draft + Done/Cancel + discard confirm
+- (คู่กัน) `zyra-api` [#99](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/99) + `zyra-ws` [#58](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/58) — obstacle grid หลัง unclaim
+
+**verify ถึงไหน**: build/lint/tsc/prettier เขียวทั้งสองฝั่ง · `go test ./...` เขียว ·
+vitest 135 files / 1799 tests เขียว (27 ตัวใหม่ครอบ diff module) · **ยังไม่ live-test** —
+เครื่องที่ทำไม่มี Postgres/zyra-api/zyra-ws ขึ้นอยู่ และเรื่องนี้ต้องเทสต์ 2 client ใน workspace เดียว
+
+**ต่อจากนี้** (verify บน dev):
+1. วาง/หมุน/ย้าย/ลบ — sprite ต้องขึ้นทันที และ Network tab ต้อง **ไม่มี** request ต่อ action
+2. client ที่ 2 ต้อง **ไม่เห็นอะไร** ระหว่างแก้
+3. Done → 1 request → client ที่ 2 เห็นทั้งชุดพร้อมกัน
+4. Cancel ที่มีการแก้ค้าง → confirm → กลับสภาพเดิม ไม่มี request
+5. เดินชนของที่วางใหม่หลัง Done — collision ต้องตรง (ทดสอบ grid republish ของ #99 ไปด้วย)
+
+**ติดอะไร**: T08 เดิม ("B เห็น object โผล่ก่อนกด Save") ถูกยกเลิกโดยเจตนา — ผู้ใช้เลือก
+draft ส่วนตัว · dead code `zoneScope` ใน `hero-workspace-editor.tsx` (ไม่มี caller) ยังไม่ได้ลบ ·
+per-action endpoint เดิมยังเปลือง query อยู่ (admin Space Builder ยังใช้ path นั้น)
