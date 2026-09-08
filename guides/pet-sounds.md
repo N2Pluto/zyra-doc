@@ -66,6 +66,10 @@ category ที่ยังไม่มีเสียง = สัตว์เ�
 - ระดับเสียงคูณกับ **Notification volume** ใน Settings → Audio (ตั้ง 0 = ปิดจริง) — ยังไม่มีสวิตช์แยกของ pet
 - เสียงสัตว์ตัดที่ **2.5 วินาที** แล้ว fade (คลิปต้นทางบางไฟล์ยาว 8–15 วิ ซึ่งยาวเกินไปสำหรับการตอบสนองตอนลูบ) ส่วนเสียงเติบโตปล่อยจนจบ
 - ทั้งสองจุดเกิดจากการคลิกของผู้ใช้ จึงไม่ติด autoplay policy ของเบราว์เซอร์
+- เล่นผ่าน **Web Audio API** (`lib/pet-sound-player.ts`) ไม่ใช่ `<audio>` — โหลดคลิปผ่าน `/api/img?url=…`
+  (R2 ไม่ส่ง CORS header, `decodeAudioData` จึงต้องผ่าน proxy) แล้ว cache เป็น `AudioBuffer` ต่อ URL
+  ห้ามเปลี่ยนกลับไปใช้ media element: Zen/Firefox จะขึ้นรายการค้างใน media panel หนึ่งแถวต่อคลิป
+  (ดู `issues/pet-sound-media-panel-rows-2026-09-08.md`)
 
 ## ฟังทั้งหมด
 
