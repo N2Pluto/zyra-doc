@@ -38,6 +38,8 @@
 | [`prod-db-access.md`](guides/prod-db-access.md) | ต่อ prod AlloyDB + Redis จากเครื่องตัวเองผ่าน IAP tunnel |
 | [`i18n-migration.md`](guides/i18n-migration.md) | next-intl — โครงสร้าง locale และวิธีเพิ่มคำแปล |
 | [`tanstack-query-migration.md`](guides/tanstack-query-migration.md) | TanStack Query v5 — pattern ที่ใช้ใน zyra-app |
+| [`pet-sounds.md`](guides/pet-sounds.md) | Room Pet — โครงเสียงบน R2 และวิธีเพิ่ม category ใหม่ |
+| [`flaky-test-hunting.md`](guides/flaky-test-hunting.md) | ล่า flaky test — วิธีสแกน, วัด margin เป็น σ, และสแกนไปถึงไหนแล้ว |
 
 ### [`issues/`](issues/) — บั๊ก/ปัญหาในตัวแอป
 บันทึกต่อรอบรายงาน: อาการ → root cause จากโค้ดจริง → สิ่งที่แก้ → verify แล้วหรือยัง
