@@ -5,6 +5,46 @@
 
 ---
 
+## 2026-09-09 · แก้ companion layout (Spotlight + Meeting) ให้ตรง Figma 5495:910662
+
+- **ทำอะไร:** ดึง spec จาก Figma MCP (node `5495:910662` — Spotlight display พร้อม Meeting panel) แล้วแก้ค่าที่เพี้ยนจาก design
+  - **ระยะห่างสองการ์ด:** design วาง Spotlight panel `top=16 height=720` และ Meeting panel `top=744` → ห่างกัน **8px** พอดี. โค้ดเดิมกัน bottom ไว้ `300px` ตายตัว จึงเหลื่อม เปลี่ยนเป็น `bottom-[312px]`: ขอบบน Meeting panel = 16 (offset) + ความสูงคงที่ของ panel, ต้องการ gap 8 แล้วหัก `p-[16px]` ของ wrapper อีกชั้น. ค่าสุดท้าย: tile สูง 160 → panel สูง 304 → ขอบบนอยู่ 320 → ขอบการ์ด 328 → `bottom-[312px]` (รอบแรกใส่ 288 แล้วยังห่าง เพราะลืมหัก padding ของ wrapper)
+  - **สี tile ผู้เข้าร่วม:** design ใช้ `rgba(255,255,255,0.05)` บนพื้น `#1A1B1E` ไม่ใช่สีทึบ — เดิมเป็น `#242528` (นี่คือ "สีไม่ตรง")
+  - **ขนาด tile:** ยืนยันจาก `get_metadata` (`5468:673373` / `5468:673375`) — แถว tile กว้าง 1336, chevron 32×32, tile = 202.67 × 120, avatar = 42 × 42 กลาง tile. ค่าจริงที่ใช้หลังรีวิวกับผู้ใช้คือ **`h-[160px] max-w-[318px] flex-1` + `justify-center` + avatar 56px** = ขนาดเดียวกับกล่อง screen-share compact (`zone-enter-screen-share.tsx:127`) เป๊ะ ตามที่ผู้ใช้สั่ง "ให้ขนาดเท่าแชร์จอ" — geometry จึงไม่ต่างจาก tile ปกติของโปรเจกต์แล้ว เหลือต่างแค่สีพื้น (white 5% ตาม design). ลำดับที่รีวิวมา: ปล่อย flex เต็มแถว → "ยืด" → cap 203 ชิดซ้าย → "เล็ก/ควรอยู่กลาง" → 318×120 กลาง → "ต้องสูงกว่านี้ให้สมส่วน" → 318×188 → "กรอบรวมสูงเกิน" → 318×160 (เท่า screen-share)
+  - **Meeting panel head:** design เป็น Display Head 56px (`px-8 py-16`) เหมือนหัว Spotlight — companion mode ครอบ `PanelHeader` ด้วย container 56px (เพิ่ม `w-full` ให้ PanelHeader ให้ยืดเต็มใน container)
+  - **Spotlight panel:** padding 16 → **8**, เพิ่ม `gap-[24px]` ระหว่าง head กับ stage, head 36px → **56px** (`px-8`), ชื่อ stage 16px → **14px medium**, chip `h-24 p-4`, ปุ่มหัวการ์ด 28px → **24px** (`p-4` + icon 16), พื้น stage `#242528` → `rgba(255,255,255,0.05)` + `rounded-12` + `p-4`, ป้ายชื่อย้ายมาอยู่ใน flow มุมล่างซ้าย (`bg-black/80` + blur, `px-12 py-8`, `rounded-12`, 16/22), avatar เต็มจอ 220px → **35% ของความสูง stage** ตาม design
+  - **ปุ่มกลางบนหัวการ์ด:** design เป็นปุ่มไอคอน 3 อันเท่ากัน (PiP / Chat / X) — ของเราปุ่มกลางเป็น `Stop listening` แบบมีข้อความ จึงเปลี่ยนเป็นปุ่มไอคอนขนาดเท่ากัน (24px) แต่ **ยังเป็น Stop listening ไม่ใช่ Chat** เพราะ Spotlight chat ยังไม่ได้ทำ → รอ PM เคาะว่าจะเพิ่มปุ่ม Chat ตาม design (งานใหม่) หรือคง Stop listening ไว้ในช่องนี้
+- **verify ถึงไหน:** targeted Vitest 5 ไฟล์ 63 tests ผ่าน (อัปเดต 2 assertion ที่ผูกกับค่าเก่า: `bottom-[300px]` → `bottom-[312px]`, `bg-[#242528]` → `rgba(255,255,255,0.05)` + h-160/max-w-318), `tsc --noEmit` ไม่มี error ใหม่, ESLint + Prettier ผ่าน
+- **เบี่ยงจาก design อย่างตั้งใจ (ผู้ใช้สั่งในรีวิว):** tile companion ใช้ 318×160 + avatar 56px แทน 202.67×120 + 42px ของ Figma เพราะ viewport จริงแคบกว่า frame 1440 (design ได้ 202px จากการมี 6 tiles พอดีในแถว) และต้องเท่ากล่อง screen-share ที่โปรเจกต์ใช้อยู่
+- **ยังต่างจาก design:** ระยะซ้าย/ขวาของสองการ์ด (design ชิดขอบ sidebar 0 + ขวา 16 บน sidebar 72px; ของเรา sidebar 56px และเว้น 16 ทั้งสองข้าง) — ยังไม่แก้เพราะเป็น layout ระดับหน้า ไม่ใช่จุดที่รีวิว; MeetingTimer ในหัว Meeting panel ไม่มีใน design; ยังไม่ได้ live-test ผ่าน UI
+
+---
+
+## 2026-09-09 · แก้ Bell entry ไม่ขึ้นเลย (validation + CHECK constraint บน dev DB)
+
+- **ทำอะไร:** ผู้ใช้รายงานว่าไม่เห็น notification เลย ตรวจแล้วเจอสองสาเหตุ
+  1. **Bug จริงในโค้ด:** `validateSpotlightBroadcast` ตรวจ `actor_id`/`recipient_ids` ด้วย `uuid.Parse` แต่ `tb_user.id` เป็น `VARCHAR` (เก็บ identity-provider subject เช่น Google sub `111238104937251950343`) → request จริงถูกตีกลับ 400 ทั้งหมดและไม่มี row เกิดขึ้นเลย แก้เป็นตรวจ non-empty + `maxUserIDLen` (255) เฉพาะ `workspace_id`/`session_id` ที่เป็น UUID column จริงจึงยังตรวจ UUID; เพิ่ม test case ของ Google-sub id, blank และ id ยาวเกิน
+  2. **dev DB:** CHECK constraint `tb_notification_type_check` บน dev DB (`gather-dev`) ไม่มี `spotlight_live` ทั้งที่ column ใหม่สองตัวมีแล้ว (embedded DDL ของ instance ที่รันตอน 16:34 ใส่ให้แล้ว) → ถูก revert ทีหลัง ตรงกับคำเตือนใน `internal/database/postgres.go` ว่า statement นี้ DROP/ADD constraint ทุก boot ดังนั้น **instance ที่ยังไม่มีโค้ดนี้ boot ทับได้** (dev DB นี้ถูกใช้ร่วมกับ environment ที่ deploy ไว้) จึงรัน statement ของ migration 98 ใส่ dev DB ให้แล้ว (column + CHECK + index, idempotent)
+- **verify ถึงไหน:** ยิง internal endpoint ด้วย id จริง (workspace + user จริงในระบบ) `POST /api/internal/spotlight/broadcasts` → 200 และเกิด row `spotlight_live` จริงใน `tb_notification`; `POST .../:sessionId/end` → 200 และ `spotlight_ended_at` ถูก set; `go vet`/`go test ./...` ของ `zyra-api` ผ่านทั้งหมด
+- **ข้อควรรู้/ยังต้องทำ:**
+  - จนกว่า branch นี้จะขึ้น `develop`/dev **instance เก่าที่ boot ทับจะลบ `spotlight_live` ออกจาก CHECK อีก** แล้ว insert จะ fail เงียบ ๆ (best-effort call) — ถ้าเจออาการ noti ไม่ขึ้นซ้ำ ให้ตรวจ constraint ก่อน
+  - พฤติกรรมที่ตั้งใจ: **ผู้ broadcast ไม่ได้รับ entry ของตัวเอง** และผู้รับคือสมาชิกที่อยู่ floor เดียวกัน "ตอนเริ่ม" เท่านั้น → ทดสอบด้วยบัญชีเดียว/workspace ที่มีสมาชิกคนเดียวจะไม่เห็นอะไรเลยตามดีไซน์ ต้องใช้ 2 บัญชีที่อยู่ workspace + floor เดียวกัน
+  - ยังไม่ได้ live-test ผ่าน UI จริง
+
+---
+
+## 2026-09-09 · Durable Notification Bell entry for a Spotlight broadcast (EC-02)
+
+- **ทำอะไร:** ทำ Bell entry ของ Spotlight ให้ **durable** ตามที่ผู้ใช้เคาะ (spec §7 ข้อ 14 → ดู Decision ใหม่ใน spec §1) เพื่อให้คนที่ปิด toast หรือกด X ออกจาก stage แล้วยังกลับเข้า broadcast ได้ และเมื่อ live จบ card เปลี่ยนเป็น "Broadcast ended" ที่ไม่มีปุ่ม Join
+  - `zyra-api`: migration `98_notification_spotlight.sql` เพิ่ม type `spotlight_live` + column `spotlight_session_id` / `spotlight_ended_at` และ index ของ session (มิร์เรอร์ใน embedded DDL ของ `internal/database/postgres.go` ด้วย — ไม่งั้น CHECK constraint ถูก revert ทุก boot); `NotificationService.CreateSpotlightLive` / `EndSpotlightLive` insert-แล้ว-push และปิด session พร้อม push row ที่อัปเดต; internal endpoint `POST /api/internal/spotlight/broadcasts` และ `POST /api/internal/spotlight/broadcasts/:sessionId/end`; `ListNotifications` ส่งสองคอลัมน์ใหม่ออกไปด้วย
+  - `zyra-ws`: `Room.spotlightSessions` ถือ session ปัจจุบันต่อ floor (สร้างเมื่อ speaker set ว่าง → ไม่ว่าง, ลบเมื่อว่าง), ส่ง `session_id` ไปกับ `ws:spotlight:stateUpdate` ทุกครั้งรวม snapshot, และเรียก zyra-api แบบ fire-and-forget ผ่าน `Hub.postInternalJSON` ใหม่ (pattern เดียวกับ `cleanupMeetingAttachments`). Recipients = คนที่อยู่ floor นั้นตอนเริ่ม ยกเว้นผู้ broadcast; สร้างเฉพาะ session ที่เพิ่งเปิดและ `notify=true` จึงไม่ซ้ำตอน reconnect re-assert
+  - `zyra-app`: `spotlightSessionId` ใน `vo-session-store`; การ์ดใหม่ `SpotlightNotificationCard` ใน `vo-notification-panel` (badge broadcast แทน avatar, ปุ่ม Join ตอน live, ข้อความ ended เมื่อจบ); `canJoinBroadcastFromNotification` เป็น pure guard ให้ Join ได้เฉพาะ session ที่ live อยู่จริง ไม่งั้นเด้ง `spotlightEndedBeforeJoin`; hero เชื่อม Join เข้ากับการล้าง `spotlightViewerDismissed`/opt-out + ส่ง `spotlightMeetingJoin` ให้คนที่อยู่ใน Meeting; copy ใหม่ 6 คีย์ทั้ง en/th
+  - `prependNotification` ใน chat-store เปลี่ยนให้ replace **ตรงตำแหน่งเดิม** (ตาม comment ที่เขียนไว้แต่เดิม) เพราะ row เดียวถูก push สองครั้ง (live → ended) และไม่ควรกระโดดขึ้นหัว list; แก้ test เดิมที่ยืนยันพฤติกรรมเก่าแล้ว
+- **verify ถึงไหน:** `zyra-api` `go build/vet/test ./...` ผ่าน (เพิ่ม test ของ payload/validate + `dedupeIDs`); `zyra-ws` `go build/vet/test ./...` ผ่าน (เพิ่ม `spotlight_notification_test.go`: session id lifecycle, start/end call ผ่าน httptest stub ของ internal API, ข้าม re-assert, recipients ต่อ floor); `zyra-app` targeted Vitest 10 ไฟล์ 125 tests ผ่าน (มี `vo-notification-panel-spotlight.test.tsx` ใหม่), `tsc --noEmit` ไม่มี error ใหม่ (ยังเหลือ error เดิมที่ไม่เกี่ยวใน `pet-creation-wizard.test.tsx`, `pixi-game-scene.test.ts`), ESLint ของไฟล์ที่แก้ + Prettier + `git diff --check` ผ่านทั้งสาม repo
+- **เหลือ/ติดอะไร:** ยังไม่ได้ live-test สอง browser (เริ่ม broadcast → คนอื่นเห็น entry ใน Bell → กด Join กลับเข้า stage → ผู้ broadcast หยุด → card เปลี่ยนเป็น ended). ต้องรัน migration 98 บน dev ก่อนทดสอบ และ `zyra-ws` ต้องมี `ZYRA_API_URL` + internal secret ตั้งไว้ ไม่งั้น entry จะไม่ถูกสร้าง (broadcast ยังทำงานปกติ). ยังไม่ commit/push/deploy. ข้อที่ยังไม่เคาะและตั้งใจไม่ทำ: recipients ระดับ workspace-wide/offline (§7 ข้อ 5), retention ของ row (§7 ข้อ 8/18), toast 15 วินาที + accept/later ตาม HP-04, และ setting เปิด-ปิดการแจ้งเตือนนี้
+
+---
+
 ## 2026-09-09 · Resolve Spotlight PR review findings
 
 - Unified frontend Spotlight Meeting behavior around physical Meeting-zone context and server-confirmed room acceptance, including the solo-occupant prompt path, pending/retry handling, translated rejection feedback, status blocking, PiP companion behavior, and a distinct Stop listening action.

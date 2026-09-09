@@ -18,6 +18,23 @@
 
 สมาชิกคนใดใน Meeting กด Join Spotlight จะเป็นการยอมรับสำหรับ Meeting เดียวกันทั้งหมด สมาชิกยังอยู่ใน Meeting และคุยต่อได้ หน้าจอใช้ Spotlight ด้านบนและ meeting tiles/toolbar ด้านล่าง ตาม Figma node `5485:899345`; toast ขนาดกระชับอยู่มุมบนขวา
 
+### Decision — 2026-09-09, Notification Bell = durable (user approved, §7 ข้อ 14)
+
+Bell ของ Spotlight เป็น **durable** ไม่ใช่ client session: เก็บใน `tb_notification` เพื่อให้ค้างข้าม refresh/เครื่อง และมี read state จริง ตาม EC-02
+
+Contract:
+
+- Type ใหม่ `spotlight_live` ใน `tb_notification` (migration 98) + column `spotlight_session_id UUID` และ `spotlight_ended_at TIMESTAMPTZ`
+- `zyra-ws` เป็นเจ้าของ session state: สร้าง `session_id` (UUIDv4) เมื่อ speaker set ของ floor ว่าง → ไม่ว่าง และลบเมื่อว่างอีกครั้ง; ส่ง `session_id` ไปกับ `ws:spotlight:stateUpdate` ทุกครั้ง (รวม snapshot ตอน reconnect) และเป็น `""` เมื่อไม่มี broadcast
+- `zyra-ws` → `zyra-api` ผ่าน internal endpoint (`X-Internal-Secret`, fire-and-forget):
+  - `POST /api/internal/spotlight/broadcasts` `{workspace_id, session_id, actor_id, recipient_ids[]}` ตอนเริ่ม
+  - `POST /api/internal/spotlight/broadcasts/:sessionId/end` `{workspace_id}` ตอนจบ → set `spotlight_ended_at` ของ session นั้นและ push row ที่อัปเดตแล้ว
+- **Recipients = สมาชิกที่อยู่บน floor ที่ broadcast ตอนเริ่ม ยกเว้นผู้ broadcast** — คงพฤติกรรม floor-scoped ของ Spotlight ปัจจุบัน (§7 ข้อ 5 workspace-wide ยังไม่เคาะ) และทำให้ปุ่ม Join มีความหมายกับคนที่ได้รับจริง
+- สร้าง row เฉพาะเมื่อ session เพิ่งเปิดและ `notify=true` — reconnect re-assert (`notify=false`) ไม่สร้างซ้ำ
+- Row เป็น `email_suppressed` เสมอ (ไม่เข้า chat digest) และ push ผ่าน `vo:notify` → `chat:notification:new` เดิม
+- Client จะ Join ได้เฉพาะเมื่อ `spotlight_session_id` ของ row ตรงกับ `session_id` ที่ live อยู่ตอนนั้น ไม่เช่นนั้นแสดง `spotlightEndedBeforeJoin` — กันการเปิด session ใหม่ของ marker เดิมผิดตัวตาม EC-02
+- ยังไม่ตัดสิน: retention/ลบประวัติ (§7 ข้อ 8/18), offline/cross-floor delivery และ setting เปิด-ปิดการแจ้งเตือนนี้
+
 Contract: client sends `ws:spotlight:meetingJoin` with `{room_id: string}`. Matching `MediaRoomID` is authoritative membership evidence; before the media handshake, published Meeting geometry plus the caller's claimed tile is the fallback. An active Spotlight on the caller's floor is required. Invalid requests use the existing error envelope. Any member may accept; no owner restriction. Server includes `accepted_meeting_ids: string[]` in existing floor `ws:spotlight:stateUpdate` messages (including reconnect snapshots). Clients apply acceptance only when their current meeting ID matches and do not treat Join as successful before that snapshot confirms it. Duplicate requests are idempotent.
 
 Acceptance remains room-level and can be reversed with `ws:spotlight:meetingLeave {room_id: string}`. Leave is idempotent and broadcasts an updated snapshot. The server also revokes acceptance when the room's final media member leaves, preventing a later unrelated group in the same Meeting zone from inheriting it. The floor's final broadcaster stopping/disconnecting still clears all accepted rooms. State is ephemeral and floor-scoped, with no DB migration. Missing `accepted_meeting_ids` from older servers means an empty list. Meeting media is never left by accepting; Stop listening revokes the room acceptance and is distinct from hiding the Spotlight stage.
@@ -408,7 +425,7 @@ Spotlight ปัจจุบันคือ “ประกาศเสียง
 | State | in-memory speaker set | `spotlight_sessions` + grace | persistenceต้องเคาะ |
 | Multi-stage | ไม่มี marker identity | switcher/sessionแยก | ของเดิมแยก Stageไม่ได้ |
 | Viewer count | ไม่มี | realtime/session | protocolใหม่ |
-| Notification | 8 วินาที; mute/dismiss;ไม่ durable | 15 วินาที; accept/later/Bell | UX/dataใหม่ |
+| Notification | 8 วินาที; mute/dismiss; Bell durable ตาม EC-02 (2026-09-09) | 15 วินาที; accept/later/Bell | เหลือ 15 วินาที + accept/later |
 | Share | ไม่มี global precedence | Spotlightหยุด meeting; first Stage wins | distributed authority |
 | Disconnect | removeทันที | pause/resume 2 นาที | cleanupใหม่ |
 
@@ -448,7 +465,7 @@ Spotlight ปัจจุบันคือ “ประกาศเสียง
 | 11 | Multi-Stage | default/order/auto-switch เมื่อ Stageจบ |
 | 12 | Share lock | owner, race, TTL, reconnect, stale recovery |
 | 13 | Viewer count | pending/hidden/PiP/muted/reconnect นับอย่างไร |
-| 14 | Bell | local หรือ durable; retention/read/offline/cross-device |
+| 14 | Bell | **เคาะแล้ว 2026-09-09: durable ใน `tb_notification`** (ดู §1 Decision); เหลือ retention/offline/cross-floor |
 | 15 | Walk leave | `auto-exit` default/owner/debounce |
 | 16 | Mute | mute คง sessionหรือจบแบบระบบเดิม |
 | 17 | Reconnect | identity หลาย tab/device และ resume authorization |
@@ -464,7 +481,7 @@ Spotlight ปัจจุบันคือ “ประกาศเสียง
 4. Normal viewerถูกเปิดเต็มจอทันทีจริงไหม; หลังกลับ VO ดูใหม่ตรงไหน?
 5. Meeting viewerได้ยินสอง sessionพร้อมกันจริงไหม?
 6. Spotlight share ต้องหยุดทุก meeting share ทั้ง Workspaceจริงไหม?
-7. Bell ต้อง durable/offline หรืออยู่แค่ client session?
+7. ~~Bell ต้อง durable/offline หรืออยู่แค่ client session?~~ → durable (2026-09-09); ยังเหลือ offline/cross-floor delivery และ retention
 8. `spotlight_sessions` เก็บประวัตินานเท่าไร?
 9. ขอ Figma/approved design ของทุก surface ใหม่
 
