@@ -2,13 +2,14 @@
 
 > ดึงข้อมูลจาก ClickUp — Space: Zyra World, List: `901614367195`
 > Parent Task: [[Feature] Room Pet — Virtual Office](https://app.clickup.com/t/86d3dc92c) (`86d3dc92c`) · tag `client` · status **in progress** · priority normal · ไม่มี assignee · creator Moss Pm
-> Subtask: SC-PET-01 ~ 08 ทุกใบ status **pending** · SC-PET-01~05 priority **high** · SC-PET-06~08 priority normal
-> Card สร้าง 2026-06-19 · parent แก้ล่าสุด 2026-09-02 · subtask แก้ล่าสุด 2026-08-13 ~ 2026-08-18
+> Subtask: SC-PET-01 ~ 08 ทุกใบ status **in progress** (เปลี่ยนจาก pending 2026-09-03/04 — เนื้อหา description ไม่เปลี่ยน) · SC-PET-01~05 priority **high** · SC-PET-06~08 priority normal · parent มี assignee แล้ว
+> Card สร้าง 2026-06-19 · **อ่านใหม่ทั้งชุด 2026-09-05 → ตารางเทียบ card กับของจริงทุกข้ออยู่ที่ [clickup-audit-2026-09-05.md](clickup-audit-2026-09-05.md)** (พร้อม 8 ข้อที่ยังไม่มีใครเคาะ + 8 decision ที่ user เคาะวันนี้)
 > ใน ClickUp **ไม่มี** comment / attachment / checklist / dependency / linked task เลยแม้แต่ใบเดียว — เนื้อหาทั้งหมดอยู่ใน description
 >
-> **สถานะเอกสาร: ถอดจาก ClickUp ครบทุกใบ 2026-09-02 — ยังไม่เริ่ม implement · ยังไม่ได้ review กับ PM**
-> **ความพร้อม 2026-09-02: ยังไม่พอเริ่ม flow จริง** — ไม่มี `tb_room_pet` / member API / XP engine / pet ใน zyra-ws · PR #240 (app) #63 (api) บน `feat/pet-management-xp` เป็นงาน admin ล้วน → ดู [§ความพร้อม](#ความพร้อม--ข้อมูลพอเริ่ม-room-pet-แล้วหรือยัง-ประเมิน-2026-09-02)
-> **ทำไปแล้ว 2026-09-02 (branch `feat/room-pet-ui`, ยังไม่ commit):** component ล้วนครบ 6 รายการ + feature flag `NEXT_PUBLIC_ROOM_PET` (default false) — 452 test ผ่าน · รายละเอียดใน [progress.md](progress.md) · ยังไม่มีชิ้นไหน mount ใน hero
+> **ตรวจ spec ทีละข้อครั้งล่าสุด: [spec-audit-2026-09-07.md](spec-audit-2026-09-07.md)** (รอบ 71 · 185 ข้อ · ✅ 94 · แทนที่แล้ว 31 · บางส่วน 38 · ค้าง 22)
+> **สถานะเอกสาร: implement ครบทั้ง 8 scenario + deploy dev แล้ว 2026-09-04** — verify ผ่าน REST/WebSocket ครบทุก scenario · **ยังไม่ได้เทส UI ในเบราว์เซอร์** (ติด login) · **สรุปส่งต่ออยู่ที่ [progress.md รอบ 21](progress.md)** อ่านอันนั้นก่อนถ้าจะมาทำต่อ
+> **ความพร้อม 2026-09-04: พอแล้ว — dependency ครบทั้ง 6 ข้อ** · `tb_room_pet` + placement (api #65) · member list (api #66) · ws relay `pet_*` 6 ตัว (ws #29) · Map Editor drag-drop (app #246) · VO render (app #248) · XP engine + ledger ([api #68](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/68) รอ merge) → ดู [§ความพร้อม](#ความพร้อม--ข้อมูลพอเริ่ม-room-pet-แล้วหรือยัง-ประเมิน-2026-09-02)
+> **เหลืออะไร (2026-09-04):** ~~จ่าย XP ของอีก 9 activity~~ ✅ เสร็จ ([api #75](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/75) + [#76](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/76)) · ~~เปิด activity ทั้ง 10~~ ✅ เสร็จ (config **v11** enabled ครบ ไม่มีตัวไหนเกิน cap) · ที่เหลือ: **เทส UI ในเบราว์เซอร์** (ติด login) · ตั้ง `xp_play_with_pet.times`=5 · Share flow · pet facing rows · `pet_sittable` · cron 09:00 ICT — รายการเต็มอยู่ใน [progress.md รอบ 21](progress.md)
 > **repo ที่กระทบ:** zyra-app (VO client), zyra-api (member API + XP engine), zyra-ws (pet AI + broadcast), zyra-notifications (SC-PET-07)
 >
 > **เกี่ยวเนื่องกับ [PetManagement](../PetManagement/)** — โมดูลนั้นคือฝั่ง **Admin** (pet type library, sprite, XP config, วาง pet ลงห้อง) ส่วนเอกสารนี้คือฝั่ง **Member/Client** (pet มีชีวิตอยู่ในห้อง VO) ทุก scenario ในนี้ **ขึ้นกับ SC-PM-05 (วาง pet ลงห้อง) ซึ่งยังไม่เริ่ม** — ดูตารางเทียบ + จุดขัดกันใน [§ความเกี่ยวเนื่องกับ PetManagement](#ความเกี่ยวเนื่องกับ-petmanagement)
@@ -48,6 +49,21 @@ Evolve   (2000+ XP)    → รูปแบบสมบูรณ์ มี specia
 | ทีม online พร้อมกัน 5+ คน | +10 XP bonus |
 
 > ตารางนี้มี 4 แหล่ง — ฝั่ง Admin ([PetManagement SC-PM-04](../PetManagement/spec.md)) เคาะเป็น **10 activities ที่ admin ตั้งค่าได้** แล้ว ดู [§จุดที่ขัดกัน ข้อ 2](#จุดที่ขัดกับ-petmanagement-ต้องเคาะก่อน-implement)
+
+### Scenarios (Client Feature) — ตารางใน parent card ตามต้นฉบับ
+
+| ID | Scenario (ชื่อตาม parent) | Type |
+|---|---|---|
+| SC-PET-01 | ดู Pet บน Virtual Office Map | Happy Path |
+| SC-PET-02 | Pet AI Movement — เดิน / Idle / **นั่งบน Object** | Happy Path |
+| SC-PET-03 | Interact กับ Pet **(ป้อน / pet)** | Happy Path |
+| SC-PET-04 | Pet Growth — Egg → Hatch | Happy Path |
+| SC-PET-05 | Pet Growth — Hatch → Grow → Evolve | Happy Path |
+| SC-PET-06 | ดู Pet Status และ XP Progress | Happy Path |
+| SC-PET-07 | Pet Notification — Growth Event | Happy Path |
+| SC-PET-08 | **Pet Hungry /** Neglected State | Alternate Path |
+
+> ชื่อตัวหนาคือส่วนที่ parent เขียนแต่ **subtask ตัวจริงตัดออกแล้ว** (SC-02 ไม่มี "นั่งบน Object", SC-03 ไม่มี "(ป้อน / pet)", SC-08 ไม่มี "Hungry") — ตาราง §2 ด้านล่างใช้ชื่อตาม subtask · ตรวจสดจาก ClickUp 2026-09-05: parent ยังเขียนแบบนี้อยู่
 
 ---
 
@@ -450,7 +466,7 @@ card ชุด Room Pet เขียนก่อนที่ PM จะเคา�
 | 7 | **XP penalty ตอน Sad** | ลดเฉพาะ "XP จาก team activity" 50% | mood multiplier คูณ **ทุก** activity (Happy 150% / Neutral 100% / Sad 50%) รวม `xp_play_with_pet` | ถามว่า Stroke ตอน Sad ได้ 50% ด้วยไหม — card สื่อว่า interaction ยังได้เต็ม (เพื่อให้ recovery จูงใจ) |
 | 8 | **Recovery ทันที** | Stroke/feed 1 ครั้ง → Happy ทันที | mood = `NOW() - last_activity_at` → interaction ที่ update `last_activity_at` ก็ทำให้ Happy ทันทีอยู่แล้ว | ตรงกัน — แต่ต้องกำหนดว่า **activity ไหนบ้าง** ที่ update `last_activity_at` (เฉพาะ interaction? หรือ login/office ด้วย — ถ้าด้วย pet จะแทบไม่มีวัน Sad ในทีมที่ active) |
 | 9 | **1 Room = 1 Pet** | ระบุชัดทั้ง parent และ SC-PET-01 | **ยังไม่เคาะ** — default ปัจจุบันวางได้หลายตัว (`uq_room_pet_one_per_zone` ปิดไว้) | card นี้เป็นคำตอบของคำถามค้าง #1 ใน PetManagement → **เปิด unique index + implement modal "Replace this pet" ใน Map Editor** ก่อน merge PR 6/8 |
-| 10 | **ใครวาง pet / persona** | "Workspace Admin เลือก pet type" · AC7: Workspace Admin, Owner, Admin System | **System Admin** ผ่าน Map Editor (`/api/admin/maps/:mapId/pets`, AdminGuard) | ถ้า Workspace Owner/Admin ต้องวางเองได้ → ต้องมี endpoint ฝั่ง `/api/user/*` + สิทธิ์ตาม workspace role ซึ่ง**ยังไม่มีใน design** — ถาม PM |
+| 10 | ✅ **ปิดแล้ว 2026-09-04** — **ใครวาง pet / persona** | "Workspace Admin เลือก pet type" · AC7: Workspace Admin, Owner, Admin System | **System Admin** ผ่าน Map Editor (`/api/admin/maps/:mapId/pets`, AdminGuard) | ถ้า Workspace Owner/Admin ต้องวางเองได้ → ต้องมี endpoint ฝั่ง `/api/user/*` + สิทธิ์ตาม workspace role ซึ่ง**ยังไม่มีใน design** — ถาม PM |
 | 11 | **ชื่อ event / ช่องทาง realtime** | `ws:pet:state` · `ws:pet:interact` · `ws:pet:stageChange` (ยิงจาก ws โดยตรง) | `pet_spawned` · `pet_moved` · `pet_renamed` · `pet_removed` · `pet_stage_changed` · `pet_xp_changed` (api → Redis `vo:zone` → ws) | รวมเป็นชุดเดียว: admin action ใช้ของ PetManagement · **AI position tick (`ws:pet:state`) เกิดใน zyra-ws เอง** ไม่ผ่าน api · `ws:pet:interact` ≈ `pet_xp_changed` + `action` |
 | 12 | **AI movement server-side** | zyra-ws เดิน A\*, tick 200ms/2s, Redis `pet:position`, หยุดเมื่อไม่มีคน >5 นาที | **ไม่มีใน design เลย** — PetManagement ครอบแค่ตำแหน่งที่ admin วาง | งานใหม่ทั้งก้อนใน zyra-ws (pet ต้องรู้ zone tiles + blocked tiles + `pet_sittable` objects) — ต้องเขียน technical design แยก |
 | 13 | **Animation ที่ client ต้องเล่น vs slot ที่มี** | wobble · walk 4 ทิศ · idle loop (หาว/เงย/กระดิก) · notice (หูตั้ง) · happy · sad/นอนซม · hatch (crack) · grow (glow+scale) · evolve (light pillar) · born · recovery · sit | slot ต่อ stage: egg = `Wobbling` `Evolution` · baby/adult/evolved = `Walking` `Sitting` `Happy` `Sad` `Evolution` (**17 slot, `Idle` ถูกถอด 2026-09-01**) | map ให้ชัด: idle → ใช้เฟรมแรกของ `Walking` หรือ `Sitting`? · notice/born/recovery → ไม่มี slot ต้องเป็น particle/effect ฝั่ง client หรือ reuse `Happy` · crack/glow/light pillar → `Evolution` ของ stage ต้นทาง + effect ฝั่ง client · **ถ้าต้องมี idle จริง ต้องกลับไปเปิด slot `Idle` (20 slot) ซึ่งเพิ่งตัดออก** |
@@ -493,21 +509,21 @@ card ชุด Room Pet เขียนก่อนที่ PM จะเคา�
 | ขาด | ผล | อยู่ในแผนไหน |
 |---|---|---|
 | `tb_room_pet` + placement API `/api/admin/maps/:mapId/pets` + palette ใน Map Editor (SC-PM-05) | **ไม่มี pet อยู่ในห้องใดเลย → ไม่มีอะไรให้ render** | PetManagement PR 6, 8 — ยังไม่เริ่ม |
-| member endpoint `GET /api/user/workspaces/:id/pets` · stroke · status | panel / interaction ไม่มีข้อมูล | contract design แล้ว ยังไม่มีโค้ด |
-| XP engine + ledger `tb_room_pet_xp_event` | `tb_pet_xp_config` ยังไม่มี consumer → pet ไม่โต | PR 9 |
+| ~~member endpoint `GET /api/user/workspaces/:id/pets` · stroke · status~~ | ✅ **ครบทั้ง 3 ตัวแล้ว** (list = PR 10 merged · stroke + status = PR 9 [api #68](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/68)) — เหลือฝั่ง client ที่ยังต่อ mock อยู่ | PR 10 ✅ / PR 9 ✅ |
+| ~~XP engine + ledger `tb_room_pet_xp_event`~~ | ✅ **มีแล้ว 2026-09-04** — migration 89 + `RoomPetXPService` + `POST …/pets/:petId/play` + `GET …/status` ([api #68](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/68), ยังไม่ merge) · จ่าย XP ได้แค่ `xp_play_with_pet` — อีก 9 activity (login/office/meeting/chat) ยังไม่มี caller | PR 9 ✅ |
 | zyra-ws: pet AI + event `pet_*` (ตอนนี้รู้จักแค่ `zone_claim_changed` / `map_object_changed` / `map_updated`) | pet ไม่เคลื่อน ไม่ sync | PR 7 + technical-design.md ยังไม่เขียน |
 | notification type `pet_*` ใน api / app / zyra-notifications + cron 9:00 ICT | SC-PET-07 ทั้งใบ | ยังไม่มี |
 | Evolution GIF-only + prefill egg + ถอด `Idle` (17 slot) | โค้ดยังรับ PNG/GIF, ส่ง GIF เข้า grid validation, `RequiredPetSlots` ยัง 20 | รายการแก้ใน PetManagement/spec.md |
 | `pet_sittable` บน object (มีแค่ derive `type === "sofa"`) | pet นั่ง object ไม่ได้ตาม spec | ยังไม่มี |
 | คำตอบ design 12 ข้อ ([ux-ui.md §11](ux-ui.md)) + PM 9 ข้อ ([test-plan.md §6](test-plan.md)) | badge Adult/Evolved, minimap dot, compact zoom, toast ชน panel ฯลฯ | รอคำตอบ |
 
-**ลำดับที่ต้องผ่านก่อนเริ่ม SC-PET-01**
-1. merge #240 / #63 (หลังแก้ review) → PR ตามแก้ GIF-only + prefill + 17 slot
-2. api PR 6 — `tb_room_pet` + placement + `pet_spawned/moved/renamed/removed`
-3. ws PR 7 — forward `pet_*` (+ technical design ของ pet AI)
-4. app PR 8 — drag-drop ใน Map Editor
-5. api PR 9 — XP engine + ledger
-6. เริ่ม Room Pet ฝั่ง member
+**ลำดับที่ต้องผ่านก่อนเริ่ม SC-PET-01** — ✅ **ผ่านครบทั้ง 6 ข้อแล้ว 2026-09-04**
+1. ✅ merge #240 / #63 → PR ตามแก้ GIF-only + prefill + 17 slot
+2. ✅ api PR 6 — `tb_room_pet` + placement + `pet_spawned/moved/renamed/removed` (api #65)
+3. ✅ ws PR 7 — forward `pet_*` ทั้ง 6 ตัว (ws #29)
+4. ✅ app PR 8 — drag-drop ใน Map Editor (app #246)
+5. ✅ api PR 9 — XP engine + ledger ([api #68](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/68), รอ merge)
+6. ✅ เริ่ม Room Pet ฝั่ง member ได้แล้ว — SC-PET-01 render บน VO เสร็จ (app #248) · **ถัดไป: ต่อ `VOPetPanel` + ปุ่ม stroke เข้า API จริง (SC-PET-03/06) แทน mock**
 
 **เริ่มได้ทันทีโดยไม่รอข้อ 1–5** (component ล้วน ทดสอบกับ fixture ใน [test-plan.md §0](test-plan.md)): `PetStageBadge` · `PetTooltip` 3 variant · `VOPetPanel` (mock data) · derive helpers `lib/pet-stage.ts` (stage / mood / relative XP) · option `leadingIcon` / `trailingEmoji` / `progress` ของ `makeNameTag` · prop `petDots` ของ `VOMinimap` · unhide section PET ใน Setting — ตรง test-plan §1.1–1.7, 1.13, 1.14 · **ต้องเปิด `progress.md` ในโฟลเดอร์นี้ตั้งแต่ PR แรก**
 
@@ -521,6 +537,45 @@ card ชุด Room Pet เขียนก่อนที่ PM จะเคา�
 - Object Management: `pet_sittable` (ข้อ 15)
 
 ---
+
+## สถานะ implement ต่อ scenario (อัปเดต 2026-09-05) — สำหรับ QA
+
+> ⚠️ **ตารางในหัวข้อนี้หยุดอยู่ที่รอบ 25 — ของใหม่กว่าอยู่ที่ [spec-audit-2026-09-07.md](spec-audit-2026-09-07.md)** ซึ่งไล่ตรวจทุกข้อของทุก scenario (185 ข้อ) เทียบโค้ดบน develop รอบ 71 พร้อมรายการงานค้างจริงแยกจากข้อที่ถูก Figma/decision แทนที่ไปแล้ว
+
+> อ้างอิง PR ในตารางของ [progress.md รอบ 18](progress.md) · **build เขียวทุกตัว · deploy dev ครบทั้ง 3 repo · live-test ผ่าน REST + WebSocket ครบทั้ง 8 scenario** (รายละเอียดต่อ scenario อยู่ใน [รอบ 19](progress.md)) · `NEXT_PUBLIC_ROOM_PET=true` ตั้งแล้วบน dev
+>
+> **ยังไม่ได้ทดสอบด้วยตาในเบราว์เซอร์** — ยังไม่มีใครเปิด VO ดูของจริงสักครั้ง ทุกอย่างข้างล่างนี้ยืนยันผ่าน API/WS เท่านั้น
+
+| ID | ทำแล้ว | ไม่ได้ทำ (พร้อมเหตุผล) |
+|---|---|---|
+| SC-PET-01 ดู Pet บน map | sprite + nameplate + mood emoji + XP bar + minimap dot + คลิกเปิด panel · sheet 404 → ไม่แสดงอะไร (LOAD-03) | — |
+| SC-PET-02 AI movement | wander (สุ่มจุดใกล้จุดวาง, พัก 3–8 วิ, ~50/50) · ไม่ออกนอกห้อง ไม่ทะลุ obstacle · หันหาคนใน 3 tiles · เดินเข้าหาเมื่อยืนนิ่ง 3 วิ · หลายคนเท่ากัน = สุ่ม · egg ไม่เดิน · sad ไม่เดิน · หยุดเมื่อไม่มีคน 5 นาที · client interpolate ให้ลื่น · **facing** ตาม row Down/Left/Right/Up = 0/1/2/3 (ตารางเดียวกับ admin preview, [app #259](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/259)) | **นั่งบน object** — ต้องมี `pet_sittable` ใน Object Management ก่อน (คนละโมดูล · แผนอยู่ใน [progress รอบ 25](progress.md)) |
+| SC-PET-03 Interact | marker มือ (คลิกถึงจะขึ้น) · tooltip `Press [P] pet` ตอน hover ในระยะ 2 tiles · คีย์ลัด P · ลำดับ `+N XP` → ♥ · Happy animation 2.5 วิ · rate limit 3 วิ (429) · ครบโควตา = ยังเล่นได้แต่ไม่ได้ XP | **Feed** — card ตัดชื่อออกแล้ว เหลือ Stroke อย่างเดียว |
+| SC-PET-04 Egg → Baby | prompt คลิกไข่ → GIF → แสงวาบ → reveal → modal · เฉพาะคนที่ทำให้ XP เต็มเห็น animation คนอื่นได้ modal · GIF อ่านจาก API ไม่ hardcode · GIF 404 → ข้ามไป flash · Esc ข้ามไป modal · ไม่เด้งใส่คน away / ในห้องประชุม / ใน Bubble · **Share your friends** → picker DM/Group/Channel → `pet_card` message ([api #79](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/79) / [app #260](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/260)) · **achievement log** `tb_room_pet_achievement` first_hatch/fully_evolved ([api #77](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/77)) | **แสดง achievement** — card บอก "เก็บ logs ไว้ ยังไม่แสดง" จึงยังไม่มี endpoint/UI อ่าน |
+| SC-PET-05 Baby → Adult → Evolved | flow เดียวกับ 04 ทุกประการ · bar ไหลลงจาก 100% พร้อมตัวเลขนับ · demote (admin ขยับ threshold) = ไม่เล่น animation | เหมือน 04 |
+| SC-PET-06 Pet Status | panel เปิดจากคลิก pet · stage badge · mood · XP bar แบบ relative · Daily quest นับจริงจาก `GET …/status` · MAX XP variant | **Top 3 carers** — Figma แทนด้วย Daily quest (ยึด Figma) · ข้อมูลมีใน response แล้ว |
+| SC-PET-07 Notification | 3 ชนิด (`pet_growth` / `pet_milestone` / `pet_reminder`) · เคารพ setting `pet_activity` · milestone 50/75/90 ไม่ยิงซ้ำ · reminder 09:00 ICT วันละครั้ง — **ยิงจริงแล้ว 2026-09-05 09:00 (8 แถว, dedupe ผ่าน)** · card แปลภาษาฝั่ง client | **HUD banner 5 วิ** — Figma แทนด้วย modal เต็มจอ ซึ่งทุกคนได้อยู่แล้ว ทำทั้งคู่ = ประกาศซ้ำ |
+| SC-PET-08 Neglected | mood derive จาก `last_activity_at` (3 state) · sad = แสดง sheet `Sad` + หยุดเดิน + ไม่ react · XP ลด 50% ผ่าน mood multiplier · stroke 1 ครั้ง = กลับ Happy ทันที | — |
+
+### ต้องทำก่อนส่ง QA
+
+| # | สิ่งที่ต้องทำ | สถานะ |
+|---|---|---|
+| 1 | secret `NEXT_PUBLIC_ROOM_PET=true` บน dev | ✅ ตั้งแล้ว 2026-09-04 |
+| 2 | deploy zyra-api + zyra-ws (pet AI + notification) | ✅ ขึ้น dev แล้ว |
+| 3 | `Award()` ต้องมี caller ครบ 10 activity | ✅ เสร็จ ([api #75](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/75)/[#76](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/76)) |
+| 4 | เปิด activity ใน XP config | ✅ config **v12** (2026-09-05) — เปิด **5 ตัวที่ตรง Figma** (login / office 10min / meeting / first message / react) ปิดอีก 5 รวม `xp_play_with_pet` → ลูบไม่ได้ XP จนกว่าจะเปิดกลับ |
+| 5 | ตั้ง `xp_play_with_pet.times` = **5** (ตอนนี้ 1 แต่ SC-PET-03 เขียน 5) | ⬜ **ยังไม่ทำ** — เป็นค่านโยบาย รอ PM |
+| 6 | อัป GIF slot `Evolution` ของ pet type ที่จะเทส (baby/adult ต้องอัปเอง · egg มี prefill กลาง) | ⬜ **ยังไม่ทำ** — ไม่มีแล้ว flow จะข้าม GIF ไป flash เลย |
+
+### งานที่เหลือทั้งหมด เรียงตามความสำคัญ (อัปเดต 2026-09-05 รอบ 25)
+
+1. **เทส UI ในเบราว์เซอร์** — งานหลักที่เหลือ · ยังไม่เคยเปิด VO ดูของจริง (ติด login — ดู progress pin)
+2. **`pet_sittable`** บน object (คนละโมดูล · 4 repo) — แผน + คำถาม design 2 ข้ออยู่ใน [progress รอบ 25](progress.md)
+3. **แสดง achievement** — log มีแล้ว (migration 91) รอ design ว่าจะโชว์ที่ไหน
+4. **`xp_play_with_pet.times` = 5** และ **GIF slot Evolution** (ตาราง "ต้องทำก่อนส่ง QA" ข้อ 5–6) — รอ PM / content
+
+ปิดแล้วในรอบ 25: Share your friends · pet facing · achievement log · cron 09:00 (ยิงจริง) · `xp_office_10/30min` (live-test + แก้บั๊ก stale clock [api #78](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/78))
 
 ## Reference
 
