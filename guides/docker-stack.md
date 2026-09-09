@@ -1,9 +1,9 @@
 # Docker Stack — Dev & GCloud SFU Deploy
 
-**Dev default: Docker รันแค่ infra ที่รัน native ยาก (`sfu` + `redis`)** — app/api/ws รัน native เพื่อ hot-reload:
+**Dev default: Docker รัน Redis จาก root workspace** — app/api/ws รัน native เพื่อ hot-reload. (SFU local compose ยังไม่มีใน workspace นี้):
 
 ```bash
-docker compose up -d                 # sfu + redis เท่านั้น (default)
+docker compose up -d                 # redis ที่ localhost:6379
 cd zyra-api && go run .              # :3002 native (REDIS_URL ชี้ localhost:6379 แล้ว)
 cd zyra-ws  && go run main.go        # :3003 native (REDIS_URL ชี้ localhost:6379 แล้ว)
 cd zyra-app && npm run dev           # :3000 native
@@ -25,8 +25,7 @@ cd zyra-app && npm run dev           # :3000 native
 
 | Service | Host port | Compose profile |
 |---|---|---|
-| sfu | 7880 (HTTP/WS), 7881 (ICE-TCP), 7882/udp (media mux) | default |
-| redis | 6379 | default |
+| redis | 6379 | root `docker-compose.yaml` |
 | api | 3002 | `backend` |
 | ws | 3003 | `backend` |
 | notifications | — (internal: `http://notifications:3003`) | `backend` |

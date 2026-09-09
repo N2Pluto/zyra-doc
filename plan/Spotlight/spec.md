@@ -4,7 +4,7 @@
 > Parent Task: [[Feature] Spotlight — Virtual Office](https://app.clickup.com/t/36898257/86d46qtnj) (`86d46qtnj`) · tag `client` · status **in progress** · priority **high** · sprint points **6** · assignees `rif fullstack`, `P A` · creator Moss Pm
 > Subtask 14 ใบ: HP-01 และ EC-01 **closed** · อีก 12 ใบยังเปิด (`pending` 11, `open` 1) · HP-01~09 priority high · EP-01~02 และ EC-01~02 normal · EC-03 low
 >
-> **สถานะเอกสาร: ถอด parent และ description ของ subtask ครบทั้ง 14 ใบ ณ 2026-09-07 — ยังไม่ได้ review กับ PM**
+> **สถานะเอกสาร: ถอด parent และ description ของ subtask ครบทั้ง 14 ใบ ณ 2026-09-07 — ล่าสุดผู้ใช้ยืนยัน Start UX: เข้า Spotlight ยังไม่ broadcast; ต้องกดปุ่ม Play บน HUD ก่อน**
 > **ความพร้อม: ยังไม่ควรเริ่ม implement ตาม spec ใหม่นี้ทั้งก้อน** — Spotlight รุ่นปัจจุบันเป็น floor-wide audio broadcast และขัดกับ card หลายจุด ดู [§6](#6-ความต่างจากระบบปัจจุบัน-ตรวจโค้ด-2026-09-07) และ [§7](#7-เรื่องที่ต้องเคาะก่อน-implement)
 > **repo ที่คาดว่ากระทบ:** `zyra-app`, `zyra-ws`, `zyra-api` และอาจมี `zyra-notifications` หาก Notification Bell ต้อง durable/offline
 >
@@ -13,6 +13,12 @@
 ---
 
 ## 1. Overview (parent card)
+
+### Decision — 2026-09-08, Meeting-wide Join (user approved)
+
+สมาชิกคนใดใน Meeting กด Join Spotlight จะเป็นการยอมรับสำหรับ Meeting เดียวกันทั้งหมด สมาชิกยังอยู่ใน Meeting และคุยต่อได้ หน้าจอใช้ Spotlight ด้านบนและ meeting tiles/toolbar ด้านล่าง ตาม Figma node `5485:899345`; toast ขนาดกระชับอยู่มุมบนขวา
+
+Contract: client sends `ws:spotlight:meetingJoin` with `{room_id: string}`. Server requires current `MediaRoomID` to match, validates a published meeting zone, and requires an active Spotlight on caller's floor. Invalid requests use the existing error envelope. Any member may accept; no owner restriction. Server includes `accepted_meeting_ids: string[]` in existing floor `ws:spotlight:stateUpdate` messages (including reconnect snapshots). Clients apply acceptance only when their current meeting ID matches. Duplicate requests are idempotent. Acceptance lasts until the floor's final broadcaster stops/disconnects; it is ephemeral, with no DB migration. Missing field from older servers means an empty list. Meeting media is never left by accepting.
 
 Spotlight คือ Stage สำหรับการนำเสนอใน Virtual Office ผู้ดูแลวาง Spotlight marker ผ่าน Map Editor และสมาชิก Workspace เดินเข้า marker เพื่อเริ่ม Spotlight session
 
@@ -179,16 +185,16 @@ Card ยังไม่กำหนด FK target ของ Workspace, unique/ind
 
 #### Scenario Steps
 
-1. แสดง prompt ใกล้ avatar: `ยืนยันเพื่อขึ้น Stage`
-2. Activate แล้วแสดง `ขึ้น Stage ?` พร้อม `ขึ้น Stage`/`ยกเลิก`
-3. Confirm แล้ว Server สร้าง session
+1. เมื่อเดินเข้า Spotlight ให้แสดงปุ่ม Play ที่ด้านขวาของ HUD โดยยังไม่เริ่ม broadcast
+2. User กด Play เพื่อยืนยันเริ่ม broadcast
+3. หลังจากกดแล้ว Server สร้าง session
 4. Broadcast `⭐ [ชื่อ user] กำลัง Present บน Stage`
 5. Viewer ไป HP-03 หรือ HP-04 ตามสถานะ
 
 #### Acceptance Criteria / Rules
 
-- อีกส่วนของ card ใช้ `กด E เพื่อขึ้น Stage` ต้องเคาะ copy/input
-- เดินเข้าอย่างเดียวยังไม่สร้าง session; confirm ต้อง idempotent
+- ปุ่ม Play บน HUD เป็น Start action ที่ยืนยันล่าสุด; flow prompt ใกล้ avatar/ปุ่ม E จาก card เดิมตกไปสำหรับจุดนี้
+- เดินเข้าอย่างเดียวยังไม่สร้าง sessionและห้ามส่ง `ws:spotlight:start`; กด Play แล้ว start ต้อง idempotent
 - HUD แสดง `⭐ LIVE — [Stage name]`, viewer count, mic/camera/share/chat/leave
 - Avatar presenter มี glow ring; marker คนละจุด active พร้อมกันได้
 - Card ไม่บอกว่าคนเดียวขึ้นหลาย Stage หรือ marker เดียวรับหลายคนได้หรือไม่
@@ -390,7 +396,7 @@ Spotlight ปัจจุบันคือ “ประกาศเสียง
 | เรื่อง | ปัจจุบัน | ClickUp | Gap |
 |---|---|---|---|
 | Map | `tb_map_zone`, rectangle/tile | marker ใน `map.json` + radius | ต้องเลือก source of truth/migration |
-| Start | ยืน tile แล้ว unmute | prompt + confirm + session | flow/state machine ใหม่ |
+| Start | ยืน tile แล้ว unmute | เข้า tile → แสดง Play บน HUD → กดแล้วเริ่ม session | เปลี่ยนเป็น explicit-start gate |
 | Identity | `spotlight:<floorId>`, state floor+user | workspace+marker+session | contract ใหม่ |
 | Scope | floor-only | Workspace-wide | อาจต้องข้าม floor/map |
 | Media | audio-only; cameraถูก block | mic+camera+share | client/SFU งานใหญ่ |
