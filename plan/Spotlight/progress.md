@@ -5,6 +5,78 @@
 
 ---
 
+## 2026-09-09 · PiP เห็นจอที่แชร์ + ปุ่ม chat ในหัวการ์ด/mini window
+
+- **PiP ตอนแชร์จอมองไม่เห็น (แก้แล้ว):** รอบก่อนตั้งใจให้ mini window เป็น avatar-only (`sharing = !compact`) ซึ่งผิดความต้องการ — ถ้ามีคนแชร์อยู่ mini window จะแสดง **จอที่แชร์** แทน avatar (`MiniWindowScreen` ใหม่: `<video>` attach จาก `attachScreen`, `object-contain` บนพื้นดำเพื่อไม่ crop จอในการ์ด 340px, ป้ายชื่อพร้อมไอคอน Monitor มุมล่างซ้าย) และ hero ส่ง `screenSharers/screenEpoch/attachScreen/detachScreen` เข้า instance ของ mini window ด้วย (เดิมส่งแค่ instance ของ stage)
+- **ปุ่ม chat ตามดีไซน์ (ทำแล้ว):** เพิ่มปุ่ม chat ทั้งหัวการ์ด stage และ title bar ของ mini window ตามที่ดีไซน์วางไว้ (ลำดับ: PiP/expand → chat → stop listening → X)
+  - **ไม่ได้สร้าง chat ใหม่:** ตาม spec HP-08 ("Spotlight Chat รวมกับทุกคนใน Workspace") ปุ่มนี้เปิด **workspace chat เดิม** — เลือก conversation ที่ `is_default` จาก chat store แล้วเปิด `ChatSurface` แบบ `half` (reuse ทางเดียวกับที่ Bell เปิดห้องแชท)
+  - **เหตุผลที่กด chat แล้วย่อเป็น mini window:** panel แชทแบบ half ถูก dock ซ้ายที่ z-50 และ stage เต็มจอเป็น sibling ที่วาดทับ จึงเปิดพร้อมกันไม่ได้ — กด chat จาก stage เต็มจอจะย่อ broadcast ลง mini window (มุมขวาล่าง) ให้เห็นทั้งแชทและ broadcast พร้อมกัน
+- **verify ถึงไหน:** เพิ่ม/แก้ 2 Vitest cases (mini window เรียก `attachScreen` และยังเป็นการ์ด 340px ไม่ใช่ layout side-column; ปุ่ม chat ยิง callback ได้ทั้งจาก stage และ mini window); targeted Vitest 9 ไฟล์ 137 tests ผ่าน, `tsc --noEmit` ไม่มี error ใหม่, ESLint 0 error (เหลือ warning เดิมบน HEAD 1 ตัว), Prettier + `git diff --check` ผ่าน
+- **ยังไม่ได้ทำ:** Spotlight chat แบบ thread แยกของตัวเอง (spec HP-08 ระบุว่าใช้ Workspace Chat ร่วมกัน จึงถือว่าเข้าเกณฑ์แล้ว) และการวางแชทไว้ "ด้านขวา" ของ stage ตามข้อความใน spec §HP-03 (ของเรา dock ซ้ายตาม ChatSurface เดิม)
+
+---
+
+## 2026-09-09 · chip หัวการ์ดกดดูรายชื่อได้ + เก็บ eslint error ที่ตกค้าง
+
+- **chevron ใน chip ทำงานจริงแล้ว:** กด chip `Spotlight <n>` หรือ `Viewers <n>` แล้วเปิด dropdown รายชื่อ — reuse `ZoneParticipantsSubmenu` (panel `#242B32` 289px ของ meeting header) ไม่ได้สร้าง component ใหม่; chevron หมุน 180° ตอนเปิด, มี click-away layer แบบเดียวกับ submenu เดิม, เปิดได้ทีละอัน และแต่ละแถวมีปุ่มแชท 1:1 (ต่อกับ `handleOpenDm` เดิม)
+- **รายชื่อผู้ชมมาจากไหน:** เพิ่ม `participantIds()` ใน `SFUClient` (local + remote identities ของห้อง) แล้วเปลี่ยน `roomParticipantCount` → **`roomParticipantIds`** ทั้งใน `use-meeting-media.ts` และ `use-spotlight-broadcast.ts`; hero กรอง speaker ออกแล้ว resolve ชื่อ/รูปจาก `allWorkspaceMembers` (`display_name` → `character_name` → `someoneFallback`) เป็น `ZoneParticipant[]` ส่งเข้า stage — prop `viewerCount` เลยถูกแทนด้วย `viewers` (จำนวน = `viewers.length` แหล่งเดียว ไม่มี state ซ้อน)
+- **เก็บ eslint error ตกค้าง (จากรอบ confirm dialog):** เดิมใส่ `eslint-disable react-hooks/set-state-in-effect` ไว้ — รอบนี้แก้ที่ต้นเหตุ: ย้าย state `spotlightShareConfirm` ขึ้นไปอยู่กับ state ของการเข้า Spotlight tile แล้วยุบ reset เข้า effect "ออกจาก tile" ที่มีอยู่เดิม จึง **ลบทั้ง effect และ suppression ที่เพิ่มไว้ออก** (สุทธิ: effect น้อยลง 1 อัน, suppression น้อยลง 1 อัน)
+- **verify ถึงไหน:** ขยาย test ของหัวการ์ดให้ครอบ dropdown (กดแล้วเห็นรายชื่อ, เปิดอันหนึ่งปิดอีกอัน, ยังไม่กดต้องไม่มีรายชื่อโผล่); targeted Vitest 10 ไฟล์ 105 tests ผ่าน, `tsc --noEmit` ไม่มี error ใหม่, ESLint ของไฟล์ที่แก้ **0 error** (เหลือ warning เดิม 1 ตัวของ `handleSpotlightStopListening` ที่มีอยู่ก่อนแล้วบน HEAD — ไม่แตะเพราะไม่ใช่ของงานนี้), Prettier + `git diff --check` ผ่าน
+
+---
+
+## 2026-09-09 · PiP ของ Spotlight = mini window ลากได้ในหน้า (Figma 5493:904351 / 5491:904215)
+
+- **เปลี่ยนแนวทางจากรอบก่อน:** เดิม PiP ของ Spotlight เปิด **native Document PiP** (`useDocumentPip`) เพราะลากออกนอก browser ได้ แต่ดีไซน์ที่ผู้ใช้ส่ง (`5493:904351`) เป็น **การ์ดลอยในหน้า** วางบนแผนที่และลากไปวางที่ไหนก็ได้ จึงเปลี่ยนมาทำตามดีไซน์และถอด native PiP ของ Spotlight ออก (Outside display ยังใช้ native PiP ของตัวเองอยู่ เพราะจุดประสงค์ของอันนั้นคือให้เห็นตอนสลับแท็บ)
+- **สเปกที่ทำตาม (node `5491:904215`):** การ์ด `340×280`, `bg #1A1B1E`, `rounded-16`, `pb-8`, `gap-8`; title bar `bg #242B32` `p-8` มีชื่อ 14/18 medium + ไอคอน 16px สามอัน (full screen / chat / cancel) แบบไม่มีกรอบ; body `px-8` + surface `rgba(255,255,255,0.05)` `rounded-12` `p-4` avatar กลาง 35% ของความสูง + ป้ายชื่อเล็กมุมล่างซ้าย; ตำแหน่งเริ่มต้น `bottom-24 right-64`
+- **ลากได้:** drag ที่ title bar ด้วย pointer events + `setPointerCapture`, clamp ไม่ให้หลุดขอบ viewport (เหลือขอบ 8px) และปุ่มบน title bar `stopPropagation` จึงกดได้ไม่ลากการ์ดตาม
+- **โครงสร้างที่ปรับ:** `compact` ของ `VOSpotlightStage` เดิมเป็น "การ์ดเล็กในกรอบ stage เดิม" → เปลี่ยนเป็น return `VOSpotlightMiniWindow` ตรง ๆ และล้างเงื่อนไข `compact`/`inPipWindow` ออกจาก markup ของ stage เต็มจอ (prop `inPipWindow` ถูกลบ); avatar ใช้กฎ 35% ของความสูงเหมือนกันทุกขนาดตาม design
+- **พฤติกรรมที่ผูกกัน:** กด PiP → ซ่อน stage เต็มจอ เหลือ mini window (เสียงยังทำงาน), กด full screen บน mini window → กลับเป็น stage เต็มจอ, กด X → ซ่อน broadcast รอบนี้เหมือนเดิม; และตอน mini window แสดงอยู่ Meeting panel กลับไปเป็นแถบ compact ปกติด้านบน (ไม่ใช่ companion layout) ตรงตามที่ดีไซน์วาดไว้
+- **verify ถึงไหน:** แทน test เดิมของ `inPipWindow` ด้วย case ใหม่ (การ์ด 340×280, ไม่มี viewer counts, title bar เป็น drag handle `cursor-grab`, ปุ่ม expand/close ยิง callback ถูกตัว); targeted Vitest 8 ไฟล์ 93 tests ผ่าน, `tsc --noEmit` ไม่มี error ใหม่, ESLint ของไฟล์ที่แก้ผ่าน (เหลือ warning เดิมของ `handleSpotlightStopListening` ที่มีอยู่ก่อนแล้วบน HEAD), Prettier + `git diff --check` ผ่าน
+- **หมายเหตุ trade-off:** mini window แบบในหน้าไม่แสดงเมื่อสลับไปแท็บ/แอปอื่น (ต่างจาก native PiP เดิม) — ถ้าต้องการทั้งสองแบบ ต้องเคาะว่าจะให้ปุ่มไหนทำอะไร; ปุ่มกลางของ title bar ในดีไซน์คือ **chat** แต่ของเรายังเป็น Stop listening เพราะ Spotlight chat ยังไม่ได้ทำ (ค้างเรื่องเดียวกับหัวการ์ด stage)
+
+---
+
+## 2026-09-09 · หัวการ์ด Spotlight: จำนวนคนไลฟ์ + จำนวนผู้ชม (Figma DisplayHead 5469:894550)
+
+- **ทำอะไร:** หัวการ์ดเดิมมี chip เดียว (นับ speaker) เปลี่ยนเป็นสองชุดตาม design: `Spotlight <n>` │ `Viewers <n>` โดย chip ใช้สเปกของ design (`bg rgba(255,255,255,0.05)`, `border rgba(255,255,255,0.2)`, `h-24`, `p-4`, `rounded-6`, icon 16, ตัวเลข 14/18) และเส้นคั่นแนวตั้ง 16px `white/20`; แยกเป็น `StageCountChip` ใน `vo-spotlight-stage.tsx` — คนไลฟ์นับจาก speaker set (floor เดียวไลฟ์พร้อมกันได้หลายคน) ส่วนผู้ชมมาจาก prop ใหม่ `viewerCount`
+- **ที่มาของจำนวนผู้ชม (ของจริง ไม่ใช่ค่าปลอม):** เดิมรอบก่อนถอด viewer count ออกเพราะไม่มีแหล่งข้อมูล — รอบนี้ใช้ LiveKit เป็นแหล่ง: ทุกคนที่ต่ออยู่ในห้อง `spotlight:<floorId>` ที่ไม่ใช่ speaker = ผู้ชม
+  - เพิ่ม `roomParticipantCount` ใน `use-meeting-media.ts` (sync จาก `sfu.state.participantCount` ตอน connect + event `participantJoined/Left`, reset เป็น 0 ตอน teardown) → ใช้ฝั่ง presenter เพราะ session ของเขาคือห้อง broadcast เอง
+  - เพิ่ม `roomParticipantCount` แบบเดียวกันใน `use-spotlight-broadcast.ts` (listener session) → ใช้ฝั่งคนดู/companion
+  - hero คำนวณ `max(0, roomParticipantCount - speakers.length)` ทั้งสองเส้นทาง (ผู้ชมนับตัวเองด้วย ซึ่งถูกต้องตามความหมาย "คนที่กำลังดู")
+- **ยังไม่ทำ (ไม่ได้สั่ง):** chip ใน design มีลูกศร chevron ซึ่งสื่อว่ากดเพื่อดูรายชื่อคนไลฟ์/คนดู — ยังไม่ทำ dropdown เพราะเป็น flow ใหม่ (จะได้ chevron ที่กดไม่ได้) รอเคาะ; ส่วน §7 ข้อ 13 (นับ pending/hidden/PiP/muted/reconnect อย่างไร) ถือว่าใช้เกณฑ์ "ต่ออยู่ในห้อง broadcast" ไปก่อน
+- **verify ถึงไหน:** เพิ่ม 2 Vitest cases (แสดงทั้งสองจำนวน / ยังไม่มีคนดูต้องขึ้น 0 ไม่ใช่ช่องว่าง) และแก้ assertion เดิมที่เคยยืนยันว่าไม่มีคำ `Viewers` ในหัวการ์ด; targeted Vitest 9 ไฟล์ 92 tests ผ่าน, `tsc --noEmit` ไม่มี error ใหม่, ESLint/Prettier/`git diff --check` ผ่าน
+
+---
+
+## 2026-09-09 · Confirm ก่อนขึ้น Stage ตอนกำลังแชร์จอ (EC-01) + toast ตาม Figma
+
+- **ทำอะไร:**
+  - `vo-spotlight-share-confirm-modal.tsx` ใหม่: กด Play บน Spotlight tile ขณะที่ตัวเองมี screen share อยู่ → ถามก่อน ตาม EC-01 ข้อ 1-2 (`ยกเลิก` / `ขึ้น Stage และปิด Share`) กด confirm แล้วปิด share ของตัวเองทันที (EC-01 ข้อ 3) แล้วจึงเริ่ม countdown 5 วิเหมือนปกติ; เดินออกจาก tile หรือถูก block ด้วยสถานะ = ยกเลิกคำถามไปด้วย
+  - `hero-virtual-office.tsx`: แยก `beginSpotlightCountdown` ออกจาก `handleSpotlightStart` (ตัวหลังเป็นด่านถาม) และย้าย 2 handler ไปไว้หลัง `meetingAudio` เพราะต้องอ่าน `screenOn`
+  - Toast ตาม design: ดึง node `5495:911326` มาแล้วพบว่าเป็น toast ของโปรเจกต์อยู่แล้ว (bg `#1A1B1E`, radius 16, p-16, icon box 40px, title bold 14/18, body 14/18, X 16) → ใช้ `zyraToast.warningWithTitle` ทั้งสองกรณี: **title `Screen sharing stopped`** + body ตาม design `Your screen share ended when you joined Spotlight.` สำหรับคนที่ขึ้น Stage เอง และ body ที่ชัดกว่าสำหรับคนที่ถูก Spotlight ของคนอื่นปิด (`shareStoppedBySpotlight`)
+- **สิ่งที่พบใน Figma (สำคัญ):** section HP-06 (`5495:907584`) **ไม่มี confirm dialog** ในดีไซน์เลย — ดีไซน์ใช้แค่ toast; confirm มาจาก spec EC-01 (ClickUp) ที่ผู้ใช้สั่งให้ทำเพิ่ม จึงทำตาม shell ของ confirm dialog ที่โปรเจกต์มีอยู่ (`PZUnclaimModal`, Figma 2615:103366) — ถ้าภายหลังมี node ของ dialog นี้ให้เปลี่ยนตามได้
+- **จุดที่ยังไม่ตรง design 100%:** สี icon ของ toast — design ใช้ Yellow/500 `#ECC819` บน `rgba(255,212,0,0.1)` ส่วน variant `warning` ของ `lib/toast.tsx` เป็นส้ม `#F6913A` บน `rgba(246,145,58,0.2)`; ไม่เพิ่ม variant ใหม่เพราะเป็น primitive ที่ทุกหน้าใช้ร่วมกัน — รอผู้ใช้/ดีไซน์เคาะว่าจะเพิ่มสีเหลืองเป็น variant ของ design system หรือคงส้ม
+- **verify ถึงไหน:** เพิ่ม `__tests__/vo-spotlight-share-confirm.test.tsx` (5 cases: copy ครบ, cancel/confirm/X แยกกันชัด, key ครบทั้ง en/th, และ pin คำในดีไซน์ของ toast); targeted Vitest 10 ไฟล์ 137 tests ผ่าน, `tsc --noEmit` ไม่มี error ใหม่, ESLint/Prettier ผ่าน, `git diff --check` ผ่าน
+- **เหลือ:** ยังไม่ได้ live-test (ต้องมี share อยู่จริงแล้วเดินขึ้น Spotlight tile — ในสถาปัตยกรรมปัจจุบันการเดินออกจาก Meeting zone จะสลับ media room และหยุด share ให้ก่อนอยู่แล้ว ดังนั้น dialog จะเจอในกรณีที่ยังอยู่ในห้อง/ยังแชร์อยู่ตอนกด Play เท่านั้น)
+
+---
+
+## 2026-09-09 · Spotlight share screen (presenter + viewer + companion) + precedence เหนือ meeting share
+
+- **ทำไมเดิมแชร์ไม่ได้:** ไม่ใช่บั๊ก — ฟีเจอร์ยังไม่มี. ฝั่ง publish ผ่านอยู่แล้ว (`roomId` ตอนอยู่ Spotlight = `spotlight:<floorId>` และ `ws:room:enter` ตั้ง `MediaRoomID` ให้ ทำให้ `handleShareStart` ผ่านเพราะ `spotlight:*` ไม่ใช่ zone จึง fail open) แต่ (1) `vo-spotlight-stage.tsx` ไม่มีพื้นที่แสดงจอเลย และ (2) listener session ของคนดูต่อเฉพาะ mic/กล้อง ไม่มี `attachScreen` ทั้งคนดูก็ไม่ได้อยู่ใน media room จึงไม่ได้รับ `ws:share:started`
+- **Decision ใหม่ (ผู้ใช้เคาะ 2026-09-09, spec §7 ข้อ 10):** Spotlight share **หยุด screen share ของทุก meeting ทั้งเวิร์กสเปซ** (ตาม HP-06 ตรงตัว)
+- **ทำอะไร:**
+  - `zyra-ws` `screenshare.go`: `handleShareStart` ที่ room เป็น `spotlight:*` เรียก `stopMeetingSharesForSpotlight` ใหม่ → force-stop presenter ของทุก room อื่นในเวิร์กสเปซ (ข้าม room ที่เป็น `spotlight:*` ด้วยกัน) พร้อม reason `spotlight_started`; เก็บรายชื่อเหยื่อใต้ lock แล้วค่อยเรียก `stopShare` (มัน lock เอง)
+  - `zyra-app` `use-meeting-media.ts`: handler `ws:share:stopped` ถ้าเป็นตัวเราเองและ reason = `spotlight_started` → unpublish track ของตัวเอง + toast `shareStoppedBySpotlight` (en/th)
+  - `zyra-app` `use-spotlight-broadcast.ts`: expose `screenSharerIds` / `screenEpoch` / `attachScreen` / `detachScreen` จาก listener SFU (event `screenTracksChanged`) — คนดูจึงเห็นจอได้โดย **ไม่ต้องแก้ contract ของ zyra-ws เลย**
+  - `zyra-app` `vo-spotlight-stage.tsx`: ตาม Figma node `5495:912468` → `get_metadata`/`get_design_context` ได้ layout ตอนแชร์: `Share screen` frame 1320×624 = **Side display 250×576** + gap **8px** + **Share display 1062×624**; แยก presenter surface ออกเป็น component `SpotlightPresenterSurface` (ถือ attach/detach กล้องของตัวเอง) เพื่อ render ได้ทั้งเต็มจอ/คอลัมน์ข้าง/PiP; ตัวเล่นจอ reuse `ScreenShareView variant="expanded"` ที่มีกรอบ `#1A1B1E` + border white/20 + ป้ายชื่อ + ปุ่มซูม `100% − ⎯ +` ตรงตาม design node `I5499:915624;85:28008` อยู่แล้ว; PiP (compact) ตั้งใจไม่สลับไป layout แชร์
+  - `hero-virtual-office.tsx`: ส่ง screen props — presenter ใช้จาก `meetingAudio` (session ของตัวเองคือ room spotlight), viewer/companion ใช้จาก `spotlight.*` พร้อม resolve ชื่อจาก roster
+- **verify ถึงไหน:** `zyra-ws` เพิ่ม 2 Go tests (`TestSpotlightShareStopsMeetingShares` ครอบ 2 meeting ต่าง floor + ยืนยันว่า Spotlight ของ floor อื่นไม่ถูกแตะ, `TestMeetingShareDoesNotStopOtherShares` เป็น inverse guard) — `go build/vet/test ./...` ผ่าน; `zyra-app` เพิ่ม 3 Vitest cases ของ share layout (side column + attachScreen ถูกเรียก, ไม่มีคนแชร์ = layout เดิม, PiP ไม่ takeover) — targeted 8 ไฟล์ 80 tests ผ่าน, `tsc --noEmit` ไม่มี error ใหม่, ESLint/Prettier/i18n parity ผ่าน, `git diff --check` ผ่านทั้งสอง repo
+- **ข้อจำกัด/ยังไม่ทำ:** precedence ทำงานภายใน Room ของ zyra-ws instance เดียว (ถ้า scale หลาย instance ต้อง relay ผ่าน Redis เพิ่ม); ยังไม่มีปุ่ม/ป้ายเตือนก่อนขึ้น Stage ว่า meeting share จะถูกปิด (HP-06 ข้อ 1-2 confirm dialog) และยังไม่ได้ทำ Spotlight chat ที่ design มีปุ่มไว้; ยังไม่ได้ live-test สอง browser
+
+---
+
 ## 2026-09-09 · แก้ companion layout (Spotlight + Meeting) ให้ตรง Figma 5495:910662
 
 - **ทำอะไร:** ดึง spec จาก Figma MCP (node `5495:910662` — Spotlight display พร้อม Meeting panel) แล้วแก้ค่าที่เพี้ยนจาก design
