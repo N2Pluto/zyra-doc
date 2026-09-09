@@ -7,6 +7,35 @@
 
 ---
 
+## 2026-09-09 — แท็บ Workspace (Workspace lists) ใน User management
+
+> ⚠️ **ID ชนกัน:** Figma frame ใหม่ (`node-id=5388-539697`) ถูกตั้งชื่อว่า **SC-UM-11 : Workspace lists**
+> แต่ `spec.md` เดิม SC-UM-11 = "เพิ่ม Admin User ใหม่" (ทำเสร็จตั้งแต่ 2026-07-15) — คนละงานกัน
+> ฝาก PM เคาะว่าจะ renumber อันไหน ก่อนอัปเดต `spec.md` / ClickUp
+
+- **ทำอะไร:** เพิ่มแท็บที่ 3 "Workspace" ในหน้า User management ฝั่ง admin (`/admin/customers/workspaces`) — ตารางรายการ workspace ของลูกค้าทั้งหมด: Workspace Name · Map type (tag สี) · Map template · Owner · Plan · Member (`used/capacity`) · Online · Date created + ค้นหา + filter Map type + sort Member/Online + pagination
+- **ถึงไหน:** implement ครบตาม Figma แล้ว ทั้ง backend + frontend
+  - `zyra-api`: migration `98_workspace_plan.sql` (+`.down.sql`) เพิ่ม `tb_workspace.plan TEXT NOT NULL DEFAULT 'Free'` · `GET /api/admin/customer-workspaces` (guard `admin.customer.read`) — `WorkspaceService.ListCustomerWorkspaces` · online count join มาจาก presence hub ผ่าน `unnest($3::text[], $4::int[])` เพื่อให้ sort/paginate คอลัมน์ Online ถูกทั้งชุด ไม่ใช่แค่ในหน้าเดียว
+  - `zyra-app`: `lib/api/admin-customer-workspaces.ts` · `views/admin/user-management/workspace/{hero-workspace-list,workspace-list-table}.tsx` · `components/map-type-tag.tsx` · `app/admin/customers/workspaces/page.tsx` · แยก tab bar ที่เคยก๊อปอยู่ 2 ที่ออกมาเป็น `components/user-management-tabs.tsx` (customer = 3 แท็บ, admin = 2 แท็บเท่าเดิม) · i18n en/th
+- **ปรับเพิ่มหลังรีวิวกับ user (รอบเดียวกัน):**
+  - ความกว้างคอลัมน์ไม่ตรง Figma แล้ว 2 ช่อง: Plan 167 → **90px** (ค่าคือ "Free" สั้น) · Date created 146 → **170px** + `whitespace-nowrap` เพื่อให้ `13/11/2026 (11:00)` อยู่บรรทัดเดียว (146 ตามดีไซน์แคบเกินจนตกบรรทัด) · ตารางรวม 1101 → **1048px**
+  - Date created sort ได้แล้ว (`created_at` มีใน whitelist ของ backend อยู่แล้ว ไม่ต้องแก้ API)
+  - ทุกช่องในตาราง hover แล้วขึ้น tooltip ข้อความเต็ม · คลิก 1 ครั้ง = copy → `components/copyable-cell.tsx` (Tailwind ล้วนตามกฎ 08 ไม่ใช้ shadcn tooltip ที่ `components/tooltip.tsx` ใช้อยู่) · tooltip เป็น `position: fixed` เพราะตารางมี `overflow-hidden` (มุมโค้ง) ซ้อนใน `overflow-x-auto` ถ้า absolute จะโดน clip · ช่องที่เป็น "—" ไม่ทำอะไร (ไม่มีอะไรให้ copy) · clipboard reject → tooltip คงข้อความเดิม ไม่หลอกว่า copy สำเร็จ · Member/Date created copy เป็นข้อความประกอบ (`100/100`, `13/11/2026 (11:00)`) ผ่าน `formatDateTimeLabel` ที่ export เพิ่มใน `user-table-cells.tsx`
+- **ตัดสินใจกับ user 2 ข้อ:**
+  1. ปุ่มเขียว "+ Create role" มุมขวาบนในดีไซน์เป็นของค้างจากหน้า Role & Permission → **ตัดออก** (กฎ no-dead-buttons) เหลือแค่ช่อง Search
+  2. คอลัมน์ Plan โชว์ "Free" ทุกแถวในดีไซน์ แต่ DB ไม่มี field → **เพิ่มคอลัมน์ `plan` จริงใน `tb_workspace`** (default `'Free'`) แล้วอ่านจาก DB ไม่ hardcode ที่ UI
+  3. ตัวที่ดีไซน์ซ่อนไว้ (`opacity-0`) ไม่ได้ทำตาม: filter "Role type" / "Package" และปุ่ม Export CSV ท้ายตาราง
+- **PR:** เปิดเข้า `develop` แล้วทั้งคู่ (2026-09-09) — zyra-api [#107](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/107) · zyra-app [#334](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/334) · branch `feat/sc-um-11-workspace-lists` ทั้งสอง repo (แตกจาก develop ล่าสุด: api `4233fbd`, app `ce1aa1d`)
+- **verify ถึงไหน:**
+  - backend: `go build ./...` · `go vet` · `go test ./internal/service ./internal/handler` เขียว · **ยิง endpoint จริงกับ local api ที่ต่อ dev DB** — 27 customer workspaces, `category=Nature` → 13 แถวเป็น Nature ล้วน, `search=zyra` → 3, sort `member` desc `[23,10,6,4,3]` / asc `[1,1,1,1,1]`, sort `name` asc เรียงถูก, sort key มั่ว → fallback `created_at` (200 ไม่ 500), ไม่มี token → 401
+  - frontend: `tsc --noEmit` (เหลือแต่ error เดิม 3 ตัวใน `__tests__` ที่ไม่เกี่ยวกับงานนี้) · `eslint .` เขียว · prettier ผ่าน · vitest ใหม่ `__tests__/customer-workspace-list.test.tsx` 21/21 ผ่าน (รวมเคส tooltip/copy)
+  - **ยังไม่ได้ live-test บนเบราว์เซอร์** — ต้อง login เป็น admin ก่อน แต่ไม่มี credential ของ dev (ปัญหาเดียวกับ Roompet รอบ 33)
+- **migration ที่รันบน dev DB แล้ว:** 98 (`tb_workspace.plan`) — **ยังไม่รันบน uat/prod**
+- **ต่อจากนี้:** login เป็น admin บน `localhost:3100` แล้วดูหน้าจริง → เปิด PR เข้า develop → รัน migration 98 บน uat/prod ก่อน deploy
+- **ติดอะไร:** (1) credential admin สำหรับ live-test · (2) รอ PM เคาะเรื่อง ID ชนกันด้านบน · (3) `online_count` มาจาก presence hub ที่อยู่ใน memory ของ pod เดียว — ถ้า scale api เกิน 1 replica ตัวเลข Online จะเห็นแค่ของ pod ที่รับ request (ข้อจำกัดเดิมของ `/api/user/workspaces` ไม่ได้เกิดใหม่จากงานนี้)
+
+---
+
 ## สถานะรายฟีเจอร์
 
 | Scenario | สถานะ | หมายเหตุ |
