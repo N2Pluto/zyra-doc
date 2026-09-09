@@ -7,6 +7,8 @@
 
 ## 2026-09-09 · Fix Join action using the live Office WebSocket
 
+- Resolved the `zyra-api` merge artifact in `internal/handler/media_handler.go`: retained the 3-argument `NewMediaHandler` constructor used by `main.go`, retained the Spotlight room helper required by its handler tests, and removed the duplicate prefix/legacy constructor that prevented the package from compiling.
+
 - Adjusted the accepted-meeting companion layout against Figma node `5485:899345`: a non-interactive `#242B32` backdrop now covers the content area so the map cannot show through, while the Spotlight card and Meeting card remain separate, visibly bounded panels.
 - Removed the idle tile outline at UI review; the companion card surface, spacing, and rounded corners provide the participant separation instead.
 - Fixed the companion Meeting panel to always use the compact tile strip. A prior controlled expanded-state could render the full-screen grid, causing two participants to stretch into oversized cards instead of the fixed Figma tiles.
