@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-09-09 · Resolve Spotlight PR review findings
+
+- Unified frontend Spotlight Meeting behavior around physical Meeting-zone context and server-confirmed room acceptance, including the solo-occupant prompt path, pending/retry handling, translated rejection feedback, status blocking, PiP companion behavior, and a distinct Stop listening action.
+- Added `ws:spotlight:meetingLeave {room_id}`. Acceptance remains room-level, is explicitly revocable, clears when the final media-room member leaves, stays floor-scoped, and still clears when the final Spotlight speaker stops.
+- Spotlight broadcaster state now follows the WebSocket speaker snapshot. Listener mic/camera/video attachment now follows the subscribe-only Spotlight SFU rather than Meeting media state.
+- Removed dead stage controls and fabricated viewer count, restored non-Spotlight compact-tile styling, stabilized presenter video attachment, and changed countdown to a stable deadline.
+- Confirmed `zyra-api` PR #104's behavior is already on `develop` via the existing room classifier, `MapInWorkspace`, UUID guards, and media-room tests; removed only the branch's dead helper/redundant helper-only test and cleaned duplicate comments.
+- Verification so far: targeted frontend ESLint and Spotlight Vitest suites pass; `zyra-ws` and `zyra-api` build/vet/full tests pass. Full frontend lint/test validation and final diff review remain before handoff.
+
 ## 2026-09-09 · Fix Join action using the live Office WebSocket
 
 - Resolved the `zyra-api` merge artifact in `internal/handler/media_handler.go`: retained the 3-argument `NewMediaHandler` constructor used by `main.go`, retained the Spotlight room helper required by its handler tests, and removed the duplicate prefix/legacy constructor that prevented the package from compiling.
