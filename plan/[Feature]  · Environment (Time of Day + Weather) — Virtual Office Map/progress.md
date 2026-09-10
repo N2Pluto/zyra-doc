@@ -21,8 +21,11 @@
 
 **credential (2026-09-10):**
 - ✅ **Google** — เปิด 3 API (`weather` / `timezone-backend` / `geocoding-backend`) บน project `gather-dev-458614` แล้ว · สร้าง key **"zyra-api SC-ENV-01 (dev)"** จำกัดเฉพาะ 3 API นั้น · ใส่ `GOOGLE_MAPS_API_KEY` + `ENVIRONMENT_ENABLED=true` ลง secret `zyra-api-dev-env-json` **version 5** และ ESO sync เข้า k8s secret `dev/zyra-api-secrets` แล้ว
-- ❌ **ยังไม่มีผลจริงบน dev** — restart pod ไม่ขึ้น ติดบักคนละเรื่อง ดู [ops/dev-api-unrestartable-notification-constraint-2026-09-10.md](../../ops/dev-api-unrestartable-notification-constraint-2026-09-10.md)
-- ❌ **ยังไม่ได้ตั้ง `NEXT_PUBLIC_ENVIRONMENT=true`** ใน GitHub Environment `dev` ของ `zyra-app` — เป็น build-time ต้องมีทั้งคู่ ไม่งั้น build ขึ้นไปมืด (ดู [[uat-room-pet-release-2026-09-08]])
+- ✅ **key ใช้ได้จริง ยิงครบทั้ง 3 API แล้ว** (2026-09-10) — Weather คืน `CLOUDY / 29.7°C / humidity 73 / precip 21% / wind 10 kph` · Time Zone คืน `Asia/Bangkok` offset `25200` · Geocoding reverse คืนถึงระดับ **แขวง/เขต** ("แขวงห้วยขวาง เขตห้วยขวาง") ⇒ **ปิดข้อ 44** ที่ค้างว่า provider จะให้ความละเอียดระดับเขตได้ไหม
+- ✅ **`precip_pct` เห็นค่าจริงจาก Google แล้ว** (`precipitation.probability.percent = 21`) — เดิมมีแต่ mock ตาม doc
+- ✅ **`ENVIRONMENT_ENABLED=true` + `GOOGLE_MAPS_API_KEY` เข้าถึง process บน dev แล้ว** (ยืนยันด้วย `kubectl exec ... env`) หลังแก้บักที่ทำให้ pod บูตไม่ขึ้น (ดูข้างล่าง)
+- ✅ **ตั้ง `NEXT_PUBLIC_ENVIRONMENT=true`** เป็น Environment secret ของ `dev` แล้ว · ยืนยันว่า **uat / production ไม่มี** (ยังมืดตามเดิม) · `ARG`/`ENV` ใน Dockerfile + `--build-arg` ใน workflow มีอยู่บน branch แล้วตั้งแต่ C1
+- ⛔ **แต่ยังทดสอบ environment บน dev ไม่ได้** — `develop` **ยังไม่มีโค้ด SC-ENV-01 เลย** (`grep ENVIRONMENT_ENABLED` ใน config บน develop = 0 · route `environment` ตอน boot = 0) ⇒ env พร้อมแล้วแต่ไม่มีใครอ่าน · **ต้อง merge api#108 + ws#64 + app#336 เข้า develop ก่อนถึงจะเห็นของจริง**
 - ⏳ **TMD** — ต้องลงทะเบียนที่ `https://data.tmd.go.th` ในนามบริษัทเพื่อขอ `uid`/`ukey` (ข้อ 3 ในตารางท้าย spec) · ตอนนี้ทดสอบด้วย demo `uid=api&ukey=api12345` ซึ่ง **ห้ามใช้ prod**
 
 **เริ่มทำต่อที่:** C3 (weather effects บน Pixi) ที่ยังติด asset 1× ของ 3 ไฟล์ (ข้อ 48) + เกณฑ์ลมแรง (ข้อ 11) · หรือ C5 (alert banner) ที่ยังติดมติ severity + ข้อ 40
@@ -67,9 +70,9 @@ git worktree add /path/ใหม่ feat/sc-env-01-api-settings
 - สูตรดวงอาทิตย์ **pin กับค่าจริงของ provider** 4 เมือง (Bangkok/London/Sydney/Svalbard) + polar 2 ฤดู
 
 **ยังไม่ผ่าน / ยังไม่เคยทำ**
-- ❌ **ยังไม่เคยยิง Google หรือ TMD ด้วย credential จริง** — ทุกอย่างเป็น httptest mock ตาม schema ที่ดึงจาก reference ของ provider
+- ❌ **ยังไม่เคยยิง TMD ด้วย credential จริง** — เป็น httptest mock ทั้งหมด · **Google ยิงจริงแล้ว 2026-09-10** ครบ 3 API (ดูหัวเอกสาร) แต่เป็นการยิงตรงด้วย `curl` **ไม่ใช่ผ่านโค้ดของเรา** เพราะโค้ดยังไม่ได้ deploy
 - ❌ **ยังไม่เคยเห็นแสงหรือ widget จริงบนจอด้วยตา** — ต่อเข้า `hero-virtual-office.tsx` แล้วและ build เขียว แต่ยังไม่มี live run (ต้องมี key + `ENVIRONMENT_ENABLED=true`) · ยังไม่ได้วัด FPS ก่อน/หลังตาม DoD ของ C2
-- ❌ **ยังไม่เคยเห็นค่า `precip_pct` จาก Google จริง** — mapping มาจากเอกสาร `currentConditions` + test ที่ mock ทั้งกรณีมีและไม่มีฟิลด์
+- ✅ **เห็นค่า `precip_pct` จาก Google จริงแล้ว** — `precipitation.probability.percent = 21` ตรงกับที่ mapping ไว้
 - ❌ dedup กับ DB จริง (`xmax = 0`), poller lock กับ Redis จริง, insert notification จริง — ยังไม่ทดสอบ
 - ❌ ยังไม่มี e2e ตั้งแต่ poller → ws → client
 
@@ -100,7 +103,7 @@ git worktree add /path/ใหม่ feat/sc-env-01-api-settings
 - สร้าง API key **"zyra-api SC-ENV-01 (dev)"** (uid `56ab900d-b2ea-4441-9421-582631d2b9e0`) **จำกัดเฉพาะ 3 API นั้น** — ยังไม่ได้จำกัด IP เพราะ egress ของ k3s ยังไม่ได้ยืนยัน
 - `zyra-api-dev-env-json` **version 5** = ของเดิม 39 key + `ENVIRONMENT_ENABLED=true` + `GOOGLE_MAPS_API_KEY` · force-sync ESO แล้ว ยืนยันว่า 2 key เข้า `dev/zyra-api-secrets` จริง
 
-**ติดอะไร — ใหม่และสำคัญ:** **dev zyra-api รีสตาร์ทไม่ขึ้นมาตั้งแต่ 2026-09-09 ~10:10 UTC** เพราะ migration ตอนบูต DROP-แล้ว-ADD `tb_notification_type_check` แล้วมีแถว `type='spotlight_live'` 25 แถว (จาก `zyra-app` branch `feat/spotlight`) ที่ไม่อยู่ในลิสต์ ⇒ env ใหม่เข้า secret แล้วแต่ยังไม่ถึง process · rollout undo กลับแล้ว dev ไม่ล่ม · **constraint ตอนนี้หายไปจาก dev DB** จนกว่าจะมี pod บูตผ่าน — รายละเอียด + ทางแก้: [ops/dev-api-unrestartable-notification-constraint-2026-09-10.md](../../ops/dev-api-unrestartable-notification-constraint-2026-09-10.md)
+**บักที่เจอระหว่างทางและแก้แล้ว:** **dev zyra-api รีสตาร์ทไม่ขึ้นมาตั้งแต่ 2026-09-09 ~10:10 UTC** เพราะ migration ตอนบูต DROP-แล้ว-ADD `tb_notification_type_check` แล้วมีแถว `type='spotlight_live'` 25 แถว (จาก `zyra-app` branch `feat/spotlight`) ที่ไม่อยู่ในลิสต์ — ไม่เกี่ยวกับ SC-ENV-01 เจอเพราะ restart เพื่อฟีเจอร์นี้ · แก้ด้วย [api#110](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/110) merge เข้า `develop` แล้ว **ยืนยันบน dev แล้วว่า pod บูตผ่านและ constraint กลับมา** — ตาราง before/after: [ops/dev-api-unrestartable-notification-constraint-2026-09-10.md](../../ops/dev-api-unrestartable-notification-constraint-2026-09-10.md)
 
 **ติดอะไร (เดิม)** — TMD credential · มติ severity 2 ข้อ + ข้อ 40 · asset 1× 3 ไฟล์สำหรับ C3 · ไฟล์ดวงจันทร์อีก 3 phase (ข้อ 58) + มติซีกโลกใต้ (ข้อ 59) · `NEXT_PUBLIC_ENVIRONMENT` ฝั่ง GitHub Environment
 

@@ -1,6 +1,6 @@
 # dev zyra-api รีสตาร์ทไม่ขึ้น — CHECK constraint ของ tb_notification
 
-> **สถานะ:** ⚠️ **ยังไม่แก้ · dev ยังใช้งานได้อยู่** (pod เก่ายังรัน) แต่ pod ใหม่บูตไม่ผ่าน
+> **สถานะ:** ✅ **แก้แล้ว · ยืนยันบน dev แล้ว** (PR #110 → `develop` → Argo sync 2026-09-10 08:41 UTC)
 > **วันที่พบ:** 2026-09-10 · **repo ที่กระทบ:** `zyra-api` (โค้ด) · `zyra-app` branch `feat/spotlight` (ต้นเหตุของข้อมูล)
 > **เจอตอน:** restart dev zyra-api เพื่อให้รับ `ENVIRONMENT_ENABLED` + `GOOGLE_MAPS_API_KEY` ใหม่ (SC-ENV-01)
 
@@ -47,9 +47,9 @@ statement แต่ละอันคอมมิตแยกกัน ⇒ **DRO
 
 rollout ถูก `rollout undo` กลับไปแล้ว — RS เก่า (`zyra-api-75df6c5f79`) กลับมา 1/1 · RS ที่ crash (`zyra-api-7fb54f4874`) scale เหลือ 0 · dev กลับมาสถานะเดิมก่อน restart
 
-## วิธีแก้ (ยังไม่ได้ทำ — ต้องขออนุมัติ เพราะแตะ `develop`)
+## วิธีแก้ — ทำแล้ว ([zyra-api#110](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/110), squash-merge เข้า `develop` 2026-09-10)
 
-**ทางที่ถูก:** เพิ่ม `'spotlight_live'` เข้าลิสต์ใน `internal/database/postgres.go` แล้ว merge เข้า `develop` (auto-deploy dev) — pod ใหม่จะบูตผ่านและสร้าง constraint กลับมาเอง
+เพิ่ม `'spotlight_live'` เข้าลิสต์ใน `internal/database/postgres.go` + เทสต์ `TestNotificationTypeCheckListsEveryKnownType` ที่ pin ลิสต์ไว้ (รวม type ที่ repo นี้ไม่ได้เขียนเอง ซึ่งเป็นเคสที่ compiler และเทสต์เดิมจับไม่ได้) — pod ใหม่จะบูตผ่านและสร้าง constraint กลับมาเอง
 
 ```go
 CHECK (type IN ('dm', 'mention', 'reply', 'group_add', 'reaction', 'zone_force_unclaimed', 'announcement',
@@ -64,3 +64,17 @@ migration แบบ DROP-แล้ว-ADD constraint ที่รันตอน
 
 - เพิ่ม type ใหม่เข้าลิสต์ **ใน PR เดียวกับที่เริ่มเขียน type นั้น** ไม่ว่าจะเขียนจาก repo ไหน
 - หรือ `NOT VALID` constraint (ตรวจเฉพาะแถวใหม่ ไม่ล้มตอนบูตเพราะแถวเก่า)
+
+---
+
+## ยืนยันผลแล้ว (2026-09-10 08:41 UTC)
+
+| | ก่อนแก้ | หลังแก้ |
+|---|---|---|
+| pod ใหม่บูต | ❌ CrashLoopBackOff (restart 4 ครั้งใน 2m37s) | ✅ `zyra-api-c8858fddc-lrfmn` **1/1 Running** · `zyra-api listening on :8080` |
+| error ตอน boot | `init db failed: run migrations: ... (SQLSTATE 23514)` | grep `init db failed|migration failed|panic` = **ไม่มี** |
+| `tb_notification_type_check` ใน dev DB | **ไม่มี** (0 rows ใน `pg_constraint`) | ✅ มีแล้ว และลิสต์รวม `'spotlight_live'` |
+| image | `backend-preview:dev-abed8e4` | `backend-preview:dev-0bff223` |
+
+**วัดยังไง:** `kubectl -n dev get pods` + `kubectl logs` + `SELECT conname, pg_get_constraintdef(oid) FROM pg_constraint WHERE conname='tb_notification_type_check'` (รันผ่าน pod ชั่วคราวใน namespace `dev`)
+**แหล่งข้อมูล:** cluster `zyra-k3s` namespace `dev` · GitHub run `34455955183` · zyra-infra commit `5183aeb`
