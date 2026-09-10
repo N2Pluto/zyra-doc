@@ -5,7 +5,7 @@
 ## สถานะล่าสุด — 2026-09-10
 
 **เสร็จ 11 / 17 PR** · ฝั่ง server ครบ (Track A + B) · ฝั่งหน้าบ้านทำแล้ว 4 ใน 7 (C1 + C2 + C4 + C6) — **แสงตามเวลา + widget + หน้าตั้งค่าของ owner ขึ้นจอแล้ว**
-**asset:** พระจันทร์ 5 phase อัปขึ้น R2 แล้วที่ `static/env/sky/` (2026-09-10)
+**asset:** พระจันทร์ 5 phase ที่ `static/env/sky/` + **เสียงบรรยากาศ 16 ไฟล์** ที่ `static/env/sound/` อัปขึ้น R2 แล้ว (2026-09-10) — ดู [guides/environment-sounds.md](../../guides/environment-sounds.md)
 **preview ให้ทีมตรวจ:** [artifact](https://claude.ai/code/artifact/17865a33-4c40-445d-b84c-4e52a20c1ac6) — 9 สภาพอากาศ + วันเดินจริง + phase ดวงจันทร์ + ทุกสถานะการ์ด
 
 | Repo | Branch | Commit | PR (draft, base `develop`) |
@@ -68,6 +68,27 @@ git worktree add /path/ใหม่ feat/sc-env-01-api-settings
 - ❌ ยังไม่มี e2e ตั้งแต่ poller → ws → client
 
 ---
+
+## รอบที่ 12 — 2026-09-10 · เสียงบรรยากาศ (นอกแผน 17 PR เดิม)
+
+**ทำอะไร** — `zyra-app` commit `3a5deaf` (PR #336) · คู่มือเต็ม: [guides/environment-sounds.md](../../guides/environment-sounds.md)
+
+ได้ไฟล์เสียงมา 19 ไฟล์ 6 โฟลเดอร์ · อัปขึ้น R2 **16 ไฟล์** ที่ `static/env/sound/{ambient,oneshot}/` แล้วต่อเข้าออฟฟิศ
+
+1. **`lib/environment-sound.ts`** — layout + `environmentBedFor()` map (stage × condition × อุณหภูมิ) → bed · **สภาพอากาศชนะช่วงเวลา** · condition ที่ไม่มีเสียงของตัวเอง (fog/cloudy/clear) ตกไปใช้เสียงตามเวลา ไม่ใช่เงียบ · **ปิดตาม toggle ที่คุมภาพตัวเดียวกัน**
+2. **`lib/environment-sound-player.ts`** — player แยกจาก pet เพราะ bed ต่างกัน 3 ข้อ (วนลูปไม่จำกัด · ต้องให้ฟ้าผ่าดังทับได้ · **ไม่มีคลิกให้เริ่ม**) ⇒ จำ bed ที่อยากเล่นแล้วเริ่มตอน gesture แรก · วนลูปด้วย source 2 ตัวสลับกันพร้อม gain ramp บนนาฬิกาของ audio engine ให้ crossfade คร่อมรอยตัด (ถ้า `loop = true` เฉย ๆ จะสะดุดทุก 90 วิ)
+3. **`use-environment-sound.ts`** — bed ตาม snapshot เดียวกับที่ภาพใช้ + ไก่ขันตอน stage เปลี่ยนเข้า morning (ไม่ขันตอน mount) + ฟ้าผ่าทุก 10 วิระหว่างพายุ + ลมกระโชกทุก 26 วิระหว่างหิมะ
+
+**ตัด bed ก่อนอัป** — ไฟล์ที่ได้ทั้งชุด encode 256–320 kbps และ `Rain.mp3` ยาว **10 นาที = 19.2 MB** ที่ทุกคนใน workspace ฝนตกต้องโหลดทั้งที่มันวนลูปอยู่แล้ว ⇒ ตัดเหลือ 90 วินาทีด้วยการ copy ทีละ MPEG frame (ไม่ re-encode เสียงที่เหลือตรงบิต ยืนยัน trailing bytes = 0) · **49.5 MB → 26.3 MB** ไฟล์ใหญ่สุด 19.2 → 3.4 MB
+
+**verify ถึงไหน**
+- ✅ eslint สะอาด · `next build` เขียว · **vitest 145 ไฟล์ / 1,936 test** (ใหม่ 15 เคส — mapping 9 + hook 6)
+- ✅ ยิง public URL จริงได้ `HTTP 200 · audio/mpeg` · ตรวจว่าจุดตัดลงท้าย frame พอดีทุกไฟล์
+- ❌ **ยังไม่เคยฟังจริงในเบราว์เซอร์** — ทั้ง crossfade ตรงรอยลูป, การเริ่มตอน gesture แรก และระดับเสียงเทียบกับ voice chat ยังไม่เคยทดสอบด้วยหู
+
+**5 เรื่องที่ต้องตัดสิน (ข้อ 60–64 ในคู่มือ)** — ไม่มีสวิตช์ปิดเสียง (ที่อยู่คือ C7 แต่ดีไซน์ C7 ไม่มี toggle เสียง) · เกณฑ์ 30 °C ของเสียงจักจั่นผมตั้งเอง · จังหวะฟ้าผ่าเป็นของชั่วคราวรอ C3 มาสั่งจากแสง · โฟลเดอร์ `Running` ไม่ได้อัปเพราะ footstep สังเคราะห์เสียงอยู่แล้วโดยเจตนา · ไม่มี bed ของ fog/cloudy
+
+**ต่อจากนี้** — C5 หรือ C7 · ถ้าจะ re-encode เสียงให้เล็กลงอีก ~60% ต้องมี ffmpeg ซึ่งเครื่องนี้ยังไม่มี
 
 ## รอบที่ 11 — 2026-09-10 · C6 (หน้าตั้งค่าของ owner) + asset ดวงจันทร์ + preview ให้ทีม
 
