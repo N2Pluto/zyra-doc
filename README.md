@@ -39,6 +39,7 @@
 | [`i18n-migration.md`](guides/i18n-migration.md) | next-intl — โครงสร้าง locale และวิธีเพิ่มคำแปล |
 | [`tanstack-query-migration.md`](guides/tanstack-query-migration.md) | TanStack Query v5 — pattern ที่ใช้ใน zyra-app |
 | [`pet-sounds.md`](guides/pet-sounds.md) | Room Pet — โครงเสียงบน R2 และวิธีเพิ่ม category ใหม่ |
+| [`environment-sounds.md`](guides/environment-sounds.md) | SC-ENV-01 — เสียงบรรยากาศบน R2, การ map ช่วงเวลา/สภาพอากาศ, ทำไม player คนละตัวกับ pet |
 | [`flaky-test-hunting.md`](guides/flaky-test-hunting.md) | ล่า flaky test — วิธีสแกน, วัด margin เป็น σ, และสแกนไปถึงไหนแล้ว |
 
 ### [`issues/`](issues/) — บั๊ก/ปัญหาในตัวแอป
