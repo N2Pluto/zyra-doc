@@ -1,6 +1,6 @@
 # SC-ENV-01 — เสียงบรรยากาศ (R2 layout + วิธีเพิ่มคลิป)
 
-> อัปโหลดครั้งแรก 2026-09-10 · กระทบ `zyra-app` (`lib/environment-sound.ts`, `lib/environment-sound-player.ts`, `views/user/virtual-office/use-environment-sound.ts`) · ไฟล์ต้นทางจาก `storage/[Feature] · Environment .../Environment/`
+> อัปโหลดครั้งแรก 2026-09-10 · **re-encode + normalize 2026-09-10** (47.2 MB → 9.4 MB) · กระทบ `zyra-app` (`lib/environment-sound.ts`, `lib/environment-sound-player.ts`, `views/user/virtual-office/use-environment-sound.ts`) · ไฟล์ต้นทางจาก `storage/[Feature] · Environment .../Environment/`
 > คู่มือของเสียงสัตว์เลี้ยงอยู่ที่ [pet-sounds.md](pet-sounds.md) — ใช้กลไกเดียวกันแต่ **player คนละตัว** เหตุผลอยู่ท้ายหน้า
 
 ## โครงบน R2 (bucket `zgather-dev`)
@@ -14,7 +14,9 @@ static/env/sound/
 อัปด้วย `Content-Type: audio/mpeg` · `Cache-Control: public, max-age=86400` (แทนไฟล์ชื่อเดิมได้ กระจายภายใน 1 วัน)
 public base: `https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.dev/static/env/sound`
 
-### ที่มีตอนนี้ 16 ไฟล์ · 26.3 MB
+### ที่มีตอนนี้ 16 ไฟล์ · **9.4 MB** (จากต้นฉบับ 47.2 MB)
+
+ทุกไฟล์ **96 kbps joint-stereo · 44.1 kHz · −23 LUFS (EBU R128)**
 
 | key | ไฟล์ | ยาว | ใช้เมื่อ |
 |---|---|---|---|
@@ -25,14 +27,14 @@ public base: `https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.dev/static/env/sou
 | `wind` | `ambient/wind.mp3` | 14s | *(สำรอง)* |
 | `winter-wind` | `ambient/winter-wind.mp3` | 19s | `snow` |
 | `morning-birds` | `ambient/morning-birds.mp3` | 90s | `dawn` · `morning` · `afternoon` ที่ไม่ร้อน |
-| `morning-farmyard` | `ambient/morning-farmyard.mp3` | 45s | *(สำรอง)* |
+| `morning-farmyard` | `ambient/morning-farmyard.mp3` | 90s | *(สำรอง)* |
 | `night` | `ambient/night.mp3` | 90s | `evening` |
 | `night-crickets` | `ambient/night-crickets.mp3` | 90s | `night` |
 | `hot-day-cicadas` | `ambient/hot-day-cicadas.mp3` | 90s | `afternoon` ที่อุณหภูมิ ≥ 30 °C |
-| `hot-day` | `ambient/hot-day.mp3` | 41s | *(สำรอง)* |
+| `hot-day` | `ambient/hot-day.mp3` | 82s | *(สำรอง)* |
 | `rooster` | `oneshot/rooster.mp3` | 2.8s | ครั้งเดียวตอน stage เปลี่ยนเข้า `morning` |
 | `thunder-1` / `thunder-2` | `oneshot/thunder-*.mp3` | 4.5s / 2.9s | ทุก 10 วินาทีระหว่างพายุ |
-| `snow-gust` | `oneshot/snow-gust.mp3` | 2.5s | ทุก 26 วินาทีระหว่างหิมะตก |
+| `snow-gust` | `oneshot/snow-gust.mp3` | 5s | ทุก 26 วินาทีระหว่างหิมะตก |
 
 **สภาพอากาศชนะช่วงเวลา** — ยืนอยู่ในพายุต้องได้ยินพายุ ไม่ใช่เสียงนกยามเช้า · condition ที่ไม่มีเสียงของตัวเอง (`fog` `cloudy` `clear` `partly_cloudy`) ตกลงไปใช้เสียงตามช่วงเวลา ไม่ใช่เงียบ
 
@@ -52,10 +54,27 @@ public base: `https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.dev/static/env/sou
 
 2. **เพิ่มบรรทัดใน `ENV_BEDS` / `ENV_ONESHOTS`** (`zyra-app/lib/environment-sound.ts`) พร้อม `seconds` และ `volume` · ถ้าจะให้ถูกเรียกอัตโนมัติ ต้องแก้ `environmentBedFor()` ด้วย
 
-## เรื่องที่ห้ามพลาด
+## การเตรียมไฟล์ (`scratchpad/sound/encode.py`)
 
-- **ตัด bed ให้สั้นก่อนอัป** — ไฟล์ที่ได้มาทั้งชุด encode ที่ 256–320 kbps และ `Rain.mp3` ยาว **10 นาที = 19.2 MB** ซึ่งทุกคนใน workspace ที่ฝนตกต้องโหลด ทั้งที่มันวนลูปอยู่แล้ว · ตัดเหลือ 90 วินาทีด้วยการ **copy ทีละ MPEG frame** (`scratchpad/sound/trim.py`) เสียงส่วนที่เหลือจึงตรงบิตกับต้นฉบับ ไม่ได้ re-encode · **49.5 MB → 26.3 MB** และไฟล์ใหญ่สุด 19.2 → 3.4 MB
-- **ยังควร re-encode ให้ต่ำกว่า 256 kbps** — เสียงบรรยากาศที่ 96 kbps mono ฟังไม่ต่างและจะลดอีกราว 60% · เครื่องที่ทำงานอยู่ไม่มี ffmpeg จึงยังไม่ได้ทำ
+```bash
+ffmpeg -nostdin -i <src> -t 90 \
+  -af loudnorm=I=-23:LRA=7:TP=-2:linear=true:measured_I=…:measured_LRA=…:measured_TP=…:measured_thresh=…:offset=… \
+  -c:a libmp3lame -b:a 96k -ar 44100 -ac 2 -map_metadata -1 <dst>
+```
+
+สามอย่างที่ทำ และเหตุผลของแต่ละอย่าง:
+
+| ขั้น | ทำไม |
+|---|---|
+| **`-t 90`** | bed วนลูป ยาวกว่านาทีครึ่งจึงไม่ได้อะไรนอกจากกิน bandwidth · `Rain.mp3` มาเป็น **10 นาที / 19.2 MB** ที่ทุกคนใน workspace ฝนตกต้องโหลด |
+| **`loudnorm` 2 pass** | ระดับเสียงต้นฉบับ**กระจายถึง 28 LU** (−13.8 ถึง −41.8 LUFS) ⇒ ถ้าไม่ทำ สลับ bed ทีนึงเสียงจะกระโดดเป็นสิบ ๆ dB · pass เดียวยังพลาดในไฟล์ที่ระดับเสียงแกว่งมาก (คลาด 5 LU) จึงต้องวัดแล้วป้อนค่ากลับ · **หลังทำเหลือกระจาย 1.0 LU** |
+| **96k joint-stereo** | **ไม่ยุบเป็น mono** ต้นฉบับ stereo ทุกไฟล์ และ bed ฝนที่เป็น mono จะยุบเป็นเสียงจากจุดเดียว ซึ่งเป็นสิ่งเดียวที่เสียงบรรยากาศต้องไม่เป็น · 96k ให้ผลประหยัดตามที่ต้องการอยู่แล้ว |
+
+**ผล: 47.2 MB → 9.4 MB (20%)** · ไฟล์ใหญ่สุด 19.2 → 1.03 MB
+
+เพราะทุกไฟล์อยู่ที่ −23 LUFS เท่ากันแล้ว ค่า volume ต่อ bed จึงไม่ต้องไล่ปรับมือ — เหลือค่าเดียว `ENV_BED_VOLUME` กับข้อยกเว้นเดียว (drizzle ยืม bed ฝนมาเบา ๆ)
+
+> **ความยาวเอาจาก `ffprobe` เท่านั้น** — ตอนแรกผมนับจาก MPEG frame header เอง แล้วได้ค่าผิดไปราวครึ่งใน 4 ไฟล์
 - **โหลดผ่าน `/api/img?url=…` เท่านั้น** — R2 ไม่ส่ง CORS header `decodeAudioData` จึงต้องผ่าน proxy (เหมือนเสียง pet)
 - **ห้ามใช้ `<audio>`** — Firefox/Zen ขึ้นแถวค้างใน media panel หนึ่งแถวต่อคลิป ([issue](../issues/pet-sound-media-panel-rows-2026-09-08.md))
 
@@ -75,8 +94,8 @@ public base: `https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.dev/static/env/sou
 
 | # | เรื่อง |
 |---|---|
-| **60** | **ไม่มีสวิตช์ปิดเสียงบรรยากาศ** — ตอนนี้ระดับเสียงอิงกับ "Notification volume" ซึ่งเป็น volume เดียวที่มีใน settings · โค้ดอ่าน `enable_environment_sounds` แบบ "ไม่ใช่ false" ไว้แล้ว เติม key นี้ทีหลังได้โดยไม่ต้องแก้อะไรอีก · **ที่อยู่ของสวิตช์คือ C7** (HP-05 personal prefs) แต่ดีไซน์ของ C7 มีแค่ 2 toggle ไม่มีเสียง ⇒ ต้องขอ design เพิ่ม |
-| **61** | **เกณฑ์ 30 °C ของเสียงจักจั่น** ผมตั้งเอง — โฟลเดอร์ที่ได้มาชื่อ "Summer" แต่โมเดลไม่มีฤดู มีแต่อุณหภูมิ · ควรตัดสินคู่กับเกณฑ์ "ลมแรง" ([ข้อ 11](../plan/%5BFeature%5D%20%20%C2%B7%20Environment%20%28Time%20of%20Day%20%2B%20Weather%29%20%E2%80%94%20Virtual%20Office%20Map/spec.md)) |
-| **62** | **จังหวะฟ้าผ่าเป็นของชั่วคราว** — ตอนนี้ยิงทุก 10 วินาทีด้วย timer ของตัวเอง · เมื่อ C3 วาดฟ้าแลบแล้ว **ต้องให้แสงเป็นตัวสั่งเสียง** ไม่ใช่ timer สองตัวเดินแยกกันจนหลุดจังหวะ |
-| **63** | **โฟลเดอร์ `Running` ไม่ได้อัป** — footstep ในระบบ**สังเคราะห์เสียงด้วย Web Audio โดยเจตนา** (`views/user/virtual-office/footstep-sound.ts`) เพราะ sample คงที่จะฟังเหมือนปืนกลเวลาเดินเร็ว และไม่ต้องมี asset ให้ license · ถ้าอยากได้เสียงตามพื้น (กรวด/หญ้าเปียก) เป็นงานของฟีเจอร์ footstep ไม่ใช่ SC-ENV-01 |
+| ~~60~~ | ✅ **ทำแล้ว 2026-09-10** — สวิตช์อยู่ที่ **Setting → Notifications → ENVIRONMENT → "Environment sounds"** ตามแบบเดียวกับ `pet_sound` ที่อยู่ใน tab นั้นอยู่แล้ว · field `enable_environment_sounds` ใน `audio_settings` (JSONB **ไม่ต้อง migration** เพราะ Go unmarshal ทับ struct ที่เติม default ไว้ ⇒ คนที่บันทึก settings ไว้ก่อนหน้านี้ได้ค่า on) · สวิตช์เดียวปิดทั้ง bed, ฟ้าผ่า และไก่ขัน · **ระดับเสียงยังอิง "Notification volume"** — slider แยกของเสียงบรรยากาศยังควรทำใน C7 |
+| ~~61~~ | ✅ **ยืนยันแล้ว 2026-09-10** — ใช้เกณฑ์ **30 °C** สำหรับสลับเป็นเสียงจักจั่น (`ENV_CICADA_TEMP_C`) |
+| **62** | **จังหวะฟ้าผ่าเป็นของชั่วคราว — ยอมรับแล้ว** (ผู้ใช้ 2026-09-10) ยิงทุก 10 วินาทีด้วย timer ของตัวเองไปก่อน · **เมื่อ C3 วาดฟ้าแลบ ต้องย้ายให้แสงเป็นตัวสั่งเสียง** ไม่ใช่ timer สองตัวเดินแยกกันจนหลุดจังหวะ |
+| ~~63~~ | ✅ **ยืนยันแล้ว — ไม่อัป `Running`** — footstep ในระบบ**สังเคราะห์เสียงด้วย Web Audio โดยเจตนา** (`views/user/virtual-office/footstep-sound.ts`) เพราะ sample คงที่จะฟังเหมือนปืนกลเวลาเดินเร็ว และไม่ต้องมี asset ให้ license · ถ้าอยากได้เสียงตามพื้น (กรวด/หญ้าเปียก) เป็นงานของฟีเจอร์ footstep ไม่ใช่ SC-ENV-01 |
 | **64** | ไม่มี bed ของ `fog` และ `cloudy` — ตกไปใช้เสียงตามช่วงเวลา ซึ่งพอใช้ได้ แต่ถ้าอยากได้บรรยากาศอึมครึมต้องขอไฟล์เพิ่ม |
