@@ -1,6 +1,7 @@
 # SC-ENV-01 · UX/UI Plan
 
 > **สถานะ:** ถอดจาก Figma จริงบางส่วน (ดึงเมื่อ 2026-09-09 ด้วย Figma MCP) — **ยังไม่ครบทุก node** ดู [§7](#7-สิ่งที่ยังต้องถอดเพิ่ม)
+> **อัปเดต 2026-09-10:** ได้ asset **พระจันทร์ 5 phase** แล้ว อัปขึ้น R2 เรียบร้อย → [§7.2.5](#725-พระจันทร์-5-phase--ได้รับ--อัปขึ้น-r2-แล้ว-2026-09-10) (ข้อ **57–59** ต้องตัดสินก่อนใช้)
 > **อัปเดต 2026-09-09 (C4):** ถอด weather panel + การ์ดครบแล้ว → [§9](#9-weather-panel--widget-c4--ถอดจริง-2026-09-09) · เจอ 5 จุดที่ design ยังไม่มีแต่ spec บังคับ (ข้อ **52–56**)
 > **asset:** โฟลเดอร์ + checklist ชื่อไฟล์รออยู่ที่ `storage/env-weather/` (MANIFEST.md) — mapping กับ WMO code อยู่ใน [§7.2](#72-asset-ที่รออยู่--วางที่-storageenv-weather)
 > **ไฟล์:** `Map8gX0L2hk7HnkaFRfhtj` — Zyra design (More Organised ver.)
@@ -253,6 +254,32 @@ asset ชุดนี้เป็นของฉาก — **การ์ด "Wo
 ### 7.2.4 เส้นทางไฟล์
 `storage/...` เป็นที่เก็บต้นฉบับ · ตอน implement ต้องอัปขึ้น **Cloudflare R2** แล้วเก็บ public URL ตาม [11-s3-storage](../../../.claude/rules/11-s3-storage.md)
 key ที่เสนอ (ชื่อสะอาด ไม่มีช่องว่าง/วงเล็บแบบชื่อโฟลเดอร์ปัจจุบัน): `static/env/sky/sun.gif` · `static/env/sky/moon.gif` · `static/env/sky/star-<name>.gif` · `static/env/sky/cloud-<n>.gif` · `static/env/fx/rain-<n>.gif` · `static/env/fx/snow-<n>.gif` · `static/env/fx/fog.gif` · `static/env/fx/wind-<n>.gif` · `static/env/fx/leaf-<n>.gif` · `static/env/bg/zyra-backdrop.png`
+
+### 7.2.5 พระจันทร์ 5 phase — ได้รับ + อัปขึ้น R2 แล้ว (2026-09-10)
+
+ต้นฉบับ: `storage/[Feature] · Environment .../gif for dev/พระจันทร์แบบแยก/moon1–5.gif` (1600×1600 · 1 เฟรม · 92–121 KB)
+ย่อ 1× ไว้ที่ `storage/env-weather/1x/moon/` แล้วอัปขึ้น **R2 bucket `zgather-dev`** ตาม [11-s3-storage](../../../.claude/rules/11-s3-storage.md)
+
+| ไฟล์ต้นฉบับ | phase | key บน R2 | public URL | ขนาด 1× |
+|---|---|---|---|---|
+| moon1 | เต็มดวง | `static/env/sky/moon-full.gif` | [ดู](https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.dev/static/env/sky/moon-full.gif) | 6,700 B |
+| moon5 | เสี้ยวข้างขึ้น (สว่างขวา) | `static/env/sky/moon-waxing-crescent.gif` | [ดู](https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.dev/static/env/sky/moon-waxing-crescent.gif) | 4,909 B |
+| moon4 | ขึ้น 8 ค่ำ (สว่างขวา) | `static/env/sky/moon-first-quarter.gif` | [ดู](https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.dev/static/env/sky/moon-first-quarter.gif) | 5,242 B |
+| moon2 | แรม 8 ค่ำ (สว่างซ้าย) | `static/env/sky/moon-last-quarter.gif` | [ดู](https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.dev/static/env/sky/moon-last-quarter.gif) | 5,188 B |
+| moon3 | เสี้ยวข้างแรม (สว่างซ้าย) | `static/env/sky/moon-waning-crescent.gif` | [ดู](https://pub-b74ca51768ef4435bac2cf6f1210514d.r2.dev/static/env/sky/moon-waning-crescent.gif) | 4,897 B |
+
+ทั้ง 5 ไฟล์ยิงจริงแล้วได้ `HTTP 200 · image/gif` · `static/env/` เป็น prefix ใหม่ ไม่ได้ทับของเดิม
+
+**การย่อเป็น lossless จริง** — ต้นฉบับเป็นงาน 160 px ที่ถูกขยาย 10× แบบสะอาด (ตรวจแล้ว: บล็อก 10×10 ทุกบล็อกเป็นสีเดียวล้วน 25,600/25,600 บล็อก) ย่อกลับด้วย NEAREST ที่ 1/10 แล้วขยายคืนได้ pixel ตรงกันเป๊ะทั้ง 5 ไฟล์ (differing px = 0)
+**494 KB → 27 KB** และหน่วยความจำตอน decode **51.2 MB → 0.51 MB** (สำคัญ เพราะเคสเดียวกับ `shooting-star` ที่กิน 153 MB จนใช้ไม่ได้)
+
+#### 3 เรื่องที่ต้องตัดสินก่อนเอาไปใช้
+
+| # | เรื่อง |
+|---|---|
+| **57** | **`moon/moon.gif` เดิมใช้ต่อไม่ได้** — มันคือ 5 phase นี้เอามาเล่นวนกันทุก 2.5 วินาที (ตรวจแล้วว่าเป็นภาพชุดเดียวกัน ต่างกันแค่ offset 1 px) ซึ่งเป็นเหตุผลที่ design แยกไฟล์มาให้ · phase ต้องมาจาก **อายุดวงจันทร์ของวันนั้น** ไม่ใช่วนไปเรื่อย ๆ |
+| **58** | **มีแค่ 5 จาก 8 phase** — ขาด **เดือนดับ (new moon)** และ **gibbous ทั้งสองข้าง** ⇒ ต้องเลือกว่า ขอไฟล์เพิ่ม 3 แบบ หรือยุบ 8 ช่วงลงใน 5 ไฟล์ที่มี (gibbous ใช้ full แทน · เดือนดับไม่วาดอะไรเลย) |
+| **59** | **ซีกโลกใต้เห็นกลับข้าง** — "สว่างขวา = ข้างขึ้น" เป็นมุมมองซีกโลกเหนือ · workspace ที่ซิดนีย์จะเห็นเสี้ยวกลับด้าน ⇒ ฟีเจอร์นี้รองรับทั่วโลก จึงต้องเลือกว่า **กลับด้าน sprite เมื่อ `lat < 0`** หรือยอมให้ผิดสำหรับซีกโลกใต้ |
 
 ### 7.3 ยังไม่มีใน Figma ที่พบ
 - **"shotcut หน้าหลัก"** ที่ HP-06/HP-07 บอกว่าจะหายไปด้วย — ยังไม่เห็นใน node ที่ถอด (ข้อ 36 ยังค้าง)
