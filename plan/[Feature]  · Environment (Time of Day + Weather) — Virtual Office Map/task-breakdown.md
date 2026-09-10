@@ -9,7 +9,7 @@
 
 ## ภาพรวม
 
-> **ความคืบหน้า (2026-09-09):** ✅ **A1 A2 A3 A4 A5 A6 B1 C1 C2 C4 เสร็จแล้ว (10/17)** · ⏳ เหลือ C3 C5 C6 C7 และ D1–D3 · สถานะเต็ม + วิธีกลับมาทำต่ออยู่ใน [progress.md](progress.md)
+> **ความคืบหน้า (2026-09-10):** ✅ **A1 A2 A3 A4 A5 A6 B1 C1 C2 C4 C6 เสร็จแล้ว (11/17)** · ⏳ เหลือ C3 C5 C7 และ D1–D3 · สถานะเต็ม + วิธีกลับมาทำต่ออยู่ใน [progress.md](progress.md)
 
 | Track | จำนวน PR | เริ่มได้เมื่อ |
 |---|---|---|
@@ -186,8 +186,9 @@
 
 ---
 
-### C6 — `feat(app): add workspace environment settings for owner`
-**Branch** `feat/sc-env-01-app-settings` · ต่อจาก C1 · ⚠️ ปักหมุด vs ค้นชื่อ (ข้อ 9) + ที่ตั้ง UI (ข้อ 34) + HP-07 ซ้ำ toggle เดิม (ข้อ 33) รอมติ · **ครอบ HP-01 + HP-06 + HP-07**
+### C6 — `feat(app): add workspace environment settings for owner` ✅ **เสร็จ 2026-09-10**
+**Branch** `feat/sc-env-01-app-client` (รวมกับ C1/C2/C4) · commit `31b92f4` · [PR #336](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/336) · **ครอบ HP-01 + HP-06 + HP-07**
+ข้อ 9 / 34 / 33 **ตอบแล้วจาก design เอง** — ไม่มี picker เลย เป็น toggle ขอตำแหน่งจากเบราว์เซอร์ · อยู่ใน Setting modal tab ที่ 7 · HP-07 คือ toggle เดิมไม่ใช่ตัวใหม่
 
 - section ใหม่ใน `views/user/workspace/` — location ปัจจุบัน + ปุ่มเปลี่ยน + **master switch "Workspace location" (HP-06)** + 3 toggle (time of day / weather / alerts — ตัวที่ 3 คือ HP-07) + preview อากาศปัจจุบัน
 - ปิด master switch → ทุก toggle ข้างล่าง disable · **ค่า location ต้องยังอยู่** เปิดกลับได้ทันที

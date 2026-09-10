@@ -2,22 +2,24 @@
 
 > entry ใหม่อยู่**บนสุด** · แยก "build เขียว" ออกจาก "live-test ผ่าน" ให้ชัดทุกครั้ง
 
-## สถานะล่าสุด — 2026-09-09
+## สถานะล่าสุด — 2026-09-10
 
-**เสร็จ 10 / 17 PR** · ฝั่ง server ครบ (Track A + B) · ฝั่งหน้าบ้านทำแล้ว 3 ใน 7 (C1 + C2 + C4) — **แสงตามเวลา + widget สภาพอากาศขึ้นจอแล้ว**
+**เสร็จ 11 / 17 PR** · ฝั่ง server ครบ (Track A + B) · ฝั่งหน้าบ้านทำแล้ว 4 ใน 7 (C1 + C2 + C4 + C6) — **แสงตามเวลา + widget + หน้าตั้งค่าของ owner ขึ้นจอแล้ว**
+**asset:** พระจันทร์ 5 phase อัปขึ้น R2 แล้วที่ `static/env/sky/` (2026-09-10)
+**preview ให้ทีมตรวจ:** [artifact](https://claude.ai/code/artifact/17865a33-4c40-445d-b84c-4e52a20c1ac6) — 9 สภาพอากาศ + วันเดินจริง + phase ดวงจันทร์ + ทุกสถานะการ์ด
 
 | Repo | Branch | Commit | PR (draft, base `develop`) |
 |---|---|---|---|
 | zyra-api | `feat/sc-env-01-api-settings` | **7** (A1–A6 + `precip_pct`) | [zyra-api#108](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/108) |
 | zyra-ws | `feat/sc-env-01-ws-relay` | **1** (B1) | [zyra-ws#64](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/64) |
-| zyra-app | `feat/sc-env-01-app-client` | **3** (C1, C2, C4) | [zyra-app#336](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/336) |
+| zyra-app | `feat/sc-env-01-app-client` | **4** (C1, C2, C4, C6) | [zyra-app#336](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/336) |
 
 **ทั้ง 3 PR เป็น draft และยังไม่ merge** — ตั้งใจ เพราะยังไม่เคยยิง provider ด้วย key จริง · merge เข้า `develop` = deploy dev อัตโนมัติ ซึ่งตอนนี้จะพา flag ที่ปิดอยู่ขึ้นไปเฉย ๆ
 ⚠️ **ห้ามใช้ `gh pr merge --auto` บน zyra-app** — merge ทันทีไม่เข้าคิว (ดู [[gh-auto-merge-not-queued]])
 
 **Migration:** 98 / 99 / 100 **รันบน dev แล้ว** (ยืนยันคอลัมน์ + index + constraint ทุกตัว) · **ยังไม่รันบน uat/prod**
 
-**เริ่มทำต่อที่:** C7 (personal prefs — ไม่ติดอะไร) หรือ C3 (weather effects บน Pixi) ที่ยังติด asset 1× ของ 3 ไฟล์ (ข้อ 48) + เกณฑ์ลมแรง (ข้อ 11) · C5 (alert banner) ยังติดมติ severity + ข้อ 40 · C6 (owner settings) ต้องถอด Figma เพิ่ม
+**เริ่มทำต่อที่:** C5 (alert banner — ยังรอมติ severity) หรือ C7 (personal prefs — ไม่ติดอะไร) หรือ C3 (weather effects บน Pixi) ที่ยังติด asset 1× ของ 3 ไฟล์ (ข้อ 48) + เกณฑ์ลมแรง (ข้อ 11) · C5 (alert banner) ยังติดมติ severity + ข้อ 40 · C6 (owner settings) ต้องถอด Figma เพิ่ม
 
 ### วิธีกลับมาทำต่อ
 
@@ -66,6 +68,36 @@ git worktree add /path/ใหม่ feat/sc-env-01-api-settings
 - ❌ ยังไม่มี e2e ตั้งแต่ poller → ws → client
 
 ---
+
+## รอบที่ 11 — 2026-09-10 · C6 (หน้าตั้งค่าของ owner) + asset ดวงจันทร์ + preview ให้ทีม
+
+**ทำอะไร** — `zyra-app` commit `31b92f4` (PR #336)
+
+ดึง Figma `4635:150663` + `4635:174601` ก่อนเขียน แล้วพบว่า **`ToggleRow` ที่มีอยู่ใน `vo-setting-modal.tsx` ตรงสเปค Figma อยู่แล้ว** (48×24 track / knob 20px / `#58D68D` / gap-24 / รองรับ disabled) เลย reuse ไม่สร้างใหม่ · `NavItem` ก็ตรง (`bg-[rgba(88,214,141,0.1)]` + `#58D68D`) · dialog ใช้ shell เดียวกับ `vo-leave-workspace-modal.tsx` ซึ่งเป็น "General modal" ตัวเดียวกันในดีไซน์
+
+1. **`components/vo-environment-tab.tsx`** — tab ที่ 7 ของ Setting modal: การ์ดสภาพอากาศ + 4 toggle (Workspace location / Weather alert notification / Time of day lighting / Weather visual effects) + divider ตามตำแหน่งจริงใน Figma (คั่นหลังแถว 1 และ 2 ไม่คั่นระหว่าง 2 แถวท้าย)
+2. **master switch ปิด → 3 toggle ล่าง disable** และค่า location ยังอยู่
+3. **`isEnvironmentTabVisible()`** ใน `lib/environment-feature.ts` — กฎ 3 ชั้น (flag + owner + workspaceId) แยกออกมาให้ทดสอบได้โดยไม่ต้อง mount Setting modal ทั้งตัว · **ซ่อน tab จาก member ไม่ใช่ disable** เพราะทุก toggle เป็น workspace-wide ที่ server ปฏิเสธให้ member อยู่แล้ว
+4. **reuse `WeatherCard` จาก C4** (export เพิ่ม) ไม่ก็อปเรขาคณิตมาใหม่ — ดีไซน์ใช้ component instance ตัวเดียวกันจริง
+5. ใช้ **query key เดียวกับ hook บนแมพ** ⇒ owner กด toggle แล้วแมพหลัง modal เปลี่ยนทันทีโดยไม่ยิงซ้ำ
+
+**2 การตัดสินใจข้างในที่ต้องรู้**
+- **ขอตำแหน่งจากเบราว์เซอร์เฉพาะตอนที่ workspace ยังไม่มี location** · เปิด master กลับมาทีหลังแค่เปิด flag ไม่ถามใหม่ เพราะ HP-06 สัญญาว่าที่ตั้งไม่หายตอนปิด — ถ้าถามใหม่จะย้ายออฟฟิศไปที่ที่ owner ยืนอยู่วันนั้นเงียบ ๆ ซึ่งตรงข้ามกับสัญญานั้น
+- **permission ถูกปฏิเสธ ≠ หาตำแหน่งไม่สำเร็จ** ⇒ ปฏิเสธ → เปิด dialog `4635:174601` (แก้ได้ที่ตั้งค่าเบราว์เซอร์เท่านั้น) · timeout → error inline ที่ลองซ้ำได้ · ถ้าใช้ข้อความเดียวกัน owner ครึ่งหนึ่งจะไปแก้ผิดที่
+
+**ข้อ 9 / 33 / 34 ที่ค้างมานาน ตอบแล้วจาก design เอง** — ไม่มี picker/ปักหมุด/ช่องค้นเมืองเลย เป็น toggle ขอตำแหน่งจากเบราว์เซอร์ · toggle ทั้งของ owner และ member อยู่ใน Setting modal tab เดียวกัน สลับชุดตาม role · HP-07 คือ toggle เดิม ไม่ใช่ตัวใหม่
+
+**verify ถึงไหน**
+- ✅ eslint สะอาด · `next build` production เขียวพร้อม flag เปิด · **vitest ทั้ง repo 143 ไฟล์ / 1,921 test เขียว** (ของใหม่ 15 เคส — tab 10 + กฎ visibility 5)
+- ✅ ครบ DoD: non-owner ไม่เห็น tab · master ปิดแล้ว 3 toggle disable · ปิดแล้วไม่ส่ง lat/lng · เปิดกลับไม่ถามเบราว์เซอร์ · ครั้งแรกถาม · ปฏิเสธ vs ล้มเหลวแยกข้อความ · save ทีละ field
+- ❌ **ยังไม่เคยกดของจริงบนจอ** — ต้องมี Google key + `ENVIRONMENT_ENABLED=true` และต้องเป็น owner จริงบน dev
+- ❌ **ยังไม่ได้ทดสอบ 2 browser** ตาม DoD ("บันทึกแล้ว member อื่นเห็นภายใน 5 วินาที") — ฝั่ง broadcast ทำไว้แล้วใน A6 แต่ยังไม่เคยรันคู่กันจริง
+
+**asset ดวงจันทร์ (2026-09-10)** — ได้ sprite 5 phase ย่อ 10× แบบ lossless (494 KB → 27 KB · decode 51.2 MB → 0.51 MB) อัปขึ้น R2 `static/env/sky/` ยืนยัน `HTTP 200` ทั้ง 5 · เจอว่า **`moon.gif` เดิมคือ 5 phase นี้วนกันทุก 2.5 วินาที ใช้ต่อไม่ได้** · ขาด 3 phase จาก 8 (เดือนดับ + gibbous 2 ข้าง) · ซีกโลกใต้ต้องกลับด้าน sprite · สูตร phase จากวันที่อยู่ใน [technical-design §19](technical-design.md) ไม่ต้องยิง API
+
+**ต่อจากนี้** — C5 (alert banner) ถ้าได้มติ severity หรือ C7 (personal prefs) ที่ต้องรอ C3
+
+**ติดอะไร** — credential 2 ชุด · flag ฝั่ง server · มติ severity 2 ข้อ + ข้อ 40 · asset 1× 3 ไฟล์สำหรับ C3 · **ใหม่:** ไฟล์ดวงจันทร์อีก 3 phase (ข้อ 58) + มติซีกโลกใต้ (ข้อ 59) + overlay 3 ตัวจาก preview ที่ยังไม่มีใน tint table
 
 ## รอบที่ 10 — 2026-09-09 · C4 (weather widget + panel) · **มีของกดดูได้แล้ว**
 
