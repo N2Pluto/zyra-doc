@@ -9,7 +9,7 @@
 
 ## ภาพรวม
 
-> **ความคืบหน้า (2026-09-10):** ✅ **A1 A2 A3 A4 A5 A6 B1 C1 C2 C4 C6 เสร็จแล้ว (11/17)** · ⏳ เหลือ C3 C5 C7 และ D1–D3 · สถานะเต็ม + วิธีกลับมาทำต่ออยู่ใน [progress.md](progress.md)
+> **ความคืบหน้า (2026-09-10):** ✅ **A1 A2 A3 A4 A5 A6 B1 C1 C2 C4 C6 C7 เสร็จแล้ว (12/17)** · ⏳ เหลือ C3 C5 และ D1–D3 · สถานะเต็ม + วิธีกลับมาทำต่ออยู่ใน [progress.md](progress.md)
 
 | Track | จำนวน PR | เริ่มได้เมื่อ |
 |---|---|---|
@@ -201,7 +201,7 @@
 
 ---
 
-### C7 — `feat(app): add personal visual effects preferences`
+### C7 — `feat(app): add personal visual effects preferences` ✅ **เสร็จ 2026-09-10**
 **Branch** `feat/sc-env-01-app-prefs` · ต่อจาก C2 + C3
 
 - 2 toggle ใน Setting ที่มีอยู่: time-of-day lighting / weather effects + ปุ่ม "ปิดทั้งหมด"

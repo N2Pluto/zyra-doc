@@ -4,22 +4,28 @@
 
 ## สถานะล่าสุด — 2026-09-10
 
-**เสร็จ 11 / 17 PR** · ฝั่ง server ครบ (Track A + B) · ฝั่งหน้าบ้านทำแล้ว 4 ใน 7 (C1 + C2 + C4 + C6) — **แสงตามเวลา + widget + หน้าตั้งค่าของ owner ขึ้นจอแล้ว**
+**เสร็จ 12 / 17 PR** · ฝั่ง server ครบ (Track A + B) · ฝั่งหน้าบ้านทำแล้ว 5 ใน 7 (C1 + C2 + C4 + C6 + **C7**) — **แสงตามเวลา + widget + หน้าตั้งค่าของ owner + preference ส่วนตัวของ member ขึ้นจอแล้ว**
 **asset:** พระจันทร์ 5 phase ที่ `static/env/sky/` + **เสียงบรรยากาศ 16 ไฟล์** ที่ `static/env/sound/` อัปขึ้น R2 แล้ว (2026-09-10) — ดู [guides/environment-sounds.md](../../guides/environment-sounds.md)
 **preview ให้ทีมตรวจ:** [artifact](https://claude.ai/code/artifact/17865a33-4c40-445d-b84c-4e52a20c1ac6) — 9 สภาพอากาศ + วันเดินจริง + phase ดวงจันทร์ + ทุกสถานะการ์ด
 
 | Repo | Branch | Commit | PR (draft, base `develop`) |
 |---|---|---|---|
-| zyra-api | `feat/sc-env-01-api-settings` | **7** (A1–A6 + `precip_pct`) | [zyra-api#108](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/108) |
+| zyra-api | `feat/sc-env-01-api-settings` | **8** (A1–A6 + `precip_pct` + prefs) | [zyra-api#108](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/108) |
 | zyra-ws | `feat/sc-env-01-ws-relay` | **1** (B1) | [zyra-ws#64](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/64) |
-| zyra-app | `feat/sc-env-01-app-client` | **4** (C1, C2, C4, C6) | [zyra-app#336](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/336) |
+| zyra-app | `feat/sc-env-01-app-client` | **6** (C1, C2, C4, C6, เสียง, C7) | [zyra-app#336](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/336) |
 
-**ทั้ง 3 PR เป็น draft และยังไม่ merge** — ตั้งใจ เพราะยังไม่เคยยิง provider ด้วย key จริง · merge เข้า `develop` = deploy dev อัตโนมัติ ซึ่งตอนนี้จะพา flag ที่ปิดอยู่ขึ้นไปเฉย ๆ
+**ทั้ง 3 PR เป็น draft และยังไม่ merge**
 ⚠️ **ห้ามใช้ `gh pr merge --auto` บน zyra-app** — merge ทันทีไม่เข้าคิว (ดู [[gh-auto-merge-not-queued]])
 
-**Migration:** 98 / 99 / 100 **รันบน dev แล้ว** (ยืนยันคอลัมน์ + index + constraint ทุกตัว) · **ยังไม่รันบน uat/prod**
+**Migration:** 98 / 99 / 100 **รันบน dev แล้ว** · **ยังไม่รันบน uat/prod** · C7 **ไม่ต้องมี migration** (ใช้ JSONB blob เดิม)
 
-**เริ่มทำต่อที่:** C5 (alert banner — ยังรอมติ severity) หรือ C7 (personal prefs — ไม่ติดอะไร) หรือ C3 (weather effects บน Pixi) ที่ยังติด asset 1× ของ 3 ไฟล์ (ข้อ 48) + เกณฑ์ลมแรง (ข้อ 11) · C5 (alert banner) ยังติดมติ severity + ข้อ 40 · C6 (owner settings) ต้องถอด Figma เพิ่ม
+**credential (2026-09-10):**
+- ✅ **Google** — เปิด 3 API (`weather` / `timezone-backend` / `geocoding-backend`) บน project `gather-dev-458614` แล้ว · สร้าง key **"zyra-api SC-ENV-01 (dev)"** จำกัดเฉพาะ 3 API นั้น · ใส่ `GOOGLE_MAPS_API_KEY` + `ENVIRONMENT_ENABLED=true` ลง secret `zyra-api-dev-env-json` **version 5** และ ESO sync เข้า k8s secret `dev/zyra-api-secrets` แล้ว
+- ❌ **ยังไม่มีผลจริงบน dev** — restart pod ไม่ขึ้น ติดบักคนละเรื่อง ดู [ops/dev-api-unrestartable-notification-constraint-2026-09-10.md](../../ops/dev-api-unrestartable-notification-constraint-2026-09-10.md)
+- ❌ **ยังไม่ได้ตั้ง `NEXT_PUBLIC_ENVIRONMENT=true`** ใน GitHub Environment `dev` ของ `zyra-app` — เป็น build-time ต้องมีทั้งคู่ ไม่งั้น build ขึ้นไปมืด (ดู [[uat-room-pet-release-2026-09-08]])
+- ⏳ **TMD** — ต้องลงทะเบียนที่ `https://data.tmd.go.th` ในนามบริษัทเพื่อขอ `uid`/`ukey` (ข้อ 3 ในตารางท้าย spec) · ตอนนี้ทดสอบด้วย demo `uid=api&ukey=api12345` ซึ่ง **ห้ามใช้ prod**
+
+**เริ่มทำต่อที่:** C3 (weather effects บน Pixi) ที่ยังติด asset 1× ของ 3 ไฟล์ (ข้อ 48) + เกณฑ์ลมแรง (ข้อ 11) · หรือ C5 (alert banner) ที่ยังติดมติ severity + ข้อ 40
 
 ### วิธีกลับมาทำต่อ
 
@@ -68,6 +74,35 @@ git worktree add /path/ใหม่ feat/sc-env-01-api-settings
 - ❌ ยังไม่มี e2e ตั้งแต่ poller → ws → client
 
 ---
+
+## รอบที่ 13 — 2026-09-10 · C7 (preference ส่วนตัว) + เปิด credential ของ Google บน dev
+
+**ทำอะไร** — `zyra-app` commit `f673a95` (PR #336) · `zyra-api` commit `32cc571` (PR #108)
+
+ดึง Figma `4839:34795` ก่อนเขียนตาม rule 10 แล้วพบเรื่องที่พลิกโครง: **HP-05 ไม่ใช่หน้าใหม่ แต่เป็น member variant ของ Setting → Environment tab เดียวกับ C6** (`4839:38016` "Environment setting - Member") ⇒ tab นี้เลิกเป็น owner-only แล้ว **สลับแถวตาม role แทนการซ่อนทั้ง tab** ซึ่งกลับมติของ C6 (ตอนนั้นถูกต้อง เพราะทุกแถวยังเป็น workspace-wide ที่ member โดน 403) — ค่าที่ถอดมาทั้งหมดอยู่ใน [ux-ui-plan §10](ux-ui-plan.md#10-personal-preference-c7--hp-05--ถอดจริง-2026-09-10)
+
+1. **`env_time_of_day` / `env_weather_effects` ใน general-settings blob เดิม** — ไม่มี endpoint ใหม่ ไม่มี migration · default **ON** ทั้งคู่
+2. **`PatchGeneralSettings` bind ทับ default แทน zero struct** — ของเดิม bind ลง struct เปล่า ⇒ เบราว์เซอร์ที่ยังถือ bundle เก่าจะไม่ส่ง key ใหม่มา แล้ว Go เขียนทับเป็น `false` เงียบ ๆ ตอน user ไปกดแถวอื่นใน General tab · ฝั่งอ่านเป็น merge-over-default อยู่แล้ว อันนี้แค่ทำให้ฝั่งเขียนตรงกัน
+3. **preference ลบได้อย่างเดียว** — `shouldRenderStageTint` AND สวิตช์ส่วนตัวเข้าไปข้าง ๆ สวิตช์ของ owner ⇒ member ปิดเอฟเฟกต์ที่ออฟฟิศเปิดไว้ได้ แต่**เปิดเอฟเฟกต์ที่ owner ปิดไม่ได้** · แถวที่ workspace ปิดอยู่จึง **disable** ไม่ใช่ปล่อยให้กด (สวิตช์ที่กดแล้วไม่มีอะไรเกิดขึ้นแย่กว่าสวิตช์เทา) และ**ค่าที่เก็บไว้ไม่ถูกแตะ**
+4. **ปิดแล้วไม่วาด layer เลย** ไม่ใช่ fallback เป็น Morning ตามที่ AC ของ HP-05 เขียน — morning = alpha 0 อยู่แล้ว บนจอจึงเท่ากัน และ "ไม่มี layer" คือสิ่งที่ทำให้ AC ข้อ FPS เป็นจริง (ข้อ 60)
+5. **`shouldRenderWeatherEffects`** เพิ่มไว้ทั้งที่ยังไม่มีใครเรียกนอกจากเทสต์ — C3 ต้อง AND สวิตช์ส่วนตัวเข้าไปด้วย และวิธีลืมที่ง่ายที่สุดคือไม่มี gate ให้เรียก
+
+**ไม่ได้ทำจาก design รอบนี้** — **"My location" + การ์ด "Your weather"** (ต้องมี location ราย user ที่ API ยังไม่มี + ติดมติ PII ข้อ 42/45) และ **ปุ่ม "ปิดทั้งหมด"** ที่ spec วาดไว้แต่ design ตัดออก (ข้อ 61/62)
+
+**verify ถึงไหน**
+- ✅ Go: `gofmt` / `go vet` / `go test ./...` เขียว · TS: eslint สะอาด · **`next build` production เขียวพร้อม flag เปิด** · **vitest 145 ไฟล์ / 1,953 test** (ใหม่ 17 เคส — gate 12 + member tab 5)
+- ✅ ครบ DoD ระดับเทสต์: reload แล้ว preference คงอยู่ (มาจาก blob ที่ server merge over default — pin ด้วยเทสต์ Go 3 เคส) · เปิดใหม่กลับมาตามเวลา/อากาศปัจจุบัน · ครบทั้ง 4 คู่สถานะ
+- ❌ **ยังไม่เคยกดจริงบนจอ** — ต้องรอ dev บูตได้ก่อน (ดูข้างล่าง)
+- ❌ **สวิตช์ Weather visual effects ยังไม่มีผลอะไรให้เห็น** จนกว่า C3 จะมา — ค่าถูกเก็บและ gate พร้อมแล้ว แต่วันนี้ไม่มี layer ให้ปิด · **ถ้ามีคนเทสต์ก่อน C3 จะรายงานว่าเป็นบัก**
+
+**credential ที่จัดการให้แล้ว (Google)**
+- เปิด `weather.googleapis.com` / `timezone-backend.googleapis.com` / `geocoding-backend.googleapis.com` บน `gather-dev-458614` (billing เปิดอยู่แล้ว account `01B129-524F19-1584DC`)
+- สร้าง API key **"zyra-api SC-ENV-01 (dev)"** (uid `56ab900d-b2ea-4441-9421-582631d2b9e0`) **จำกัดเฉพาะ 3 API นั้น** — ยังไม่ได้จำกัด IP เพราะ egress ของ k3s ยังไม่ได้ยืนยัน
+- `zyra-api-dev-env-json` **version 5** = ของเดิม 39 key + `ENVIRONMENT_ENABLED=true` + `GOOGLE_MAPS_API_KEY` · force-sync ESO แล้ว ยืนยันว่า 2 key เข้า `dev/zyra-api-secrets` จริง
+
+**ติดอะไร — ใหม่และสำคัญ:** **dev zyra-api รีสตาร์ทไม่ขึ้นมาตั้งแต่ 2026-09-09 ~10:10 UTC** เพราะ migration ตอนบูต DROP-แล้ว-ADD `tb_notification_type_check` แล้วมีแถว `type='spotlight_live'` 25 แถว (จาก `zyra-app` branch `feat/spotlight`) ที่ไม่อยู่ในลิสต์ ⇒ env ใหม่เข้า secret แล้วแต่ยังไม่ถึง process · rollout undo กลับแล้ว dev ไม่ล่ม · **constraint ตอนนี้หายไปจาก dev DB** จนกว่าจะมี pod บูตผ่าน — รายละเอียด + ทางแก้: [ops/dev-api-unrestartable-notification-constraint-2026-09-10.md](../../ops/dev-api-unrestartable-notification-constraint-2026-09-10.md)
+
+**ติดอะไร (เดิม)** — TMD credential · มติ severity 2 ข้อ + ข้อ 40 · asset 1× 3 ไฟล์สำหรับ C3 · ไฟล์ดวงจันทร์อีก 3 phase (ข้อ 58) + มติซีกโลกใต้ (ข้อ 59) · `NEXT_PUBLIC_ENVIRONMENT` ฝั่ง GitHub Environment
 
 ## รอบที่ 12 — 2026-09-10 · เสียงบรรยากาศ (นอกแผน 17 PR เดิม)
 
