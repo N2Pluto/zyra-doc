@@ -9,7 +9,7 @@
 
 ## ภาพรวม
 
-> **ความคืบหน้า (2026-09-10):** ✅ **A1 A2 A3 A4 A5 A6 B1 C1 C2 C4 C6 C7 เสร็จแล้ว (12/17)** · ⏳ เหลือ C3 C5 และ D1–D3 · สถานะเต็ม + วิธีกลับมาทำต่ออยู่ใน [progress.md](progress.md)
+> **ความคืบหน้า (2026-09-11):** ✅ **A1 A2 A3 A4 A5 A6 B1 C1 C2 C3 C4 C6 C7 เสร็จแล้ว (13/17)** · ⏳ เหลือ C5 และ D1–D3 · ทุกอย่างอยู่บน `develop` และขึ้น dev แล้ว · สถานะเต็ม + วิธีกลับมาทำต่ออยู่ใน [progress.md](progress.md)
 
 | Track | จำนวน PR | เริ่มได้เมื่อ |
 |---|---|---|
@@ -18,7 +18,7 @@
 | C · frontend (zyra-app) | 7 | หลัง A1 (มี contract แล้ว — ระหว่างนั้น mock ได้) |
 | D · test + verify | 3 | ตามหลังแต่ละ track |
 
-**งานที่ยังไม่ควรเริ่ม** จนได้คำตอบ: ตารางคำ→ระดับความรุนแรงของกรมอุตุฯ (ข้อ 3/23) กระทบ **A4** · เกณฑ์ "ลมแรง" (ข้อ 11) กระทบ **C3** · effect หิมะ (ข้อ 29) กระทบ **C3** · หน่วยวัด/ภาษา (ข้อ 30/31) กระทบ **C4/C5** · ที่ตั้ง UI ของ toggle owner (ข้อ 34) + HP-07 ซ้ำ toggle เดิม (ข้อ 33) + **emergency ปิดได้ไหม (ข้อ 40)** กระทบ **C5/C6**
+**งานที่ยังไม่ควรเริ่ม** จนได้คำตอบ: ตารางคำ→ระดับความรุนแรงของกรมอุตุฯ (ข้อ 3/23) กระทบ **A4** · ~~เกณฑ์ "ลมแรง" (ข้อ 11)~~ + ~~effect หิมะ (ข้อ 29)~~ **ไม่บล็อกแล้ว — C3 วาดทั้งคู่ตาม preview ไปก่อน** · หน่วยวัด/ภาษา (ข้อ 30/31) กระทบ **C4/C5** · ที่ตั้ง UI ของ toggle owner (ข้อ 34) + HP-07 ซ้ำ toggle เดิม (ข้อ 33) + **emergency ปิดได้ไหม (ข้อ 40)** กระทบ **C5/C6**
 ทั้งหมด **ไม่บล็อก A1–A3, B1, C1–C2** — เริ่มได้เลย
 
 **อัปเดต 2026-09-09:** PM เพิ่ม **HP-06** (master switch ปิด workspace location) และ **HP-07** (ปิด alert notification ทั้ง workspace) → ไม่เพิ่ม PR ใหม่ แต่ขยายขอบเขต **A1** (คอลัมน์ `env_location_enabled`) · **A3** (ข้าม fetch เมื่อปิด) · **C4/C5** (สถานะใหม่) · **C6** (master switch + 2 toggle) — ดู [spec ภาคผนวก E](spec.md#ภาคผนวก-e--task-ที่-pm-เพิ่มรอบ-2026-09-09-hp-06-hp-07)
@@ -147,14 +147,21 @@
 
 ---
 
-### C3 — `feat(app): add weather effect layers`
-**Branch** `feat/sc-env-01-app-weather-fx` · ต่อจาก C2 · ⚠️ **เกณฑ์ลมแรง (ข้อ 11) + หิมะ (ข้อ 29) รอมติ**
+### C3 — `feat(app): add weather effect layers` ✅ **เสร็จ 2026-09-11**
+**Branch** `fix/sc-env-01-backdrop-screen` → `feat/sc-env-01-preview-parity` → `fix/vo-weather-covers-the-map` · [#346](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/346) · [#347](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/347) · [#350](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/350) — **merge เข้า `develop` แล้ว** (`2c1b06f`)
+ข้อ 11 (เกณฑ์ลมแรง) และ 29 (effect หิมะ) **ไม่บล็อกอีกต่อไป** — ทั้ง `windy` และ `snow` วาดตาม composition ของ preview แล้ว ถ้ามติออกมาต่างจากนี้ค่อยปรับตาราง layer
 
-- particle/overlay ต่อ condition ตามค่าใน [HP-03](spec.md#hp-03--weather-real-time-เปลี่ยน-visual-บน-map): drizzle 50 / rain 200 / thunderstorm 500 drops/s · lightning flash 5–15 วินาที ค้าง 80ms · cloudy / fog overlay
-- ใช้ `ParticleContainer` ของ Pixi (ไม่ใช่ Sprite ต่อเม็ด) · หยุด ticker เมื่อ layer ไม่ทำงาน
-- **AC: ไม่ต่ำกว่า 30 FPS บนเครื่องระดับกลาง** → ต้องวัดจริง ไม่ใช่ประเมิน
+**ที่ทำจริง ต่างจากที่เขียนไว้ตรงนี้ 2 เรื่อง**
 
-**DoD** · วัด FPS ก่อน/หลังบน production build แล้วบันทึกตัวเลข ([18-before-after-metrics](../../../.claude/rules/18-before-after-metrics.md)) · สลับ condition ไม่ leak particle · เสียงฟ้าร้องผูกกับ toggle (ถ้ามติให้มี)
+1. **ไม่ได้ใช้ `ParticleContainer`** — เอฟเฟกต์ทุกตัวเป็น GIF ที่ดีไซน์ส่งมา (ฝน/หิมะ/เมฆ/หมอก/ลม/ฟ้าผ่า/ดวงอาทิตย์/พระจันทร์/ดาว) จึงเป็น `GifSprite` ต่อชิ้น ไม่ใช่ particle ที่วาดเอง · ตัวเลข "drops/s" ของ HP-03 จึงแปลงเป็น**จำนวนเม็ดและขนาด**แทน: drizzle = เม็ดละเอียดจำนวนมาก · rain = 56 เม็ด 3 ขนาด · thunderstorm = ฝนเท่า rain + เมฆทึบ + ฟ้าผ่า 3 จุดคนละรอบ
+2. **องค์ประกอบยึดตาม [preview ที่ทีมรีวิว](https://claude.ai/code/artifact/17865a33-4c40-445d-b84c-4e52a20c1ac6) ไม่ใช่พิกัดเฟรม Figma ตรง ๆ** — เฟรมเป็นภาพนิ่ง ลอกตรง ๆ ได้ฝน 8 ช่องเรียงกันกับเมฆนิ่ง 6 ก้อน ตาราง layer ทั้ง 323 ชิ้นถูกพอร์ตมาที่ `lib/environment-fx-composition.ts` (gen ด้วย `scripts/gen-environment-fx.py`)
+
+**ของที่ได้เพิ่มจากแผนเดิม** · ดวงอาทิตย์เดินส่วนโค้งจากพระอาทิตย์ขึ้น→ตกของพิกัดนั้นจริง + ตัดที่เส้นขอบฟ้า + halo ใต้ sprite · พระจันทร์ตาม phase จริงจากปฏิทิน (`lib/environment-sky.ts` — ไม่ยิง provider) + ดาว · แสงไล่ต่อเนื่องแทนการกระโดดระหว่าง 5 ช่วง · backdrop เป็นฉากที่ออฟฟิศตั้งอยู่ (ท้องฟ้า/ทะเล/หญ้า) + preload ตั้งแต่หน้า `/loading`
+
+**การวาง** · composition เป็น tile ขนาดจริงของดีไซน์ (1 design px = 1 world px) ปูซ้ำทั่วแมพ · ฝน/หิมะ/หมอก/ลม ปูทุกแถวลงไปจนพ้นขอบล่าง · เมฆ/ดาว/ฟ้าผ่า แถวบนอย่างเดียว (ไม่งั้นเมฆไปนั่งบนโต๊ะ) · ดวงอาทิตย์/พระจันทร์ชิ้นเดียวบนส่วนโค้ง · แมพใหญ่ = thin pattern แทน mount sprite เป็นพัน (`ENV_FX_SPRITE_BUDGET = 400`)
+
+**DoD** · ⛔ **ยังไม่ได้วัด FPS** — AC ข้อ "ไม่ต่ำกว่า 30 FPS บนเครื่องระดับกลาง" ยังค้าง และตอนนี้ sprite ต่อฉากมากกว่าแผนเดิมมาก **ควรวัดก่อนขึ้น uat** ([18-before-after-metrics](../../../.claude/rules/18-before-after-metrics.md)) · ✅ สลับ condition ไม่ leak (มีเทสต์ + แก้บั๊ก `destroy(true)` ที่ฆ่า GifSource ที่ใช้ร่วมกัน — [#348](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/348)) · ✅ เสียงผูกกับ toggle แล้วตั้งแต่รอบที่ 12
+**verify** · build/lint/test เขียว · **เห็นจริงแล้ว**: เมฆ · backdrop · แสงกลางคืน · **ยังไม่เห็นด้วยตา**: ฝน · หิมะ · ลม · ดวงอาทิตย์กลางวัน · พระจันทร์ (สภาพอากาศจริงของพิกัดทดสอบเป็น cloudy/drizzle ตลอด)
 
 ---
 
@@ -246,4 +253,4 @@ D1 ตามหลัง A5 · D2 ตามหลัง C5
 ```
 
 **เริ่มวันนี้ได้เลย:** A1 · A2 · A3 · C1 (ไม่มีข้อไหนรอมติ)
-**ต้องมีคำตอบก่อนปิด:** A4 (ตารางคำ→ระดับ) · A5 (ยืนยัน severity mapping) · C3 (ลมแรง + หิมะ) · C4/C5 (หน่วย + ภาษา) · C6 (ปักหมุด/ค้นชื่อ + Figma)
+**ต้องมีคำตอบก่อนปิด:** A4 (ตารางคำ→ระดับ) · A5 (ยืนยัน severity mapping) · C3 (ทีมรับองค์ประกอบตาม preview ไหม + วัด FPS) · C4/C5 (หน่วย + ภาษา) · C6 (ปักหมุด/ค้นชื่อ + Figma)
