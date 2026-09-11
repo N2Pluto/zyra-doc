@@ -2,11 +2,11 @@
 
 > entry ใหม่อยู่**บนสุด** · แยก "build เขียว" ออกจาก "live-test ผ่าน" ให้ชัดทุกครั้ง
 
-## สถานะล่าสุด — 2026-09-11 (รอบที่ 17)
+## สถานะล่าสุด — 2026-09-11 (รอบที่ 18)
 
 **เสร็จ 13 / 17 PR** · ฝั่ง server ครบ (Track A + B) · ฝั่งหน้าบ้าน **6 ใน 7** (C1 + C2 + C3 + C4 + C6 + C7) — เหลือ **C5** (แจ้งเตือนสภาพอากาศรุนแรง) อย่างเดียว
-**ทุกอย่างอยู่บน `develop` และขึ้น dev แล้ว** (ล่าสุด app `8dabb9d` — ท้องฟ้าเหนือทะเล · arc ดวงอาทิตย์เต็มจอ · backdrop 4056×2976 แขวนจากเส้นขอบฟ้า · เสียงเบาลง — และ api `f8dd85d`) — ไม่มี PR ค้างของ SC-ENV-01
-**asset:** ครบทุกสภาพอากาศบน R2 แล้ว (เพิ่ม moon ×5 · star ×6 · snow ×4 · wind ×5 · backdrop ตัวใหม่จากดีไซน์ 4056×2976 = 1352:992 พอดี ไม่ crop) — ยังค้างเฉพาะ **1× ต้นฉบับของ wind/snow/star** จากดีไซน์
+**ทุกอย่างอยู่บน `develop` และขึ้น dev แล้ว** (ล่าสุด app `5b42168` — ฉากอยู่แม้ปิด location · พื้นหิมะ · warm ฟ้าที่ /loading · ขอตำแหน่งตอนเข้า map — และ api `f8dd85d`) — ไม่มี PR ค้างของ SC-ENV-01
+**asset:** ครบทุกสภาพอากาศบน R2 แล้ว (เพิ่ม moon ×5 · star ×6 · snow ×4 · wind ×5 · backdrop ตัวใหม่จากดีไซน์ 4056×2976 = 1352:992 พอดี ไม่ crop + ตัวฤดูหนาว `zyra-backdrop-winter-4056.png`) — ยังค้างเฉพาะ **1× ต้นฉบับของ wind/snow/star** จากดีไซน์
 **preview ให้ทีมตรวจ:** [artifact](https://claude.ai/code/artifact/17865a33-4c40-445d-b84c-4e52a20c1ac6) — ตอนนี้ **โค้ดวาดเหมือนหน้านี้แล้ว** (ดูรอบที่ 14)
 
 | Repo | Branch | Commit | PR (draft, base `develop`) |
@@ -78,6 +78,35 @@ git worktree add /path/ใหม่ feat/sc-env-01-api-settings
 - ❌ ยังไม่มี e2e ตั้งแต่ poller → ws → client
 
 ---
+
+## รอบที่ 18 — 2026-09-11 · ฉากอยู่แม้ปิด location · พื้นหิมะ · warm ฟ้าที่ /loading · ขอตำแหน่งตอนเข้า map
+
+**ทำอะไร** — merge เข้า `develop` 4 PR (zyra-app) จากคำสั่ง 4 ข้อในวันเดียว:
+
+| PR | เรื่อง | commit บน develop |
+|---|---|---|
+| [#355](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/355) | ปิด **Workspace location** แล้ว bg ยังต้องอยู่ | `139f31e` |
+| [#356](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/356) | หิมะตก → พื้นหลังฤดูหนาว `Bg_wimter_zyra.png` | `3430081` |
+| [#357](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/357) | โหลด bg/effect ตั้งแต่ /loading ไม่ให้เห็นรอยโหลดใน VO | `a07a95b` |
+| [#358](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/358) | ขอสิทธิ์ตำแหน่งรวมกับไมค์/กล้องตอนเข้า map | `5b42168` |
+
+| อาการ / งาน | สาเหตุ | แก้ |
+|---|---|---|
+| ปิด location แล้วฉาก (ทะเล หญ้า headroom) หายไปด้วย | `isEnvironmentSceneOn` บังคับ `location_enabled && location` (เหลือจากตอนแยกฉากออกจากสวิตช์ส่วนตัว รอบที่ 15) | ฉากตามแค่ `flagEnabled && feature_enabled` · ไม่มี location = ไม่มีดวง/อากาศ/แสง แต่ออฟฟิศยังยืนบนหญ้า · API ส่ง snapshot มาอยู่แล้วไม่ว่าสวิตช์เป็นอะไร |
+| รูปฤดูหนาว | 4056×2976 ตัดเส้นเดียวกับรูปหญ้า (ทะเล 22.4% หิมะ 23.3%) | อัปโหลด R2 key ใหม่ `bg/zyra-backdrop-winter-4056.png` · `backdropFileFor(condition)`: `snow` → หิมะ อื่นๆ (รวมฝน) → หญ้า · engine สลับรูปเองเมื่อ URL เปลี่ยน · **ตัดสินใจ (ค้านได้)**: พื้นหิมะตาม weather ของ workspace ไม่ตามสวิตช์ส่วนตัว — เกล็ดคือ effect พื้นขาวคือฉาก |
+| เข้า VO แล้วฟ้ามาช้ากว่าออฟฟิศ | /loading warm แค่รูปหญ้าผ่าน `loadTex` · GIF ถูก fetch+decode หลัง /play mount · snapshot ก็ fetch หลัง mount | /loading ยิง `GET …/environment` คู่กับ members แล้ว `setQueryData(["environment", id])` (key/shape เดียวกับ `useEnvironment`, `staleTime: Infinity`) · `collectEnvironmentAssetUrls(snapshot)` = backdrop ของอากาศนั้น + GIF ทุกตัวใน composition (dedupe) · `PreloadEntry.gif` → `Assets.load({parser:"gif"})` ประตูเดียวกับ scene |
+| ขอสิทธิ์ตำแหน่งแยกทีหลังในแท็บ Environment | ขอเฉพาะตอน owner กดสวิตช์ | `useEntryMediaPermission` ขอ geolocation ต่อจากไมค์/กล้องตอน mount office (flag เปิดเท่านั้น, กติกาซ้ำถามเหมือนอุปกรณ์) · **ตัดสินใจ (ค้านได้)**: ใช้ตำแหน่งเฉพาะ **owner** และเฉพาะ workspace **ยังไม่มี place** → `PUT …/environment {location_enabled:true, lat, lng}` (save เดียวกับสวิตช์ในแท็บ) แล้ว seed cache · member ขอแล้วไม่ตั้งอะไร |
+
+**verify ถึงไหน**
+- vitest: `environment-layer` 9+1 · `environment-weather-fx` +1 · `vo-preload` 20 · `use-entry-media-permission` 5 เคสใหม่ (owner+ไม่มี place → save · member → ไม่ save · มี place แล้ว → ไม่ save · grant มาก่อน snapshot → save เมื่อ snapshot มา · ปฏิเสธ → เงียบ, `denied` ไม่ถามซ้ำ) · tsc/eslint/prettier สะอาด · CI เขียวครบทั้ง 4
+- **#355 ดูจริง** (local prod build ต่อ dev, office ปิด location): payload `location_enabled:false, location:null` → backdrop วาด, ขอบฟ้า −442 / headroom 894 **เท่าตอนมี location** (กรอบกล้องไม่ขยับ), sprite 0, tint 0 — บน develop เดิม layer = null
+- **#357 วัดจริง** (office ชี้ Bangkok ชั่วคราว, `performance` resource timing + path logger): /loading mount 22 371 ms · environment fetch ครั้งเดียว 22 669 · cloud1-3 + Sun + backdrop โหลด 25 181–25 292 · /play mount 26 678 → ไฟล์อากาศ **5/5 ก่อน /play, 0 หลัง /play**, ไม่มี environment fetch ซ้ำ — บน develop ทั้งหมดเกิดหลัง /play
+- ⛔ **#356 ยังไม่เห็นจริง** — ไม่มี workspace บน dev ที่หิมะตกตอนนี้ (เส้นทางสลับรูป = `_ensureBackdrop` เดียวกับที่รูป 2x→4056 ผ่านมาแล้วใน #353)
+- ⛔ **#358 ยังไม่เห็นจริง** — headless browser กด allow ตำแหน่งไม่ได้ · ต้องลอง browser จริง: เข้า workspace ที่เป็น owner และยังไม่ตั้งที่อยู่ → dialog ไมค์/กล้อง แล้ว dialog ตำแหน่ง → แท็บ Environment มี place + badge ขึ้น
+
+**dev DB** · `office` ปิด env_location กลับแล้ว (ชี้ Bangkok ชั่วคราวเพื่อวัด #357)
+
+**ต่อจากนี้** · ลอง #358 บน browser จริง · ดูพื้นหิมะ/ดวงอาทิตย์ตก/ดวงจันทร์/ฝน/ลมของจริง · ดวงจันทร์คืนมีเมฆ (ช่องว่างจาก preview รอดีไซน์ตัดสิน) · วัด FPS ก่อน uat · C5 · asset 1× wind/snow/star · TMD credential
 
 ## รอบที่ 17 — 2026-09-11 · เมฆขึ้นฟ้า · ดวงอาทิตย์วิ่งเต็มจอ · backdrop ตัวใหม่จากดีไซน์ · เสียงเบา
 
