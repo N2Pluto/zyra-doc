@@ -5,6 +5,62 @@
 
 ---
 
+## 2026-09-11 · แท่นยืน/ลำแสงลงมาที่เท้า · tooltip + shortcut [B] · หลายคนขึ้น stage พร้อมกัน · cap แชร์จอของ Spotlight
+
+รอบนี้ผู้ใช้แจ้ง 4 เรื่องต่อเนื่องกันจากการเล่นจริง (2 เรื่องแรกเป็นงาน art/UI, 2 เรื่องหลังเป็นบั๊กพฤติกรรม)
+
+### 1. แท่นยืน (pad) และลำแสงของ spotlight ไม่ตรงเท้าตัวละคร — `zyra-engine/pixi-game/scene.ts`
+
+- **อาการ:** ผู้ใช้บอก "แท่นยืนมันอยู่ตรงกลางเกินไป ตอนยืนมันเลยดูเลย ช่วยทำให้มันลงมาอีกนิดแต่อยู่ภายในช่อง แบบตรงเท้าพอดี" แล้วตามด้วย "ไฟที่ฉายลงมา ไม่ทำให้พอดีด้วยหรอ"
+- **สาเหตุร่วมของทั้งสองอัน:** art ถูกวางอิงแถวที่อยู่ **สูงกว่าพื้นที่ sprite ยืนจริง 10px** — `playerSprite` anchor `(0.5, 1)` วางที่ `py` และ `py` ของคนที่ยืนอยู่ = จุดกลาง tile + `|PLAYER_FOOT_OFFSET_Y|` (ดู `_snapToSeat`: `this.py = spot.worldY - PLAYER_FOOT_OFFSET_Y`)
+  - **pad + sparkle:** เดิม `position.set(cx, cy)` โดย `cy` = จุดกลาง zone แบบเรขาคณิต → เรืองแสงลอยอยู่ระดับสะโพก *ด้านหลัง* ตัวละคร
+  - **ลำแสง:** เดิม `beam.position.set(occupant.x, occupant.footY)` แต่ `footY` คือ **แถว hitbox/สำหรับ depth sort** ไม่ใช่พื้นที่ยืน → ลำแสงตัดจบแค่ระดับหน้าแข้ง เท้าหลุดออกนอกแสง
+- **แก้:** ย้ายทั้งสองมาอยู่บน "เส้นพื้น" (ground line) เส้นเดียวกัน
+  - pad: `cy = Math.min(zone.y + zone.height/2 - PLAYER_FOOT_OFFSET_Y, zone.y + zone.height - padBelowCenter)` — ตัว `Math.min` คือ clamp ตามที่ผู้ใช้สั่งว่า "แต่อยู่ภายในช่องนะ" (ขอบล่างของ art ไม่ล้นออกนอก zone) → stage 2×2 tile ลงมาเต็ม 10px, stage 1×1 clamp ที่ 7.4px แล้วขอบล่าง pad พอดีเส้นล่างของ zone
+  - beam: `position.set(occupant.x, occupant.footY - PLAYER_FOOT_OFFSET_Y)` — **เฉพาะตำแหน่ง** ส่วน `zIndex` ยังคิดจาก `footY` เดิม เพื่อไม่ให้ลำดับการวาด (แสงทับ avatar / pad อยู่ใต้ avatar) เปลี่ยน
+- **วัดจาก art จริงก่อนแก้ (ไม่ได้เดา):** `Spotlight_yellow_base.gif` 320×320 มี pixel ทึบแถว 200–319 centroid `0.811` → ตรงกับ `SPOTLIGHT_MARKER_PAD_CENTER_Y = 0.8` ที่ใช้เป็น anchor อยู่แล้ว จึงไม่ต้องแตะค่า anchor เลย แก้ที่ตำแหน่งที่วางพอ
+
+### 2. ปุ่ม Stop broadcast: tooltip แบบมี key badge + shortcut [B] — `components/zone-enter-header.tsx`
+
+- **ทำอะไร:** เดิมปุ่มใช้ `title=` ของ browser ซึ่งใส่ badge ไม่ได้ → เปลี่ยนเป็น tooltip ตอน hover/focus ใช้ภาษาภาพเดียวกับ tooltip ของ Room Pet (`PetTooltip`) เพื่อให้ key badge สองที่ในโปรดักต์อ่านเป็นอันเดียวกัน: bubble `#1A1B1E` radius 8 p-8 gap-4 + หัวลูกศรล่างเป็น CSS triangle + `<kbd>` กรอบเขียว `#58D68D`; คง `aria-label` และเพิ่ม `aria-keyshortcuts`
+- **[B] กดได้จริง (ผู้ใช้ยืนยันว่าต้องการ):** เดิมทั้งโปรเจกต์ **ไม่มี** shortcut B อยู่เลย (เช็คแล้วไม่ชนกับอะไร) → เพิ่ม `STOP_BROADCAST_SHORTCUT_KEY = "b"` + listener ใน `MeetingToolbar` โดย guard ด้วย `onStopBroadcast` ซึ่งเป็น **จุด mount เดียว** (มีแต่ `vo-spotlight-stage.tsx:382` ที่ส่ง prop นี้ และอยู่หลัง `showControls`) → คนที่ดูอยู่บน listener-only stage กด B ไปปิด broadcast ของคนอื่นไม่ได้; ข้ามการทำงานเมื่อกำลังพิมพ์ (INPUT/TEXTAREA/contentEditable) และเมื่อมี modifier — แบบเดียวกับ handler ของ shortcut `[P]` ที่มีอยู่
+- **ขอบเขตตามที่ผู้ใช้เคาะ:** ใส่ให้ **เฉพาะปุ่ม Stop broadcast** ปุ่มอื่นใน toolbar (mic/cam/emoji/ยกมือ) ยังใช้ `title` เดิม
+
+### 3. คนที่ 2 ขึ้น stage แล้วไม่ขึ้น / ขึ้นแค่คนเดียว (บั๊ก — ตรงกับดีไซน์ 2-up "Spotlight 2 │ Viewers 50")
+
+- **ของเดิมที่พร้อมอยู่แล้ว ไม่ต้องทำใหม่:** `zyra-ws` รองรับหลาย speaker ต่อ floor เต็มรูปแบบ (`spotlightFloors[floorID]` เป็น map ของ userID และมี comment ตรง ๆ ว่า "a second speaker joining an ongoing one keeps the id it already has") และ `SpotlightSpeakerGrid` ก็ layout grid หลายคนได้อยู่แล้ว (`columns = ceil(sqrt(n))` → 2 คน = 2 ช่องข้างกัน) — ปัญหาทั้งหมดอยู่ฝั่ง client 3 จุด
+- **(ก) stage อ่านแหล่งข้อมูลผิด:** stage ของ presenter list คนจาก **เรขาคณิต tile** (`getAuthoritativeZoneParticipants`) ส่วน stage ของคนดู list จาก **speaker set ของ server** → สองฝั่งไม่มีทางตรงกัน; เรขาคณิตตอบคำถามนี้ไม่ได้ด้วย เพราะ (1) ยืนบน marker ยังไม่ใช่การขึ้นไลฟ์ (ต้องกด Play) และ (2) presenter ตอนอยู่ใน exit-confirm เดินออกจาก marker แล้วแต่ยัง broadcast อยู่
+  - **แก้:** ทำ memo เดียว `spotlightStageParticipants` จาก `spotlight.speakers` (`hero-virtual-office.tsx:6949`) แล้วให้ทั้งสองฝั่งอ่านอันเดียวกัน (`spotlightViewerParticipants` กลายเป็น filter ตัวเองออกจากลิสต์นี้) — เลิกใช้ hack ที่ต้องเอา presenter ใส่กลับเข้า list ด้วยมือตอน exit-confirm ไปเลย เพราะ server คงชื่อเขาไว้ใน speaker set อยู่แล้ว
+  - **ระวังไว้แล้ว:** ใน memo แยกเคส self ออกมา (ชื่อ = `charName`, รูป = `user.image_upload`) ให้เหมือน branch self ของ `resolveParticipant` — ที่ inline เพราะ helper ตัวนั้นประกาศอยู่ล่างกว่า hook ที่ใช้ลิสต์นี้; คนอื่นยังใช้ `speaker.name` + `member.avatar_url` เหมือนเดิม ไม่เปลี่ยนพฤติกรรมฝั่งคนดู
+- **(ข) เดินขึ้น marker ที่มีคนไลฟ์อยู่แล้ว → จอว่างเปล่า:** ทั้ง `deriveShouldListen` และ `spotlightViewerActive` ตัดสิทธิ์คนที่ยืนบน marker ออกจากการเป็นคนดู → B เดินขึ้นไปแล้ว broadcast หายจากจอ ต้องกด Play แบบมองไม่เห็นอะไรเลย
+  - **แก้:** เงื่อนไขจริงแคบกว่านั้น — สิ่งที่ต้องห้ามคือ **การ publish เข้าห้องเอง** (สอง LiveKit connection ของ identity เดียวในห้องเดียวกันจะแย่งห้องกัน) ซึ่งผูกกับการกด Play ไม่ใช่การยืนบน tile (ดู `spotlightRoomId` = `onSpotlightStage && spotlightBroadcastRequested`) → เปลี่ยน gate ทั้งสองไปอิง `broadcastRequested` แทน (`deriveShouldListen` รับ arg ใหม่, `hardBlock` แก้คู่กัน)
+  - **ผลข้างเคียงที่ดีขึ้น:** ระหว่าง countdown 5 วิ (ยังไม่ set `requestedSpotlightZoneId`) คนกด Play ยังเห็น stage อยู่ แล้วค่อยสลับเป็น stage ของตัวเองตอนไลฟ์จริง; และ B ที่ฟังอยู่จะถูกนับเป็น viewer ในห้อง broadcast ด้วย (เลข Viewers เลยไม่ค้าง 0)
+- **(ค) HUD ถูก stage ทับ:** `VOHud` ไม่มี z-index ส่วน stage เป็น `z-50` → ถ้าโชว์ stage ให้ B เฉย ๆ ปุ่ม Play ที่จะพาเขาขึ้นเวทีจะถูกฝังอยู่ข้างใต้ กลายเป็นแย่กว่าเดิม
+  - **แก้:** ยกแถว HUD ล่างเป็น `z-[60]` **เฉพาะตอน** `onSpotlightTile && anySpotlightViewerActive && !spotlightViewerPip` — คนดูที่ไม่ได้ยืนบน marker ยังได้ takeover เต็มจอเหมือนเดิม
+- **ข้อที่ผู้ใช้เคาะ:** ยืนบน tile **ไม่** ขึ้นไลฟ์อัตโนมัติ — ยังต้องกด Play เหมือนเดิม (ตรงกับ Start UX ที่ยืนยันไว้ใน spec.md) แต่ต้องเห็น stage ระหว่างรอ
+
+### 4. แชร์จอบน stage ได้ทีละ 1 คน + toast ขออนุญาตคนที่แชร์อยู่
+
+- **ของเดิมที่พร้อมอยู่แล้ว:** flow นี้มีครบทั้งเส้นอยู่แล้วจาก SC-RTE-09 ของ meeting — `ws:share:request` / `ws:share:requested` / `ws:share:declined` / `ws:share:request:decline` และ `VOShareRequestNotification` ก็คือ toast ในดีไซน์ที่ผู้ใช้ส่งมาเป๊ะ (avatar + "Request to share screen · right now" + `Keep Sharing` / `Stop Sharing`); `zyra-ws` ก็ cap ห้อง spotlight ไว้ที่ 1 คนอยู่แล้ว (`maxPresentersIn`, `internal/hub/screenshare.go`)
+- **บั๊กคือตัวเลขไม่ตรงกันตัวเดียว:** client pre-check ใช้ `MAX_SCREEN_PRESENTERS = 2` แบบ flat → บน stage ที่มีคนแชร์อยู่ 1 คน `others.length (1) >= 2` เป็น false จึงปล่อยให้เปิด picker แล้ว publish ไปเลย แล้วโดน server ปฏิเสธด้วย `ws:share:denied` ขึ้น toast "screen share is full" — **flow ขอสิทธิ์จึงไม่เคยทำงานบน stage เลย**
+- **แก้:** เพิ่ม `maxScreenPresentersIn(roomId)` ใน `use-meeting-media.ts` ให้ mirror ฝั่ง server (spotlight = 1, ที่อื่น = 2) และใช้ทั้งที่ pre-check และที่ `ws:share:stopped` (เดิม `presenter_count >= 2` ก็ผิดเกณฑ์ของ stage ด้วย); เพิ่ม `SPOTLIGHT_ROOM_PREFIX` + `isSpotlightRoomId()` ใน `lib/spotlight-feature.ts` เพราะ client ต้องแยกชนิดห้องจาก media-room id อย่างเดียว (`spotlight:<floorId>` vs zone UUID)
+- **เช็ค z-order แล้ว:** toast เป็นลูก `z-50` ของ root ส่วน stage อยู่ใน overlay `z-10` → toast วาดทับ stage ได้จริง ไม่ต้องแก้อะไรเพิ่ม
+- **ไม่ได้แตะ `vo-spotlight-share-confirm-modal.tsx`:** อันนั้นคือ EC-01 (ขึ้น stage แล้วเสีย share ของตัวเอง) เป็นเรื่องละกันกับ flow ขอสิทธิ์นี้
+
+### verify ถึงไหน
+
+- **test ที่เพิ่ม/แก้:** pad อยู่บนเส้นพื้นและไม่ล้น zone + sparkle ขยับตาม pad, ลำแสงลงบนเส้นพื้น (แก้ assertion เดิมที่ pin ไว้ที่ `footY`), tooltip มี badge `B` และไม่มี `title` ซ้อน, `[B]` ปิด broadcast ได้แต่ไม่ทำงานตอนพิมพ์/มี modifier/บน listener-only stage, stage วาง speaker หลายคนข้างกันและหัวการ์ดนับ 2, `deriveShouldListen` 3 เคสใหม่ (ยืนบน tile ยังไม่กด Play = ฟัง / บน tile + ไลฟ์ = ไม่ฟัง / กด Play แล้วแต่ออกจาก tile = ฟัง), `isSpotlightRoomId`
+- **ผล:** targeted Vitest **18 ไฟล์ 541 tests ผ่าน** (ทุกไฟล์ที่ import module ที่แก้), `tsc --noEmit` ไม่มี error ใหม่ (เหลือ 5 ตัวเดิมบน HEAD: `pet-creation-wizard`, `pixi-game-scene`), ESLint 0 error
+- **ข้อจำกัดที่ต้องบอกตรง ๆ:** (1) **ยังไม่ได้ live-test 2 client พร้อมกัน** — ข้อ 3 ทั้งหมดอนุมานจากโค้ด + พฤติกรรมของ `zyra-ws` ไม่ใช่จากการเห็นของจริง ควรเปิด 2 browser เช็คก่อนปิดงาน (2) full suite 145 ไฟล์ **รันไม่จบบนเครื่องนี้** — ล้มด้วย `[vitest-pool]: Failed to start forks worker` / `Timeout waiting for worker to respond` ซึ่งเป็น resource exhaustion ของเครื่อง ไม่ใช่ assertion fail จึง verify ด้วยวิธีไล่ไฟล์ที่กระทบแทน
+
+### ยังไม่ได้ทำ / ต้องเคาะ
+
+- **ตัวเลข countdown ใหญ่ถูก stage ทับ:** overlay countdown เป็น `z-30` อยู่ใต้ stage `z-50` → ตอน B กด Play ขณะดู stage อยู่จะไม่เห็นเลข 5 วิตัวใหญ่ (chip "Going live in N" + Cancel ใน HUD ยังเห็นเพราะยกเป็น `z-[60]` แล้ว) — ตั้งใจไม่ยกเพราะเลข 360px ทับ feed สดน่าจะแย่กว่า ถ้าอยากให้เห็นต้องเคาะว่าจะย่อ/ย้ายตำแหน่งอย่างไร
+- **ชื่อ speaker บน stage ของคนดู** ยังใช้ `speaker.name` จาก server (ไม่ใช่ `character_name` จาก roster แบบลิสต์อื่นในแอป) — คงไว้เพื่อไม่ขยาย scope รอบนี้ ถ้าต้องการให้ตรงกันทั้งแอปค่อยเคาะแยก
+- **ขนาด zone ของ stage จริง:** ข้อ 1 clamp ไว้ให้ทำงานถูกทั้ง 1×1 และ 2×2 แต่ยังไม่ได้ยืนยันว่า zone ที่ผู้ใช้ใช้จริงกว้างพอให้ 2 คนยืนพร้อมกันทางเรขาคณิต — ถ้าเป็น 1×1 คนที่ 2 จะยืนไม่ได้ตั้งแต่ระดับ collision (ไม่เกี่ยวกับที่แก้ไปรอบนี้) ควรเช็คตอน live-test
+
+---
+
 ## 2026-09-09 · PiP เห็นจอที่แชร์ + ปุ่ม chat ในหัวการ์ด/mini window
 
 - **PiP ตอนแชร์จอมองไม่เห็น (แก้แล้ว):** รอบก่อนตั้งใจให้ mini window เป็น avatar-only (`sharing = !compact`) ซึ่งผิดความต้องการ — ถ้ามีคนแชร์อยู่ mini window จะแสดง **จอที่แชร์** แทน avatar (`MiniWindowScreen` ใหม่: `<video>` attach จาก `attachScreen`, `object-contain` บนพื้นดำเพื่อไม่ crop จอในการ์ด 340px, ป้ายชื่อพร้อมไอคอน Monitor มุมล่างซ้าย) และ hero ส่ง `screenSharers/screenEpoch/attachScreen/detachScreen` เข้า instance ของ mini window ด้วย (เดิมส่งแค่ instance ของ stage)
