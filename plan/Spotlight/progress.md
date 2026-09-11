@@ -5,6 +5,34 @@
 
 ---
 
+## 2026-09-11 (รอบที่ 2) · แจ้งเตือนตอน Broadcast จบ = toast มาตรฐาน (เลิกใช้ pill)
+
+- **ที่ผู้ใช้แจ้ง:** "ตอน Broadcast ปิดลงต้อง toast แจ้งเตือน" พร้อมรูป toast ที่มี title **Broadcast ended** / body **The speaker has ended the broadcast.** และไอคอน Radio สีส้มในกล่อง 40px
+- **ของเดิมมีอยู่แล้วแต่มองไม่เห็น:** `VOSpotlightStatusToast` เป็น **pill เล็ก ๆ กลางจอบน สูง 36px หายเองใน 3 วิ** (ดาว ⭐ + "{stage} has ended") วางตำแหน่งเดิมของ live banner — ผู้ใช้พลาดจนคิดว่าไม่มีการแจ้งเตือนเลย ซึ่งเป็นหลักฐานตรง ๆ ว่า pill เบาเกินไปสำหรับเหตุการณ์ระดับ "broadcast จบ"
+- **ผู้ใช้เคาะ 2 ข้อ:** (1) เอา toast **แทน** pill ไม่เอาคู่กัน (2) ทั้ง 3 เหตุการณ์ (`ended` / `endedDisconnected` / `resumed`) เป็น toast ให้หมด ภาษาภาพเดียวกัน
+- **ทำอะไร:**
+  - **`lib/toast.tsx` — เพิ่ม override ไอคอนแบบ optional:** variant ยังเป็นเจ้าของ **สี** (สีกล่อง + สีไอคอน) ส่วน arg `icon` ใหม่สลับ **แค่ glyph** → `warningWithTitle(title, body, duration?, icon?)` (เหมือนกันทั้ง success/error/warning); เป็นการเพิ่มแบบ additive **call site เดิมทุกที่ไม่เปลี่ยนพฤติกรรม** (ไม่ส่ง `icon` = ใช้ไอคอนของ variant เหมือนเดิม) — ทำแบบนี้เพราะดีไซน์ต้องการ `Radio` ซึ่งเป็นไอคอนที่ Spotlight ใช้บน live banner อยู่แล้ว แต่สีกล่องส้มในรูปคือ `warning` variant เดิมเป๊ะ จึงไม่ต้องเพิ่ม variant ใหม่ให้ design system (ต่างจากที่เคยค้างไว้เรื่องสีเหลือง/ส้มในรอบ EC-01)
+  - **`hero-virtual-office.tsx`:** ลบ state `spotlightStatusNotice` + การ render component ทิ้ง แล้วยิง `zyraToast` ตรงจาก effect เดิมทั้งสองตัว — `ended`/`endedDisconnected` เป็น `warningWithTitle(..., Radio)`, `resumed` เป็น **`successWithTitle(..., Radio)`** (เขียว เพราะเป็นคำตอบของสถานะ paused ที่ทุกคนกำลังมอง ควรอ่านว่า "กลับมาแล้ว" ไม่ใช่ "มีอะไรพังอีก"); ม่าน (`spotlightClosing` + `SPOTLIGHT_CURTAIN_MS`) ยังอยู่เหมือนเดิมไม่แตะ
+  - **ได้ลบ eslint suppression ไป 1 ตัว:** effect ของ `resumed` เดิมต้อง `eslint-disable react-hooks/set-state-in-effect` เพราะ set state — ตอนนี้ยิง toast ไม่ได้ set state แล้ว จึงลบ suppression ออกได้ (เพิ่ม `t` เข้า dep array)
+  - **เก็บกวาดของที่ตาย:** ลบไฟล์ `components/vo-spotlight-status-toast.tsx` และลบ `@keyframes vo-spotlight-toast-in` ใน `globals.css` (pill เป็น consumer เดียวของ animation นี้)
+- **copy ใหม่ (en + th ครบทั้งคู่)** แทน 3 key เดิมของ pill (`spotlightEnded`, `spotlightEndedDisconnected`, `spotlightResumedToast` — **ลบออกแล้ว** ไม่ปล่อยค้างเป็น dead copy):
+
+  | key | en |
+  |---|---|
+  | `spotlightEndedTitle` | Broadcast ended |
+  | `spotlightEndedBody` | The speaker has ended the broadcast. |
+  | `spotlightEndedDisconnectedBody` | {stage} ended — the speaker lost connection and never came back. |
+  | `spotlightResumedTitle` | Broadcast resumed |
+  | `spotlightResumedBody` | {name} is back — the Spotlight continues. |
+
+- **จุดที่ตั้งใจไม่ทำให้เหมือนกันหมด (บอกไว้ให้เคาะได้):** ดีไซน์ที่ได้มาเป็นเคส "จบปกติ" ซึ่ง body **ไม่มีชื่อ stage** → ทำตามคำเป๊ะ ๆ; แต่เคส `endedDisconnected` **ยังใส่ `{stage}` ไว้** เพราะ (ก) เป็นเคสที่ไม่มีดีไซน์ให้ (ข) "broadcast ไหนที่เพิ่งตายไป" เป็นข้อมูลที่มีค่าตอนจบแบบไม่ได้ตั้งใจ และ (ค) ถ้าถอด `{stage}` ออกด้วย `spotlightLiveStageNameRef` + effect ที่ไล่หา marker จาก tile ของ speaker (~25 บรรทัด ที่เขียนไว้ตั้งใจ) จะกลายเป็น dead code ทั้งก้อน — ถ้าจะให้ทั้งสองเคสพูดเหมือนกันบอกได้ จะถอด ref นั้นออกให้ด้วย
+- **verify ถึงไหน:** แทน test ของ pill (5 cases ที่เทส component + timer 3 วิ) ด้วย test **copy** ของ `vo-spotlight-exit.test.tsx` (key ครบทั้ง en/th, pin คำในดีไซน์ของเคสจบปกติ, ยืนยันว่าเคส disconnected ไม่ใช่ข้อความเดียวกันและยังมี `{stage}`, `resumed` ยังมี `{name}`, และ **ยืนยันว่า 3 key เดิมถูกลบจริงทั้งสองภาษา**); targeted Vitest 12 ไฟล์ 157 tests ผ่าน (รวม `i18n-namespace-split`), และรันไฟล์ที่แตะ `zyraToast` ทั้งหมดอีก 10 ไฟล์เพราะแก้ primitive ที่ใช้ร่วมกัน; `tsc --noEmit` ไม่มี error ใหม่ (เหลือ 5 ตัวเดิมบน HEAD)
+- **หมายเหตุ Prettier:** `lib/toast.tsx` format ไม่ผ่านอยู่ก่อนแล้วบน HEAD (2 จุดที่ `<p>` ของ title/message) — จัดรูปแบบเฉพาะโค้ดที่เพิ่มเข้าไปให้ตรง Prettier ไม่ได้ไป reformat ของเดิม เพื่อไม่ให้ diff บวมเกินงาน; ไฟล์อื่นที่แก้ Prettier ผ่านหมด
+- **หมายเหตุ ESLint (วัดใหม่แล้ว ตัวเลขนี้เชื่อได้):** working tree = **0 error / 11 warning** บน `hero-virtual-office.tsx` และ warning ทั้ง 11 ตัวอยู่ **นอก** hunk ที่แก้รอบนี้ทั้งหมด (10 ตัวเป็น "Unused eslint-disable directive" ที่บรรทัด 1001–5909 ซึ่งไม่ได้แตะ + 1 ตัวคือ `react-hooks/exhaustive-deps` ของ `handleSpotlightStopListening` ที่ค้างมาแต่เดิม)
+  - **เรื่องที่น่าบันทึกไว้:** ลอง lint ตัวไฟล์ของ **HEAD** เทียบดู กลับได้ **9 error** ของ rule `react-hooks/preserve-manual-memoization` — คือ HEAD แย่กว่า working tree; ที่พลิกเพราะการลบ state + render + import ออกทำให้ไฟล์เล็กลง แล้ว React Compiler เลิก bail (สังเกตได้จาก `[BABEL] ... exceeds the max of 500KB` ที่ยังโผล่อยู่) พอไม่ bail suppression หลายตัวจึงกลายเป็น "unused" แทน — **เป็นอาการของขนาดไฟล์ `hero-virtual-office.tsx` ไม่ใช่ของงานนี้** แต่แปลว่าตัวเลข error/warning ของไฟล์นี้ไม่เสถียร ถ้าจะเก็บ suppression ที่ตายแล้วออกควรทำเป็นงานแยก
+
+---
+
 ## 2026-09-11 · แท่นยืน/ลำแสงลงมาที่เท้า · tooltip + shortcut [B] · หลายคนขึ้น stage พร้อมกัน · cap แชร์จอของ Spotlight
 
 รอบนี้ผู้ใช้แจ้ง 4 เรื่องต่อเนื่องกันจากการเล่นจริง (2 เรื่องแรกเป็นงาน art/UI, 2 เรื่องหลังเป็นบั๊กพฤติกรรม)
