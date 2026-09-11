@@ -2,10 +2,10 @@
 
 > entry ใหม่อยู่**บนสุด** · แยก "build เขียว" ออกจาก "live-test ผ่าน" ให้ชัดทุกครั้ง
 
-## สถานะล่าสุด — 2026-09-11 (รอบที่ 15)
+## สถานะล่าสุด — 2026-09-11 (รอบที่ 16)
 
 **เสร็จ 13 / 17 PR** · ฝั่ง server ครบ (Track A + B) · ฝั่งหน้าบ้าน **6 ใน 7** (C1 + C2 + C3 + C4 + C6 + C7) — เหลือ **C5** (แจ้งเตือนสภาพอากาศรุนแรง) อย่างเดียว
-**ทุกอย่างอยู่บน `develop` และขึ้น dev แล้ว** (ล่าสุด `8c049ba` — สวิตช์ส่วนตัว 3 อาการ) — ไม่มี PR ค้างของ SC-ENV-01
+**ทุกอย่างอยู่บน `develop` และขึ้น dev แล้ว** (ล่าสุด app `c2adf20` + api `f8dd85d` — snapshot ตอน owner บันทึกมี weather แล้ว, client refetch เองถ้าขาด) — ไม่มี PR ค้างของ SC-ENV-01
 **asset:** ครบทุกสภาพอากาศบน R2 แล้ว (เพิ่ม moon ×5 · star ×6 · snow ×4 · wind ×5 · backdrop ตัวเต็ม 2560×1440) — ยังค้างเฉพาะ **1× ต้นฉบับของ wind/snow/star** จากดีไซน์
 **preview ให้ทีมตรวจ:** [artifact](https://claude.ai/code/artifact/17865a33-4c40-445d-b84c-4e52a20c1ac6) — ตอนนี้ **โค้ดวาดเหมือนหน้านี้แล้ว** (ดูรอบที่ 14)
 
@@ -78,6 +78,25 @@ git worktree add /path/ใหม่ feat/sc-env-01-api-settings
 - ❌ ยังไม่มี e2e ตั้งแต่ poller → ws → client
 
 ---
+
+## รอบที่ 16 — 2026-09-11 · "ต้องกด badge ก่อนเมฆถึงขึ้น" — เจอต้นเหตุจริงแล้ว
+
+**ทำอะไร** — [zyra-api#113](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/113) (`f8dd85d`) + [zyra-app#352](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/352) (`c2adf20`) merge เข้า `develop` ทั้งคู่
+
+**ต้นเหตุ** — ภาพจากผู้ใช้คือหลักฐาน: badge มีแค่ชื่อเมือง+เวลา **ไม่มีอุณหภูมิ/ไอคอน** = snapshot ที่ถืออยู่มี `weather: null`
+- `UpdateSettings` (owner บันทึก / เปิด location / สลับ toggle ของ workspace) สร้าง snapshot จากแถว DB **โดยไม่ดึง weather** แล้ว `PublishSnapshot` ให้ทุกคนทันที + reset signature เป็นสถานะไม่มี weather
+- **server ไม่มี poll loop ที่อ่าน snapshot เลย** — ตัวเดียวที่เรียก `GetSnapshot` คือ HTTP handler ⇒ ทุกคนถือ snapshot เปล่าค้าง จนมี*ใครสักคน*กด badge → refetch → `GetSnapshot` ดึง weather, signature เปลี่ยน, publish ใหม่ให้ทุกคน
+- ฝั่ง client `useEnvironment` เป็น push-driven (`staleTime: Infinity`, ไม่ refetch on focus) จึงไม่มีทางฟื้นเอง — สวิตช์ส่วนตัวที่รอบที่ 15 คิดว่าเป็นผู้ต้องสงสัยแค่ทำให้*สังเกตเห็น*
+
+**แก้ 2 ชั้น**
+| ชั้น | อะไร |
+|---|---|
+| API #113 | แยก `fillLive()` (weather + alerts) ออกจาก `GetSnapshot` ให้ `UpdateSettings` เรียกก่อน publish · กติกาเดิมครบ (feature/location/พิกัด/weather toggle ปิด = ไม่ยิง provider) · ราคาสูงสุด 1 provider call ต่อการบันทึก ปกติตอบจาก cell cache · เทสต์ table-driven 5 เคส |
+| app #352 | ถ้า snapshot บอกว่าควรมี weather (feature+location+weather ของ workspace เปิด) แต่เป็น null → refetch เองทุก 5 วิ สูงสุด 6 ครั้ง หยุดทันทีที่ได้ · key ด้วย `dataUpdatedAt` ไม่ใช่ object (TanStack คืน object เดิมเมื่อคำตอบเหมือนเดิม — เทสต์จับได้เอง) · กันกรณี provider timeout ที่ API แก้ไม่ถึง |
+
+**verify ถึงไหน** · Go `go test ./...` เขียว · vitest 2217 ผ่าน (`use-environment.test.tsx` 3 เคสใหม่) · build เขียว · CI เขียวครบทั้งสอง repo · ⛔ **ยังไม่ได้ยืนยันบน dev** — ต้องรอ api deploy แล้วลอง owner เปิด location ใหม่: สมาชิกต้องเห็น badge มีอุณหภูมิ + เมฆ**ทันที**โดยไม่กดอะไร
+
+**ต่อจากนี้** · ยืนยันบน dev ตามข้างบน · ของเดิม: ฝน/หิมะ/ลม/ดวงอาทิตย์กลางวันของจริง · วัด FPS ก่อน uat · C5
 
 ## รอบที่ 15 — 2026-09-11 · สวิตช์ส่วนตัว 3 อาการ (ฉากกระโดด · เปิดแล้วไม่ทำงาน · เสียงไม่ปิด)
 
