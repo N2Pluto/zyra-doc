@@ -2,11 +2,12 @@
 
 > entry ใหม่อยู่**บนสุด** · แยก "build เขียว" ออกจาก "live-test ผ่าน" ให้ชัดทุกครั้ง
 
-## สถานะล่าสุด — 2026-09-10
+## สถานะล่าสุด — 2026-09-11
 
-**เสร็จ 12 / 17 PR** · ฝั่ง server ครบ (Track A + B) · ฝั่งหน้าบ้านทำแล้ว 5 ใน 7 (C1 + C2 + C4 + C6 + **C7**) — **แสงตามเวลา + widget + หน้าตั้งค่าของ owner + preference ส่วนตัวของ member ขึ้นจอแล้ว**
-**asset:** พระจันทร์ 5 phase ที่ `static/env/sky/` + **เสียงบรรยากาศ 16 ไฟล์** ที่ `static/env/sound/` อัปขึ้น R2 แล้ว (2026-09-10) — ดู [guides/environment-sounds.md](../../guides/environment-sounds.md)
-**preview ให้ทีมตรวจ:** [artifact](https://claude.ai/code/artifact/17865a33-4c40-445d-b84c-4e52a20c1ac6) — 9 สภาพอากาศ + วันเดินจริง + phase ดวงจันทร์ + ทุกสถานะการ์ด
+**เสร็จ 13 / 17 PR** · ฝั่ง server ครบ (Track A + B) · ฝั่งหน้าบ้าน **6 ใน 7** (C1 + C2 + C3 + C4 + C6 + C7) — เหลือ **C5** (แจ้งเตือนสภาพอากาศรุนแรง) อย่างเดียว
+**ทุกอย่างอยู่บน `develop` และขึ้น dev แล้ว** (ล่าสุด `2c1b06f`) — ไม่มี PR ค้างของ SC-ENV-01
+**asset:** ครบทุกสภาพอากาศบน R2 แล้ว (เพิ่ม moon ×5 · star ×6 · snow ×4 · wind ×5 · backdrop ตัวเต็ม 2560×1440) — ยังค้างเฉพาะ **1× ต้นฉบับของ wind/snow/star** จากดีไซน์
+**preview ให้ทีมตรวจ:** [artifact](https://claude.ai/code/artifact/17865a33-4c40-445d-b84c-4e52a20c1ac6) — ตอนนี้ **โค้ดวาดเหมือนหน้านี้แล้ว** (ดูรอบที่ 14)
 
 | Repo | Branch | Commit | PR (draft, base `develop`) |
 |---|---|---|---|
@@ -77,6 +78,51 @@ git worktree add /path/ใหม่ feat/sc-env-01-api-settings
 - ❌ ยังไม่มี e2e ตั้งแต่ poller → ws → client
 
 ---
+
+## รอบที่ 14 — 2026-09-11 · C3 ขึ้น dev + ยกท้องฟ้าให้เท่า preview + ปิดบั๊ก Leave
+
+**ทำอะไร** — merge เข้า `develop` 5 PR (ทั้งหมดเป็น zyra-app):
+
+| PR | เรื่อง | commit บน develop |
+|---|---|---|
+| [#346](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/346) | backdrop เต็มขอบจอทุกมุมกล้อง + preload ตั้งแต่หน้า `/loading` | `e1c0413` |
+| [#348](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/348) | **บั๊ก: กด Leave workspace แล้วแอปพังทั้งหน้า** | `2df7b9f` |
+| [#347](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/347) | ท้องฟ้าเท่า preview ทั้งชุด (323 layer) | `2efdaa7` |
+| [#349](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/349) | CI lint OOM + lint error 9 ตัวที่ซ่อนอยู่ใต้ OOM | `d3149da` |
+| [#350](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/350) | สภาพอากาศครอบคลุมทั้งแมพ ไม่ใช่มุมเดียว | `2c1b06f` |
+
+**C3 ต่างจากเดิมยังไง** — เดิมลอกพิกัดจากเฟรม Figma ตรง ๆ ได้ฝน 8 ช่องเรียงกัน เมฆ 6 ก้อนนิ่ง ๆ ไม่มีพระจันทร์ ไม่มีดาว ไม่มีการเคลื่อนไหว เพราะเฟรมเป็นภาพนิ่ง สิ่งที่ภาพนิ่งบอกไม่ได้ (ระยะลึก · การเคลื่อนที่ · สำเนาที่เหลื่อมจังหวะกัน) คือสิ่งที่แยก "สภาพอากาศ" ออกจาก "ลายซ้ำ" ตอนนี้ตาราง layer ของ preview ถูกพอร์ตมาทั้งชุดที่ `lib/environment-fx-composition.ts` (gen ด้วย `scripts/gen-environment-fx.py` จาก payload ของ [artifact](https://claude.ai/code/artifact/17865a33-4c40-445d-b84c-4e52a20c1ac6)) พร้อม:
+
+- ฝน 56 เม็ด 3 ขนาด · เมฆมาก 19 ก้อน 3 ระยะ · ฝนปรอย = เม็ดละเอียดกว่าแต่มากกว่า
+- ทุกชิ้นลอยขวา→ซ้าย คนละรอบ คนละความเร็ว GIF (`FX_SPEEDS`)
+- กลางคืน: พระจันทร์ตาม phase จริงจากปฏิทิน (`lib/environment-sky.ts`, ไม่ยิง provider) + ดาว 14 ดวง · เดือนดับ = ไม่วาดพระจันทร์ · ใต้เส้นศูนย์สูตรกลับด้านเสี้ยว
+- ดวงอาทิตย์เดินส่วนโค้งจากพระอาทิตย์ขึ้น→ตก **ของพิกัดนั้นจริง** ตัดที่เส้นขอบฟ้า + แสงประกายอยู่ใต้ sprite (เมฆบังได้)
+- แสงไล่ต่อเนื่องจากนาฬิกาเดียวกับดวงอาทิตย์ — ค้างแต่ละช่วงแล้วข้ามในชั่วโมงสุดท้าย (`SKY_FADE_MINUTES`) แทนการกระโดดระหว่าง 5 ค่า
+- `snow` / `windy` วาดแล้ว (เดิม return null)
+
+**การวาง** — composition เป็น **tile ขนาดจริงของดีไซน์** (1 design px = 1 world px) ปูซ้ำทั่วแมพ: ฝน/หิมะ/หมอก/ลม ปูทุกแถวลงไปจนพ้นขอบล่าง · เมฆ/ดาว/ฟ้าผ่า แถวบนอย่างเดียว · ดวงอาทิตย์กับพระจันทร์ชิ้นเดียวบนส่วนโค้ง · แมพใหญ่ = thin pattern แทนการ mount sprite เป็นพัน (`ENV_FX_SPRITE_BUDGET = 400`)
+
+**asset** — อัป R2 เพิ่ม 21 ไฟล์: `bg/zyra-backdrop-2x.png` (2560×1440 ตัวเต็ม แทนตัวย่อที่เบลอ) + moon ×5 + star ×6 + snow ×4 + wind ×5 · มีเทสต์ล็อกรายชื่อไฟล์ไว้ เพราะตัวโหลด sprite เป็น fire-and-forget → 404 จะเงียบ
+
+**verify ถึงไหน**
+- build เขียว · `npm run lint` 0 error · vitest 2205 ผ่าน (เพิ่ม `environment-sky.test.ts` + เขียน fx test ใหม่ + เทสต์ layout/drift/arc/ฟ้าผ่า/wash/halo/tiling)
+- **ดูจริงบน local prod build**: backdrop คมเต็มขอบ · เมฆกระจายทั่วฟ้าและไม่ตกลงพื้นออฟฟิศ · wash ม่วงกลางคืน + แสง night
+- **ดูจริงบน dev**: บั๊ก Leave หายแล้ว (`window.onerror` 0 error จากเดิมพังทุกครั้ง)
+- ⛔ **ยังไม่ได้เห็นด้วยตา**: ฝน · หิมะ · ลม · ดวงอาทิตย์ตอนกลางวัน + แสงประกาย · พระจันทร์ — สภาพอากาศจริงของพิกัดทดสอบเป็น cloudy/drizzle ตลอดช่วงที่ทำ (ลองย้ายพิกัดไป Jakarta / Mumbai / Colombo / Singapore ก็ยังไม่เจอฝน) ทั้งหมดใช้โค้ดเส้นเดียวกับเมฆ มีแต่เทสต์คุม
+
+**บั๊กที่เจอระหว่างทาง (ไม่ใช่ของ SC-ENV-01 ทั้งคู่ แต่ต้องแก้ก่อนถึงจะเดินต่อได้)**
+1. **กด Leave workspace แล้วแอปพังทั้งหน้า ต้องรีโหลด** — `scene.destroy()` เรียก `gif.destroy(true)` ซึ่งทำลาย **GifSource** ด้วย แต่ `Assets` cache source ไว้ไฟล์ละตัวเดียวแล้วแจกให้ทุก sprite ที่ใช้ไฟล์นั้น → ตัวแรกฆ่า source ตัวที่เหลือยังอยู่บน shared ticker → `TypeError: Cannot read properties of null (reading 'findIndex') at GifSprite.update` โยนออกจาก ticker ซึ่งไม่มีใคร catch · แก้เป็น `destroy()` + มีเทสต์ที่ fail บนโค้ดเดิม
+2. **CI `lint-and-build` ตายทุก PR ด้วย heap OOM** (`exit 134`) ไม่ว่าจะแก้อะไร → ใส่ `NODE_OPTIONS: --max-old-space-size=8192` · พอ lint รันจบก็เผย error จริง 9 ตัวจาก spotlight #329 ที่ซ่อนอยู่ใต้ OOM — แก้ด้วยการใส่ `useState` setter (identity คงที่) ลง dep array 7 callback ไม่แตะ logic
+
+**ต่อจากนี้**
+- ดูของจริงบน dev ตอนฝนตก/กลางวัน แล้วให้ทีมตัดสินว่าองค์ประกอบโอเคไหม
+- C5 (การแจ้งเตือนสภาพอากาศรุนแรง) ยังไม่เริ่ม — รอ decision เรื่อง severity
+- วัด FPS (DoD ข้อสุดท้ายของ C3) ยังไม่ได้ทำ — ตอนนี้ sprite ต่อฉากมากขึ้นมาก ควรวัดก่อนขึ้น uat
+
+**ติดอะไร**
+- asset 1× ต้นฉบับของ wind/snow/star ยังไม่ได้ — snow/wind ยังเป็นไฟล์ใหญ่ (decode 12.3 / 8.6 / 6.7 MB) ใช้ memory มากกว่าสภาพอากาศอื่น
+- TMD `uid`/`ukey` ยังไม่ได้ (Google ไม่มีข้อมูลเตือนภัยของไทย — พิสูจน์ด้วยการยิงจริงแล้วในรอบที่ 13)
+- dev DB: workspace `office` เปิด `env_location_enabled` ที่พิกัด Bangkok ไว้สำหรับทดสอบ
 
 ## รอบที่ 13 — 2026-09-10 · C7 (preference ส่วนตัว) + เปิด credential ของ Google บน dev
 
