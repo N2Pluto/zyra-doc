@@ -29,7 +29,21 @@
 
 - ✅ **build เขียวทั้งสองฝั่ง** — `go build ./...` + `go test ./...` ผ่านหมด · `next build` ผ่าน · `vitest run` **166 ไฟล์ / 2292 เคส ผ่าน** (เพิ่ม `environment-effective.test.ts` 10 เคส · `personalWeatherPanelState` 4 เคส · tab "my location" 4 เคส · handler `UpdateMe` 7 เคส · service `personalFrom`/`EffectSourceFor` 10 เคส)
 - ⛔ **ยังไม่ได้ live-test บน dev** — migration 101 **ยังไม่ได้รัน** ที่ไหนเลย · ต้องรันบน dev ก่อน merge ไม่งั้น `GET /environment` จะพังตรง `SELECT env_* FROM tb_user`
-- ⛔ ยังไม่ได้วัด FPS (ค้างมาจากรอบ 21) · EP-01 retry 3 ครั้ง + provider สำรอง ยังไม่ได้ทำ · TMD credential ยังไม่มี
+- ⛔ ยังไม่ได้วัด FPS (ค้างมาจากรอบ 21) · TMD credential ยังไม่มี
+
+### EP-01 ทำให้ตรง AC แล้ว (commit `800ae18`)
+
+AC เขียนไว้ 3 ชั้น เดิมมีแค่ชั้นล่างสุด ตอนนี้ครบทั้ง 3:
+
+| ชั้น | AC | ของจริงตอนนี้ |
+|---|---|---|
+| retry 3 ครั้ง 30s → 2m → 5m | ข้อ 2 | `environment_weather_retry.go` — ticker หลังบ้านทุก 10 วิ เดินบันไดกลับไปหา provider หลัก · ครบ 3 ขั้นแล้วปล่อยให้ refresh รายชั่วโมงจัดการ |
+| fallback ไป provider ที่ 2 **ภายใน 30 วิ** | ข้อ 3 + AC ข้อแรก | สลับ**ทันที**ใน request เดียวกัน ไม่รอ ticker |
+| cache ล่าสุด ≤ 3 ชม. → default clear | ข้อ 4 | เหมือนเดิม |
+
+**เลือก Open-Meteo ไม่ใช่ OpenWeatherMap** — 3 เหตุผล: (1) ไม่ต้องใช้ key ⇒ ตัวสำรองจะไม่กลายเป็นของที่ "ยังไม่ได้สมัคร" ในวันที่ตัวหลักล่ม (2) ดีไซน์เขียน "Source : Open-Meteo" บนการ์ดอยู่แล้ว และ HP-01/03/04 ถูกแก้ตามนั้นแล้ว (ที่เหลือ "OpenWeatherMap" ใน EP-01/02 คือ conflict ข้อ 1) (3) free tier จำกัดด้วย rate ไม่ใช่โควตารายเดือน ⇒ การ fallback ไม่แอบใช้เงินที่ quota guard กันไว้
+**โควตาหมด** ก็ไปใช้ตัวสำรอง (ฟรี) ก่อน แทนที่จะตกไปใช้ค่า stale ทันทีเหมือนเดิม
+**verify:** ยิง API จริงแล้ว — จุด Bangkok คืน `cloudy / 27.7°C / humidity 82 / wind 3.6 kph / precip 75% / source Open-Meteo` normalize ผ่าน 9 condition เดียวกับตัวหลัก · unit test เพิ่ม 26 เคส (ladder 30s/2m/5m · fallback chain 5 เคส · WMO code 16 เคส)
 
 **ต่อจากนี้**
 1. รัน migration 101 บน dev → merge api → merge app
