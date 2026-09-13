@@ -2,7 +2,7 @@
 
 > entry ใหม่อยู่**บนสุด** · แยก "build เขียว" ออกจาก "live-test ผ่าน" ให้ชัดทุกครั้ง
 
-## สถานะล่าสุด — 2026-09-13 (รอบที่ 20)
+## สถานะล่าสุด — 2026-09-13 (รอบที่ 21)
 
 **เสร็จ 13 / 17 PR** · ฝั่ง server ครบ (Track A + B) · ฝั่งหน้าบ้าน **6 ใน 7** (C1 + C2 + C3 + C4 + C6 + C7) — เหลือ **C5** (แจ้งเตือนสภาพอากาศรุนแรง) อย่างเดียว
 **ทุกอย่างอยู่บน `develop` และขึ้น dev แล้ว** (ล่าสุด app `789405c` — จูนทุกสภาพอากาศให้พอดีแมพ · ไฟส่องออฟฟิศ · แจ้งเตือนภัยพิบัติ · debug panel เฉพาะ owner/admin — และ api `e3168e0`) — ไม่มี PR ค้างของ SC-ENV-01
@@ -78,6 +78,43 @@ git worktree add /path/ใหม่ feat/sc-env-01-api-settings
 - ❌ ยังไม่มี e2e ตั้งแต่ poller → ws → client
 
 ---
+
+## รอบที่ 21 — 2026-09-13 · Alert UI ตามดีไซน์จริง + ไล่เช็ค AC ทุก scenario เทียบโค้ด
+
+**ทำอะไร** — ผู้ใช้แจ้งว่า Emergency Alert ไม่เหมือน UI แล้วให้ไล่เทียบ spec ↔ ClickUp ↔ Figma ↔ โค้ด ทุก scenario
+
+**ที่ผิดจริง** — banner ที่ทำไว้เป็นแถบดำพาดบนจอ ส่วนดีไซน์คือ **toast 322 px มุมขวาบน** สีตามระดับ (รายละเอียดถอดไว้ใน [spec.md § HP-04](spec.md)) ⇒ ทำใหม่ตามดีไซน์: การ์ดสีอ่อน + สี่เหลี่ยมไอคอนสีเข้ม + ข้อความดำ + "Issued: HH:MM" + "Read more" ขีดเส้นใต้ + ปุ่มปิด (ไม่มีในระดับ emergency) · เลื่อนเข้าจากขวา 220 ms ตาม sticky · อยู่เหนือ noti อื่น และ widget สภาพอากาศหลบลงให้เอง
+
+**ของใหม่ที่เจอจาก Figma (ยังไม่เคยอยู่ใน spec)** — sticky 5 ใบใน HP-04: animation, ลำดับเหนือ noti อื่น (ทำแล้ว) และ **โมเดล location ราย member** 3 ใบ (widget 2 อัน · alert ยึด location ของ member เอง · ที่เดียวกันแจ้งครั้งเดียว) — **ยังไม่ทำ** ผูกกับข้อ 42/45 (PII + quota ต่อผู้ใช้) บันทึกไว้ใน spec แล้ว · ตัว **ClickUp parent task ไม่มีอะไรใหม่** ตั้งแต่ 7 ก.ย. (ยังเขียน TMD/OpenWeatherMap ซึ่ง spec บันทึก drift ไว้แล้ว)
+
+**ช่องว่างที่ปิดในรอบนี้**
+
+| scenario | AC ที่ยังขาด | ทำอะไร |
+|---|---|---|
+| HP-04 ข้อ 5 · EC-02 | "map effect เปลี่ยนเป็น severe ทันที" | ระหว่างมี emergency alert map วาดพายุทับค่า reading รายชั่วโมง (สวิตช์ส่วนตัวยังชนะ) |
+| HP-04 · EC-02 | "notification เก็บใน bell panel" | ฝั่ง server ลงแถว `weather_alert` ตั้งแต่ A4 แต่ client ไม่มี case → ขึ้นเป็น "Notification" ธรรมดา · ตอนนี้มีป้าย + ไอคอนสามเหลี่ยมแดงของตัวเอง และอ่าน title/headline เหมือน toast |
+| EC-03 | toast "Location ของ Workspace เปลี่ยนเป็น …" | ขึ้น toast เมื่อพิกัดของ workspace เปลี่ยนกลางคัน (snapshot แรกของ session ไม่นับ) |
+
+**ผลไล่เช็คทั้งหมด (AC ต่อ scenario)**
+
+| scenario | ครบ | ยังขาด |
+|---|---|---|
+| HP-01 | owner-only · ปักหมุดผ่านเบราว์เซอร์ · preview · 3 toggle · propagate ≤5 วิ · นอกไทยใช้ provider อื่นอัตโนมัติ | — (ข้อ 41: ไม่มี map picker ตาม design) |
+| HP-02 | ยึด timezone ของ workspace · fade 30 วิ · server clock · ปิดแล้วไม่มี overlay · gameplay ไม่กระทบ | renderer เป็น **Pixi** ไม่ใช่ Phaser (บันทึกเป็นข้อขัดแย้งข้อ 2) |
+| HP-03 | fetch/cache 60 นาที · broadcast · widget มุมขวาบน · กดเปิด panel · ปิด effect แล้ว widget ยังอยู่ | **ยังไม่วัด FPS ≥30** |
+| HP-04 | poll 15 นาที · dedup ตาม alert_id · banner(toast) · สีตามระดับ · emergency ปิดไม่ได้ · watch/warning ปิดได้ · read more · หมดอายุหาย · **bell** · **map severe** | โมเดล location ราย member (sticky ใหม่) |
+| HP-05 | 2 สวิตช์ส่วนตัว · persist · widget ยังอยู่ · alert ปิดเองไม่ได้ | ปุ่ม "ปิดทั้งหมด" (design ตัดออก — ข้อ 61) · ยังไม่วัด FPS |
+| HP-06 | ปิด location → widget หาย · persist · เปิดกลับได้ทันที | ฉาก (พื้นหลัง) ยังอยู่โดยเจตนา (ตัดสินใจรอบที่ 18) |
+| HP-07 | ปิด alert → ไม่มี toast/bell แต่ widget ยังบอกอากาศ | — |
+| EP-01 | retry + fallback + cache ฝั่ง server · badge "ข้อมูลอาจไม่อัปเดต" ใน panel · ไม่ crash | provider ปัจจุบันคือ Google/GDACS ไม่ใช่ TMD (รอ credential) |
+| EP-02 | นอกไทยใช้ provider อื่น · coverage 3 สถานะบอกตรง ๆ · ไม่มี error ชวนสับสน | — |
+| EC-01 | ยึด timezone ของ workspace · ไม่มี option ให้เลือกเอง · widget บอกเวลา+โซน · tooltip อธิบาย | — |
+| EC-02 | emergency ปิดไม่ได้ · เรียงระดับรุนแรงก่อน · poll 5 นาที · **map severe** · **bell** · หมดอายุหาย | TMD webhook (ไม่มี credential) |
+| EC-03 | fetch ใหม่ทันที · ≤5 วิ · fade ไม่กระตุก · **toast แจ้ง** · widget อัปเดต · timezone เปลี่ยนตาม | — |
+
+**verify ถึงไหน** · vitest 165 ไฟล์ / 2273+ เคส ผ่าน · eslint 0 error · tsc/prettier สะอาด · ⛔ **ยังไม่ได้ดู toast จริงบนจอ** (ต้องยิง alert จาก debug panel ซึ่งต้องเป็น owner/admin — ทำบน dev)
+
+**ต่อจากนี้** · ดู toast/bell จริงบน dev · มติ PM เรื่อง location ราย member (ข้อ 42/45 + sticky ใหม่) · วัด FPS ก่อน uat · TMD credential
 
 ## รอบที่ 20 — 2026-09-13 · จูนทุกสภาพอากาศให้พอดีแมพ · ไฟส่องออฟฟิศ · แจ้งเตือนภัยพิบัติ (C5 ครึ่งแรก)
 

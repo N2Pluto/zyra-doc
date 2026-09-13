@@ -317,6 +317,29 @@ wind particle: leaf/dust elements เคลื่อนไหวขวา
 
 [Figma node `4654-536054`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=4654-536054)
 
+#### ถอดจริงจาก design (2026-09-13) — **เป็น toast ไม่ใช่ banner เต็มความกว้าง**
+
+ASCII ด้านบนเป็นของ ClickUp ฉบับแรก · ของจริงใน Figma คือ **การ์ด 322 px มุมขวาบนของ HUD** (`Weather toast` — watch `4744:556645` · warning `4744:556865` · emergency `4744:513488` / `4779:682165`) วางที่ `x=1094, y=24` ของเฟรม 1440 ⇒ **right 24 / top 24** ซึ่งเป็นช่องเดียวกับ weather widget (widget ต้องหลบลงมา)
+
+| tier | พื้น | เส้นขอบ + สี่เหลี่ยมไอคอน | ไอคอน | หัวข้อใน mock |
+|---|---|---|---|---|
+| watch | `#F9EEB8` | `#ECC819` (Yellow/500) | eye-on | "Weather advisory" |
+| warning | `#FFD8B0` | `#FF8000` | warning-triangle | "Weather warning" |
+| emergency | `#FAC2C2` | `#F03A3A` (Red/500) | siren | "Emergency alert" |
+
+โครงร่วม: radius 16 · padding 16 · border 1px · เนื้อความ `#1A1B1E` Inter 14/18 (หัวข้อ Bold) · ช่องไอคอน 40×40 radius 8 ไอคอน 24 · ปุ่ม Cancel 16 px มุมขวา — **emergency ไม่มีปุ่มนี้** (ยืนยัน EC-02) · บรรทัด "Issued: 14:30 ICT" และลิงก์ขีดเส้นใต้ "Read more"
+
+**Sticky ที่ยังไม่เคยอยู่ใน spec:**
+
+| sticky | ใจความ | สถานะ |
+|---|---|---|
+| `4782:20973` | animation เลื่อนเข้าจากขวาไปซ้าย | ✅ ทำแล้ว (`vo-weather-alert-in` 220ms) |
+| `4782:20969` | ถ้ามี noti อื่นขึ้นพร้อมกัน **ให้ noti แจ้งภัยขึ้นก่อน** | ✅ ทำแล้ว (z-46 เหนือ toast อื่น + widget หลบ) |
+| `4744:671922` | owner เปิด location + member เปิด location ของตัวเอง ⇒ **มี widget 2 อัน** | ⛔ ยังไม่ทำ — ผูกกับข้อ 42/45 (location ราย user + PII) |
+| `4744:672872` | ภัยพิบัติที่ location ของ **ตัว member เอง** · ถ้าภัยเกิดที่ location ของ owner แต่ member อยู่คนละที่ ⇒ **member คนนั้นไม่ได้รับแจ้ง** | ⛔ ยังไม่ทำ — ปัจจุบัน alert ยึด location ของ workspace ทั้งหมด |
+| `4744:673129` | ถ้าทั้งสอง location เป็นที่เดียวกัน ⇒ แจ้งครั้งเดียว (ของ workspace) | ⛔ ยังไม่ทำ (ตามข้อบน) |
+| `4770:678971` | member ที่ไม่ได้เปิด location ของตัวเอง ⇒ แจ้งของ workspace | ✅ เป็นพฤติกรรมปัจจุบันอยู่แล้ว |
+
 ---
 
 ## HP-05 · User ปิด Environment Effects เอง (Personal Preference)
