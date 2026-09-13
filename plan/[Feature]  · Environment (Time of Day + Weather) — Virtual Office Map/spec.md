@@ -335,9 +335,9 @@ ASCII ด้านบนเป็นของ ClickUp ฉบับแรก · �
 |---|---|---|
 | `4782:20973` | animation เลื่อนเข้าจากขวาไปซ้าย | ✅ ทำแล้ว (`vo-weather-alert-in` 220ms) |
 | `4782:20969` | ถ้ามี noti อื่นขึ้นพร้อมกัน **ให้ noti แจ้งภัยขึ้นก่อน** | ✅ ทำแล้ว (z-46 เหนือ toast อื่น + widget หลบ) |
-| `4744:671922` | owner เปิด location + member เปิด location ของตัวเอง ⇒ **มี widget 2 อัน** | ⛔ ยังไม่ทำ — ผูกกับข้อ 42/45 (location ราย user + PII) |
-| `4744:672872` | ภัยพิบัติที่ location ของ **ตัว member เอง** · ถ้าภัยเกิดที่ location ของ owner แต่ member อยู่คนละที่ ⇒ **member คนนั้นไม่ได้รับแจ้ง** | ⛔ ยังไม่ทำ — ปัจจุบัน alert ยึด location ของ workspace ทั้งหมด |
-| `4744:673129` | ถ้าทั้งสอง location เป็นที่เดียวกัน ⇒ แจ้งครั้งเดียว (ของ workspace) | ⛔ ยังไม่ทำ (ตามข้อบน) |
+| `4744:671922` | owner เปิด location + member เปิด location ของตัวเอง ⇒ **มี widget 2 อัน** | ✅ ทำแล้ว (รอบที่ 22) — panel มี 2 การ์ด "Workspace weather" + "Your weather" (node `4779:680513`) |
+| `4744:672872` | ภัยพิบัติที่ location ของ **ตัว member เอง** · ถ้าภัยเกิดที่ location ของ owner แต่ member อยู่คนละที่ ⇒ **member คนนั้นไม่ได้รับแจ้ง** | ✅ ทำแล้ว (รอบที่ 22) — alert **รวมสองที่** (ของ workspace + ของตัวเอง) · poller เดินผ่าน cell ของ member ด้วย · bell มีแถวของ alert ส่วนตัว |
+| `4744:673129` | ถ้าทั้งสอง location เป็นที่เดียวกัน ⇒ แจ้งครั้งเดียว (ของ workspace) | ✅ ทำแล้ว — dedupe ด้วย alert id ทั้งฝั่ง client (`mergeAlerts`) และ DB (unique `weather_alert_id + user_id`) |
 | `4770:678971` | member ที่ไม่ได้เปิด location ของตัวเอง ⇒ แจ้งของ workspace | ✅ เป็นพฤติกรรมปัจจุบันอยู่แล้ว |
 
 ---
