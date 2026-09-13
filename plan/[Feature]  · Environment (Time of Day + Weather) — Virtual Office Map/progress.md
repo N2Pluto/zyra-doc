@@ -2,6 +2,44 @@
 
 > entry ใหม่อยู่**บนสุด** · แยก "build เขียว" ออกจาก "live-test ผ่าน" ให้ชัดทุกครั้ง
 
+## รอบที่ 22 — 2026-09-13 · location ราย member + การ์ดที่ 2 "Your weather"
+
+**ทำอะไร** — ปิดช่องว่างที่ค้างมาตั้งแต่รอบ 21 (ข้อ 42/56/62): member ทุกคนเห็น **2 การ์ด** และมี location ของตัวเอง
+
+| สิ่งที่เพิ่ม | อยู่ที่ไหน |
+|---|---|
+| location ราย user (เปิด/ปิด · lat/lng · label · timezone · country) | `tb_user` — **migration 101** (+ `.down.sql` + partial index สำหรับ poller) |
+| `PUT /api/user/workspaces/:id/environment/me` | member คนไหนก็เรียกได้ (ไม่ใช่ owner-only) · ตอบกลับเป็น snapshot ทั้งก้อน |
+| `personal` + `effect_source` ใน snapshot | `internal/model/environment.go` · ประกอบ **ต่อ request** และ **ผูกเข้า snapshot หลังจาก publish แล้ว** ⇒ พิกัดของ member ไม่เคยขึ้น channel ของ workspace |
+| การ์ด **"Your weather"** ใน panel + tab | Figma `4779:680513` (panel) · `4872:592375` (tab ของ member) |
+| แถว **"My location"** | tab Environment ของ member — ปิดแล้วยังเก็บที่เดิมไว้ (กติกาเดียวกับสวิตช์ของ owner) |
+| alert รวมสองที่ + bell ของ alert ส่วนตัว | `notifyPersonalAudience` + `CreateWeatherAlertNotificationForUser` · poller เดินผ่าน cell ของ member ด้วย (UNION ใน `activeAlertCells`) |
+
+**กติกาที่ผู้ใช้สั่งตรง ๆ (สำคัญที่สุดในรอบนี้)**
+
+> "effect สภาพอากาศบน maps ต้องยึดตาม owner maps ยกเว้นแต่ว่า owner ปิดอยู่ ให้เปลี่ยนไปใช้ของตัวเอง"
+
+⇒ `effect_source` = `workspace` ตราบใดที่ owner เปิด location อยู่ · เป็น `personal` เฉพาะตอน owner **ปิด** (หรือไม่เคยตั้ง) · เป็น `none` เมื่อไม่มีทั้งคู่
+ส่วน **alert ไม่ใช้กติกานี้** — รวมทั้งสองที่เสมอ เพราะพายุที่ออฟฟิศเป็นเรื่องของทุกคนในออฟฟิศ และพายุที่บ้าน member เป็นเรื่องของเขาไม่ว่าออฟฟิศจะอยู่ไหน · ซ้ำ id เดียวกันแสดงครั้งเดียว
+ตัวกติกาทั้งสองอยู่รวมกันที่ **`lib/environment-effective.ts`** ⇒ Pixi layer / นาฬิกา stage / เสียง / banner ยังอ่าน snapshot ก้อนเดียวเหมือนเดิม · panel กับ tab อ่าน **snapshot ดิบ** เพราะต้องโชว์ทั้งสองฝั่ง
+
+**เรื่อง "owner ไม่ได้เข้า maps"** — ไม่ต้องทำอะไรเพิ่ม: สภาพอากาศของ workspace ถูก cache ฝั่ง server อยู่แล้ว (`WeatherCacheTTL` 60m · `WeatherStaleMax` 3h · ตาราง `tb_environment_snapshot` ต่อ grid cell) และ `fillLive` ดึงตอน **member คนไหนก็ได้** เปิดแมพ ⇒ ค่าล่าสุดของ owner ยังแสดงให้คนอื่นเห็นแม้ owner ไม่ออนไลน์
+
+**ถึงไหน / verify ถึงระดับไหน**
+
+- ✅ **build เขียวทั้งสองฝั่ง** — `go build ./...` + `go test ./...` ผ่านหมด · `next build` ผ่าน · `vitest run` **166 ไฟล์ / 2292 เคส ผ่าน** (เพิ่ม `environment-effective.test.ts` 10 เคส · `personalWeatherPanelState` 4 เคส · tab "my location" 4 เคส · handler `UpdateMe` 7 เคส · service `personalFrom`/`EffectSourceFor` 10 เคส)
+- ⛔ **ยังไม่ได้ live-test บน dev** — migration 101 **ยังไม่ได้รัน** ที่ไหนเลย · ต้องรันบน dev ก่อน merge ไม่งั้น `GET /environment` จะพังตรง `SELECT env_* FROM tb_user`
+- ⛔ ยังไม่ได้วัด FPS (ค้างมาจากรอบ 21) · EP-01 retry 3 ครั้ง + provider สำรอง ยังไม่ได้ทำ · TMD credential ยังไม่มี
+
+**ต่อจากนี้**
+1. รัน migration 101 บน dev → merge api → merge app
+2. live-test: เปิด My location ด้วย account member · ดูว่า 2 การ์ดขึ้นครบ · ปิด Workspace location ของ owner แล้วต้องเห็นแมพเปลี่ยนไปใช้อากาศของตัวเอง
+3. ยิง alert ผ่าน debug panel แล้วเช็คว่า bell ได้แถวเดียวเมื่อทั้งสอง location เป็นที่เดียวกัน
+
+**ติดอะไร** — ข้อ 45 (PII ของ location ราย user) ยังไม่มีมติเป็นลายลักษณ์อักษร · รอบนี้ทำตามคำสั่งผู้ใช้ตรง ๆ และจำกัดความเสี่ยงเท่าที่ทำได้: เก็บเมื่อกดเปิดเอง · อ่านกลับได้เฉพาะเจ้าของแถว · ไม่เคย broadcast · ปิดแล้วหยุดใช้ทันที (แต่**ยังไม่ลบพิกัด** ตามกติกา "ปิดแล้วเก็บที่เดิม")
+
+---
+
 ## สถานะล่าสุด — 2026-09-13 (รอบที่ 21)
 
 **เสร็จ 13 / 17 PR** · ฝั่ง server ครบ (Track A + B) · ฝั่งหน้าบ้าน **6 ใน 7** (C1 + C2 + C3 + C4 + C6 + C7) — เหลือ **C5** (แจ้งเตือนสภาพอากาศรุนแรง) อย่างเดียว
