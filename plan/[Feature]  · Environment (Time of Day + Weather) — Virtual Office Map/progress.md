@@ -2,11 +2,11 @@
 
 > entry ใหม่อยู่**บนสุด** · แยก "build เขียว" ออกจาก "live-test ผ่าน" ให้ชัดทุกครั้ง
 
-## สถานะล่าสุด — 2026-09-11 (รอบที่ 17)
+## สถานะล่าสุด — 2026-09-13 (รอบที่ 21)
 
 **เสร็จ 13 / 17 PR** · ฝั่ง server ครบ (Track A + B) · ฝั่งหน้าบ้าน **6 ใน 7** (C1 + C2 + C3 + C4 + C6 + C7) — เหลือ **C5** (แจ้งเตือนสภาพอากาศรุนแรง) อย่างเดียว
-**ทุกอย่างอยู่บน `develop` และขึ้น dev แล้ว** (ล่าสุด app `8dabb9d` — ท้องฟ้าเหนือทะเล · arc ดวงอาทิตย์เต็มจอ · backdrop 4056×2976 แขวนจากเส้นขอบฟ้า · เสียงเบาลง — และ api `f8dd85d`) — ไม่มี PR ค้างของ SC-ENV-01
-**asset:** ครบทุกสภาพอากาศบน R2 แล้ว (เพิ่ม moon ×5 · star ×6 · snow ×4 · wind ×5 · backdrop ตัวใหม่จากดีไซน์ 4056×2976 = 1352:992 พอดี ไม่ crop) — ยังค้างเฉพาะ **1× ต้นฉบับของ wind/snow/star** จากดีไซน์
+**ทุกอย่างอยู่บน `develop` และขึ้น dev แล้ว** (ล่าสุด app `789405c` — จูนทุกสภาพอากาศให้พอดีแมพ · ไฟส่องออฟฟิศ · แจ้งเตือนภัยพิบัติ · debug panel เฉพาะ owner/admin — และ api `e3168e0`) — ไม่มี PR ค้างของ SC-ENV-01
+**asset:** ครบทุกสภาพอากาศบน R2 แล้ว (เพิ่ม moon ×5 · star ×6 · snow ×4 · wind ×5 · backdrop ตัวใหม่จากดีไซน์ 4056×2976 = 1352:992 พอดี ไม่ crop + ตัวฤดูหนาว `zyra-backdrop-winter-4056.png`) — ยังค้างเฉพาะ **1× ต้นฉบับของ wind/snow/star** จากดีไซน์
 **preview ให้ทีมตรวจ:** [artifact](https://claude.ai/code/artifact/17865a33-4c40-445d-b84c-4e52a20c1ac6) — ตอนนี้ **โค้ดวาดเหมือนหน้านี้แล้ว** (ดูรอบที่ 14)
 
 | Repo | Branch | Commit | PR (draft, base `develop`) |
@@ -78,6 +78,116 @@ git worktree add /path/ใหม่ feat/sc-env-01-api-settings
 - ❌ ยังไม่มี e2e ตั้งแต่ poller → ws → client
 
 ---
+
+## รอบที่ 21 — 2026-09-13 · Alert UI ตามดีไซน์จริง + ไล่เช็ค AC ทุก scenario เทียบโค้ด
+
+**ทำอะไร** — ผู้ใช้แจ้งว่า Emergency Alert ไม่เหมือน UI แล้วให้ไล่เทียบ spec ↔ ClickUp ↔ Figma ↔ โค้ด ทุก scenario
+
+**ที่ผิดจริง** — banner ที่ทำไว้เป็นแถบดำพาดบนจอ ส่วนดีไซน์คือ **toast 322 px มุมขวาบน** สีตามระดับ (รายละเอียดถอดไว้ใน [spec.md § HP-04](spec.md)) ⇒ ทำใหม่ตามดีไซน์: การ์ดสีอ่อน + สี่เหลี่ยมไอคอนสีเข้ม + ข้อความดำ + "Issued: HH:MM" + "Read more" ขีดเส้นใต้ + ปุ่มปิด (ไม่มีในระดับ emergency) · เลื่อนเข้าจากขวา 220 ms ตาม sticky · อยู่เหนือ noti อื่น และ widget สภาพอากาศหลบลงให้เอง
+
+**ของใหม่ที่เจอจาก Figma (ยังไม่เคยอยู่ใน spec)** — sticky 5 ใบใน HP-04: animation, ลำดับเหนือ noti อื่น (ทำแล้ว) และ **โมเดล location ราย member** 3 ใบ (widget 2 อัน · alert ยึด location ของ member เอง · ที่เดียวกันแจ้งครั้งเดียว) — **ยังไม่ทำ** ผูกกับข้อ 42/45 (PII + quota ต่อผู้ใช้) บันทึกไว้ใน spec แล้ว · ตัว **ClickUp parent task ไม่มีอะไรใหม่** ตั้งแต่ 7 ก.ย. (ยังเขียน TMD/OpenWeatherMap ซึ่ง spec บันทึก drift ไว้แล้ว)
+
+**ช่องว่างที่ปิดในรอบนี้**
+
+| scenario | AC ที่ยังขาด | ทำอะไร |
+|---|---|---|
+| HP-04 ข้อ 5 · EC-02 | "map effect เปลี่ยนเป็น severe ทันที" | ระหว่างมี emergency alert map วาดพายุทับค่า reading รายชั่วโมง (สวิตช์ส่วนตัวยังชนะ) |
+| HP-04 · EC-02 | "notification เก็บใน bell panel" | ฝั่ง server ลงแถว `weather_alert` ตั้งแต่ A4 แต่ client ไม่มี case → ขึ้นเป็น "Notification" ธรรมดา · ตอนนี้มีป้าย + ไอคอนสามเหลี่ยมแดงของตัวเอง และอ่าน title/headline เหมือน toast |
+| EC-03 | toast "Location ของ Workspace เปลี่ยนเป็น …" | ขึ้น toast เมื่อพิกัดของ workspace เปลี่ยนกลางคัน (snapshot แรกของ session ไม่นับ) |
+
+**ผลไล่เช็คทั้งหมด (AC ต่อ scenario)**
+
+| scenario | ครบ | ยังขาด |
+|---|---|---|
+| HP-01 | owner-only · ปักหมุดผ่านเบราว์เซอร์ · preview · 3 toggle · propagate ≤5 วิ · นอกไทยใช้ provider อื่นอัตโนมัติ | — (ข้อ 41: ไม่มี map picker ตาม design) |
+| HP-02 | ยึด timezone ของ workspace · fade 30 วิ · server clock · ปิดแล้วไม่มี overlay · gameplay ไม่กระทบ | renderer เป็น **Pixi** ไม่ใช่ Phaser (บันทึกเป็นข้อขัดแย้งข้อ 2) |
+| HP-03 | fetch/cache 60 นาที · broadcast · widget มุมขวาบน · กดเปิด panel · ปิด effect แล้ว widget ยังอยู่ | **ยังไม่วัด FPS ≥30** |
+| HP-04 | poll 15 นาที · dedup ตาม alert_id · banner(toast) · สีตามระดับ · emergency ปิดไม่ได้ · watch/warning ปิดได้ · read more · หมดอายุหาย · **bell** · **map severe** | โมเดล location ราย member (sticky ใหม่) |
+| HP-05 | 2 สวิตช์ส่วนตัว · persist · widget ยังอยู่ · alert ปิดเองไม่ได้ | ปุ่ม "ปิดทั้งหมด" (design ตัดออก — ข้อ 61) · ยังไม่วัด FPS |
+| HP-06 | ปิด location → widget หาย · persist · เปิดกลับได้ทันที | ฉาก (พื้นหลัง) ยังอยู่โดยเจตนา (ตัดสินใจรอบที่ 18) |
+| HP-07 | ปิด alert → ไม่มี toast/bell แต่ widget ยังบอกอากาศ | — |
+| EP-01 | retry + fallback + cache ฝั่ง server · badge "ข้อมูลอาจไม่อัปเดต" ใน panel · ไม่ crash | provider ปัจจุบันคือ Google/GDACS ไม่ใช่ TMD (รอ credential) |
+| EP-02 | นอกไทยใช้ provider อื่น · coverage 3 สถานะบอกตรง ๆ · ไม่มี error ชวนสับสน | — |
+| EC-01 | ยึด timezone ของ workspace · ไม่มี option ให้เลือกเอง · widget บอกเวลา+โซน · tooltip อธิบาย | — |
+| EC-02 | emergency ปิดไม่ได้ · เรียงระดับรุนแรงก่อน · poll 5 นาที · **map severe** · **bell** · หมดอายุหาย | TMD webhook (ไม่มี credential) |
+| EC-03 | fetch ใหม่ทันที · ≤5 วิ · fade ไม่กระตุก · **toast แจ้ง** · widget อัปเดต · timezone เปลี่ยนตาม | — |
+
+**verify ถึงไหน** · vitest 165 ไฟล์ / 2273+ เคส ผ่าน · eslint 0 error · tsc/prettier สะอาด · ⛔ **ยังไม่ได้ดู toast จริงบนจอ** (ต้องยิง alert จาก debug panel ซึ่งต้องเป็น owner/admin — ทำบน dev)
+
+**ต่อจากนี้** · ดู toast/bell จริงบน dev · มติ PM เรื่อง location ราย member (ข้อ 42/45 + sticky ใหม่) · วัด FPS ก่อน uat · TMD credential
+
+## รอบที่ 20 — 2026-09-13 · จูนทุกสภาพอากาศให้พอดีแมพ · ไฟส่องออฟฟิศ · แจ้งเตือนภัยพิบัติ (C5 ครึ่งแรก)
+
+**ทำอะไร** — merge เข้า `develop` 3 PR: [zyra-api#114](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/114) (`e3168e0`) · [zyra-app#360](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/360) (`9749519`) · [zyra-app#361](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/361) (`789405c`)
+
+**ต้นเหตุร่วมของรายงานเกือบทุกข้อ** — composition ทุกชุดวาดมาเพื่อ **เฟรมเดียว** (1352×992) แต่ออฟฟิศกว้าง ~2 เฟรม สูง 3 เฟรม ⇒ หมอก 8 แถบกลายเป็น 96 · ฝนหยุดที่ 66% ของไทล์เลยมีแถบแห้งคั่นทุกไทล์ · และเมื่อเกิน sprite budget ตัวเดิม**ตัดสำเนาทิ้ง** (เป็นรู) แทนที่จะ**ตัดลายทิ้ง** (บางเท่ากันทุกที่)
+
+| รายงาน | แก้ |
+|---|---|
+| fog เยอะ/เร็ว/เป็นเส้นแนวนอน · windy เหมือนกัน | เหลือครึ่งแถบ · opacity ×0.4 · drift ×3.2 (windy ×1.9 ทั้งชุด) · ทุกสำเนาของไทล์มี offset + เฟส drift ของตัวเอง (`copyScatter`, สำเนาต้นฉบับอยู่ที่เดิมเป๊ะ) |
+| drizzle/rain ฝนไม่ทั่ว + เม็ดใหญ่ + ไม่เห็นดวงอาทิตย์ | กางลายเต็มไทล์ (ไม่มีแถบแห้ง) · เม็ด ×0.78 · ใส่ดวงอาทิตย์จาง (0.42 / 0.30) กลับมาเฉพาะกลางวัน |
+| partly_cloudy / cloudy เปลี่ยนที่เร็วไป | เมฆ drift ×1.6 |
+| snow ไม่ครอบคลุม | กางลายเต็มไทล์ + budget ตัดลายแทนตัดสำเนา |
+| thunderstorm ฟิลเตอร์ขาดด้านล่าง | wash ต่อลงใต้กรอบดีไซน์ (พื้นแมพอยู่ใต้กรอบ) |
+| เปิด/ปิดแสงวาบฟ้าผ่า | สวิตช์ส่วนตัวใหม่ `env_lightning_flash` (default ON, api#114) — สายฟ้ายังฟาดเหมือนเดิม ปิดแค่จอวาบ |
+| **เวลามืดต้องเปิดไฟให้เห็นพื้นที่** | รอบแรกทำเป็นแสงอุ่น additive → ผู้ใช้บอก "จ้าเกิน ไม่ธรรมชาติ" ⇒ เปลี่ยนเป็น **เว้นพื้นที่ออฟฟิศจากฟิลเตอร์** (`paintAround` วาด tint/wash รอบแมพ ไล่ขอบ 5 ไทล์) ⇒ ในแมพเห็นเหมือนตอนฟ้าใส รอบนอกมืด · เว้นมาก-น้อยตามความมืดจริงที่ member คนนั้นเห็น |
+| แจ้งเตือนภัยพิบัติ + ปุ่มทดสอบใน debug | **banner C5**: ทีละใบ (รุนแรงสุด → ประกาศล่าสุด) นับที่เหลือข้างๆ · **emergency ปิดไม่ได้** (EC-02) และแสดงแม้ id ไปอยู่ในลิสต์ที่ปิดแล้ว · watch/warning ปิดแล้วจำข้ามรีโหลด (ต่อ browser) · หมดอายุหายเอง · owner ปิด alert = ไม่มี banner · debug panel มีปุ่ม `none/watch/warning/emergency` ยิง alert จำลอง (เครื่องนี้เท่านั้น) |
+| debug mode ต้องเป็น admin/owner เท่านั้น | Cmd + / ไม่เปิดให้ member และ unmount ถ้า role กลายเป็น member ทีหลัง |
+
+**verify ถึงไหน** · vitest **165 ไฟล์ / 2273 เคส** ผ่าน · eslint 0 error · tsc/prettier สะอาด · CI เขียวครบทั้ง 3 PR · **ดูจริงบน local prod build ต่อ dev**: rain 336 เม็ด y −611…2644 (แมพ 0…1568) · snow 264 · thunderstorm 412 · fog 48 (เดิม 96) opacity 0.162→0.11 · wash พายุกิน y −6206…6367 · ไฟ: เปิด = ออฟฟิศสีปกติขอบไล่นุ่ม/รอบนอกมืด, ปิด = ฟิลเตอร์คลุมทั้งจอ (ภาพเทียบใน PR) · gate: ทดสอบด้วย member-a ที่เป็น Member กด Cmd + / แล้วไม่เปิด
+· ⛔ **ยังไม่ได้ลองบน dev จริง**: banner + ปุ่ม alert ใน debug (ต้องเป็น owner/admin), สวิตช์ Lightning flashes end-to-end, badge หลบแถบ meeting ของจริง
+
+**ยังไม่ได้ทำใน C5** · bell entry · encode ลิงก์ PDF ภาษาไทยของกรมอุตุฯ
+
+**ต่อจากนี้** · ลองทั้งชุดบน dev · ดีไซน์: ไฟล์ข้างจันทร์ที่ยังยืม full (gibbous ×2) · วัด FPS ก่อน uat · TMD credential
+
+## รอบที่ 19 — 2026-09-11 · debug panel ทุกสภาพอากาศ + เร่งเวลา · กฎกล้องใหม่ · ดวงจมน้ำ · badge ลากได้
+
+**ทำอะไร** — [zyra-app#359](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/359) merge เข้า `develop` เป็น `3b9d304` (squash จาก 21 commit ที่ค้าง local ระหว่างรอบทดสอบยาวบน :3100 กับผู้ใช้)
+
+| เรื่อง | รายละเอียด |
+|---|---|
+| **debug panel (Cmd + /)** | section ENVIRONMENT: บังคับ 9 สภาพอากาศ · นาฬิกา 60×/600×/1800×/3600× + hold + slider เวลา · เลือกข้างจันทร์ 8 ข้าง/tonight · เครื่องนี้เท่านั้น เขียนทับ view หลัง snapshot มาถึง (`lib/environment-debug.ts` pure) · workspace ไม่มี location ได้ที่แทน "Bangkok (debug)" · stats overlay ย้ายไป Cmd + > |
+| **เดือนดับ** | 11 ก.ย. 2026 เป็นเดือนดับจริง โค้ดเดิมไม่วาดดวงเลย ดูเหมือนพัง → วาด full disc ที่ 30% (`MOON_NEW_OPACITY`) halo หรี่ตาม · คืนที่ composition ไม่มีดวง (นอกจาก clear) ไม่วาด halo · opacity/flip เข้า key ของ layer ไม่งั้นสลับข้างจันทร์แล้ว sprite ไม่ rebuild |
+| **ท้องฟ้า/ภาพ** | เมฆวาด 2× (`ENV_CLOUD_SCALE`) · แมพลงจากเส้นหญ้า 6% ของเฟรม (`BACKDROP_HORIZON_GAP`, เดิม 442 px) · wash กลางคืนต่อขึ้นเหนือกรอบดีไซน์ (เดิมเหลือฟ้ากลางวันแถบบนตอน zoom out) |
+| **ดวงอาทิตย์/จันทร์ตก** | ปลาย arc (40.5%) ห่างเส้นตัด (38.9%) แค่ ~32 px บนแถบฟ้าจริง → ดวงจมได้ 1/3 แล้วหาย → ระหว่างเส้นตัด→ปลาย arc ดันลงเพิ่มเท่ารัศมี จมทั้งดวง · เส้นตัดย้ายจาก "เส้นหญ้า" (23.2%) ไป **ขอบบนของทะเล** (`ENV_BACKDROP_SKYLINE` 22.35%) — รูปยังแขวนด้วยเส้นหญ้า |
+| **กฎกล้อง (เปลี่ยนใหญ่)** | เดิมจุดกลางกล้องไปได้ถึงขอบโลก → zoom out เห็นพื้นที่ว่างครึ่งจอทุกด้าน · ใหม่: **ขอบจอหยุดที่ pan bounds = สิ่งที่ zoom out สุดเห็น** (ออฟฟิศ+ฟ้า+ทะเล/หญ้าที่ล้นสองข้าง) เท่ากันทุก zoom → zoom in ลากออกไปถึงขอบเดียวกันได้ ไม่เลยไปกว่านั้น · ฉากเล็กกว่าจอ = จัดกลางจอ · `zoomTo`/resize re-clamp กล้องที่จอด (เดิมไม่ clamp กล้องค้างเลยขอบได้) · backdrop/ฟ้า ขยายเท่า reach นี้พอดี (`screenReachAtZoom`) ไม่มี canvas ดำ · **panel ด้านข้างเป็น overlay** ไม่ยุ่งกับกล้อง (กลไก inset ที่ลองใส่ระหว่างทางถอดออกแล้ว — ทะเลที่ล้น 472 px กว้างกว่า rail 56 px ดึงขอบแมพออกจากใต้ rail ได้ด้วยการลากปกติ) |
+| **badge สภาพอากาศ** | `VODraggable`: ลากไปวางที่ไหนก็ได้ จำตำแหน่งต่อ browser (`zyra_weather_widget_pos`) ดับเบิลคลิกกลับมุม · กดเฉยๆ ยังเปิด (จับ pointer capture เฉพาะเมื่อเป็นการลาก — จับตั้งแต่กดทำให้ click ไม่ถึงปุ่ม) · panel ที่เปิดปักมุมขวาบนเสมอ · หลบแถบ meeting (`data-vo-avoid="weather"` เลื่อนลงใต้ +12 px) · ซ่อนตอน meeting ขยาย / chat full |
+
+**verify ถึงไหน** · ทั้งชุด vitest ผ่าน (2243+ ตอนเปลี่ยนกล้อง; ไฟล์ใหม่ `environment-debug` 9 · `vo-draggable` 3 · scene 348) · CI เขียวครบ · **ดูจริงบน local prod build ต่อ dev (office ไม่มี location → ที่แทน)**: snow→พื้นหิมะ 264 sprite · clear→ดวงอาทิตย์+halo บนเส้นทะเล · thunderstorm 399 sprite ฟ้าผ่า on · นาฬิกา 3600× เดิน 14:45→17:15 ใน 2.5 นาทีจริง · เดือนดับ alpha 0.3/halo 0.078 → full 1.0/0.26 · ตะวันตก 18:15 ดวงจมหลังเส้นน้ำ (−139) · zoom 0.4 ภาพคลุมจอพอดี · zoom 1.2 ลากถึง pan bounds ครบ 4 ด้าน · เปิด Members ที่ zoom 0.4 กล้อง/ภาพ/ขนาด canvas ไม่เปลี่ยนเลย · badge ลาก/เปิด/ปิด/หลบแถบจำลอง ครบ · ⛔ ยังไม่ได้ลองใน meeting จริง (headless เข้าไม่ได้)
+
+**กับดักที่เจอ** · แผงเปิดด้วย `Cmd + >` มาก่อน ไม่ใช่ `Cmd + /` (สลับแล้ว) · `zoomTo` ไม่ clamp กล้อง · pointer capture บน holder กิน click ของลูก · service worker บน :3100 ไม่ได้ cache — สาเหตุจริงของ "ยังไม่เปลี่ยน" ส่วนมากคือแท็บยังไม่รีโหลดหลัง restart
+
+**ต่อจากนี้** · ลอง badge/meeting บน dev ใน browser จริง · ดีไซน์: ไฟล์ข้างจันทร์ที่ยังยืม full (gibbous ×2) และดวงจันทร์คืนมีเมฆ · วัด FPS ก่อน uat · C5 · TMD credential
+
+## รอบที่ 18 — 2026-09-11 · ฉากอยู่แม้ปิด location · พื้นหิมะ · warm ฟ้าที่ /loading · ขอตำแหน่งตอนเข้า map
+
+**ทำอะไร** — merge เข้า `develop` 4 PR (zyra-app) จากคำสั่ง 4 ข้อในวันเดียว:
+
+| PR | เรื่อง | commit บน develop |
+|---|---|---|
+| [#355](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/355) | ปิด **Workspace location** แล้ว bg ยังต้องอยู่ | `139f31e` |
+| [#356](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/356) | หิมะตก → พื้นหลังฤดูหนาว `Bg_wimter_zyra.png` | `3430081` |
+| [#357](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/357) | โหลด bg/effect ตั้งแต่ /loading ไม่ให้เห็นรอยโหลดใน VO | `a07a95b` |
+| [#358](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/358) | ขอสิทธิ์ตำแหน่งรวมกับไมค์/กล้องตอนเข้า map | `5b42168` |
+
+| อาการ / งาน | สาเหตุ | แก้ |
+|---|---|---|
+| ปิด location แล้วฉาก (ทะเล หญ้า headroom) หายไปด้วย | `isEnvironmentSceneOn` บังคับ `location_enabled && location` (เหลือจากตอนแยกฉากออกจากสวิตช์ส่วนตัว รอบที่ 15) | ฉากตามแค่ `flagEnabled && feature_enabled` · ไม่มี location = ไม่มีดวง/อากาศ/แสง แต่ออฟฟิศยังยืนบนหญ้า · API ส่ง snapshot มาอยู่แล้วไม่ว่าสวิตช์เป็นอะไร |
+| รูปฤดูหนาว | 4056×2976 ตัดเส้นเดียวกับรูปหญ้า (ทะเล 22.4% หิมะ 23.3%) | อัปโหลด R2 key ใหม่ `bg/zyra-backdrop-winter-4056.png` · `backdropFileFor(condition)`: `snow` → หิมะ อื่นๆ (รวมฝน) → หญ้า · engine สลับรูปเองเมื่อ URL เปลี่ยน · **ตัดสินใจ (ค้านได้)**: พื้นหิมะตาม weather ของ workspace ไม่ตามสวิตช์ส่วนตัว — เกล็ดคือ effect พื้นขาวคือฉาก |
+| เข้า VO แล้วฟ้ามาช้ากว่าออฟฟิศ | /loading warm แค่รูปหญ้าผ่าน `loadTex` · GIF ถูก fetch+decode หลัง /play mount · snapshot ก็ fetch หลัง mount | /loading ยิง `GET …/environment` คู่กับ members แล้ว `setQueryData(["environment", id])` (key/shape เดียวกับ `useEnvironment`, `staleTime: Infinity`) · `collectEnvironmentAssetUrls(snapshot)` = backdrop ของอากาศนั้น + GIF ทุกตัวใน composition (dedupe) · `PreloadEntry.gif` → `Assets.load({parser:"gif"})` ประตูเดียวกับ scene |
+| ขอสิทธิ์ตำแหน่งแยกทีหลังในแท็บ Environment | ขอเฉพาะตอน owner กดสวิตช์ | `useEntryMediaPermission` ขอ geolocation ต่อจากไมค์/กล้องตอน mount office (flag เปิดเท่านั้น, กติกาซ้ำถามเหมือนอุปกรณ์) · **ตัดสินใจ (ค้านได้)**: ใช้ตำแหน่งเฉพาะ **owner** และเฉพาะ workspace **ยังไม่มี place** → `PUT …/environment {location_enabled:true, lat, lng}` (save เดียวกับสวิตช์ในแท็บ) แล้ว seed cache · member ขอแล้วไม่ตั้งอะไร |
+
+**verify ถึงไหน**
+- vitest: `environment-layer` 9+1 · `environment-weather-fx` +1 · `vo-preload` 20 · `use-entry-media-permission` 5 เคสใหม่ (owner+ไม่มี place → save · member → ไม่ save · มี place แล้ว → ไม่ save · grant มาก่อน snapshot → save เมื่อ snapshot มา · ปฏิเสธ → เงียบ, `denied` ไม่ถามซ้ำ) · tsc/eslint/prettier สะอาด · CI เขียวครบทั้ง 4
+- **#355 ดูจริง** (local prod build ต่อ dev, office ปิด location): payload `location_enabled:false, location:null` → backdrop วาด, ขอบฟ้า −442 / headroom 894 **เท่าตอนมี location** (กรอบกล้องไม่ขยับ), sprite 0, tint 0 — บน develop เดิม layer = null
+- **#357 วัดจริง** (office ชี้ Bangkok ชั่วคราว, `performance` resource timing + path logger): /loading mount 22 371 ms · environment fetch ครั้งเดียว 22 669 · cloud1-3 + Sun + backdrop โหลด 25 181–25 292 · /play mount 26 678 → ไฟล์อากาศ **5/5 ก่อน /play, 0 หลัง /play**, ไม่มี environment fetch ซ้ำ — บน develop ทั้งหมดเกิดหลัง /play
+- ⛔ **#356 ยังไม่เห็นจริง** — ไม่มี workspace บน dev ที่หิมะตกตอนนี้ (เส้นทางสลับรูป = `_ensureBackdrop` เดียวกับที่รูป 2x→4056 ผ่านมาแล้วใน #353)
+- ⛔ **#358 ยังไม่เห็นจริง** — headless browser กด allow ตำแหน่งไม่ได้ · ต้องลอง browser จริง: เข้า workspace ที่เป็น owner และยังไม่ตั้งที่อยู่ → dialog ไมค์/กล้อง แล้ว dialog ตำแหน่ง → แท็บ Environment มี place + badge ขึ้น
+
+**dev DB** · `office` ปิด env_location กลับแล้ว (ชี้ Bangkok ชั่วคราวเพื่อวัด #357)
+
+**ต่อจากนี้** · ลอง #358 บน browser จริง · ดูพื้นหิมะ/ดวงอาทิตย์ตก/ดวงจันทร์/ฝน/ลมของจริง · ดวงจันทร์คืนมีเมฆ (ช่องว่างจาก preview รอดีไซน์ตัดสิน) · วัด FPS ก่อน uat · C5 · asset 1× wind/snow/star · TMD credential
 
 ## รอบที่ 17 — 2026-09-11 · เมฆขึ้นฟ้า · ดวงอาทิตย์วิ่งเต็มจอ · backdrop ตัวใหม่จากดีไซน์ · เสียงเบา
 
