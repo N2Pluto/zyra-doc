@@ -5,6 +5,106 @@
 
 ---
 
+## 2026-09-14 · ปุ่มบน stage ของคนดู (ยืนยันก่อนปิด + mute ที่ mute จริง) · กระดิ่งของคนเข้าทีหลัง · แถว "live" ค้างตลอดกาล
+
+ผู้ใช้แจ้ง 4 เรื่องรวดจากการเล่นจริง 2 หน้าต่างคู่กัน — ทั้งหมดเป็นฝั่ง **คนดู (viewer)** ไม่ใช่ presenter
+
+### 1. ปุ่ม X บน stage ต้องถามก่อน — `components/vo-spotlight-leave-confirm-modal.tsx` (ไฟล์ใหม่)
+
+- **ที่ผู้ใช้แจ้ง:** "ตอน viewer จะกดปุ่มปิด spotlight ด้านบนขวามือ มันควรจะมี modal ยืนยันนะ"
+- **เจอของแถมตอนแก้:** X เดิม **ไม่ได้ปิด spotlight จริง** — มันแค่ `setSpotlightViewerDismissed(true)` ซึ่งซ่อน stage ส่วน listener session ยังต่ออยู่ (`deriveShouldListen` ดู `optedOut` ไม่ได้ดู dismissed) → คนกดปิดไปแล้ว **ยังได้ยินเสียง broadcast อยู่**
+- **ทำอะไร:** X → เปิด modal (shell เดียวกับ `VOSpotlightExitConfirmModal` ของ presenter); กดยืนยัน = `handleSpotlightStopListening()` (opt-out จริง / `spotlightMeetingLeave` ถ้าดูจากในห้องประชุม) **แล้วค่อย** ซ่อน stage + ปิด PiP; modal ผูกกับ `anySpotlightViewerActive` ด้วย broadcast จบระหว่างเปิด dialog อยู่ modal จะหายไปเอง
+- **copy แยกสองเวอร์ชัน:** ถ้าดูจากในห้องประชุม body บอกตรง ๆ ว่า "ปิดสำหรับทุกคนในห้องประชุมนี้ด้วย" เพราะ acceptance เป็นระดับ**ห้อง** ไม่ใช่ระดับคน (ตรงตาม comment ของ `handleSpotlightMeetingLeave` ใน `zyra-ws`) — ของเดิมปุ่มนี้กดทีเดียวไปเลย ไม่มีใครรู้ว่าลากคนทั้งห้องไปด้วย
+
+### 2. ปุ่มลำโพง = ปิดเสียง ไม่ใช่ออกจาก Spotlight — `use-spotlight-broadcast.ts` + `vo-spotlight-stage.tsx`
+
+- **ที่ผู้ใช้แจ้ง:** "ปุ่ม mute ก็คือปิดเสียงคน spotlight ป่ะ ตอนนี้มันคือปิด spotlight ไปเลย"
+- **สาเหตุ:** ปุ่มนี้ยิง `toggleOptOut` ซึ่งเป็น **hard block** ของ listener session (ดู `hardBlock` ใน hook) → session ถูก tear down และ stage หายจากจอทั้งอัน ซึ่งคือความหมายของ "Mute broadcast" บน banner (ที่นั่นถูกแล้ว เพราะ banner ไม่มีภาพให้ดู) แต่บน stage มันไม่ใช่
+- **แก้:** เพิ่ม `audioMuted` / `toggleAudioMuted` ใน hook — เรียก `sfu.setPlaybackHold()` (มีอยู่แล้ว ใช้กับ media leave-grace ZYR-1085) จึงเป็นการ**ปิดเสียงล้วน ๆ**: ภาพ/จอที่แชร์ยังอยู่ session ยังต่อ เปิดเสียงกลับได้ทันทีโดยไม่ reconnect
+  - re-apply ค่าตอน `connect().then()` ด้วย เพราะ `<audio>` ที่ attach ใหม่หลัง reconnect default เป็นดัง → ไม่งั้นเสียงแอบกลับมาเอง
+  - รีเซ็ตพร้อม `optedOut` เมื่อ broadcast จบ (mute ผูกกับ broadcast นี้ ไม่ใช่ทุก broadcast ในอนาคต)
+  - side effect เขียนผ่าน ref ก่อน setState ไม่เอาไว้ใน updater (Strict Mode เรียก updater ซ้ำ)
+- **prop ที่เลิกใช้:** `onStopListening` / `stopListeningLabel` ถูกแทนด้วย `audioMuted` / `onToggleAudioMute` ทั้งบน stage เต็มและ PiP mini window (ไม่เหลือ dead prop)
+
+### 3. คนเข้า workspace ทีหลังไม่มีแจ้งเตือน — `zyra-ws/internal/hub/spotlight.go` + `zyra-api/internal/service/notification_service.go`
+
+- **สาเหตุ:** `spotlightFloorRecipients` snapshot รายชื่อ **ณ ตอนเริ่มไลฟ์** คนที่เดินเข้ามาทีหลังจึงไม่มีแถวในกระดิ่งเลย — ทั้งที่ `sendSpotlightSnapshot` ส่ง state ให้เขาแล้ว (stage เด้งขึ้นปกติ) พอเขาปิด stage ไปก็ไม่มีทางกลับเข้ามา
+- **แก้:** `sendSpotlightSnapshot` สร้างแถวให้คนที่เพิ่งเข้ามาด้วย (`notifySpotlightStartedFor`) — endpoint เดิม `POST /api/internal/spotlight/broadcasts` และ **session id เดิม** แถวจึงถูกปิดพร้อมกันตอน `EndSpotlightLive`; ข้ามให้คนที่เป็น speaker เอง
+- **ฝั่ง API ต้องกันซ้ำก่อน:** `CreateSpotlightLive` เปลี่ยนจาก `INSERT ... VALUES` เป็น `INSERT ... SELECT ... WHERE NOT EXISTS (session, user)` → reconnect กี่รอบก็ไม่มีแถวซ้ำ **ไม่ต้อง migration** (เลือกทางนี้แทน unique index + `ON CONFLICT` เพราะ index จะสร้างไม่ผ่านถ้ามีแถวซ้ำค้างใน DB อยู่ก่อน)
+
+### 4. ไลฟ์จบแล้วกระดิ่งยังมีปุ่ม Join — `components/vo-notification-panel.tsx`
+
+- **ที่ผู้ใช้แจ้ง:** รูปกระดิ่งที่แถว "Broadcast is live" ของ **เมื่อวาน** ยังมีปุ่ม Join เขียว ๆ อยู่ (ขณะที่แถวอื่นขึ้น "Broadcast ended" ถูกต้อง)
+- **สาเหตุ:** `spotlight_ended_at` เขียนโดย best-effort call จาก `zyra-ws` ตอน speaker คนสุดท้ายออก — **zyra-ws restart / call หลุด เมื่อไร แถวนั้นค้าง NULL ตลอดกาล** และการ์ดตัดสิน "live" จากคอลัมน์นี้อย่างเดียว
+- **แก้ (ฝั่ง client เป็นหลัก):** เพิ่ม `isSpotlightRowLive(n, liveSessionId)` — แถวจะ joinable ก็ต่อเมื่อ `spotlight_session_id` ตรงกับ **session ที่ไลฟ์อยู่จริงตอนนี้** (`useVOSessionStore.spotlightSessionId`); ไม่มีอะไรไลฟ์อยู่ = ทุกแถว ended. ใช้กติกาเดียวกันทั้งการ์ด **และ** ตอนคลิก — เดิม `onItemClick` เช็คแค่ `spotlight_ended_at` ทำให้การ์ดขึ้น "ended" แต่คลิกยังยิง join ได้ (test ใหม่จับได้ตอนเขียน)
+- **กติกานี้คือของที่ `canJoinBroadcastFromNotification` ใน hero ทำอยู่แล้ว** — รอบนี้แค่ทำให้ UI พูดตรงกับมัน แทนที่จะเชิญให้กดแล้วเด้ง toast ว่าไลฟ์จบไปแล้ว
+
+### 5. รายชื่อในหัวการ์ดขึ้น "In meeting" หมดทุกคน — `components/zone-participants-submenu.tsx`
+
+- **ที่ผู้ใช้แจ้ง:** "ตรง status ถ้าคนนั้นไม่ได้อยู่ใน meeting มันควรจะเป็น viewer ไม่ควรเป็น in meeting นอกจากคนนั้นจะอยู่ใน meeting จริง ๆ"
+- **สาเหตุ:** `MemberRow` hardcode subtitle เป็น `t("meetingLabel")` — ถูกสำหรับที่ที่มันเกิดมา (หัวการ์ดห้องประชุม) แต่ panel ตัวนี้ถูกใช้ซ้ำโดย `StageCountMenu` ทั้งสองชุดของ Spotlight (`Spotlight n` = คนไลฟ์, `Viewers n` = คนดู) ซึ่งไม่ใช่คนในห้องประชุมสักคน
+- **แก้:** เพิ่ม prop `statusLabelFor?: (p) => string` (ไม่ส่ง = `meetingLabel` เหมือนเดิม ทุก call site ของห้องประชุมจึงไม่เปลี่ยนพฤติกรรม) แล้ว stage ส่ง label ตามลิสต์: คนไลฟ์ = `spotlightOnStageStatus`, คนดู = `spotlightViewerStatus`
+- **แต่ "In meeting" ยังต้องขึ้นถ้าจริง:** stage รับ prop ใหม่ `meetingUserIds` = `usersInMeeting` แบบ lowercase (`meetingUserIdsLower` ใน hero) — ต้อง lowercase เพราะ id ของสองลิสต์นี้มาจาก **LiveKit identity** ไม่ใช่ roster (เหตุผลเดียวกับ `spotlightDisconnectedUserIds`); ใครอยู่ในเซ็ตนั้นยังขึ้น "In meeting" ตามเดิม
+- **copy ใหม่ (en+th):** `spotlightOnStageStatus` = On stage / กำลังไลฟ์อยู่ · `spotlightViewerStatus` = Watching / กำลังดูอยู่
+- **รอบแก้ที่ 2 (ผู้ใช้แจ้งต่อ "คนอยู่ใน meeting ขึ้น watching หมดเลย"):** อาการคือ **แถวของตัวเองบนจอตัวเอง** ขึ้น "Watching" ทั้งที่นั่งอยู่ในห้องประชุม ขณะที่จอของคนอื่นแสดง "In meeting" ให้คนคนเดียวกันถูกต้อง — เพราะ `usersInMeeting` (ตัวเดียวกับที่ทำสถานะแดงบนแผนที่) **ต้องมีคนที่ 2 ก่อนถึงจะนับ** (ยืนคนเดียวในห้องประชุมไม่ใช่การประชุม) และ self เข้าเซ็ตนั้นผ่าน branch 2+ ทางเดียวเท่านั้น → แก้โดย union self เข้าไปจาก **ความจริงฝั่ง local** คือ `hasMeetingPanel` (panel ประชุมอยู่บนจอ) แทนที่จะพึ่ง roster; ต้องย้าย `meetingUserIdsLower` ลงไปประกาศหลัง `hasMeetingPanel` ด้วย ไม่งั้น TDZ
+
+### 6. (ตามหลังข้อ 4) ไลฟ์ยังอยู่แต่กระดิ่งขึ้น "ended" หมด กด join กลับไม่ได้ — `zyra-ws/internal/hub/spotlight.go`
+
+- **ที่ผู้ใช้แจ้ง:** "เจอบั๊กตอนที่แก้กันอ่ะ ที่บอก noti ยังให้ join — ตอนนี้ live ยังไม่จบ คนกดออกกันหมด แล้วกด join ไม่ได้" พร้อมรูปกระดิ่งที่มี "Broadcast ended" 3 แถวในเวลา 18 นาที
+- **ไม่ใช่ regression ของกติกาใหม่ แต่เป็นบั๊กที่กติกาใหม่ทำให้โผล่:** 3 แถวใน 18 นาที = **3 session** ที่ปิดไปแล้วจริง ๆ ส่วน session ที่ไลฟ์อยู่ตอนนั้น **ไม่มีแถวในกระดิ่งเลยสักแถว** (ของเดิมแถวเก่ายังโชว์ Join อยู่ เลยบังอาการนี้ไว้ — กดแล้วก็แค่เด้ง toast ว่าจบไปแล้ว)
+- **สาเหตุ:** `handleSpotlightStart` สร้างแถวกระดิ่งด้วยเงื่อนไข `sessionOpened && notify` — เอา `notify` (แปลว่า "เด้งการ์ด who-is-speaking") มาคุมของที่คนละเรื่องกัน คือ "แถวถาวรสำหรับกลับเข้าไลฟ์" ผลคือเส้นทางนี้ไม่มีแถวเลย:
+  1. presenter หลุด → grace หมด (หรือ **zyra-ws restart** ซึ่งเกิดบ่อยมากตอน dev) → session ปิด + แถวเดิมถูก stamp ended
+  2. client ของ presenter re-assert ตอน `welcome` ด้วย **`notify=false`** → **เปิด session ใหม่** (`sessionOpened=true`) แต่ `notify=false` → ไม่มีแถวใหม่
+  3. ไลฟ์ยังอยู่ทุกประการ แต่ในกระดิ่งมีแต่ซาก session เก่า = กลับเข้าไม่ได้
+- **แก้:** เปลี่ยนเป็น `if sessionOpened` อย่างเดียว — **session ใหม่ = ต้องมีแถวใหม่เสมอ** ส่วน `notify` ยังคุมเฉพาะ toast เหมือนเดิม; re-assert เข้า session ที่**ยังเปิดอยู่** ยังไม่สร้างอะไร (`sessionOpened=false`) และ dedupe ต่อ (session, user) ที่ทำไว้ในข้อ 3 กันแถวซ้ำให้อีกชั้น
+- **verify:** เพิ่ม `TestSpotlightBellEntriesAfterSessionReopens` (start → stop → re-assert แบบ `notify=false` ต้องได้ POST แถวใหม่ที่ session id ไม่ซ้ำของเดิม) และคง `TestSpotlightBellEntriesSkipReAssert` เดิมไว้เพื่อกันฝั่งตรงข้าม — ต่างกันตรง session เปิดอยู่หรือปิดไปแล้ว, เขียนกำกับไว้ใน doc comment ของทั้งสองเทสต์
+- **ของที่แก้ไม่ได้ย้อนหลัง:** แถว "ended" ที่ค้างอยู่ตอนนี้คือ session ที่ตายจริง จะไม่กลับมา joinable — ผลของการแก้เริ่มที่ไลฟ์รอบถัดไป
+
+- **ถึงไหน:** ทั้ง 6 ข้อ implement ครบบน `feat/spotlight` (zyra-app, zyra-ws, zyra-api) · copy `en`+`th` ครบทุก key ใหม่ (`spotlightMuteAudio`, `spotlightUnmuteAudio`, `spotlightLeave*`)
+- **PR:** — (commit ตรงบน branch `feat/spotlight`)
+- **verify ถึงไหน:** `tsc --noEmit` ไม่มี error นอก `__tests__/` · vitest **166 ไฟล์ 2295 tests เขียวทั้งหมด** (แก้เทสต์ที่ผูกกับ prop เดิมของปุ่มลำโพง + เพิ่ม 2 เคสสำหรับแถวค้าง: session อื่น และไม่มีอะไรไลฟ์ + 1 เคสสำหรับ label ในหัวการ์ด) · `go build` + `go test ./...` ผ่านทั้ง zyra-ws และ zyra-api (รวมเทสต์ใหม่ของข้อ 6) · **ยังไม่ได้ live-test ทั้ง 4 ข้อ** (ข้อ 3 ต้องเทสสองเครื่อง: เริ่มไลฟ์ก่อน แล้วให้อีกคนเพิ่งเข้า workspace)
+- **ติดอะไร / รอเคาะ:**
+  - แถวที่ค้าง NULL อยู่ใน DB ตอนนี้ยังค้างต่อไป (แก้ที่การ*แสดงผล* ไม่ได้ล้างข้อมูล) — ถ้าจะให้สะอาดจริงต้องมี sweep ปิด session ที่ไม่มี speaker ตอน `zyra-ws` boot หรือ cron ฝั่ง api
+  - การออกจาก Spotlight ของคนที่อยู่ในห้องประชุม **มีผลทั้งห้อง** (พฤติกรรมเดิมของปุ่ม Stop listening ที่ย้ายมาอยู่ใต้ X) — ตอนนี้แค่เตือนใน modal ถ้าอยากให้เป็นรายคนต้องเพิ่ม state ฝั่ง server
+
+---
+
+## 2026-09-13 · panel ที่ถูก stage ทับ · ลำแสง (จาง + ปลายลำแสง) · ขอบเขียวตอนพูด · ล็อกแชร์จอระหว่างมี Spotlight
+
+### 1. เปิด Spotlight แล้วกดแถบด้านข้างไม่ได้ — `hero-virtual-office.tsx`
+
+- **ที่ผู้ใช้แจ้ง:** "ตอนมี spotlight กดแถบด้านข้างไม่ได้ อยากให้กดได้เหมือนเดิม"
+- **สาเหตุ:** rail กดได้อยู่ตลอด (`z-[60]`) แต่ panel ที่มันเปิด — Members / Notifications / Chat half — อยู่ `z-50` **เท่ากับ** Spotlight stage และถูก render **ก่อน** stage ใน DOM → z เท่ากันแพ้ลำดับ DOM, stage ทับหมด (Profile panel ยิ่งหนักกว่า: `z-20`) อาการที่ผู้ใช้เห็นคือ "กดแล้วไม่มีอะไรเกิดขึ้น" ทั้งที่ panel เปิดจริงแต่อยู่ข้างหลัง
+- **แก้:** ยก panel ทั้ง 4 เป็น `z-[55]` — เหนือ stage (50) แต่ยังต่ำกว่า rail (60) ตาม convention ที่ Help Center ใช้อยู่แล้ว (Announcement / Chat full ใช้ `z-[9998]` อยู่แล้วจึงไม่กระทบ)
+
+### 2. ลำแสง: จางลง + ปลายลำแสงไม่เลยเท้า — `zyra-engine/pixi-game/constants.ts`, `scene.ts`
+
+- **ที่ผู้ใช้แจ้ง:** "ลดความทึบของแสงบนหัวหน่อย ทำให้ตัวละครเด่น ๆ" แล้วต่อด้วย "แสงมันฉายเกินเท้าไปหน่อยหนึ่ง"
+- **แก้:** `SPOTLIGHT_BEAM_ALPHA` 0.75 → **0.4** (blend เป็น `screen` อยู่แล้ว alpha สูงจะฟอกสีตัวละครจนจาง) และเพิ่มค่าใหม่ `SPOTLIGHT_BEAM_FOOT_LIFT = 4` (world px) ยกขอบล่างของ GIF ขึ้นจากเส้นพื้น เพราะตัว art มี fade อยู่ท้ายเฟรม ขอบที่ทาบเส้นพื้นพอดีจึงล้นไปโดนกระเบื้องหน้าเท้า — ทั้งสองค่าเป็นจุดปรับจุดเดียวคุมทั้งเกม (อยู่ต่อจากงาน 2026-09-11 §1 ที่ย้ายลำแสงมาที่ ground line)
+
+### 3. คนไลฟ์พูดแล้วไม่มีขอบเขียว — `use-spotlight-broadcast.ts`, `vo-spotlight-stage.tsx`
+
+- **ที่ผู้ใช้แจ้ง:** "ตอนคนไลฟ์ spotlight พูด มันควรมีขอบเขียว ๆ เหมือนอันอื่นด้วย"
+- **สาเหตุ:** listener session (SFU ตัวที่สอง แบบ subscribe-only) subscribe แต่ `remoteAudioMuteChanged` / `videoTracksChanged` / `screenTracksChanged` — **ไม่ได้ subscribe `activeSpeakersChanged` เลย** ฝั่งคนดูจึงไม่มีข้อมูล "ใครกำลังพูด" อยู่ในมือตั้งแต่ต้น
+- **แก้:** hook export `speakingUserIds` (เคลียร์ตอน disconnect/teardown ไม่ให้ขอบค้างที่คนที่พูดอยู่ตอนหลุด) → stage ส่งต่อเข้าทุก layout (grid / side column ตอนแชร์จอ / PiP) → `SpotlightPresenterSurface` มี `border-2` ตลอดเวลาเปลี่ยนแค่สี (ไม่ให้ tile ขยับตอนขอบโผล่ แบบเดียวกับ `zone-enter-tiles`)
+- **กติกาเดียวกับ tile ของห้องประชุม:** `isSpeakingNow()` — LiveKit ชนะ, ถูกกดเฉพาะเมื่อ `muted === true` ชัด ๆ (ไม่ใช่ `undefined` จังหวะสั้น ๆ หลัง join/unmute — Bug 8), และคนที่กำลัง reconnect ไม่ติดขอบ
+- **ฝั่ง presenter ใช้ `mySpeakingUserIds`** (มี `localSpeaking` OR อยู่แล้ว) ขอบของตัวเองจึงขึ้นทันทีไม่ต้องรอ round-trip
+
+### 4. ล็อกปุ่มแชร์จอระหว่างมี Spotlight (HP-06) — `zone-enter-header.tsx`, `vo-hud.tsx`, `zone-enter-types.ts`, `hero-virtual-office.tsx`
+
+- **เรื่องนี้เข้าใจสลับกันอยู่รอบหนึ่ง บันทึกไว้กันคนต่อไปไล่ผิดทาง:** ผู้ใช้แจ้งว่า "ตอนคนใน meet ดู spotlight ปุ่ม screen share disable" ซึ่งอ่านได้ว่าเป็นบั๊ก — ไล่โค้ดแล้ว**ไม่มีที่ไหน disable ปุ่มนี้เลย**, วัดพิกเซลจากสกรีนช็อตได้พื้นปุ่ม `rgb(59,64,70)` = `hover:bg-white/10` บน `#252B31` พอดี และไอคอน `rgb(196,198,200)` = `text-white/70` เท่าปุ่ม emoji/hand → **นั่นคือ hover state ปกติ** ผู้ใช้ทดสอบต่อแล้วยืนยันว่า picker ของ Chrome เด้งขึ้นจริง จากนั้นจึงเฉลยว่าที่ต้องการคือ **"ปุ่มมันไม่ควรกดได้เลยนะ"** — คือขอให้ *ล็อก* ไม่ใช่ปลดล็อก
+- **ทำอะไร:** เพิ่ม `screenDisabled` ใน `MeetingMediaControls` → toolbar ของ meeting/companion และแถบ HUD แสดงปุ่มจาง 40% + `cursor-not-allowed` + `disabled` จริง + tooltip บอกเหตุผล (`shareLockedBySpotlight`, en+th)
+  - `spotlightShareLocked = anySpotlightViewerActive` — ล็อกเมื่อ Spotlight อยู่บนจอของคนนั้น (ทั้งเต็มจอและ PiP); **presenter ไม่โดน** เพราะเขาเป็น speaker ไม่ใช่ viewer (การแชร์บนเวทีกับ meeting share เดิมมี EC-01 จัดการอยู่แล้ว)
+  - **guard ที่ `handleScreenToggle` เองด้วย ไม่ใช่แค่ที่ปุ่ม** เพราะ PiP bar มีทางลัด "arm แล้วรอคลิกถัดไป" (`pipSharePending`) ที่ไม่ผ่านปุ่มนี้ — กดตอนล็อกจะได้ toast แทน; การ **หยุด** แชร์ที่ค้างอยู่ยังทำได้เสมอ ไม่งั้นคนที่แชร์อยู่ก่อนจะติดแหง็ก
+- **ของแถมจากการไล่บั๊ก:** `startScreenShare()` เดิมมี bare `return` ก้อนเดียวคลุม 4 เคส (ไม่มี sfu / ยังไม่ ready / ไม่มี room / แชร์อยู่แล้ว) — กดแล้วเงียบสนิท ไม่มี log ไม่มี toast ซึ่งคือสาเหตุที่ debug เรื่องนี้ยากมาก ตอนนี้แยกเคส "แชร์อยู่แล้ว" ออก (no-op เงียบตามเดิม) ที่เหลือขึ้น toast + `console.warn` พร้อม `hasSfu/mediaReady/roomId` และ log ทุกครั้งที่ picker ไม่เด้ง (รวม `NotAllowedError` ที่กิน 2 ความหมาย: ผู้ใช้กด cancel กับ user gesture หมดอายุ)
+
+- **ถึงไหน:** ทั้ง 4 ข้อ implement ครบ (zyra-app เท่านั้น) · เพิ่ม key `shareLockedBySpotlight` ครบ en+th
+- **PR:** — (commit ตรงบน branch `feat/spotlight`)
+- **verify ถึงไหน:** `tsc --noEmit` ไม่มี error นอก `__tests__/` · eslint ไฟล์ที่แตะ 0 error (hero เหลือ 11 warning ของเดิมทั้งหมด ดูรอบ 09-11 ข้อ "หมายเหตุ ESLint") · **live-test:** ผู้ใช้ยืนยันเองว่า picker เด้งจริงก่อนใส่ล็อก ส่วน 3 ข้อแรกดูจากสกรีนช็อตของผู้ใช้ · **เทสต์ pixi ที่ผูกกับตำแหน่งลำแสงค้างแดงอยู่ 1 เคสตั้งแต่รอบนี้ ไปแก้ให้ตรงกับ `SPOTLIGHT_BEAM_FOOT_LIFT` ในรอบ 09-14**
+- **ติดอะไร / รอเคาะ:** ขอบเขตการล็อกแชร์จอ — ตอนนี้ล็อกทุกครั้งที่ Spotlight อยู่บนจอ (ตามที่ผู้ใช้สั่ง "ไม่ควรกดได้เลย") ซึ่ง**กว้างกว่า** HP-06 ข้อ 5 ที่เขียนไว้ว่า "เมื่อ Spotlight หยุด share ผู้ใช้ meeting เริ่ม share ใหม่ได้" (= ล็อกเฉพาะตอน Spotlight กำลังแชร์จอ) ถ้าจะเอาตาม spec เป๊ะ แก้บรรทัดเดียวที่ `spotlightShareLocked`
+
+---
+
 ## 2026-09-11 (รอบที่ 2) · แจ้งเตือนตอน Broadcast จบ = toast มาตรฐาน (เลิกใช้ pill)
 
 - **ที่ผู้ใช้แจ้ง:** "ตอน Broadcast ปิดลงต้อง toast แจ้งเตือน" พร้อมรูป toast ที่มี title **Broadcast ended** / body **The speaker has ended the broadcast.** และไอคอน Radio สีส้มในกล่อง 40px
