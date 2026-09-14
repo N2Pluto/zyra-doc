@@ -2,6 +2,56 @@
 
 > entry ใหม่อยู่**บนสุด** · แยก "build เขียว" ออกจาก "live-test ผ่าน" ให้ชัดทุกครั้ง
 
+## รอบที่ 23 — 2026-09-14 · TMD เป็น provider ตัวแรกของไทย + บัค debug alert + scrim
+
+### 1. TMD credential มาแล้ว — แต่เป็นคนละ service กับที่เดาไว้ (api [#116](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/116))
+
+| | auth | ให้อะไร |
+|---|---|---|
+| `data.tmd.go.th/nwpapi/…` | Bearer token | **พยากรณ์ราย point** ← credential ที่ได้มา |
+| `data.tmd.go.th/api/…` | `uid` + `ukey` | **ประกาศเตือนภัย** |
+
+`/nwpapi/v1/warning` ตอบ **404** ⇒ token นี้**ไม่เปิด feed เตือนภัย** · **alert ของ TMD ยังไม่มี credential** ยังใช้ GDACS + Google ต่อไป
+ที่ปิดได้คือ **EP-01 "Priority 1: TMD API"** — chain ตอนนี้เป็น `TMD (เฉพาะไทย) → Google (metered) → Open-Meteo (ฟรี) → cache ≤3h → clear`
+ทำไม TMD ต้องมาก่อน ไม่ใช่มาทีหลัง: เป็นของกรมอุตุฯ เอง · ฟรี · ทุก workspace ไทยที่ TMD ตอบ = ไม่กิน quota ของ Google ซึ่งคือสิ่งที่ soft cap ตั้งมาปกป้อง · นอกไทยมันบอกเองโดยไม่ต้องยิง request
+
+**model ไม่มีอะไรบ้าง** ไม่มี gust · ไม่มีโอกาสเกิดฝน · ไม่มี flag กลางวัน/กลางคืน ⇒ gust กับ precip ปล่อยว่าง (การ์ดขึ้น em dash ซึ่งเป็นความจริง) ไม่เดาแทน · กลางวัน/กลางคืนคำนวณจากดวงอาทิตย์ของพิกัดนั้นเอง (โค้ดเดิมที่ใช้ทำแสงอยู่แล้ว) · code 4 ตัวจาก 12 ตัวของ TMD บอก**อุณหภูมิ**ไม่ใช่ท้องฟ้า (หนาวจัด/หนาว/เย็น/ร้อนจัด) ⇒ fallback ไปดูเมฆแทน เพราะไม่มี effect สำหรับ "อากาศร้อน"
+
+**verify:** ยิง API จริง — Bangkok คืน `cloudy / 26.0°C / humidity 79 / wind 9.4 kph / cloud 100% / day` normalize ผ่าน 9 condition เดียวกับอีกสองตัว · unit test เพิ่ม 25 เคส
+**⚠️ deploy ต้องใส่ `TMD_NWP_TOKEN`** ลง runtime secret (`zyra-api-<env>-env-json`) — ถ้าไม่ใส่ TMD จะหลุดออกจาก chain เงียบ ๆ และพฤติกรรมเท่าเดิมทุกอย่าง (ไม่ error)
+
+**บัคที่เจอระหว่างรื้อ chain:** reading จาก provider **ตัวสำรอง** ไป clear บันได retry ที่ความล้มเหลวของตัวหลักเพิ่งตั้งไว้ ⇒ cell ค้างอยู่กับตัวสำรองจนถึง refresh รายชั่วโมงถัดไป · ตอนนี้มีแต่หัว chain เท่านั้นที่ปิดบันไดได้
+
+### 2. ปุ่ม alert ใน debug mode กดแล้วไม่มีอะไรขึ้น (app [#365](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/365))
+
+**root cause:** alert ปลอมถูก stamp ด้วย **นาฬิกา override** (`nowMs`) ซึ่งค้างที่ `0` จนกว่าจะกดเร่งเวลา และค่า default ของ clock คือ "live" ⇒ ทุก alert ที่กดออกมาเป็น
+
+```
+announced_at: 1970-01-01T00:00:00.000Z
+expires_at:   1970-01-01T01:00:00.000Z
+```
+
+`liveAlerts` กรอง `expires_at <= now` ทิ้งก่อนจะได้วาด ⇒ **ปุ่มนี้ไม่เคยทำงานได้เลยตราบใดที่ clock เป็น "live"**
+แก้โดยจำเวลาที่กดด้วย**นาฬิกาจริง** (แบบเดียวกับ moon phase ที่ทำถูกอยู่แล้ว) และส่งเป็น argument แยกชื่อ `alertRaisedAtMs` เพื่อไม่ให้สับสนกับ override clock อีก · แถม id ไม่ซ้ำต่อการกด เพราะเดิม bucket ต่อนาที ⇒ คนที่ปิด toast แล้วกดซ้ำในนาทีเดียวกันได้ alert ที่ถูก dismiss ไปแล้ว = ปุ่มดูพังซ้ำสอง
+**"คนอื่นไม่เห็น" ไม่ใช่บัค** — panel เขียนไว้เองว่า "this device only" ไม่มีอะไรใน debug ที่ publish ออกไป ถ้าจะทดสอบการกระจายจริงต้องให้ alert มาจาก server
+
+### 3. weather panel — scrim ยาวถึง minimap และจางลง (app [#366](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/366))
+
+เดิม panel สูงเท่าเนื้อหา ⇒ ตัดขอบดำเป็นเส้นตรงกลางแมพ · ตอนนี้ `h-[calc(100vh-144px)]` = 24px ที่เว้นจากขอบบน + แถว HUD ล่าง (20px จากขอบ + minimap สูง 100px) ⇒ ขอบล่างจบพอดีตรงที่ minimap เริ่ม · สีดำจาก solid → `rgba(0,0,0,0.72)` เพราะเต็มความสูงแล้วดำทึบอ่านเป็นกำแพงไม่ใช่ panel
+(design จริงก็เต็มความสูงอยู่แล้ว — 992 ในเฟรม 1024)
+
+### 4. test ของ spotlight ที่ค้างแดงบน develop (app [#364](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/364))
+
+`2419240` เพิ่ม `SPOTLIGHT_BEAM_FOOT_LIFT = 4` แล้วลืมอัปเดต assertion ⇒ `expected 214 to be 218` แดงบน develop และทำให้ **ทุก PR ที่เปิดหลังจากนั้นแดงตามไปด้วย** · แก้ที่ assertion (โค้ดเป็นฝั่งที่ตั้งใจ เพราะ lift เป็น constant ที่ตั้งชื่อไว้ชัด) ไม่แตะ source
+
+### สถานะ
+
+- ✅ build เขียวทุก repo · `go test ./...` ผ่าน · `vitest` 166 ไฟล์ / 2296 เคส ผ่าน
+- ⛔ **ยังไม่ได้ live-test บน dev ทั้ง 4 ข้อ** — ต้องรอ deploy แล้วเปิดดูจริง
+- ⛔ ยังไม่ได้วัด FPS (ค้างมาตั้งแต่รอบ 21) · alert ของ TMD ยังไม่มี credential
+
+---
+
 ## รอบที่ 22 — 2026-09-13 · location ราย member + การ์ดที่ 2 "Your weather"
 
 **ทำอะไร** — ปิดช่องว่างที่ค้างมาตั้งแต่รอบ 21 (ข้อ 42/56/62): member ทุกคนเห็น **2 การ์ด** และมี location ของตัวเอง
