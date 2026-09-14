@@ -748,7 +748,16 @@ TitleEnglish, HeadlineEnglish, DescriptionEnglish, WebUrlEnglish, ContactEnglish
 
 **กับดักที่เจอตอน parse:** ใน `<Warning>` เดียว มี `TitleEnglish` / `HeadlineEnglish` / `DescriptionEnglish` / `WebUrlEnglish` / `ContactEnglish` **ซ้ำ 2 ชุด** — ชุดแรกเนื้อหาเป็น**ภาษาไทย** ชุดที่สองเป็นอังกฤษจริง ("Heavy to Very Heavy Rain in Thailand No.5") ถ้า parser ใช้ `findtext()` แบบเอา element แรกจะได้ภาษาไทยมาโชว์ในฝั่ง EN
 
-**Credential:** demo `uid=api&ukey=api12345` ใช้ได้ตอนทดสอบ แต่ prod ต้องลงทะเบียนขอ uid/ukey ของตัวเองที่ TMD (ยังไม่ได้ทำ)
+**Credential:** demo `uid=api&ukey=api12345` ใช้ได้ตอนทดสอบ แต่ prod ต้องลงทะเบียนขอ uid/ukey ของตัวเองที่ TMD (**ยังไม่ได้ทำ**)
+
+> ⚠️ **TMD มี 2 service แยกกัน อย่าสับสน** (ยืนยัน 2026-09-14)
+>
+> | endpoint | auth | ให้อะไร | สถานะ |
+> |---|---|---|---|
+> | `data.tmd.go.th/api/…` | `uid` + `ukey` | ประกาศเตือนภัย (feed นี้) | ❌ ยังไม่มี credential จริง |
+> | `data.tmd.go.th/nwpapi/…` | Bearer token | พยากรณ์ราย point | ✅ มีแล้ว (`TMD_NWP_TOKEN`) |
+>
+> token ของ nwpapi **ไม่เปิด** feed เตือนภัย (`/nwpapi/v1/warning` → 404) ⇒ ได้ weather แต่ยังไม่ได้ alert
 
 ### ตัวเลือก 2: OpenWeatherMap One Call — alerts แบบ per-coordinate ทั่วโลก
 
