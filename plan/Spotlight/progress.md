@@ -5,6 +5,21 @@
 
 ---
 
+## 2026-09-15 · tooltip ของปุ่ม Start broadcast (ให้เหมือน Stop) + แยก tooltip ออกเป็น component ร่วม
+
+- **ที่ผู้ใช้แจ้ง:** "ปุ่ม start spotlight ควรมี tooltip แบบ stop spotlight นะ" — ของเดิม Start ใช้ `title` ของ browser (กล่องขาวของ OS) ส่วน Stop เป็น bubble ที่ทำเองพร้อม key badge `[B]` สองปุ่มของ**คอนโทรลเดียวกันคนละสถานะ**เลยดูเป็นคนละของ
+- **ทำอะไร:** ย้าย markup ของ tooltip ออกจาก `zone-enter-header.tsx` มาเป็น `components/vo-hud-tooltip.tsx` (`VOHudTooltip`) แล้วใช้ร่วมกันทั้งสองปุ่ม — wrapper เป็นเจ้าของ `group` ที่เปิด bubble, `group-focus-within` ให้คนใช้คีย์บอร์ดเห็นด้วย, `pointer-events-none` บน bubble จึงแย่งคลิกไปจากปุ่มไม่ได้; ภาษาภาพยังเป็นของ PetTooltip เหมือนเดิม (`#1A1B1E` / radius 8 / p 8 / gap 4 / หัวลูกศร CSS triangle / `<kbd>` ขอบเขียว)
+- **รอบแก้ที่ 2 — ใส่ shortcut [B] ให้ Start ด้วย (ผู้ใช้ส่ง Figma มายืนยัน "Start broadcast [B]"):** รอบแรกตั้งใจไม่ใส่ badge เพราะ Start ยังไม่มี shortcut จริง รอบนี้จึง**ทำ shortcut ให้มีจริง** แล้วค่อยติด badge:
+  - ย้ายค่าคีย์จาก `STOP_BROADCAST_SHORTCUT_KEY/LABEL` (ประกาศอยู่ใน `zone-enter-header.tsx`) ไปเป็น `SPOTLIGHT_SHORTCUT_KEY/LABEL` ใน `lib/spotlight-feature.ts` — ชื่อเดิมผูกกับ "stop" ทั้งที่ตอนนี้เป็นคีย์ของคอนโทรลเดียวกันทั้งสองสถานะ (ที่เดียวกับที่ `PET_STROKE_SHORTCUT_KEY` อยู่ใน `lib/pet-interaction.ts`)
+  - `VOHud` ผูก listener ของตัวเอง guard เหมือนฝั่ง Stop เป๊ะ (ไม่ทำงานตอนพิมพ์ใน INPUT/TEXTAREA/contentEditable, ไม่ทำงานเมื่อมี modifier)
+  - **สองฝั่งไม่ยิงชนกัน:** HUD ผูกคีย์เฉพาะตอนปุ่ม Play กดได้จริง (`showSpotlightStart && !broadcasting && !starting`) พอขึ้นไลฟ์ปุ่มถูก disable → HUD ปล่อยคีย์ แล้ว Stop บน stage รับช่วงต่อ — กด B ครั้งเดียวจึงไม่โดนทั้ง start และ stop พร้อมกัน (มีเทสต์ครอบทั้ง 3 สถานะ: broadcasting / starting / ไม่ได้ยืนบน tile)
+- **Start ตอน disabled ก็ยังมี tooltip:** ปุ่มถูก `disabled` ระหว่างไลฟ์/นับถอยหลัง แต่เมาส์ยังอยู่บน wrapper อยู่ดี bubble จึงขึ้น และเปลี่ยนข้อความเป็น `spotlightBroadcastingLabel` — ซึ่งเป็นคำตอบของคำถาม "ทำไมกดไม่ได้"
+- **ถึงไหน:** เสร็จ (zyra-app เท่านั้น) ไม่มี copy ใหม่ ใช้ key เดิมทั้งหมด
+- **verify ถึงไหน:** เพิ่มเทสต์ใน `vo-hud-spotlight.test.tsx` (มี bubble + badge `B`, ไม่มี `title` ซ้อน, ยังบรรยายตอน live, กด B แล้วเริ่มไลฟ์, ไม่ทำงานตอนพิมพ์/มี modifier, และปล่อยคีย์เมื่อไลฟ์แล้ว) · เทสต์เดิมของ Stop (`stop-broadcast-tooltip` + `[B]`) ยังเขียวหลังรื้อ markup · `tsc --noEmit` ไม่มี error นอก `__tests__/` · vitest 167 ไฟล์เขียว (รอบเต็มมี pet 2 ไฟล์แดงจาก timeout ตอนเครื่องโหลดหนัก รันแยกแล้วผ่าน — ไม่เกี่ยวกับงานนี้) · Prettier ผ่าน · **ยังไม่ได้ live-test**
+- **ติดอะไร:** —
+
+---
+
 ## 2026-09-14 · ปุ่มบน stage ของคนดู (ยืนยันก่อนปิด + mute ที่ mute จริง) · กระดิ่งของคนเข้าทีหลัง · แถว "live" ค้างตลอดกาล
 
 ผู้ใช้แจ้ง 4 เรื่องรวดจากการเล่นจริง 2 หน้าต่างคู่กัน — ทั้งหมดเป็นฝั่ง **คนดู (viewer)** ไม่ใช่ presenter
