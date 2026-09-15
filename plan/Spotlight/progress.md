@@ -5,7 +5,7 @@
 
 ---
 
-## 2026-09-15 · tooltip ของปุ่ม Start broadcast (ให้เหมือน Stop) + แยก tooltip ออกเป็น component ร่วม
+## 2026-09-15 · tooltip + shortcut [B] ของ Start broadcast · รูปโปรไฟล์ในกล่อง "ใครกดสติกเกอร์" · เดินไป spotlight tile ข้าง ๆ ต้องถามก่อนจบไลฟ์
 
 - **ที่ผู้ใช้แจ้ง:** "ปุ่ม start spotlight ควรมี tooltip แบบ stop spotlight นะ" — ของเดิม Start ใช้ `title` ของ browser (กล่องขาวของ OS) ส่วน Stop เป็น bubble ที่ทำเองพร้อม key badge `[B]` สองปุ่มของ**คอนโทรลเดียวกันคนละสถานะ**เลยดูเป็นคนละของ
 - **ทำอะไร:** ย้าย markup ของ tooltip ออกจาก `zone-enter-header.tsx` มาเป็น `components/vo-hud-tooltip.tsx` (`VOHudTooltip`) แล้วใช้ร่วมกันทั้งสองปุ่ม — wrapper เป็นเจ้าของ `group` ที่เปิด bubble, `group-focus-within` ให้คนใช้คีย์บอร์ดเห็นด้วย, `pointer-events-none` บน bubble จึงแย่งคลิกไปจากปุ่มไม่ได้; ภาษาภาพยังเป็นของ PetTooltip เหมือนเดิม (`#1A1B1E` / radius 8 / p 8 / gap 4 / หัวลูกศร CSS triangle / `<kbd>` ขอบเขียว)
@@ -14,8 +14,26 @@
   - `VOHud` ผูก listener ของตัวเอง guard เหมือนฝั่ง Stop เป๊ะ (ไม่ทำงานตอนพิมพ์ใน INPUT/TEXTAREA/contentEditable, ไม่ทำงานเมื่อมี modifier)
   - **สองฝั่งไม่ยิงชนกัน:** HUD ผูกคีย์เฉพาะตอนปุ่ม Play กดได้จริง (`showSpotlightStart && !broadcasting && !starting`) พอขึ้นไลฟ์ปุ่มถูก disable → HUD ปล่อยคีย์ แล้ว Stop บน stage รับช่วงต่อ — กด B ครั้งเดียวจึงไม่โดนทั้ง start และ stop พร้อมกัน (มีเทสต์ครอบทั้ง 3 สถานะ: broadcasting / starting / ไม่ได้ยืนบน tile)
 - **Start ตอน disabled ก็ยังมี tooltip:** ปุ่มถูก `disabled` ระหว่างไลฟ์/นับถอยหลัง แต่เมาส์ยังอยู่บน wrapper อยู่ดี bubble จึงขึ้น และเปลี่ยนข้อความเป็น `spotlightBroadcastingLabel` — ซึ่งเป็นคำตอบของคำถาม "ทำไมกดไม่ได้"
+### รูปในกล่อง "ใครกดสติกเกอร์" เป็นสไปรต์เดินแทนรูปโปรไฟล์ — `views/user/virtual-office/utils/chat-avatars.ts` (ไฟล์ใหม่)
+
+- **ที่ผู้ใช้แจ้ง:** "ตอนจะดูรายชื่อคนกดสติกเกอร์ข้อความ รูปมันแปลก ๆ ต้องใช้รูปโปรไฟล์นะ" (รูป: แถบสไปรต์ตัวละครถูกบีบลงในวงกลม 32px)
+- **สาเหตุ:** zyra-ws bake identity ลงในแต่ละ entry ของแชท และ `avatar_url` ที่ bake มาคือ **สไปรต์ชีตเดิน** (ค่าที่ client ส่งตอน join ไว้วาดตัวละครบนแผนที่) ไม่ใช่รูปโปรไฟล์ — hero แก้ให้แล้วตั้งแต่ก่อนหน้า **แต่แก้แค่ผู้ส่งข้อความ** ส่วน `reactions[].users[]` ซึ่ง bake มาแบบเดียวกัน ไม่เคยถูก re-resolve กล่อง "ใครกดสติกเกอร์" จึงยังโชว์สไปรต์อยู่ที่เดียว
+- **แก้:** ถอด logic ออกจาก hero มาเป็นฟังก์ชันบริสุทธิ์ `resolveChatEntryAvatars(entries, resolveAvatarUrl)` ที่แทนรูปให้ **ทั้งผู้ส่งและ reactor ทุกคน**; หา roster ไม่เจอให้ตกเป็น `undefined` (ขึ้นอักษรย่อ) **ห้ามตกกลับไปใช้ค่าดิบ** เพราะค่าดิบคือสไปรต์ที่เป็นตัวบั๊กเอง; ใช้ร่วมกันทั้ง log ของ meeting และของ Spotlight
+- **verify:** เทสต์ใหม่ `__tests__/chat-avatars.test.ts` 5 เคส (ผู้ส่ง, reactor ทุกคน, คนที่ไม่อยู่ใน roster ต้องไม่เหลือสไปรต์, entry ที่ไม่มี reaction ไม่ถูกแตะและไม่ถูก mutate, เรียก roster ครั้งเดียวต่อ identity) — ก่อนหน้านี้ logic นี้ฝังอยู่ใน hero 14k บรรทัดจึงเทสต์ไม่ได้เลย
+
+### เดินจาก spotlight tile ไปอีก tile ที่ติดกัน = ไลฟ์จบทันที ไม่ถาม — `hero-virtual-office.tsx`, `use-spotlight-broadcast.ts`
+
+- **ที่ผู้ใช้แจ้ง:** "ตอนมี spotlight zone ติดกัน แล้วตอนเรา live อยู่ เดินไป spotlight ข้าง ๆ live จบเลย อยากให้ขึ้น modal confirm แบบตอนเดินออกนอก stage"
+- **สาเหตุ:** EC-03 (ถามก่อนจบไลฟ์) ผูกกับคำถาม "ยังยืนอยู่บน **spotlight tile** ไหม" ซึ่งเดินไป tile ข้าง ๆ ก็ยังตอบว่า "ใช่" → ไม่เข้า grace ไม่มี modal; แต่ตัว broadcast ผูกกับ **zone id** (`requestedSpotlightZoneId === spotlightStageZoneId`) และ `spotlightStageZoneId` อ่าน `activeSpotlightZoneId` ก่อน → พอ activeZone กลายเป็น tile ใหม่ เงื่อนไขนั้นเป็น false → `spotlightRoomId` เป็น null → state machine ยิง `spotlight:stop` เอง **ก่อนที่ใครจะได้ถาม**
+- **แก้ 2 จุด ให้ "เวที" กับ "ที่ยืน" เป็นคนละเรื่องกันจริง ๆ:**
+  1. `resolveSpotlightExitState` เปลี่ยน arg `onSpotlightTile` → **`onStageMarker`** = ยืนอยู่บน marker **ของเวทีนี้** (`onSpotlightTile && activeSpotlightZoneId === requestedSpotlightZoneId`) — tile ข้าง ๆ คือคนละเวที เดินข้ามไปจึงเท่ากับเดินออก และได้ modal เดียวกัน
+  2. `spotlightStageZoneId` เปลี่ยนเป็น `spotlightStartInForce ? requestedSpotlightZoneId : activeSpotlightZoneId` — ระหว่างที่ยังมี Start press ค้างอยู่ เวทีคือ tile ที่กด Play ไว้เสมอ ไม่ว่าตัวละครจะไปยืนตรงไหน → `spotlightBroadcastRequested` ยังจริง ไลฟ์จึงถูก "ค้างไว้" ระหว่างถาม เหมือนเคสเดินออกพื้นธรรมดาเป๊ะ
+- **พฤติกรรมหลังแก้:** Cancel = เดินกลับ marker เดิมอัตโนมัติ (ใช้ `spotlightStageZoneRef` ตัวเดิม) · Confirm = ไลฟ์จบแล้วยืนอยู่บน tile ใหม่ในสถานะ idle กด Play เริ่มเวทีใหม่ได้เลย
+- **verify:** เปลี่ยนชื่อ arg ในเทสต์เดิมของ `resolveSpotlightExitState` ทั้งชุด + เพิ่มเคส "เดินไป spotlight tile อื่นต้องถาม" (44 tests ในไฟล์นั้นเขียว)
+- **เจอระหว่างทาง ยังไม่แก้ (ไม่ใช่ regression รอบนี้):** `armedRef` ในฮุคติดธง "ครั้งแรกของการเข้า tile" จากการ**เข้า tile** ไม่ใช่จาก**เปลี่ยน zone** → ถ้าจบไลฟ์บน A แล้วกด Play บน B ต่อทันที viewer จะไม่ได้การ์ด who-is-speaking (แถวกระดิ่งยังได้ตามปกติ เพราะ session ใหม่เปิด) ถ้าจะให้เด้งด้วยต้องส่ง zone id เข้าฮุค — บอกได้ถ้าอยากให้ทำ
+
 - **ถึงไหน:** เสร็จ (zyra-app เท่านั้น) ไม่มี copy ใหม่ ใช้ key เดิมทั้งหมด
-- **verify ถึงไหน:** เพิ่มเทสต์ใน `vo-hud-spotlight.test.tsx` (มี bubble + badge `B`, ไม่มี `title` ซ้อน, ยังบรรยายตอน live, กด B แล้วเริ่มไลฟ์, ไม่ทำงานตอนพิมพ์/มี modifier, และปล่อยคีย์เมื่อไลฟ์แล้ว) · เทสต์เดิมของ Stop (`stop-broadcast-tooltip` + `[B]`) ยังเขียวหลังรื้อ markup · `tsc --noEmit` ไม่มี error นอก `__tests__/` · vitest 167 ไฟล์เขียว (รอบเต็มมี pet 2 ไฟล์แดงจาก timeout ตอนเครื่องโหลดหนัก รันแยกแล้วผ่าน — ไม่เกี่ยวกับงานนี้) · Prettier ผ่าน · **ยังไม่ได้ live-test**
+- **verify ถึงไหน:** vitest ทั้งชุด **168 ไฟล์ 2365 tests เขียว** (รอบที่เห็น pet แดง 1-2 เคสคือ timeout ตอนเครื่องโหลดหนัก รันแยกผ่านทุกครั้ง) · เพิ่มเทสต์ใน `vo-hud-spotlight.test.tsx` (มี bubble + badge `B`, ไม่มี `title` ซ้อน, ยังบรรยายตอน live, กด B แล้วเริ่มไลฟ์, ไม่ทำงานตอนพิมพ์/มี modifier, และปล่อยคีย์เมื่อไลฟ์แล้ว) · เทสต์เดิมของ Stop (`stop-broadcast-tooltip` + `[B]`) ยังเขียวหลังรื้อ markup · `tsc --noEmit` ไม่มี error นอก `__tests__/` · vitest 167 ไฟล์เขียว (รอบเต็มมี pet 2 ไฟล์แดงจาก timeout ตอนเครื่องโหลดหนัก รันแยกแล้วผ่าน — ไม่เกี่ยวกับงานนี้) · Prettier ผ่าน · **ยังไม่ได้ live-test**
 - **ติดอะไร:** —
 
 ---
