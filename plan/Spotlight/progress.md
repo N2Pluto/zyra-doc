@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-09-16 (ต่อ) · Merge zyra-ws #66 เข้า develop
+
+- **ทำอะไร:** merge zyra-ws PR #66 (`fix/spotlight-start-tolerant-tile` → `develop`) ด้วย merge commit `0b6a42e` ตามคำสั่งผู้ใช้ — CI `test-and-build` เขียวก่อน merge, `mergeStateStatus=CLEAN`
+- **ถึงไหน:** `Deploy zyra-ws (GitOps → k3s)` workflow trigger อัตโนมัติทันทีหลัง merge (queued ที่ commit `0b6a42e`) → รอดู sync เข้า dev cluster จริง
+- **verify ถึงไหน:** merge สำเร็จ + deploy workflow เริ่มแล้วเท่านั้น — **ยังไม่ยืนยันว่า pod ใหม่ deploy จริง**, ยังไม่ health check, ยังไม่ live-test
+- **ต่อจากนี้:** รอ deploy workflow จบ → health check dev `GET /api/health` → live-test spotlight บน dev (ยังต้องรอ zyra-app #399 merge ด้วยเพราะ client ฝั่งเก่ายังไม่มี arrival-gate/retry) → merge #399 → live-test เต็ม flow ตาม checklist ในไฟล์ issue §รอบที่ 2
+- **ติดอะไร:** —
+
 ## 2026-09-16 · Fix Play ต้องกดหลายครั้งบน prod (server-confirmed start)
 
 - **ทำอะไร:** วินิจฉัย + แก้ [`issues/spotlight-play-needs-multiple-clicks-2026-09-16.md`](../../issues/spotlight-play-needs-multiple-clicks-2026-09-16.md) — 4 ต้นเหตุซ้อนกัน: (1) `handleSpotlightStart` ฝั่ง zyra-ws เช็ค `c.TileX/TileY` ดิบ (จุดเดียวที่ไม่ผ่าน `zoneClaimTileOK` tolerance) → reject "not on a spotlight tile" เมื่อ tick commit leg ช้ากว่า client; (2) client ตั้ง `startedRef=true` ทันทีที่ส่งโดยไม่รอ server, ไม่ฟัง error → state ค้าง ต้องเดินออก/เข้า tile; (3) ปุ่ม Play กดได้ก่อนตัวละครถึง (settledTile วิ่งนำ #56); (4) เปิด LiveKit publisher ตั้งแต่ request ไม่ใช่ตอน confirm → เสีย session + linger 8s ทุกครั้งที่ล้มเหลว. เป็นเฉพาะ prod เพราะ `HasZoneType` บน zone set nil fail-open (local ไม่ publish zones)

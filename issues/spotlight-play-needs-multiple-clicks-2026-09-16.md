@@ -1,7 +1,7 @@
 # Spotlight — ต้องกด Play หลายครั้ง (มักเป็น 3 ครั้ง) บน prod ถึงจะเริ่ม broadcast
 
 > **สถานะ:** แก้ในโค้ดแล้ว 2026-09-16 (รอบที่ 2 ด้านล่าง) — verify ถึงระดับ **unit/integration test + tsc/lint/gofmt เขียว เท่านั้น** · **ยังไม่ live-test · ยังไม่วัด before/after** · **repo:** zyra-app, zyra-ws
-> **branch:** zyra-ws `fix/spotlight-start-tolerant-tile` · zyra-app `fix/spotlight-start-confirmed-state` · **PR (open, ยังไม่ merge):** zyra-ws [#66](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/66) · zyra-app [#399](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/399) — merge #66 ก่อน #399
+> **branch:** zyra-ws `fix/spotlight-start-tolerant-tile` (merged → develop) · zyra-app `fix/spotlight-start-confirmed-state` (ยังไม่ merge) · **PR:** zyra-ws [#66](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/66) **merged** → dev deploy กำลังรัน · zyra-app [#399](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/399) ยังเปิดอยู่
 > **ที่มา:** รายงานจากผู้ใช้ว่ากด Play บน spotlight tile บน prod ต้องกดประมาณ 3 ครั้งกว่าจะติด
 > **สำคัญ:** ห้ามถือว่า fixed จนกว่าจะมี live-test บน dev/uat + ตาราง before/after ตาม [`.claude/rules/18-before-after-metrics.md`](../../.claude/rules/18-before-after-metrics.md)
 
