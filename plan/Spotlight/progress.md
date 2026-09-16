@@ -5,6 +5,39 @@
 
 ---
 
+## 2026-09-16 (ต่อ 3) · Live-test บน dev — happy path + stop ยืนยันแล้ว, edge case ที่เหลือหยุดตามคำขอผู้ใช้
+
+- **ทำอะไร:** login เป็น `Tester Ten` บน `app.dev.zyra.center` เข้า workspace `n2pluto` (มี zone จริงชื่อ "Spotlight 1" tile (43,24) ที่ user สร้างไว้ 08:45 UTC วันเดียวกัน — zone set publish แล้ว ไม่ fail-open) พบว่ากำลัง broadcast อยู่แล้ว (น่าจะจากที่ user เดินไปกด Play เองตอน login) → ยืนยัน happy path เต็ม (live, LiveKit ห้อง `spotlight:<floorId>` ถูกต้อง) แล้วกด Stop broadcast → ผ่าน EC-03 confirm modal → จบสำเร็จ
+- **ถึงไหน:** พยายามเดินตัวละครกลับไป tile (43,24) เพื่อทดสอบ checklist ที่เหลือ (arrival-gate, forced reject/retry, restart ws, stop-while-pending, cancel-during-countdown) — คำนวณพิกัด screen click จาก WS debug panel (`tile/cam/zoom`) ตรงแล้วแต่ click-to-walk บน canvas ยังเดินไม่ถึงหลายรอบ ประกอบกับ Browser pane สลับ hidden/visible ระหว่าง turn ทำให้ synthetic click หลุดเป็นระยะ (ไม่ใช่บั๊กโค้ด — ปัญหา automation tooling) ผู้ใช้บอกให้หยุดแล้วไปทดสอบเองต่อ
+- **verify ถึงไหน:** live-confirm แล้ว — happy path (Play→live ครั้งเดียว, ไม่มีอาการกดหลายครั้ง) และ Stop broadcast/EC-03 · **ยังไม่ verify** — arrival gate ระหว่างเดิน, forced reject→retry→toast, restart zyra-ws กลางทาง, stop ระหว่าง pending, cross-client viewer (ต้อง 2 account), before/after metric
+- **ต่อจากนี้:** ผู้ใช้ทดสอบ checklist ที่เหลือเองบน dev workspace `n2pluto` ที่ tile (43,24) แล้วอัปเดตไฟล์นี้ + `issues/spotlight-play-needs-multiple-clicks-2026-09-16.md` · หลังครบค่อยวัด before/after จาก Loki แล้วพิจารณา main/tag
+- **ติดอะไร:** browser automation เดิน click-to-walk ในเกมไม่เสถียรพอสำหรับ edge-case testing ที่ต้องเดินซ้ำหลายรอบแม่นยำ — ต้องการ human tester หรือเครื่องมือ automation ที่ควบคุม tile position ได้ตรงกว่านี้
+
+## 2026-09-16 (ต่อ 2) · Merge zyra-app #399 เข้า develop
+
+- **ทำอะไร:** ระหว่างรอ merge #399 CI แรก `lint-and-build` แดง — React Compiler (`react-hooks/preserve-manual-memoization`) ฟ้องว่า `handleSpotlightStartFailed` inferred dependency ไม่ตรงกับที่ประกาศ (`[t]` แต่ compiler ต้องการ `setRequestedSpotlightZoneId` ด้วย) ตามธรรมเนียมเดิมในไฟล์ที่ callback ข้างเคียง (`handleSpotlightExitConfirm`/`handleSpotlightExitCancel`) list setState identity ไว้ในนั้นอยู่แล้ว. แก้โดยเพิ่ม `setRequestedSpotlightZoneId` เข้า deps array แล้ว push commit `cd5dc63` เพิ่ม — CI รอบสองเขียวทั้ง 5 checks. merge PR #399 (`fix/spotlight-start-confirmed-state` → `develop`) ด้วย merge commit `bfe2a1b` ตามคำสั่งผู้ใช้
+- **ถึงไหน:** `Deploy zyra-app (GitOps → k3s)` trigger อัตโนมัติที่ commit `bfe2a1b` (in_progress ตอนบันทึก) — ทั้งสอง repo (`0b6a42e` ฝั่ง ws, `bfe2a1b` ฝั่ง app) อยู่บน `develop` แล้ว
+- **verify ถึงไหน:** merge สำเร็จทั้งสอง repo + deploy workflow เริ่มแล้ว — **ยังไม่ยืนยัน pod ใหม่ deploy จริง**, ยังไม่ health check, ยังไม่ live-test, ยังไม่วัด before/after
+- **ต่อจากนี้:** รอ deploy workflow ทั้งสองจบ → health check dev `GET /api/health` (version ตรง commit ที่เพิ่ง deploy) → live-test เต็ม flow ตาม checklist ในไฟล์ issue §รอบที่ 2 → วัด `spotlight start rejected` rate จาก Loki 24h ก่อน/หลัง แล้วเติมตาราง before/after → ค่อย main/tag (ถาม confirm)
+- **ติดอะไร:** สี disabled ของปุ่ม Play ตอนยังไม่ถึง tile ไม่มี Figma spec (ใช้ `rgba(255,255,255,0.4)` ไปก่อน) · Grafana MCP ต่อไม่ติดในเครื่องนี้
+
+## 2026-09-16 (ต่อ) · Merge zyra-ws #66 เข้า develop
+
+- **ทำอะไร:** merge zyra-ws PR #66 (`fix/spotlight-start-tolerant-tile` → `develop`) ด้วย merge commit `0b6a42e` ตามคำสั่งผู้ใช้ — CI `test-and-build` เขียวก่อน merge, `mergeStateStatus=CLEAN`
+- **ถึงไหน:** `Deploy zyra-ws (GitOps → k3s)` workflow trigger อัตโนมัติทันทีหลัง merge (queued ที่ commit `0b6a42e`) → รอดู sync เข้า dev cluster จริง
+- **verify ถึงไหน:** merge สำเร็จ + deploy workflow เริ่มแล้วเท่านั้น — **ยังไม่ยืนยันว่า pod ใหม่ deploy จริง**, ยังไม่ health check, ยังไม่ live-test
+- **ต่อจากนี้:** รอ deploy workflow จบ → health check dev `GET /api/health` → live-test spotlight บน dev (ยังต้องรอ zyra-app #399 merge ด้วยเพราะ client ฝั่งเก่ายังไม่มี arrival-gate/retry) → merge #399 → live-test เต็ม flow ตาม checklist ในไฟล์ issue §รอบที่ 2
+- **ติดอะไร:** —
+
+## 2026-09-16 · Fix Play ต้องกดหลายครั้งบน prod (server-confirmed start)
+
+- **ทำอะไร:** วินิจฉัย + แก้ [`issues/spotlight-play-needs-multiple-clicks-2026-09-16.md`](../../issues/spotlight-play-needs-multiple-clicks-2026-09-16.md) — 4 ต้นเหตุซ้อนกัน: (1) `handleSpotlightStart` ฝั่ง zyra-ws เช็ค `c.TileX/TileY` ดิบ (จุดเดียวที่ไม่ผ่าน `zoneClaimTileOK` tolerance) → reject "not on a spotlight tile" เมื่อ tick commit leg ช้ากว่า client; (2) client ตั้ง `startedRef=true` ทันทีที่ส่งโดยไม่รอ server, ไม่ฟัง error → state ค้าง ต้องเดินออก/เข้า tile; (3) ปุ่ม Play กดได้ก่อนตัวละครถึง (settledTile วิ่งนำ #56); (4) เปิด LiveKit publisher ตั้งแต่ request ไม่ใช่ตอน confirm → เสีย session + linger 8s ทุกครั้งที่ล้มเหลว. เป็นเฉพาะ prod เพราะ `HasZoneType` บน zone set nil fail-open (local ไม่ publish zones)
+- **ถึงไหน:** zyra-ws `fix/spotlight-start-tolerant-tile` — `zoneTypeClaimTileOK` (reconcile + leg END) แทน check ดิบ + `slog.Warn` ตอน reject ไว้วัด · zyra-app `fix/spotlight-start-confirmed-state` — `confirmed = self ∈ speakers && !disconnected`, pending/ack-timeout 1500ms, retry 500ms บน transient reject, budget 3 ส่ง, error handler + toast + Play กลับมา, `arrived` gate จาก `liveZoneId` (ปุ่ม disabled จนถึงจริง — ตามที่ผู้ใช้เลือก), publisher room เปิดหลัง confirm เท่านั้น, `welcome` bump epoch แทน re-assert listener เดิม · i18n en/th 5 key · โค้ดเสร็จทั้งสอง repo, push แล้ว, PR เปิดแล้ว **ยังไม่ merge**
+- **PR:** zyra-ws [#66](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/66) (CI `test-and-build` เขียว) · zyra-app [#399](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/399) (CI กำลังรันตอนบันทึก) · doc [zyra-doc#21](https://github.com/N2Pluto/zyra-doc/pull/21) — ลำดับ merge: #66 ก่อน #399 (client ใช้กับ server เก่าได้ แค่โดน transient reject บ่อยกว่า)
+- **verify ถึงไหน:** `go test ./internal/hub/` + vet + gofmt ผ่าน (4 test ใหม่) · Vitest 4 ไฟล์ 86 tests ผ่าน (hook test เพิ่ม 11 เคส) · `tsc --noEmit` ไม่มี error ใหม่ · eslint/prettier ผ่าน (เหลือ warning เดิม 1 ตัวเท่า develop) · **ยังไม่ live-test** — session ไม่มี Redis/Docker/LiveKit และต้อง login; ถ้าไม่มี zone set ใน Redis server fail-open จึง repro reject ไม่ได้อยู่ดี · **ยังไม่วัด before/after**
+- **ต่อจากนี้:** รอ CI #399 เขียว + review → merge #66 แล้ว #399 เข้า develop (dev deploy อัตโนมัติ) → live-test บน dev ตาม checklist ในไฟล์ issue §รอบที่ 2 → วัด `spotlight start rejected` rate จาก Loki 24h ก่อน/หลัง แล้วเติมตาราง before/after ในไฟล์ issue → ค่อย main/tag (ถาม confirm)
+- **ติดอะไร:** สี disabled ของปุ่ม Play ตอนยังไม่ถึง tile ไม่มี Figma spec (ใช้ `rgba(255,255,255,0.4)` ไปก่อน) · Grafana MCP ต่อไม่ติดในเครื่องนี้ (`mcp-grafana` binary หาย)
+
 ## 2026-09-09 · Fix Join action using the live Office WebSocket
 
 - Adjusted the accepted-meeting companion layout against Figma node `5485:899345`: a non-interactive `#242B32` backdrop now covers the content area so the map cannot show through, while the Spotlight card and Meeting card remain separate, visibly bounded panels.
