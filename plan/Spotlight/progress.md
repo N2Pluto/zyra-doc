@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-09-16 (ต่อ 3) · Live-test บน dev — happy path + stop ยืนยันแล้ว, edge case ที่เหลือหยุดตามคำขอผู้ใช้
+
+- **ทำอะไร:** login เป็น `Tester Ten` บน `app.dev.zyra.center` เข้า workspace `n2pluto` (มี zone จริงชื่อ "Spotlight 1" tile (43,24) ที่ user สร้างไว้ 08:45 UTC วันเดียวกัน — zone set publish แล้ว ไม่ fail-open) พบว่ากำลัง broadcast อยู่แล้ว (น่าจะจากที่ user เดินไปกด Play เองตอน login) → ยืนยัน happy path เต็ม (live, LiveKit ห้อง `spotlight:<floorId>` ถูกต้อง) แล้วกด Stop broadcast → ผ่าน EC-03 confirm modal → จบสำเร็จ
+- **ถึงไหน:** พยายามเดินตัวละครกลับไป tile (43,24) เพื่อทดสอบ checklist ที่เหลือ (arrival-gate, forced reject/retry, restart ws, stop-while-pending, cancel-during-countdown) — คำนวณพิกัด screen click จาก WS debug panel (`tile/cam/zoom`) ตรงแล้วแต่ click-to-walk บน canvas ยังเดินไม่ถึงหลายรอบ ประกอบกับ Browser pane สลับ hidden/visible ระหว่าง turn ทำให้ synthetic click หลุดเป็นระยะ (ไม่ใช่บั๊กโค้ด — ปัญหา automation tooling) ผู้ใช้บอกให้หยุดแล้วไปทดสอบเองต่อ
+- **verify ถึงไหน:** live-confirm แล้ว — happy path (Play→live ครั้งเดียว, ไม่มีอาการกดหลายครั้ง) และ Stop broadcast/EC-03 · **ยังไม่ verify** — arrival gate ระหว่างเดิน, forced reject→retry→toast, restart zyra-ws กลางทาง, stop ระหว่าง pending, cross-client viewer (ต้อง 2 account), before/after metric
+- **ต่อจากนี้:** ผู้ใช้ทดสอบ checklist ที่เหลือเองบน dev workspace `n2pluto` ที่ tile (43,24) แล้วอัปเดตไฟล์นี้ + `issues/spotlight-play-needs-multiple-clicks-2026-09-16.md` · หลังครบค่อยวัด before/after จาก Loki แล้วพิจารณา main/tag
+- **ติดอะไร:** browser automation เดิน click-to-walk ในเกมไม่เสถียรพอสำหรับ edge-case testing ที่ต้องเดินซ้ำหลายรอบแม่นยำ — ต้องการ human tester หรือเครื่องมือ automation ที่ควบคุม tile position ได้ตรงกว่านี้
+
 ## 2026-09-16 (ต่อ 2) · Merge zyra-app #399 เข้า develop
 
 - **ทำอะไร:** ระหว่างรอ merge #399 CI แรก `lint-and-build` แดง — React Compiler (`react-hooks/preserve-manual-memoization`) ฟ้องว่า `handleSpotlightStartFailed` inferred dependency ไม่ตรงกับที่ประกาศ (`[t]` แต่ compiler ต้องการ `setRequestedSpotlightZoneId` ด้วย) ตามธรรมเนียมเดิมในไฟล์ที่ callback ข้างเคียง (`handleSpotlightExitConfirm`/`handleSpotlightExitCancel`) list setState identity ไว้ในนั้นอยู่แล้ว. แก้โดยเพิ่ม `setRequestedSpotlightZoneId` เข้า deps array แล้ว push commit `cd5dc63` เพิ่ม — CI รอบสองเขียวทั้ง 5 checks. merge PR #399 (`fix/spotlight-start-confirmed-state` → `develop`) ด้วย merge commit `bfe2a1b` ตามคำสั่งผู้ใช้

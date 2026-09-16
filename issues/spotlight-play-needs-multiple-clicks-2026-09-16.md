@@ -1,6 +1,6 @@
 # Spotlight — ต้องกด Play หลายครั้ง (มักเป็น 3 ครั้ง) บน prod ถึงจะเริ่ม broadcast
 
-> **สถานะ:** แก้ในโค้ดแล้ว 2026-09-16 (รอบที่ 2 ด้านล่าง) — verify ถึงระดับ **unit/integration test + tsc/lint/gofmt เขียว เท่านั้น** · **ยังไม่ live-test · ยังไม่วัด before/after** · **repo:** zyra-app, zyra-ws
+> **สถานะ:** แก้ในโค้ดแล้ว 2026-09-16 (รอบที่ 2 ด้านล่าง) — verify ถึงระดับ **unit/integration test เขียว + live-test บน dev บางส่วน** (happy path + stop ยืนยันจริง, edge case ที่เหลือยังไม่ได้ลอง) · **ยังไม่วัด before/after** · **repo:** zyra-app, zyra-ws
 > **branch:** zyra-ws `fix/spotlight-start-tolerant-tile` (merged → develop) · zyra-app `fix/spotlight-start-confirmed-state` (merged → develop) · **PR:** zyra-ws [#66](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/66) **merged** (`0b6a42e`) · zyra-app [#399](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/399) **merged** (`bfe2a1b`) — ทั้งคู่ deploy เข้า dev แล้ว/กำลังรัน
 > **ที่มา:** รายงานจากผู้ใช้ว่ากด Play บน spotlight tile บน prod ต้องกดประมาณ 3 ครั้งกว่าจะติด
 > **สำคัญ:** ห้ามถือว่า fixed จนกว่าจะมี live-test บน dev/uat + ตาราง before/after ตาม [`.claude/rules/18-before-after-metrics.md`](../../.claude/rules/18-before-after-metrics.md)
@@ -158,7 +158,10 @@ if !r.getZoneSet().HasZoneType("spotlight", c.TileX, c.TileY) {
 
 ### ยัง verify ไม่ถึงระดับไหน
 
-- **ยังไม่ live-test เลย** — session นี้ไม่มี Redis (ไม่มี binary, Docker daemon ไม่ได้รัน), ไม่มี LiveKit local, และเข้า VO ต้อง login · **ถ้าไม่มี Redis + zone set publish (`vo:zones:<workspaceId>`) server จะ fail-open → repro path ที่ reject ไม่ได้** (กับดักเดียวกับ [`vo-meeting-panel-stuck-on-walkout-2026-09-01.md`](vo-meeting-panel-stuck-on-walkout-2026-09-01.md))
-- checklist live-test ที่ต้องทำ (dev หลัง merge เหมาะสุด — Redis จริง + zones publish แล้ว): (a) คลิก spotlight tile จากไกล → Play โชว์แต่ disabled จนถึง → กด → 5 วิ → ติดครั้งแรก, browser 2 เห็น stage, LiveKit connect เกิด *หลัง* `stateUpdate`; (b) จำลอง reject → retry ≤3 → toast + Play กลับมา, ไม่มี LiveKit connect; (c) restart zyra-ws กลางทาง → broadcast กลับมาเอง ไม่มี card ซ้ำ; (d) เดินออกระหว่าง pending → `ws:spotlight:stop` 1 ครั้ง; (e) Cancel ระหว่าง countdown → ไม่มี start ออกไป
+**Live-test บน dev 2026-09-16 หลัง merge ทั้งสอง PR — ทำได้บางส่วน:**
+
+- workspace `n2pluto` มี zone จริงชื่อ **"Spotlight 1"** (`zone_type: spotlight`, pixel `x:1376,y:768` → tile `(43,24)`) สร้างไว้ตอน 08:45 UTC วันเดียวกัน — ใช้ทดสอบได้จริง มี zone set publish แล้ว (ไม่ fail-open) ตรงเงื่อนไขที่ต้องการ
+- **ยืนยันแล้วจริง (สังเกตตอนเข้า workspace):** happy path กด Play → ติด broadcast สำเร็จ (`"You're live to everyone in the workspace"`, ปุ่ม Stop broadcast โชว์, LiveKit connect เข้าห้อง `spotlight:820c3314-a25e-4f69-a776-24413eeae8a2` ตรงตาม `spotlight:<floorId>`) — ไม่มีอาการต้องกดหลายครั้ง · กด **Stop broadcast** → เจอ EC-03 confirm modal → confirm → จบ broadcast สำเร็จ ถูกต้อง
+- **ทำไม่ได้ในรอบนี้ (ข้อจำกัดเครื่องมือ ไม่ใช่โค้ด):** ชุด checklist (a)-(e) เดิม (arrival-gate ระหว่างเดิน, forced reject → retry/toast, restart zyra-ws, stop-while-pending, cancel-during-countdown) ต้องเดินตัวละครไปยัง tile (43,24) อย่างแม่นยำซ้ำหลายรอบ — browser automation ใน session นี้เดิน click-to-walk ไม่เสถียร (double-click บน canvas ไม่ landed ตามพิกัดที่คำนวณจาก debug panel ได้แน่นอน, เจอ Browser pane สลับ hidden/visible ระหว่าง turn ทำให้ click หลุดเป็นพักๆ) ผู้ใช้ขอให้หยุดแล้วไปทดสอบต่อเอง — **cross-client viewer test ก็ยังไม่ได้ทำ** (ต้อง 2 account ที่ login พร้อมกัน)
 - **before/after ยังไม่ได้วัด** — metric ที่วางไว้: อัตรา log `spotlight start rejected` (slog ใน PR 1) ต่อ `ws:spotlight:start` บน prod 24h ก่อน/หลัง; ตัวที่สอง participant-join ห้อง `spotlight:*` ที่ไม่มี speaker (ถ้า SFU metric มี) · Grafana MCP ต่อไม่ติดตอนทำงานรอบนี้
 - สี disabled ของปุ่ม Play (ยังไม่ถึง tile) ไม่มี Figma spec — ใช้ `rgba(255,255,255,0.4)` ไปก่อน ต้อง confirm กับ design
