@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-09-16 (ต่อ 2) · Merge zyra-app #399 เข้า develop
+
+- **ทำอะไร:** ระหว่างรอ merge #399 CI แรก `lint-and-build` แดง — React Compiler (`react-hooks/preserve-manual-memoization`) ฟ้องว่า `handleSpotlightStartFailed` inferred dependency ไม่ตรงกับที่ประกาศ (`[t]` แต่ compiler ต้องการ `setRequestedSpotlightZoneId` ด้วย) ตามธรรมเนียมเดิมในไฟล์ที่ callback ข้างเคียง (`handleSpotlightExitConfirm`/`handleSpotlightExitCancel`) list setState identity ไว้ในนั้นอยู่แล้ว. แก้โดยเพิ่ม `setRequestedSpotlightZoneId` เข้า deps array แล้ว push commit `cd5dc63` เพิ่ม — CI รอบสองเขียวทั้ง 5 checks. merge PR #399 (`fix/spotlight-start-confirmed-state` → `develop`) ด้วย merge commit `bfe2a1b` ตามคำสั่งผู้ใช้
+- **ถึงไหน:** `Deploy zyra-app (GitOps → k3s)` trigger อัตโนมัติที่ commit `bfe2a1b` (in_progress ตอนบันทึก) — ทั้งสอง repo (`0b6a42e` ฝั่ง ws, `bfe2a1b` ฝั่ง app) อยู่บน `develop` แล้ว
+- **verify ถึงไหน:** merge สำเร็จทั้งสอง repo + deploy workflow เริ่มแล้ว — **ยังไม่ยืนยัน pod ใหม่ deploy จริง**, ยังไม่ health check, ยังไม่ live-test, ยังไม่วัด before/after
+- **ต่อจากนี้:** รอ deploy workflow ทั้งสองจบ → health check dev `GET /api/health` (version ตรง commit ที่เพิ่ง deploy) → live-test เต็ม flow ตาม checklist ในไฟล์ issue §รอบที่ 2 → วัด `spotlight start rejected` rate จาก Loki 24h ก่อน/หลัง แล้วเติมตาราง before/after → ค่อย main/tag (ถาม confirm)
+- **ติดอะไร:** สี disabled ของปุ่ม Play ตอนยังไม่ถึง tile ไม่มี Figma spec (ใช้ `rgba(255,255,255,0.4)` ไปก่อน) · Grafana MCP ต่อไม่ติดในเครื่องนี้
+
 ## 2026-09-16 (ต่อ) · Merge zyra-ws #66 เข้า develop
 
 - **ทำอะไร:** merge zyra-ws PR #66 (`fix/spotlight-start-tolerant-tile` → `develop`) ด้วย merge commit `0b6a42e` ตามคำสั่งผู้ใช้ — CI `test-and-build` เขียวก่อน merge, `mergeStateStatus=CLEAN`
