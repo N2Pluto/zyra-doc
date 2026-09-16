@@ -5,6 +5,51 @@
 
 ---
 
+## 2026-09-16 · ปุ่ม PiP ให้ฝั่งคน live ด้วย · icon PiP ตัวใหม่ (ใช้ร่วมทั้งสองฝั่ง) · ลดความสูงแถบหัว stage/panel
+
+### 1. คนที่กำลัง live ก็ต้องมีปุ่ม PiP แบบ viewer — `hero-virtual-office.tsx`, `vo-spotlight-stage.tsx`
+
+- **ที่ผู้ใช้แจ้ง:** "ตอนคน live spotlight อยากให้เพิ่มปุ่ม pip แบบของ viewer ด้วย"
+- **สาเหตุ:** `VOSpotlightStage` มี prop `onPictureInPicture` + โหมด `compact` (การ์ดลากได้ 340×280) อยู่แล้ว แต่ **หน้า hero ส่งให้เฉพาะ block ของ viewer** — block ของ presenter (ราวบรรทัด 14240) ไม่เคยส่ง คนที่ live จึงถูกล็อกอยู่กับ stage เต็มจอตลอดเวลาที่ออกอากาศ
+- **ทำอะไร:** เพิ่ม state `spotlightPresenterPip` + `handleSpotlightPresenterPip` (คู่ขนานกับของ viewer เป๊ะ) แล้วส่ง `compact` / `onPictureInPicture` เข้า stage ของ presenter — **ไม่ต้องแตะ component เลย ใช้ทางเดิมที่ viewer ใช้**
+  - **mic/cam ไม่หายตอนย่อ:** พอ stage เต็มจอพับลง HUD ล่างจอโผล่มา ซึ่งมีปุ่ม device ชุดเดียวกับ toolbar บน stage → ไม่มีคอนโทรลไหนเข้าไม่ถึงระหว่างที่ยัง live อยู่ (นี่คือเหตุผลที่ไม่ยัด `MeetingToolbar` ลงการ์ด 340px)
+  - **ปุ่ม X บนการ์ด = `handleSpotlightExitRequest`** (เปิด modal ยืนยัน) ไม่ใช่ตัดไลฟ์ทันที — ส่งเป็น `undefined` ตอนไม่ได้อยู่ใน PiP เพื่อไม่ให้ stage เต็มจอมี X เพิ่มมาจากของเดิม (Stop อยู่ที่ toolbar อยู่แล้ว)
+  - **ปุ่มแชทบนการ์ด** ออกจาก PiP แล้วเปิด panel (การ์ดแคบเกินจะ dock แชท) — พฤติกรรมเดียวกับฝั่ง viewer
+  - **Outside display (native PiP window) ถอยให้:** `autoOpen` เพิ่มเงื่อนไข `&& !spotlightPresenterPip` และตอนเปิดการ์ดจะ `outsidePip.close()` ก่อน — สองหน้าต่างลอยพร้อมกันคือของที่ viewer เคยกันไว้แล้ว
+  - รีเซ็ต state เมื่อ `spotlight.broadcasting` เป็น false (ไลฟ์จบ = ไม่มีอะไรให้ดูในการ์ด)
+- **จุดที่เกือบพลาด:** `handleSpotlightPresenterChatToggle` ต้องประกาศ **หลัง** `handleToggleSpotlightChat` (บรรทัด ~8460) เพราะ dep array ถูก evaluate ตอน render → วางไว้ก่อนจะได้ TDZ ReferenceError ไม่ใช่แค่ lint เตือน
+
+### 2. icon PiP ตัวใหม่ ใช้ร่วมทั้ง presenter และ viewer — `vo-spotlight-stage.tsx`
+
+- **ที่ผู้ใช้แจ้ง:** "ขอ icon แบบนี้นะ pip อ่ะ ทั้งคน live ทั้ง viewer เลย" (รูป: มุมเฟรมบน-ขวา/ล่าง-ซ้าย + ลูกศรทแยงชี้เข้ามุม + กรอบมนหน้าต่างเล็กมุมล่างขวา)
+- **ทำอะไร:** เพิ่ม `PictureInPictureIcon` (SVG inline 24×24 stroke 2) ในไฟล์เดียวกัน แทน `PictureInPicture2` ของ lucide — ของ lucide คือไอคอน "เข้า native PiP ของเบราว์เซอร์" ซึ่งเป็นคนละความหมายกับ "ย่อลงการ์ดในหน้า"
+- **ได้ทั้งสองฝั่งด้วยการแก้จุดเดียว** เพราะปุ่มนี้อยู่ใน header ของ `VOSpotlightStage` ซึ่ง presenter กับ viewer ใช้ component เดียวกัน
+
+### 3. แถบหัวกินพื้นที่บน-ล่างมากไป — `vo-spotlight-stage.tsx`, `zone-enter-panel.tsx`
+
+- **ที่ผู้ใช้แจ้ง:** "ลด space บนล่างให้หน่อย มันกินพื้นที่มากไป" (ส่งรูปแถบหัว 2 อัน: stage ของ Spotlight และ panel ประชุมที่อยู่ใต้มัน)
+- **สาเหตุ:** ทั้งสองแถบสูง `h-[56px]` ทั้งที่ของข้างในสูงจริงแค่ ~24–26px (chip `h-[24px]` / ปุ่ม `p-[4px]`+icon 16) → เป็น padding เปล่า 30px; บน stage ยังมี `gap-[24px]` ใต้หัวและ wrapper `p-[16px]` ซ้อนอีก รวมเป็น chrome 104px เหนือภาพ
+- **ลดอะไรบ้าง (รวม 64px):** หัว stage + หัว panel ประชุม `56 → 40` · gap ใน stage `24 → 8` (ตาม rhythm 8px ที่ panel อื่นใช้) · wrapper `p-[16px] → px-[16px] py-[8px]` (ผู้ใช้ขอเฉพาะบน-ล่าง ซ้ายขวาคงเดิม) · แถว toolbar `h-[72px] → h-[56px]` — toolbar สูง 56 พอดี (p8 + p8 + icon24 + p8 + p8) ส่วนที่ตัดคือช่องว่างเปล่าเหนือมัน และ `items-end` ยังตรึง toolbar ไว้ล่างเหมือนเดิม
+- **เลข offset ที่ต้องตามไปแก้:** panel ประชุมตอนเป็น companion สูงลดจาก 304 → **288** (8+40+8+160+8+56+8) → ขอบบนอยู่ที่ 304 → การ์ดต้องจบที่ 312 → wrapper ที่ padding เหลือ 8 จึงเป็น `bottom-[304px]` (เดิม 312) — แก้ทั้ง class, comment คำนวณ และเทสต์ที่ assert เลขนี้
+
+### 4. รอบแก้ที่ 2 ของข้อ 3 — panel ประชุมกินที่ด้านล่างเยอะ อยากให้ stage ใหญ่ขึ้น
+
+- **ที่ผู้ใช้แจ้ง:** "ตอน meet จะมีพื้นที่ด้านล่างสีเทา ๆ ค่อนข้างเยอะ เลื่อนลงมาแหละทำให้จอ spotlight ใหญ่ขึ้น" + "ขอบล่างให้เท่าบน แล้วให้กรอบ spotlight ติดกับ meet กว่านี้"
+- **ที่มาของความสูง 288:** `8 padding + 40 head + 8 + 160 tiles + 8 + 56 toolbar + 8` — ตัวที่กินจริงคือ **tile 160px** ไม่ใช่ padding; ความสูงทั้งก้อนนี้ถูก**หักออกจาก stage** ตรง ๆ (stage คำนวณ `bottom-[…]` จากมัน)
+- **แก้ 3 อย่าง (stage สูงขึ้นรวม 44px):**
+  1. **tile ในโหมด companion 160 → 128** — ใช้ prop `spotlightStyle` ที่ `CompactDisplayCard` มีอยู่แล้ว (เดิมคุมแค่สีพื้นผิว) และ**ต้องลาก prop เดียวกันไปที่ `ScreenShareView` → `ScreenShareBox` ด้วย** ไม่งั้นพอมีคนแชร์จอ แถวจะเด้งกลับไป 160 แล้ว offset ที่ stage hardcode ไว้จะผิดทันที; กล่อง placeholder + empty state ใน panel ตามไปด้วย · **โหมดปกติ (ไม่มี Spotlight) ยังเป็น 160 เหมือนเดิม** — นี่คือของที่ UI review 2026-09-09 เคาะไว้ ไม่ได้ถูกแตะ
+  2. **panel ขยับลง `bottom-[16px]` → `bottom-[8px]`** = เท่ากับระยะขอบบนของการ์ด Spotlight (`py-[8px]`) ตามที่ผู้ใช้ขอ
+  3. **ระยะห่างระหว่างการ์ดสองใบ 8 → 4** ("ให้ติดกันกว่านี้") — ต่างจาก Figma 5495:910662 ที่ระบุ 8
+- **เลขใหม่ทั้งชุด:** panel สูง **256** (8+40+8+128+8+56+8) · ขอบบน panel = 8+256 = **264** · ขอบล่างการ์ด Spotlight = 264+4 = **268** · wrapper padding 8 → `bottom-[260px]` (เดิม 304)
+- **ของที่ต้องแก้ตามกันเสมอเวลาขยับเลขพวกนี้:** class + comment คำนวณใน `vo-spotlight-stage.tsx` + เทสต์ `leaves room for the companion Meeting panel below` + เทสต์ geometry ของ tile ใน `zone-enter-tiles-mute-default.test.tsx` (มันล็อก `h-[160px]` ไว้) — ทั้งสามจุดจับ regression นี้ได้จริง รอบนี้แดงทั้งคู่ก่อนแก้
+
+- **ถึงไหน:** เสร็จ (zyra-app เท่านั้น) · ไม่มี copy ใหม่ ใช้ i18n key เดิมทั้งหมด (`spotlightPictureInPicture`, `spotlightExpand`, `spotlightClose`)
+- **PR:** ยังไม่เปิด
+- **verify ถึงไหน:** `tsc --noEmit` ไม่มี error นอก `__tests__/` (ที่มีอยู่เดิม ไม่เกี่ยวรอบนี้) · eslint ทุกไฟล์ที่แก้ผ่าน · Prettier ผ่าน · เพิ่มเทสต์ "presenter ได้ปุ่ม PiP พร้อม toolbar และ compact แล้วปุ่ม expand พากลับ" + "tile นอก Spotlight ยัง 160" · อัปเดตเทสต์ companion offset (312 → 304 → 260) และ geometry ของ tile · **vitest ทั้งชุด 169 ไฟล์ 2372 tests เขียว** · **ยังไม่ได้ live-test ในเบราว์เซอร์** — เลข layout รอบนี้มาจากการคำนวณในโค้ด ไม่ได้วัดจากจอจริง
+- **ติดอะไร:** เลข layout รอบนี้ (`h-[40px]` หัว · `gap-[8px]` · tile 128 · ระยะห่างการ์ด 4) เป็นการตัดสินใจเองจากขนาดของข้างใน **ยังไม่ได้เทียบกับ Figma** ซึ่งระบุ 56 / 24 / 160 / 8 — ถ้า design ไม่โอเคบอกได้ ทุกค่าอยู่ที่เดียวต่อค่า และ comment คำนวณอยู่ติดกับ class
+
+---
+
 ## 2026-09-15 · tooltip + shortcut [B] ของ Start broadcast · รูปโปรไฟล์ในกล่อง "ใครกดสติกเกอร์" · เดินไป spotlight tile ข้าง ๆ ต้องถามก่อนจบไลฟ์
 
 - **ที่ผู้ใช้แจ้ง:** "ปุ่ม start spotlight ควรมี tooltip แบบ stop spotlight นะ" — ของเดิม Start ใช้ `title` ของ browser (กล่องขาวของ OS) ส่วน Stop เป็น bubble ที่ทำเองพร้อม key badge `[B]` สองปุ่มของ**คอนโทรลเดียวกันคนละสถานะ**เลยดูเป็นคนละของ
@@ -14,6 +59,7 @@
   - `VOHud` ผูก listener ของตัวเอง guard เหมือนฝั่ง Stop เป๊ะ (ไม่ทำงานตอนพิมพ์ใน INPUT/TEXTAREA/contentEditable, ไม่ทำงานเมื่อมี modifier)
   - **สองฝั่งไม่ยิงชนกัน:** HUD ผูกคีย์เฉพาะตอนปุ่ม Play กดได้จริง (`showSpotlightStart && !broadcasting && !starting`) พอขึ้นไลฟ์ปุ่มถูก disable → HUD ปล่อยคีย์ แล้ว Stop บน stage รับช่วงต่อ — กด B ครั้งเดียวจึงไม่โดนทั้ง start และ stop พร้อมกัน (มีเทสต์ครอบทั้ง 3 สถานะ: broadcasting / starting / ไม่ได้ยืนบน tile)
 - **Start ตอน disabled ก็ยังมี tooltip:** ปุ่มถูก `disabled` ระหว่างไลฟ์/นับถอยหลัง แต่เมาส์ยังอยู่บน wrapper อยู่ดี bubble จึงขึ้น และเปลี่ยนข้อความเป็น `spotlightBroadcastingLabel` — ซึ่งเป็นคำตอบของคำถาม "ทำไมกดไม่ได้"
+
 ### รูปในกล่อง "ใครกดสติกเกอร์" เป็นสไปรต์เดินแทนรูปโปรไฟล์ — `views/user/virtual-office/utils/chat-avatars.ts` (ไฟล์ใหม่)
 
 - **ที่ผู้ใช้แจ้ง:** "ตอนจะดูรายชื่อคนกดสติกเกอร์ข้อความ รูปมันแปลก ๆ ต้องใช้รูปโปรไฟล์นะ" (รูป: แถบสไปรต์ตัวละครถูกบีบลงในวงกลม 32px)
@@ -125,7 +171,7 @@
 
 ### 4. ล็อกปุ่มแชร์จอระหว่างมี Spotlight (HP-06) — `zone-enter-header.tsx`, `vo-hud.tsx`, `zone-enter-types.ts`, `hero-virtual-office.tsx`
 
-- **เรื่องนี้เข้าใจสลับกันอยู่รอบหนึ่ง บันทึกไว้กันคนต่อไปไล่ผิดทาง:** ผู้ใช้แจ้งว่า "ตอนคนใน meet ดู spotlight ปุ่ม screen share disable" ซึ่งอ่านได้ว่าเป็นบั๊ก — ไล่โค้ดแล้ว**ไม่มีที่ไหน disable ปุ่มนี้เลย**, วัดพิกเซลจากสกรีนช็อตได้พื้นปุ่ม `rgb(59,64,70)` = `hover:bg-white/10` บน `#252B31` พอดี และไอคอน `rgb(196,198,200)` = `text-white/70` เท่าปุ่ม emoji/hand → **นั่นคือ hover state ปกติ** ผู้ใช้ทดสอบต่อแล้วยืนยันว่า picker ของ Chrome เด้งขึ้นจริง จากนั้นจึงเฉลยว่าที่ต้องการคือ **"ปุ่มมันไม่ควรกดได้เลยนะ"** — คือขอให้ *ล็อก* ไม่ใช่ปลดล็อก
+- **เรื่องนี้เข้าใจสลับกันอยู่รอบหนึ่ง บันทึกไว้กันคนต่อไปไล่ผิดทาง:** ผู้ใช้แจ้งว่า "ตอนคนใน meet ดู spotlight ปุ่ม screen share disable" ซึ่งอ่านได้ว่าเป็นบั๊ก — ไล่โค้ดแล้ว**ไม่มีที่ไหน disable ปุ่มนี้เลย**, วัดพิกเซลจากสกรีนช็อตได้พื้นปุ่ม `rgb(59,64,70)` = `hover:bg-white/10` บน `#252B31` พอดี และไอคอน `rgb(196,198,200)` = `text-white/70` เท่าปุ่ม emoji/hand → **นั่นคือ hover state ปกติ** ผู้ใช้ทดสอบต่อแล้วยืนยันว่า picker ของ Chrome เด้งขึ้นจริง จากนั้นจึงเฉลยว่าที่ต้องการคือ **"ปุ่มมันไม่ควรกดได้เลยนะ"** — คือขอให้ _ล็อก_ ไม่ใช่ปลดล็อก
 - **ทำอะไร:** เพิ่ม `screenDisabled` ใน `MeetingMediaControls` → toolbar ของ meeting/companion และแถบ HUD แสดงปุ่มจาง 40% + `cursor-not-allowed` + `disabled` จริง + tooltip บอกเหตุผล (`shareLockedBySpotlight`, en+th)
   - `spotlightShareLocked = anySpotlightViewerActive` — ล็อกเมื่อ Spotlight อยู่บนจอของคนนั้น (ทั้งเต็มจอและ PiP); **presenter ไม่โดน** เพราะเขาเป็น speaker ไม่ใช่ viewer (การแชร์บนเวทีกับ meeting share เดิมมี EC-01 จัดการอยู่แล้ว)
   - **guard ที่ `handleScreenToggle` เองด้วย ไม่ใช่แค่ที่ปุ่ม** เพราะ PiP bar มีทางลัด "arm แล้วรอคลิกถัดไป" (`pipSharePending`) ที่ไม่ผ่านปุ่มนี้ — กดตอนล็อกจะได้ toast แทน; การ **หยุด** แชร์ที่ค้างอยู่ยังทำได้เสมอ ไม่งั้นคนที่แชร์อยู่ก่อนจะติดแหง็ก
@@ -150,13 +196,13 @@
   - **เก็บกวาดของที่ตาย:** ลบไฟล์ `components/vo-spotlight-status-toast.tsx` และลบ `@keyframes vo-spotlight-toast-in` ใน `globals.css` (pill เป็น consumer เดียวของ animation นี้)
 - **copy ใหม่ (en + th ครบทั้งคู่)** แทน 3 key เดิมของ pill (`spotlightEnded`, `spotlightEndedDisconnected`, `spotlightResumedToast` — **ลบออกแล้ว** ไม่ปล่อยค้างเป็น dead copy):
 
-  | key | en |
-  |---|---|
-  | `spotlightEndedTitle` | Broadcast ended |
-  | `spotlightEndedBody` | The speaker has ended the broadcast. |
+  | key                              | en                                                               |
+  | -------------------------------- | ---------------------------------------------------------------- |
+  | `spotlightEndedTitle`            | Broadcast ended                                                  |
+  | `spotlightEndedBody`             | The speaker has ended the broadcast.                             |
   | `spotlightEndedDisconnectedBody` | {stage} ended — the speaker lost connection and never came back. |
-  | `spotlightResumedTitle` | Broadcast resumed |
-  | `spotlightResumedBody` | {name} is back — the Spotlight continues. |
+  | `spotlightResumedTitle`          | Broadcast resumed                                                |
+  | `spotlightResumedBody`           | {name} is back — the Spotlight continues.                        |
 
 - **จุดที่ตั้งใจไม่ทำให้เหมือนกันหมด (บอกไว้ให้เคาะได้):** ดีไซน์ที่ได้มาเป็นเคส "จบปกติ" ซึ่ง body **ไม่มีชื่อ stage** → ทำตามคำเป๊ะ ๆ; แต่เคส `endedDisconnected` **ยังใส่ `{stage}` ไว้** เพราะ (ก) เป็นเคสที่ไม่มีดีไซน์ให้ (ข) "broadcast ไหนที่เพิ่งตายไป" เป็นข้อมูลที่มีค่าตอนจบแบบไม่ได้ตั้งใจ และ (ค) ถ้าถอด `{stage}` ออกด้วย `spotlightLiveStageNameRef` + effect ที่ไล่หา marker จาก tile ของ speaker (~25 บรรทัด ที่เขียนไว้ตั้งใจ) จะกลายเป็น dead code ทั้งก้อน — ถ้าจะให้ทั้งสองเคสพูดเหมือนกันบอกได้ จะถอด ref นั้นออกให้ด้วย
 - **verify ถึงไหน:** แทน test ของ pill (5 cases ที่เทส component + timer 3 วิ) ด้วย test **copy** ของ `vo-spotlight-exit.test.tsx` (key ครบทั้ง en/th, pin คำในดีไซน์ของเคสจบปกติ, ยืนยันว่าเคส disconnected ไม่ใช่ข้อความเดียวกันและยังมี `{stage}`, `resumed` ยังมี `{name}`, และ **ยืนยันว่า 3 key เดิมถูกลบจริงทั้งสองภาษา**); targeted Vitest 12 ไฟล์ 157 tests ผ่าน (รวม `i18n-namespace-split`), และรันไฟล์ที่แตะ `zyraToast` ทั้งหมดอีก 10 ไฟล์เพราะแก้ primitive ที่ใช้ร่วมกัน; `tsc --noEmit` ไม่มี error ใหม่ (เหลือ 5 ตัวเดิมบน HEAD)
@@ -174,7 +220,7 @@
 
 - **อาการ:** ผู้ใช้บอก "แท่นยืนมันอยู่ตรงกลางเกินไป ตอนยืนมันเลยดูเลย ช่วยทำให้มันลงมาอีกนิดแต่อยู่ภายในช่อง แบบตรงเท้าพอดี" แล้วตามด้วย "ไฟที่ฉายลงมา ไม่ทำให้พอดีด้วยหรอ"
 - **สาเหตุร่วมของทั้งสองอัน:** art ถูกวางอิงแถวที่อยู่ **สูงกว่าพื้นที่ sprite ยืนจริง 10px** — `playerSprite` anchor `(0.5, 1)` วางที่ `py` และ `py` ของคนที่ยืนอยู่ = จุดกลาง tile + `|PLAYER_FOOT_OFFSET_Y|` (ดู `_snapToSeat`: `this.py = spot.worldY - PLAYER_FOOT_OFFSET_Y`)
-  - **pad + sparkle:** เดิม `position.set(cx, cy)` โดย `cy` = จุดกลาง zone แบบเรขาคณิต → เรืองแสงลอยอยู่ระดับสะโพก *ด้านหลัง* ตัวละคร
+  - **pad + sparkle:** เดิม `position.set(cx, cy)` โดย `cy` = จุดกลาง zone แบบเรขาคณิต → เรืองแสงลอยอยู่ระดับสะโพก _ด้านหลัง_ ตัวละคร
   - **ลำแสง:** เดิม `beam.position.set(occupant.x, occupant.footY)` แต่ `footY` คือ **แถว hitbox/สำหรับ depth sort** ไม่ใช่พื้นที่ยืน → ลำแสงตัดจบแค่ระดับหน้าแข้ง เท้าหลุดออกนอกแสง
 - **แก้:** ย้ายทั้งสองมาอยู่บน "เส้นพื้น" (ground line) เส้นเดียวกัน
   - pad: `cy = Math.min(zone.y + zone.height/2 - PLAYER_FOOT_OFFSET_Y, zone.y + zone.height - padBelowCenter)` — ตัว `Math.min` คือ clamp ตามที่ผู้ใช้สั่งว่า "แต่อยู่ภายในช่องนะ" (ขอบล่างของ art ไม่ล้นออกนอก zone) → stage 2×2 tile ลงมาเต็ม 10px, stage 1×1 clamp ที่ 7.4px แล้วขอบล่าง pad พอดีเส้นล่างของ zone
