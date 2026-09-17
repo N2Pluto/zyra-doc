@@ -4,6 +4,25 @@
 
 ---
 
+## รอบที่ 4 — 2026-09-17 (interim: รับภาพ 1000px + เจอ spec ขัด code เรื่อง Delete)
+
+**ทำอะไร:** รับ 2 การตัดสินใจจากผู้ใช้เข้าเอกสาร + ตรวจโค้ด delete flow จริงแล้วเจอข้อขัดแย้งใหม่
+
+**ถึงไหน:**
+- **Interim decision (คนทำ spritesheet ยังไม่เสร็จ):** ให้ upload ภาพขนาดถึง **1000×1000** ไปก่อน — ยังเป็น horizontal strip format เดิม, ภาพนิ่ง = `frame_count = 1` (ผ่าน validator เดิมโดยไม่ต้องมี branch พิเศษ) · เปลี่ยนแค่ **dimension cap ตัวใหม่ `maxNatureSpriteDimension = 1000`** (ห้ามแตะ `maxSpriteDimension = 512` ของ piece/thumbnail) · **scaling = contain** รักษาสัดส่วน · บันทึกที่ [technical-design §5.2.1](technical-design.md#521--interim-2026-09-17--รับสไปรต์ขนาดใหญ่ถึง-1000px-ระหว่างที่-asset-ยังไม่เสร็จ) + เพิ่มเทสที่ [test-plan §1.3 / §3.6](test-plan.md)
+- **✅ ตัดสินแล้ว — Delete ใช้ behaviour เดิม (ตัวเลือก a):** spec HP-07 บอกให้ลบ `placed_objects` ออกจาก map แต่โค้ดจงใจเก็บไว้ (contract ZYR-1088) → **ยึดของเดิม ต้องกลับไปแก้ spec ใน ClickUp** · ตรวจครบทั้งเส้นแล้วว่า **render กับ collision ตรงกัน**: `ListAllActiveObjects` (`object_service.go:627-628`) ยังคืน object ที่ soft-deleted ถ้ายังมี placement · `buildDbTiles` ยังวาด · `obstacle_grid_builder.go:245-252` query ไม่มี filter `is_deleted` เลย → ยังกันทางเหมือนเดิม **ไม่มีของล่องหนที่ยังชน** · Nature ไม่มี `object_compositions` → ไม่ส่ง hitbox เข้า obstacle grid ตั้งแต่แรก · **กับดัก: ห้ามทำ hard delete S3 ตาม spec ข้อ 30 วัน** ขณะยังมี placement ไม่งั้นจะได้ "ภาพแตกแต่ยังชน" · รายละเอียดที่ [technical-design §10 ข้อ 5](technical-design.md#10-open-items-ที่ยังไม่ตัดสินใจ-ต้องถาม-pmยืนยันก่อน-implement-จริง)
+- **(เดิม) เจอ spec HP-07 ขัดกับโค้ดที่มี regression test คุมอยู่:** spec บอก delete แล้วให้ลบ `placed_objects` ออกจาก map ทันที แต่ `DeleteObject` (`object_service.go:499-532`) จงใจ**ไม่แตะ `tb_map_object`** และ contract **ZYR-1088** (`tile-builder-hidden-objects.test.ts`) บังคับว่า hidden/soft-deleted ที่วางแล้ว**ต้องยัง render** · S3 assets ก็ไม่เคยถูกลบ (ไม่มี cron 30 วัน) → เพิ่มเป็น [technical-design §10 ข้อ 5](technical-design.md#10-open-items-ที่ยังไม่ตัดสินใจ-ต้องถาม-pmยืนยันก่อน-implement-จริง) **ต้องให้ PM เลือกก่อน implement HP-07**
+
+**PR:** ต่อจาก [#22](https://github.com/N2Pluto/zyra-doc/pull/22)
+
+**verify ถึงไหน:** เอกสารล้วน · ข้อเท็จจริงเรื่อง cap 512 / TILE_SIZE 32 / DeleteObject / ZYR-1088 อ่านจากโค้ดจริงในรอบนี้ (`object_service.go:29,499-532,1011` · `zyra-engine/constants.ts:7` · `__tests__/tile-builder-hidden-objects.test.ts`) — **ยังไม่ได้รันอะไร ไม่มีโค้ดให้รัน**
+
+**ต่อจากนี้:** ขอ PM แก้ spec HP-07 ให้ตรงกับ behaviour (a) ที่ตัดสินแล้ว ควบไปกับ §14.1 12 ข้อเดิม · เรื่อง 2MB cap ให้เช็คกับไฟล์ 1000×1000 จริงจากคนทำ asset ว่าเกินไหม
+
+**ติดอะไร:** เหมือนรอบที่ 3 — §14.1 ยังเปิดครบ · เพิ่มข้อ delete มาอีก 1
+
+---
+
 ## รอบที่ 3 — 2026-09-17
 
 **ทำอะไร:** ดึง ClickUp ใหม่ทั้ง main + 9 subtask เทียบกับเอกสารรอบที่ 2 แล้ว sync เข้าเอกสาร + เขียน test plan

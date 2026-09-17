@@ -221,7 +221,7 @@ PUT  /api/admin/objects/:id/animations/:state     → upsert 1 state (สร้�
 
 | Field | Required | Validate |
 |---|---|---|
-| `file` | เฉพาะตอนอัปโหลด/แทนที่สไปรต์ใหม่ (ไม่บังคับถ้าแก้แค่ config — HP-04 เคสไม่มีไฟล์ใหม่) | PNG magic bytes, ≤ 2MB (`maxNatureSpritesheetSize`, **แยกจาก `maxSpriteSize` เดิมที่ 1MB**) |
+| `file` | เฉพาะตอนอัปโหลด/แทนที่สไปรต์ใหม่ (ไม่บังคับถ้าแก้แค่ config — HP-04 เคสไม่มีไฟล์ใหม่) | PNG magic bytes, ≤ 2MB (`maxNatureSpritesheetSize`, **แยกจาก `maxSpriteSize` เดิมที่ 1MB**) · dimension ≤ 1000px ตาม [§5.2.1](#521--interim-2026-09-17--รับสไปรต์ขนาดใหญ่ถึง-1000px-ระหว่างที่-asset-ยังไม่เสร็จ) |
 | `frame_count` | ใช่ | 1–64, `image_width % frame_count == 0` (คำนวณจาก `image.DecodeConfig` เหมือน `UploadPiece` เดิม) |
 | `frame_rate` | ใช่ | 4–24 |
 | `wind_threshold_kmh` | ไม่ (default 0) | 0–200 |
@@ -249,6 +249,29 @@ Response: `model.ObjectAnimationResponse{Status, Message, Data *ObjectAnimation}
   }
 }
 ```
+
+#### 5.2.1 ⏳ Interim (2026-09-17) — รับสไปรต์ขนาดใหญ่ถึง 1000px ระหว่างที่ asset ยังไม่เสร็จ
+
+**สถานการณ์:** คนที่ทำ spritesheet ยังทำไม่เสร็จ → ต้องให้ Admin upload ภาพชั่วคราวได้ก่อน (เช่น ภาพนิ่ง 1000×1000) โดย**ไม่เปลี่ยน flow และไม่เปลี่ยน schema**
+
+**สิ่งที่เปลี่ยน — 2 อย่างเท่านั้น:**
+
+| เรื่อง | ค่าเดิม | Interim | เหตุผล |
+|---|---|---|---|
+| Dimension cap ของ animation upload | `maxSpriteDimension = 512` (`object_service.go:29`, บังคับที่ `:1011`) | **`maxNatureSpriteDimension = 1000`** (ค่าใหม่แยกตัว **ห้ามแก้ 512 ของเดิม** เพราะ piece/thumbnail ของ object type อื่นใช้อยู่) | 1000×1000 ติด cap เดิมแน่นอน |
+| File size cap | 2MB (`maxNatureSpritesheetSize`) | คงไว้ 2MB ก่อน | PNG 1000×1000 โปร่งใสที่รายละเอียดเยอะ **มีสิทธิ์เกิน 2MB** → ถ้าเจอจริงค่อยขยับ แล้วบันทึกที่นี่ |
+
+**สิ่งที่ไม่ต้องเปลี่ยนเลย:**
+
+- **ยังเป็น horizontal strip เหมือนเดิม** — `frame_count` 1–64 ตามเดิม · ภาพนิ่ง 1 รูป = `frame_count = 1` ซึ่ง `image_width % 1 == 0` **ผ่าน validator ที่ออกแบบไว้อยู่แล้ว** ไม่ต้องมี branch พิเศษ ไม่ต้องมี flag "static mode"
+- Schema, endpoint, S3 key, response envelope — เหมือนเดิมทุกอย่าง
+- พอ asset จริงเสร็จ → upload strip ทับ state เดิมผ่าน `PUT /:id/animations/:state` ที่มีอยู่ **ไม่ต้อง migrate data**
+
+**สิ่งที่ต้องระวังตอน implement:**
+
+1. **`frame_rate` เป็น NOT NULL CHECK 4–24** → 1 เฟรมไม่มี frame rate ที่มีความหมาย ต้องเก็บ default (เช่น `12`) แล้ว **ฝั่ง render ข้าม animation loop เมื่อ `frame_count == 1`** ไม่ใช่เล่น loop 1 เฟรมที่ 12fps ทิ้งไว้ (เปลือง ticker เปล่า ๆ)
+2. **Scaling บน map = `contain`** — `TILE_SIZE = 32` (`zyra-engine/constants.ts:7`) → `big_tree` 3×4 tiles = **96×128 px** แต่ภาพ interim เป็นจตุรัส 1000×1000 → **ย่อให้พอดีกรอบ `grid_width×32 × grid_height×32` โดยรักษาสัดส่วน มีช่องว่างได้ ห้ามบิดสัดส่วน** (ตัดสินแล้ว 2026-09-17) — placeholder ที่สัดส่วนยังไม่ final จะได้ไม่ดูเพี้ยน
+3. ย่อ ~10 เท่าแปลว่า **เปลือง texture memory และ VRAM มาก** ถ้าวางหลายต้นในแมพเดียว — เป็นของชั่วคราวเท่านั้น **ห้ามปล่อยขึ้น prod ค้างไว้** ถ้าจะขึ้น prod ต้องมี asset จริงหรือ resize ก่อน
 
 ### 5.3 S3 key convention (ต่อยอด pattern เดิม)
 
@@ -368,3 +391,22 @@ test(app): vitest สำหรับ nature-animation-manager form validation + 
 2. `base_intensity_multiplier` เป็น global ต่อ state หรือ override ได้ต่อ placement (`tb_map_object`) ด้วย — spec HP-04/EC-01 พูดถึงระดับ object definition เท่านั้น ("Placed objects ที่ใช้ config เดิม: inherit config ใหม่จาก object definition อัตโนมัติ") → ยืนยันว่า**ไม่มี per-placement override** เก็บที่ `tb_object_animation` ระดับเดียวพอ (ออกแบบไว้แบบนี้แล้วในเอกสารนี้ — แจ้งไว้เป็น assumption ที่ยังไม่ถาม PM ตรงๆ)
 3. Fan-out ของ `object_sprite_updated` — ยิงเฉพาะ workspace ที่มี placement ของ object นั้น (ตามที่ออกแบบไว้) หรือ broadcast แบบ global ทุก workspace ที่ online — เอกสารนี้เลือกแบบแรก (ตรงกับ EC-01 ตัวอย่าง "15 workspaces" และประหยัดกว่า) แต่ยังไม่ได้ confirm กับ PM
 4. `wind_threshold_kmh`/weather condition ผูกกับ environment feature ที่มีอยู่แล้วหรือไม่ ([\[Feature\] Environment](<../[Feature]  · Environment (Time of Day + Weather) — Virtual Office Map/>)) — HP-05 preview เป็น "simulation แยก ไม่กระทบ production" แต่ยังไม่ชัดว่า production behavior จริง (ถ้ามี) ของ Nature จะอ่านค่าลมจาก environment service จริงหรือเป็นแค่ preview เท่านั้นที่ implement รอบนี้ (spec ไม่ได้พูดถึง production wind trigger เลย นอกจาก preview)
+5. **✅ ตัดสินแล้ว 2026-09-17 — Delete ใช้ behaviour เดิม (ตัวเลือก a) ไม่ทำตาม spec HP-07 ข้อ "ลบ placed_objects"**
+
+   spec HP-07 เขียนว่า soft delete แล้วต้อง "ลบ `placed_objects` ออกจาก map ทันที + hot reload" และ "hard delete storage assets หลัง 30 วัน" — **ตัดสินใจไม่ทำตาม** เพราะจะทำให้ map ของ workspace ที่วางของไว้แล้วหายเป็นรู และทุบ contract **ZYR-1088** ที่ทีมเคยตัดสินใจไว้แล้ว → **ต้องกลับไปแก้ spec ใน ClickUp ให้ตรงความจริง**
+
+   **behaviour ที่ยึด (= โค้ดวันนี้ ตรวจแล้วทั้งเส้น 2026-09-17):**
+
+   | ชั้น | ไฟล์ / query | soft-deleted object ที่ยังถูกวางอยู่ |
+   |---|---|---|
+   | ลบ | `DeleteObject` (`object_service.go:499-532`) | `UPDATE tb_object SET is_deleted, deleted_at, status='hidden'` — **ไม่แตะ `tb_map_object`** และ **ไม่ลบ S3 assets** |
+   | catalog ที่ client ใช้ | `ListAllActiveObjects` (`object_service.go:627-628`) | `WHERE (status='active' AND NOT is_deleted) **OR EXISTS (SELECT 1 FROM tb_map_object WHERE object_id = o.id)`** → **ยังถูกส่งให้ client** ถ้ายังมี placement |
+   | render | `buildDbTiles` + contract ZYR-1088 (`zyra-app/__tests__/tile-builder-hidden-objects.test.ts`) | **ยังวาดตามปกติ** — status ใช้ gate แค่ palette (ของที่วางใหม่ได้) |
+   | collision (server, ตัวที่ zyra-ws ใช้ validate) | `obstacle_grid_builder.go:245-252` | query `FROM tb_map_object JOIN tb_object` **ไม่มี filter `is_deleted`/`status` เลย** → **ยังกันทางเหมือนเดิม** |
+
+   **สรุปคำถาม "ผู้เล่นยังเดินผ่านได้ไหม": เห็นภาพและชนตรงกันทั้งสองฝั่ง — ไม่มีของล่องหนที่ยังชน และไม่มีภาพที่เดินทะลุได้** เพราะ render กับ obstacle grid อ่านจาก `tb_map_object` ชุดเดียวกันโดยไม่มีฝั่งไหนกรอง `is_deleted` · เฉพาะ Nature ยิ่งไม่มีประเด็นเลยเพราะไม่มีแถว `object_compositions` → ไม่ส่ง hitbox cell เข้า obstacle grid ตั้งแต่แรก ([§3](#3-เหตุผลที่-nature-เดินได้เสมอโดยไม่ต้องเขียนโค้ดเพิ่ม))
+
+   **⚠️ กับดักที่ต้องกันไว้ — อย่าทำ hard delete assets ตาม spec ข้อ 30 วัน**
+   ถ้าเอา "hard delete S3 หลัง 30 วัน" มาใช้**ทั้งที่ยังเก็บ placement ไว้** จะได้ผลลัพธ์แย่ที่สุดพอดี: **รูปหาย (ภาพแตก) แต่ hitbox ยังกันทางอยู่** = ของล่องหนที่เดินผ่านไม่ได้ ตรงกับที่ผู้ใช้ห่วงเป๊ะ · กติกาที่ต้องยึด: **ตราบใดที่ยังมีแถวใน `tb_map_object` ที่ reference object นั้น ห้ามลบ S3 asset** (คอมเมนต์ใน `DeleteObject:528-530` ระบุเจตนานี้ไว้แล้ว — อย่ารื้อ) · ถ้าอยากเก็บกวาดจริง ต้องเป็น cron ที่ลบเฉพาะ object ที่ `is_deleted = true` **และ placement count = 0** เท่านั้น ซึ่งยังไม่มีในระบบและไม่ใช่ scope รอบนี้
+
+   **ผลต่อ Nature (HP-07) ที่ต้อง implement จริง:** delete = soft delete + หายจาก palette เท่านั้น · **ไม่ต้องมี hot-reload broadcast สำหรับ delete** (ของที่วางแล้วไม่เปลี่ยน) — broadcast ที่ต้องทำมีแค่ของ EC-01 (replace sprite) ตาม [§7](#7-realtime-hot-reload-broadcast-ec-01--โครงสร้างใหม่ทั้งเส้น)
