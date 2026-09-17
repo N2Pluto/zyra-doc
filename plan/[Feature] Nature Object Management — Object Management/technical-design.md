@@ -91,33 +91,59 @@ DROP TABLE IF EXISTS tb_object_animation;
 
 ---
 
-## 3. เหตุผลที่ Nature เดินได้เสมอโดยไม่ต้องเขียนโค้ดเพิ่ม
+## 3. Nature เดินได้เสมอ — ใช้กลไก collision เดิม (ตัดสินแล้ว 2026-09-17)
 
-Spec (HP-02 AC): "Collision: fixed = walkable ไม่แสดงใน form (nature เสมอ walkable)" — ตรวจโค้ดจริงแล้วพบว่า **ทั้ง server และ client มี default-to-walkable อยู่แล้วเมื่อ object ไม่มี composition**, ไม่ต้องเขียน branch พิเศษสำหรับ `type === 'nature'` เลย:
+> **🔄 เขียนใหม่ 2026-09-17** — ฉบับก่อนสรุปว่า "Nature ไม่ insert แถว `object_compositions` เลย" ซึ่ง**ผิด** เพราะฟอร์มเดิมสร้าง composition ให้ทุก object ยกเว้น wall · ผู้ใช้ตัดสินว่า **ใช้ของเดิมที่มีอยู่แล้ว** ทั้ง toolbar สี และ blocked/walkable → Nature เดินเส้นทางเดียวกับ `decoration` เป๊ะ
 
-**Server** (`internal/service/obstacle_grid_builder.go`):
-```go
-// :57-64 resolveHitboxCells
-func resolveHitboxCells(raw []byte, variantIndex int, facing string) []hitboxCell {
-    if len(raw) == 0 {
-        return nil   // ← object_compositions.composition เป็น NULL (LEFT JOIN, ไม่มีแถว) → nil
-    }
-    ...
-}
-```
-`computeMapObstacles` (:245-250) ใช้ `LEFT JOIN object_compositions oc` แล้วส่ง `oc.composition` (NULL สำหรับ Nature) เข้า `resolveHitboxCells` → คืน `nil` → `blockedKeysForPlacement` ไม่ block cell ไหนเลย → tile ของ Nature ไม่ถูกใส่ใน `blockedSet` โดยอัตโนมัติ
+### 3.1 กลไกที่มีอยู่แล้วและใช้ได้เลย
 
-**Client** (`zyra-engine/assets/tile-builder.ts:102-114`):
+**collision default ต่อ object type** — `zyra-app/views/admin/object-management/constants.ts:90`
+
 ```ts
-const hasBlockingFootprint = (direction?: {...}) => {
-  if (!direction) return false        // ← Nature ไม่มี dirs.south เลย (ไม่มี composition)
-  ...
+export const deriveCollisionModeFromType = (type: ObjectType | ""): CollisionMode => {
+  if (type === "walkable_group" || type === "decoration" ||
+      type === "machine" || type === "foods_and_drink") {
+    return "walkable"
+  }
+  return "blocked"
 }
-// :198
-const passable = !hasBlockingFootprint(dirs.south)   // → true
 ```
 
-**สรุป:** แค่ตอน `CreateObject`/`UpdateObject` ของ Nature **ไม่ต้องส่ง `composition`/`fileStore` field เลย** (ปล่อย `nil`) — ระบบเดิมทั้งสองฝั่งจะ treat เป็น walkable ให้เองโดยธรรมชาติ ไม่ต้องมี `is_walkable` boolean ใหม่ ไม่ต้องแก้ `obstacle_grid_builder.go`/`tile-builder.ts` เลยแม้แต่บรรทัดเดียว
+**สิ่งที่ต้องทำสำหรับ Nature = เพิ่ม `type === "nature"` เข้าเงื่อนไขนี้ 1 บรรทัด** ไม่ต้องมี boolean `is_walkable` ใหม่ ไม่ต้องแก้ `obstacle_grid_builder.go` / `tile-builder.ts` และไม่ต้องมี branch พิเศษที่ service
+
+**Toolbar บน Object Preview ใช้ของเดิมทั้งชุด** (`object-preview-canvas.tsx`, ถูกเรียกจาก `object-add-form.tsx:1366` = ฟอร์มเดียวกับที่ Nature reuse):
+
+| ปุ่ม | โค้ด | ผลต่อ Nature |
+|---|---|---|
+| 🎨 สี | `:947` → `ColorPickerPopup` (`PRESET_COLORS` 13 สี + custom hex) | **piece tag colour** — สีป้ายกำกับในแถว `Object files` ไม่ลง DB ไม่กระทบ gameplay → ปล่อยไว้ได้ ตอบ AC "กำหนดสี…ของ box object" |
+| 🖌 ประเภท box | `:995-1090` brush + dropdown `blocked`/`walkable` | ตอบ AC "…และประเภทของ box object" — default มาจาก `deriveCollisionModeFromType` |
+| 🧽 ยางลบ | `:1093` | ของเดิม ไม่ต้องแตะ |
+
+→ **[ux-ui-plan §14.1 ข้อ 14a ปิดแล้ว**: "walkable เสมอ" = **default ของ type** ไม่ใช่การล็อกไม่ให้แก้ (เหมือน `decoration` ที่ default walkable แต่ admin ปรับได้ถ้าจำเป็น) จึงไม่ขัดกับ AC ที่ให้กำหนดสี/ประเภท box ได้
+
+### 3.2 ⚠️ บั๊กที่ต้องแก้ก่อน ไม่งั้น default walkable ไม่เกิดจริง
+
+`deriveCollisionModeFromType` ตั้งแค่ **โหมดพู่กัน** — cells ที่บันทึกจริงมาจาก `buildCellsFromHitbox` ซึ่ง **hardcode `type: "blocked"`** ทั้ง 2 ที่ (`constants.ts:119` ตัวที่ใช้ตอน save · `object-preview-canvas.tsx:438` ตัวที่ใช้วาด) และ `applyFootprintToComposition` (`constants.ts:158-183`) จะใช้ fallback ชุดนี้เมื่อ direction ยังไม่มี cells ที่ระบายไว้
+
+**ผล:** สร้าง Nature แล้วไม่ระบายเอง → save เป็น **blocked เต็มรอยเท้า = ต้นไม้กันทาง** ตรงข้ามกับ spec · กระทบ `decoration`/`machine`/`foods_and_drink` ด้วยเงื่อนไขเดียวกัน
+
+**แก้ที่จุดเดียว** — ให้ fallback cells ใช้ collision mode แทน hardcode:
+```ts
+export const buildCellsFromHitbox = (
+  hitbox: PieceHitbox,
+  mode: CollisionMode = "blocked",   // default เดิม → call site เก่าไม่เปลี่ยนพฤติกรรม
+): HitboxCell[] => { /* ... type: mode ... */ }
+```
+รายละเอียด + วิธีวัดผลกระทบกับข้อมูลจริง: [`issues/object-hitbox-default-collision-mode-2026-09-17.md`](../../issues/object-hitbox-default-collision-mode-2026-09-17.md) — **เป็น prerequisite ของ HP-02** ต้องแก้ก่อนหรือพร้อมกัน
+
+### 3.3 Safety net ที่ยังคงอยู่ (ถ้า object ไม่มี composition จริง ๆ)
+
+ถ้าด้วยเหตุใดก็ตาม Nature ถูกสร้างโดยไม่มีแถว `object_compositions` ระบบยัง treat เป็น walkable ให้เองทั้งสองฝั่ง — ไม่ crash ไม่กลายเป็นกำแพง:
+
+- **Server** `obstacle_grid_builder.go:57-64` — `resolveHitboxCells` คืน `nil` เมื่อ `composition` เป็น NULL (มาจาก `LEFT JOIN` ที่ `:245-250`) → ไม่ block cell ไหนเลย
+- **Client** `zyra-engine/assets/tile-builder.ts:102-114` — `hasBlockingFootprint(undefined)` → `false` → `passable = true`
+
+ใช้เป็น **fallback ไม่ใช่ design หลัก** — design หลักคือ §3.1
 
 ---
 
