@@ -43,6 +43,7 @@ instrumentation-client.ts     ← เรียก registerDefaultAnalyticsSinks(
 ```
 
 - ชื่อต้อง**ไม่ซ้ำ**และ**ต่างกันชัด** — มี unit test บังคับไว้ใน `__tests__/analytics-events.test.ts`
+- **หนึ่ง action = หนึ่งชื่อ** ต่อให้เกิดคนละที่ เช่น reaction ในแชทกับในห้องประชุมใช้ `Reaction Sent` เหมือนกันแล้วแยกด้วย `surface` และ thread reply คือ `Message Sent` + `kind: "thread_reply"` ไม่ใช่ชื่อใหม่
 - ชื่อต้อง **ไม่ผูกกับภาษา UI** — ห้ามเอา text บนปุ่มมาเป็นชื่อ event เพราะปุ่มเดียวกันคนไทยเห็น "เข้าร่วมพื้นที่" คนอังกฤษเห็น "Join space" ถ้าใช้ text จะกลายเป็นคนละ event
 - รายละเอียดปลีกย่อยให้ใส่เป็น **property** ไม่ใช่สร้างชื่อใหม่ เช่น `Mic Toggled` + `{enabled: false}` ดีกว่ามี `Mic Off` แยกอีกตัว
 
@@ -75,6 +76,17 @@ Action ที่มีความหมายทางธุรกิจ ดั
 | `lib/api/zone-sections.ts` → enter/leave | กดปุ่ม join **และเดินเข้า/ออกโซนเอง** | `Meeting Joined`, `Meeting Left` |
 | `lib/api/workspace-ws.ts` → `_send()` | ทุก action ที่ส่งผ่าน WS | ดูตารางล่าง |
 | `stores/{audio,notification,general}-settings-store.ts` → `setAndPersist()` | toggle ในหน้า Settings ~30 ตัว | `* Setting Changed` |
+| `lib/auth/session.ts` → `trackedLogin()` / `clearSession()` | login email + Google, logout | `Login Started/Succeeded/Failed`, `Logged Out` |
+| `lib/auth/register.ts` → `saveRegister()` / `verifyRegister()` | สมัคร + กรอก OTP (auto-submit ตอนครบหลัก) | `Signup Started/Succeeded`, `Otp Submitted` |
+| `lib/api/workspace-members.ts` | เชิญ/ลบสมาชิก, ออกจาก workspace, โอนสิทธิ์ | `Member Invited/Removed`, `Workspace Left`, `Ownership Transferred` |
+| `lib/api/chat.ts` | reaction, อัปโหลดไฟล์, สร้างกลุ่ม, ค้นหา | `Reaction Sent`, `File Attached`, `Chat Group Created`, `Chat Searched` |
+| `stores/vo-session-store.ts` → `initSession()` / `destroySession()` | เข้า/ออก Virtual Office 1 ครั้ง | `Office Entered`, `Office Exited` |
+| `hero-virtual-office.tsx` → canvas callbacks | **คลิกบน canvas** — อวตารคนอื่น, สัตว์เลี้ยง, แท่นเทเลพอร์ต | `Avatar Clicked`, `Object Interacted`, `Teleport Used` |
+| `lib/avatar-selection.ts` → `saveSelectedAvatar()` | เลือกตัวละคร (ทุกทางเข้า) | `Avatar Selected` |
+
+**`Logged Out` มี property `reason`** — `user` (กดออกเอง) / `expired` (token หมดอายุ) / `revoked` (ถูกเตะออก) ถ้านับรวมกันจะแยกไม่ออกว่าคนเดินจากไปเองหรือถูกระบบไล่ออก
+
+**`Login Failed` นับรวม network error ด้วย** (`reason: "network"`, `status: 0`) — ถ้า request ไม่ถึง server ผู้ใช้ก็ login ไม่ได้อยู่ดี metric ที่เงียบตอน server ล่มจะอ่านเหมือนไม่มีอะไรผิดปกติ
 
 **WS mapping** (`lib/analytics/ws-events.ts`) — frame ไหนไม่อยู่ในตารางนี้ = ไม่เก็บ:
 
