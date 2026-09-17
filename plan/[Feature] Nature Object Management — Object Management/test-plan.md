@@ -95,6 +95,10 @@ Validator ต้องเป็น pure function (`ValidateSpritesheet(cfg image
 | `TestValidateSpritesheet_FrameRateBoundary` | 3, 4, 24, 25 | 4 และ 24 ผ่าน · 3, 25 → error |
 | `TestValidateSpritesheet_WidthDivisible` | w=512,n=8 · w=960,n=7 | ลงตัวผ่าน · ไม่ลงตัว → `ErrFrameWidthNotDivisible` |
 | `TestValidateSpritesheet_FrameSizeComputed` | w=512,h=96,n=8 | `frame_width=64`, `frame_height=96` (ไม่ split แนวตั้ง) |
+| `TestValidateSpritesheet_DimensionCapInterim` | 1000×1000 · 1001×1000 | 1000 ผ่าน (interim [§5.2.1](technical-design.md#521--interim-2026-09-17--รับสไปรต์ขนาดใหญ่ถึง-1000px-ระหว่างที่-asset-ยังไม่เสร็จ)) · 1001 → `ErrImageTooLarge` |
+| `TestValidateSpritesheet_StaticSingleFrame` | 1000×1000, `frame_count=1` | ผ่าน โดย**ไม่มี branch พิเศษ** — `frame_width=1000`, `frame_height=1000` |
+| `TestUploadAnimation_DoesNotUseLegacy512Cap` | 800×800 | ผ่าน — ยืนยันว่า animation path ใช้ `maxNatureSpriteDimension` ไม่ใช่ `maxSpriteDimension=512` ของ piece/thumbnail |
+| `TestUploadPiece_Still512` (regression) | 800×800 piece ของ object type เดิม | ยัง `ErrImageTooLarge` — cap เดิม **ต้องไม่ถูกขยายตามไปด้วย** |
 | `TestUploadAnimation_RejectsNonPNG` | JPEG bytes | `ErrInvalidPNG` — เช็ค **magic bytes `89 50 4E 47`** ไม่ใช่ `Content-Type` ที่ client ส่งมา |
 | `TestUploadAnimation_RejectsOversize` | > 2MB | `ErrFileTooLarge` — ยืนยันว่าใช้ `maxNatureSpritesheetSize` (2MB) **ไม่ใช่** `maxSpriteSize` เดิม (1MB) |
 | `TestUploadAnimation_AcceptsExactly2MB` | 2MB พอดี | ผ่าน (boundary) |
@@ -202,6 +206,18 @@ Validator ต้องเป็น pure function (`ValidateSpritesheet(cfg image
 
 ---
 
+### 3.6 Render ของสไปรต์ interim (frame_count = 1 · contain scaling)
+
+| Test | Input | Expected |
+|---|---|---|
+| `frame_count === 1` → ไม่ animate | sprite 1 เฟรม | ไม่สร้าง animation loop / ticker (แค่วาดภาพนิ่ง) |
+| scaling = contain | ภาพ 1000×1000 บน grid 3×4 (96×128px) | ย่อพอดีกรอบ **รักษาสัดส่วน** (scale = min(96/1000, 128/1000)) ไม่บิดภาพ · มีช่องว่างได้ |
+| scaling ของภาพที่สัดส่วนตรงอยู่แล้ว | 3:4 บน grid 3×4 | เต็มกรอบพอดี ไม่มีช่องว่าง |
+
+> อ้าง [technical-design §5.2.1](technical-design.md#521--interim-2026-09-17--รับสไปรต์ขนาดใหญ่ถึง-1000px-ระหว่างที่-asset-ยังไม่เสร็จ) · `TILE_SIZE = 32` ต้องอ่านจาก `zyra-engine/constants.ts` ห้ามพิมพ์ 32 ในเทส
+
+---
+
 ## 4. Component Tests (critical paths only)
 
 | Component | เคสที่ต้องมี |
@@ -241,6 +257,11 @@ Feature นี้แก้ enum และ query ที่ object type เดิ�
 | object type เดิมทั้ง 9 ยังสร้าง/แก้/ลบได้ | ไม่มี validation ใหม่หลุดไปบังคับกับ type อื่น |
 | `object_compositions` flow เดิมของ furniture/sofa | ไม่เปลี่ยน |
 | `GET /api/objects/all` (member, UserGuard) | คืน nature object ที่ active ด้วย — และ **ไม่คืน** hidden/deleted |
+| **Delete/Hide ไม่ทำให้ placement เดิมหาย** (contract ZYR-1088) | `__tests__/tile-builder-hidden-objects.test.ts` ต้องยังเขียว — **ตัดสินแล้ว 2026-09-17: ใช้ behaviour เดิม (ตัวเลือก a)** ดู [technical-design §10 ข้อ 5](technical-design.md#10-open-items-ที่ยังไม่ตัดสินใจ-ต้องถาม-pmยืนยันก่อน-implement-จริง) |
+| **Delete แล้ว render กับ collision ต้องตรงกัน** (คำถามหลักของ HP-07) | soft delete object ที่ยังถูกวาง → `buildDbTiles` ยังวาด **และ** `obstacle_grid_builder` ยังคืน obstacle cell ชุดเดิม — **ห้ามมีฝั่งใดฝั่งหนึ่งหาย** (ล่องหนแต่ชน / เห็นแต่ทะลุ) |
+| `ListAllActiveObjects` ยังคืน object ที่ soft-deleted แต่มี placement | `object_service.go:627-628` — ถ้าเผลอเพิ่ม filter `is_deleted` ทุก placement ของ object นั้นจะหายทันที |
+| Nature ไม่เพิ่ม obstacle cell เลย | ไม่มีแถว `object_compositions` → obstacle grid ว่างสำหรับ nature ทุกตัว ทั้งก่อนและหลัง delete |
+| **ห้ามลบ S3 asset ขณะยังมี placement** | ถ้ามีใครเพิ่ม cleanup job ในอนาคต ต้อง assert ว่าลบเฉพาะ `is_deleted = true` **และ** placement count = 0 (กัน "ภาพแตกแต่ยังชน") |
 | `obstacle_grid_builder` + `tile-builder.ts` | object ที่ไม่มี composition ยัง walkable เหมือนเดิม (`__tests__/tile-builder-hidden-objects.test.ts` ต้องยังเขียว) |
 | `npx tsc --noEmit` + `npm run lint` + `go test ./...` | เขียวทั้งหมดก่อนเปิด PR ([05-review.md](../../../.claude/rules/05-review.md)) |
 
@@ -264,7 +285,8 @@ Feature นี้แก้ enum และ query ที่ object type เดิ�
 | 10 | แก้ชื่อ/grid/z-index/status ได้ | HP-06 | ☐ |
 | 11 | nature_type ล็อกเมื่อมี animation แล้ว · ปลดล็อกเมื่อยังไม่มี | HP-06 | ☐ |
 | 12 | Hide → member ไม่เห็นใน library · map เดิมยังแสดง | HP-07 | ☐ |
-| 13 | Delete → พิมพ์ชื่อยืนยัน → หายจาก map ที่วางไว้ | HP-07 | ☐ |
+| 13 | Delete → พิมพ์ชื่อยืนยัน → หายจาก palette (**ของที่วางบน map แล้วยังอยู่ ตามตัวเลือก a**) | HP-07 | ☐ |
+| 13b | หลัง delete: เดินเข้าหา object ที่วางไว้แล้ว — **เห็นภาพและชน/ไม่ชน ตรงกับก่อน delete เป๊ะ** (nature = เดินทะลุได้ทั้งก่อนและหลัง) | HP-07 | ☐ |
 | 14 | EP-01 error ครบ 6 เคส ข้อความตรงที่ตกลง | EP-01 | ☐ |
 | 15 | Replace sprite → modal ยืนยันแสดงจำนวน workspace/map จริง | EC-01 | ☐ |
 | 16 | Member ที่อยู่ใน VO เห็น sprite ใหม่โดยไม่ต้อง refresh | EC-01 | ☐ |
