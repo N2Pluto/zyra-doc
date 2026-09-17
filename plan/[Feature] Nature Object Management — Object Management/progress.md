@@ -4,6 +4,25 @@
 
 ---
 
+## รอบที่ 5 — 2026-09-17 (ปิด blocker 14a + เจอบั๊ก collision default)
+
+**ทำอะไร:** ตรวจโค้ด UI จริงตามที่ผู้ใช้สั่งว่า "สี/blocked-walkable ของเดิมก็มีอยู่แล้ว" แล้วเขียน design ใหม่ให้ตรงของจริง
+
+**ถึงไหน:**
+- **✅ ปิด blocker ข้อ 14a** (ตัวที่หนักสุดใน §14.1) — 🎨 = piece tag colour `PRESET_COLORS` 13 สี (`color-picker-popup.tsx:7`) ไม่ลง DB · 🖌 = collision brush ที่ default มาจาก `deriveCollisionModeFromType` (`constants.ts:90`) → Nature แค่เพิ่มเข้าลิสต์ walkable 1 บรรทัด · "walkable เสมอ" = default ของ type ไม่ใช่ล็อก จึงไม่ขัดกับ AC → เหลือ blocker 5 ข้อ
+- **แก้ [technical-design §3](technical-design.md) ใหม่ทั้งหัวข้อ** — ฉบับก่อนเขียนว่า "Nature ไม่ insert แถว `object_compositions`" **ผิด** เพราะ `object-add-form.tsx:687` สร้าง composition ให้ทุก object ยกเว้น wall · ของจริงคือ Nature เดินเส้นเดียวกับ `decoration` เป๊ะ · กลไก no-composition เดิมยังอยู่แต่ลดบทเป็น **safety net** (§3.3)
+- **เจอบั๊กใหม่** — `deriveCollisionModeFromType` ตั้งแค่โหมดพู่กัน แต่ `buildCellsFromHitbox` **hardcode `type: "blocked"`** ทั้ง `constants.ts:119` และ `object-preview-canvas.tsx:438` → object ที่ควร walkable ถูก save เป็นกำแพงถ้า admin ไม่ระบายเอง · กระทบ `decoration`/`machine`/`foods_and_drink` ด้วย ไม่ใช่แค่ Nature · บันทึกที่ [`issues/object-hitbox-default-collision-mode-2026-09-17.md`](../../issues/object-hitbox-default-collision-mode-2026-09-17.md) พร้อมวิธีแก้ (เพิ่ม param `mode` default `"blocked"`) + SQL วัดผลกระทบ — **เป็น prerequisite ของ HP-02**
+
+**PR:** ต่อจาก [#24](https://github.com/N2Pluto/zyra-doc/pull/24)
+
+**verify ถึงไหน:** เอกสารล้วน · ข้อเท็จจริงทั้งหมดอ่านจากโค้ดจริงรอบนี้ (`constants.ts:90,115,158` · `object-add-form.tsx:144,687,1366` · `object-preview-canvas.tsx:431,947,995,1093` · `color-picker-popup.tsx:7` · `object-sprite-canvas.tsx:91`) — **ยังไม่ได้ query DB จริง** ว่ามี object กี่ตัวโดนบั๊ก collision (SQL อยู่ในไฟล์ issue แล้ว)
+
+**ต่อจากนี้:** เหลือ blocker 5 ข้อ (§14.1 ข้อ 1, 2, 3, 7, 8) ที่ยังต้องถาม PM · แก้บั๊ก collision ก่อนหรือพร้อมกับ HP-02
+
+**ติดอะไร:** ยังไม่มีคำตอบ PM 5 ข้อ · ยังไม่ได้แก้ spec HP-07/`petal_fall` ใน ClickUp
+
+---
+
 ## รอบที่ 4 — 2026-09-17 (interim: รับภาพ 1000px + เจอ spec ขัด code เรื่อง Delete)
 
 **ทำอะไร:** รับ 2 การตัดสินใจจากผู้ใช้เข้าเอกสาร + ตรวจโค้ด delete flow จริงแล้วเจอข้อขัดแย้งใหม่
