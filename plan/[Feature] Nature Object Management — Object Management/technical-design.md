@@ -134,7 +134,9 @@ export const buildCellsFromHitbox = (
   mode: CollisionMode = "blocked",   // default เดิม → call site เก่าไม่เปลี่ยนพฤติกรรม
 ): HitboxCell[] => { /* ... type: mode ... */ }
 ```
-รายละเอียด + วิธีวัดผลกระทบกับข้อมูลจริง: [`issues/object-hitbox-default-collision-mode-2026-09-17.md`](../../issues/object-hitbox-default-collision-mode-2026-09-17.md) — **เป็น prerequisite ของ HP-02** ต้องแก้ก่อนหรือพร้อมกัน
+**วัดกับ prod แล้ว (2026-09-17): เกิดขึ้นจริง** — 24 object (`decoration` 15 · `machine` 9) ที่ทุก cell เป็น `blocked` โดยไม่มี `walkable` เลย → **2,453 placement ใน 50 map / 47 workspace เดินทะลุไม่ได้ทั้งที่ควรได้** · `machine` โดนหนักสุด 14 จาก 18 ตัว (78%)
+
+รายละเอียด + SQL + ข้อควรระวังในการตีความ: [`issues/object-hitbox-default-collision-mode-2026-09-17.md`](../../issues/object-hitbox-default-collision-mode-2026-09-17.md) — **เป็น prerequisite ของ HP-02** ต้องแก้ก่อนหรือพร้อมกัน
 
 ### 3.3 Safety net ที่ยังคงอยู่ (ถ้า object ไม่มี composition จริง ๆ)
 

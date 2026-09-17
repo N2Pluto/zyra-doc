@@ -1,8 +1,8 @@
 # Object hitbox — default collision mode ไม่ถูกบันทึกลง cells
 
-> **สถานะ:** พบจากการอ่านโค้ด (2026-09-17) ระหว่างออกแบบ [SC-OBJ-NAT-01](../plan/%5BFeature%5D%20Nature%20Object%20Management%20%E2%80%94%20Object%20Management/technical-design.md) — **ยังไม่แก้ · ยังไม่ได้วัดผลกระทบกับข้อมูลจริง**
+> **สถานะ:** พบจากการอ่านโค้ด (2026-09-17) ระหว่างออกแบบ [SC-OBJ-NAT-01](../plan/%5BFeature%5D%20Nature%20Object%20Management%20%E2%80%94%20Object%20Management/technical-design.md) — **ยังไม่แก้ · วัดกับ prod แล้ว ยืนยันว่าเกิดจริง: 24 object · 2,453 placement · 47 workspace** (ดู [ผลการวัด](#ผลการวัดกับ-prod-จริง-2026-09-17))
 > **Repo ที่กระทบ:** `zyra-app` (admin object management)
-> **ความรุนแรง:** object ที่ควรเดินทะลุได้ อาจถูกบันทึกเป็นกำแพง — กระทบ gameplay ใน Virtual Office
+> **ความรุนแรง:** object ที่ควรเดินทะลุได้ ถูกบันทึกเป็นกำแพง — **กระทบ gameplay จริงบน prod 2,453 จุดใน 47 workspace**
 
 ---
 
@@ -75,28 +75,121 @@ export const buildCellsFromHitbox = (
 
 ## Before/After
 
-**ยังไม่ได้วัด** — เหตุผล: เจอจากการอ่านโค้ด ยังไม่ได้ query ข้อมูลจริงว่ามี object กี่ตัวที่โดนอาการนี้ และยังไม่มีการแก้ให้เทียบ (ตาม [18-before-after-metrics](../../.claude/rules/18-before-after-metrics.md) — ห้ามเดาตัวเลข)
+**After ยังไม่มี** — ยังไม่ได้แก้โค้ด · Before วัดแล้วด้านล่าง ([18-before-after-metrics](../../.claude/rules/18-before-after-metrics.md))
 
-**วิธีวัดเมื่อจะแก้จริง** — นับ object ที่ type ควร walkable แต่ cells เป็น blocked (รันผ่าน `zyra-service/prod-db.sh` ดู [prod-db-access.md](../guides/prod-db-access.md)):
+**SQL ที่ใช้วัด** — นับ object ที่ type ควร walkable แต่ cells เป็น blocked (รันผ่าน `zyra-service/prod-db.sh` ดู [prod-db-access.md](../guides/prod-db-access.md)):
 
 ```sql
-SELECT o.type, count(*) AS objects_with_blocked_cells
-FROM tb_object o
-JOIN object_compositions oc ON oc.object_id = o.id
-WHERE o.type IN ('walkable_group','decoration','machine','foods_and_drink')
-  AND (o.is_deleted IS NULL OR o.is_deleted = false)
-  AND EXISTS (
-    SELECT 1
-    FROM jsonb_array_elements(oc.composition->'variants') v,
-         jsonb_each(v->'directions') d,
-         jsonb_array_elements(d.value->'hitboxCells') c
-    WHERE COALESCE(c->>'type', 'blocked') = 'blocked'
-  )
-GROUP BY o.type
+-- นับ object ที่ type ควร walkable แต่มี hitbox cell เป็น blocked
+-- ทนกับ composition 2 แบบ: ใหม่ {variants:[{directions:{...}}]} และ legacy {directions:{...}}
+WITH cells AS (
+  SELECT o.id, o.type, c->>'type' AS cell_type
+  FROM tb_object o
+  JOIN object_compositions oc ON oc.object_id = o.id
+  CROSS JOIN LATERAL (
+    SELECT CASE
+      WHEN jsonb_typeof(oc.composition->'variants') = 'array' THEN oc.composition->'variants'
+      ELSE jsonb_build_array(oc.composition)
+    END AS variants
+  ) vs
+  CROSS JOIN LATERAL jsonb_array_elements(vs.variants) v
+  CROSS JOIN LATERAL jsonb_each(COALESCE(v->'directions', '{}'::jsonb)) d
+  CROSS JOIN LATERAL jsonb_array_elements(
+    CASE WHEN jsonb_typeof(d.value->'hitboxCells') = 'array'
+         THEN d.value->'hitboxCells' ELSE '[]'::jsonb END
+  ) c
+  WHERE o.type IN ('walkable_group','decoration','machine','foods_and_drink')
+    AND (o.is_deleted IS NULL OR o.is_deleted = false)
+)
+SELECT
+  type,
+  count(DISTINCT id) FILTER (WHERE COALESCE(cell_type,'blocked') = 'blocked') AS objects_with_blocked_cells,
+  count(DISTINCT id) AS objects_with_composition
+FROM cells
+GROUP BY type
 ORDER BY 2 DESC;
 ```
 
-ตัวเลขที่ควรบันทึกคู่กัน: จำนวน object ต่อ type (ก่อน/หลังแก้ + backfill ถ้าทำ) และจำนวน placement ที่ได้รับผลกระทบ (`JOIN tb_map_object`)
+> **ทำไมต้อง guard `jsonb_typeof`:** `jsonb_array_elements()` จะ error ทันที (`cannot extract elements from an object`) ถ้าเจอ row ที่ `composition` เป็น legacy shape `{directions: {...}}` ซึ่งไม่มีคีย์ `variants` — migration `15` backfill ของเก่ามาจาก `tb_object.composition` ตรง ๆ จึงมีสิทธิ์เจอ
+
+**นับ placement ที่ได้รับผลกระทบจริง** (สำคัญกว่าจำนวน object เพราะคือจุดที่ผู้เล่นชนจริง):
+
+```sql
+WITH blocked_objects AS (
+  SELECT DISTINCT o.id
+  FROM tb_object o
+  JOIN object_compositions oc ON oc.object_id = o.id
+  CROSS JOIN LATERAL (
+    SELECT CASE
+      WHEN jsonb_typeof(oc.composition->'variants') = 'array' THEN oc.composition->'variants'
+      ELSE jsonb_build_array(oc.composition)
+    END AS variants
+  ) vs
+  CROSS JOIN LATERAL jsonb_array_elements(vs.variants) v
+  CROSS JOIN LATERAL jsonb_each(COALESCE(v->'directions', '{}'::jsonb)) d
+  CROSS JOIN LATERAL jsonb_array_elements(
+    CASE WHEN jsonb_typeof(d.value->'hitboxCells') = 'array'
+         THEN d.value->'hitboxCells' ELSE '[]'::jsonb END
+  ) c
+  WHERE o.type IN ('walkable_group','decoration','machine','foods_and_drink')
+    AND (o.is_deleted IS NULL OR o.is_deleted = false)
+    AND COALESCE(c->>'type','blocked') = 'blocked'
+)
+SELECT count(*) AS affected_placements,
+       count(DISTINCT mo.map_id) AS affected_maps
+FROM tb_map_object mo
+JOIN blocked_objects b ON b.id = mo.object_id;
+```
+
+ตัวเลขที่ควรบันทึกคู่กัน: จำนวน object ต่อ type และจำนวน placement/map ที่ได้รับผลกระทบ (ก่อน/หลังแก้ + backfill ถ้าทำ)
+
+> หมายเหตุ: `prod-db.sh` อนุญาตเฉพาะ statement ที่ขึ้นต้นด้วย `SELECT/EXPLAIN/SHOW/TABLE/VALUES` (`prod-db.sh:69-73`) — query ที่ขึ้นต้นด้วย `WITH` จะถูกปฏิเสธว่าเป็น write ต้องเขียนเป็น subquery ใน `FROM` แทน
+
+## ผลการวัดกับ prod จริง (2026-09-17)
+
+**วัดแล้ว — ยืนยันว่าบั๊กนี้เกิดขึ้นจริงบน production**
+
+### Object ที่มี hitbox cell เป็น blocked ทั้งที่ type ควร walkable
+
+| type | มี blocked cell | มี composition ทั้งหมด | สัดส่วน |
+|---|---|---|---|
+| `decoration` | **18** | 68 | 26% |
+| `machine` | **14** | 18 | **78%** |
+| `foods_and_drink` | 0 | 32 | 0% |
+| `walkable_group` | 0 | 46 | 0% |
+| **รวม** | **32** | 164 | 20% |
+
+### แยก "น่าจะเป็น fallback ของบั๊ก" ออกจาก "admin ตั้งใจระบาย"
+
+object ที่ **ไม่มี cell `walkable` เลยแม้แต่ช่องเดียว** = ตรงกับลายเซ็นของ fallback (`buildCellsFromHitbox` ปั๊ม `blocked` ทั้งแผง) · ถ้า admin เข้าไประบายเองจะเห็น cell ผสมกัน
+
+| type | ทุก cell เป็น blocked (**น่าจะเป็นบั๊ก**) | ผสม blocked+walkable (admin ตั้งใจ) |
+|---|---|---|
+| `decoration` | **15** | 3 |
+| `machine` | **9** | 5 |
+| **รวม** | **24** | 8 |
+
+### ผลกระทบที่ผู้เล่นเจอจริง
+
+| ขอบเขต | placement | map | workspace |
+|---|---|---|---|
+| object ที่มี blocked cell ทั้งหมด (32 ตัว) | 2,711 | 50 | 47 |
+| **เฉพาะ 24 ตัวที่น่าจะเป็นบั๊ก** | **2,453** | **50** | **47** |
+
+→ **ของที่ควรเดินทะลุได้ แต่กันทางอยู่จริง ~2,453 จุด กระจายใน 47 workspace**
+
+**วัดยังไง:** SQL 4 ชุดด้านบน รันผ่าน `zyra-service/prod-db.sh query` (read-only) บน prod AlloyDB ผ่าน IAP tunnel
+**ช่วงเวลา:** snapshot 2026-09-17 ~15:10 (ก่อนแก้ — ยังไม่มี after เพราะยังไม่ได้แก้)
+
+### ข้อควรระวังในการตีความ
+
+- ตัวเลข **24 ตัว = "น่าจะเป็นบั๊ก" ไม่ใช่ยืนยัน 100%** — ข้อมูลที่เก็บไว้แยกไม่ออกระหว่าง "fallback ปั๊มให้" กับ "admin ตั้งใจระบาย blocked ทั้งแผง" เพราะ cells หน้าตาเหมือนกันทุกประการ · ที่ใช้เป็นเกณฑ์คือ **ไม่มี cell walkable เลย** ซึ่งเข้ากับลายเซ็นของ fallback มากกว่า
+- `machine` โดน 78% สูงผิดปกติเมื่อเทียบกับ `decoration` 26% — น่าจะเพราะ machine ส่วนใหญ่ถูกสร้างโดยไม่ระบาย hitbox (สมมติฐาน ยังไม่ได้ยืนยัน)
+- `foods_and_drink` และ `walkable_group` **0 ทั้งคู่** — แปลว่าของ 2 type นี้ admin ระบาย walkable ครบทุกตัว หรือถูกสร้างผ่านเส้นทางอื่นที่ไม่ผ่าน fallback
+
+### ผลต่อการตัดสินใจ backfill
+
+เดิมเสนอว่า "แก้ไปข้างหน้าอย่างเดียว" — ตัวเลข 2,453 placement ใน 47 workspace **ใหญ่พอที่ควรพิจารณา backfill** สำหรับ 24 object ที่ไม่มี cell walkable เลย (ความเสี่ยงต่ำกว่าที่ประเมินไว้ตอนแรก เพราะกลุ่มผสม 8 ตัวที่ admin ตั้งใจระบาย แยกออกได้ด้วยเงื่อนไข `walkable_cells = 0`) — **ต้องให้ PM/ทีมเคาะ** ว่าจะ backfill หรือให้ admin ไล่แก้เอง 24 ตัว
 
 ## เกี่ยวข้องกับ
 
