@@ -6,6 +6,7 @@
 > **⚠️ อัปเดต 2026-09-16 หลังถอด Figma ([ux-ui-plan.md](ux-ui-plan.md)):** design ขัดกับ spec ที่เอกสารนี้ยึดอยู่หลายจุด — **required state = `idle` ตัวเดียว** (ไม่ใช่ 3 state ตาม §4), state ที่ 3 ชื่อ **"Sway normal"** ไม่ใช่ `sway_strong`, **ไม่มีช่องกรอก frame_count/frame_rate** (§5.2 รับ required ไม่ได้), **Status default = Active** (gating §6.4 ต้องย้ายไปที่ Save), ไม่มี `custom` nature_type, Delete พิมพ์ชื่อทั้ง 2 เงื่อนไข · รายการที่ต้องแก้ในเอกสารนี้อยู่ที่ [ux-ui-plan §16](ux-ui-plan.md#16-สิ่งที่ต้องกลับไปแก้ใน-technical-designmd-หลังเห็น-figma) — **ยังไม่ได้แก้ตัว design ด้านล่างจนกว่า PM จะเคาะว่า Figma หรือ spec ชนะ**
 > **🔄 ClickUp รอบที่ 2 (2026-09-16 ~11:09):** PM **ถอด HP-04 ออกจากตาราง Subtasks** = descoped → field `wind_threshold_kmh` / `base_intensity_multiplier` ใน §2.2 คงไว้เป็น server default ได้ แต่ **ไม่มี UI แก้** · HP-03 AC ใหม่ **"หลังบันทึกสามารถกำหนดสีและประเภทของ box object ได้"** — ถ้า "ประเภท" = hitbox blocked/walkable **จะล้ม §3** (ที่ออกแบบว่า Nature ไม่มี `object_compositions` row เพื่อให้ walkable อัตโนมัติ) → ต้องเคาะกับ PM ก่อนทำ migration · HP-03 ระบุแล้วว่า Upload เป็น **modal** (ไม่มี route แยก — ตรง §5.2 ที่เป็น sub-resource ของ object เดิม) · รายละเอียดใน [spec.md §รอบที่ 2](spec.md#รอบที่-2--2026-09-16-pm-update-clickup)
 > **⚠️ เรื่องสถานะ HP-04:** ผู้ใช้ยืนยันแล้วว่า ClickUp ปิด HP-04 ถูกต้อง — แต่จากการตรวจโค้ดจริงรอบนี้ **ยังไม่มี table/field ใดๆ ที่รองรับ animation config ของ Object เลย** (ไม่มี `tb_object_animation` หรือเทียบเท่า มีแต่ precedent ที่คล้ายกันคือ `tb_pet_animation` ของ Pet) เข้าใจว่า "ปิดถูกต้อง" หมายถึง requirement/scope เคลียร์แล้วใน ClickUp ไม่ใช่ว่ามีโค้ดรองรับแล้ว — technical design นี้จึงออกแบบ+สร้างทุกอย่างใน HP-03/HP-04 ตั้งแต่ต้น ไม่ใช่แค่ verify ของเดิม
+> **✅ เคาะครบแล้ว 2026-09-20 — schema ปลดล็อก เขียน migration ได้:** (1) **required = `idle` ตัวเดียว** ทุก type · state ที่ไม่มีไฟล์ให้ **fallback ไป `idle`** ตอน render ทั้ง preview และ VO จริง · (2) state ที่ 3 เก็บ key **`sway_strong`** label **"Sway normal"** (แยก key/label — 4 state) · (3) **ไม่มีช่องกรอก frame_count/frame_rate และไม่มี dropdown** — คอลัมน์มี DEFAULT (`1`/`12`) client ไม่ส่ง · (4) **ไม่มี `custom`** nature_type เหลือ 6 ตัว · (5) active gating **กันทั้ง server และ client** · รายละเอียดที่ [§4](#4-animation-states--required--optional--fallback-ตัดสินแล้ว-2026-09-20) และ [§6.1](#61-active-gating--กันสองชั้น) — [ux-ui-plan §14.1](ux-ui-plan.md#141-ต้องตัดสินก่อนเริ่มโค้ด-กระทบ-schema--api--flow) ไม่เหลือข้อที่กระทบ schema แล้ว
 > **🔄 ClickUp รอบที่ 3 (2026-09-17 ~10:36):** ทุก task เปลี่ยน status `pending` → **`in progress`** (HP-04 ยัง Closed) แต่ **description ไม่เปลี่ยนแม้แต่ตัวเดียว และไม่มี comment ใหม่** → **open items §10 และข้อขัดแย้ง [ux-ui-plan §14.1](ux-ui-plan.md#141-ต้องตัดสินก่อนเริ่มโค้ด-กระทบ-schema--api--flow) ยังไม่ถูกตอบทั้งหมด** — เอกสารนี้จึง **ยังไม่แก้ design ด้านล่าง** · test coverage ที่ต้องมีคู่กับ design นี้อยู่ที่ [test-plan.md](test-plan.md) (เขียนแบบไม่ล็อกค่าที่ยังไม่เคาะ) · ดู [spec.md §รอบที่ 3](spec.md#รอบที่-3--2026-09-17-status-เปลี่ยนเป็น-in-progress)
 
 ---
@@ -60,10 +61,10 @@ ALTER TABLE tb_object DROP COLUMN IF EXISTS nature_type;
 CREATE TABLE IF NOT EXISTS tb_object_animation (
     id                       UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     object_id                UUID         NOT NULL REFERENCES tb_object(id) ON DELETE CASCADE,
-    state                    VARCHAR(30)  NOT NULL,  -- idle|sway_light|sway_strong|falling|<custom slug>
+    state                    VARCHAR(30)  NOT NULL,  -- idle|sway_light|sway_strong|falling (ปิด — ไม่มี custom slug แล้ว)
     sprite_url               TEXT         NOT NULL,
-    frame_count              INTEGER      NOT NULL CHECK (frame_count BETWEEN 1 AND 64),
-    frame_rate               INTEGER      NOT NULL CHECK (frame_rate BETWEEN 4 AND 24),
+    frame_count              INTEGER      NOT NULL DEFAULT 1  CHECK (frame_count BETWEEN 1 AND 64),
+    frame_rate               INTEGER      NOT NULL DEFAULT 12 CHECK (frame_rate BETWEEN 4 AND 24),
     frame_width              INTEGER      NOT NULL CHECK (frame_width > 0),
     frame_height             INTEGER      NOT NULL CHECK (frame_height > 0),
     wind_threshold_kmh       INTEGER      NOT NULL DEFAULT 0 CHECK (wind_threshold_kmh BETWEEN 0 AND 200),
@@ -81,7 +82,9 @@ CREATE INDEX IF NOT EXISTS idx_object_animation_object ON tb_object_animation (o
 DROP TABLE IF EXISTS tb_object_animation;
 ```
 
-**หมายเหตุ:** `state` ไม่ใส่ `CHECK (... IN (...))` แบบ `tb_pet_animation.slot` เพราะ `nature_type = 'custom'` ต้องรับ state ที่ Admin ตั้งชื่อเองได้ (ClickUp: "Admin กำหนด") — validate รายชื่อที่อนุญาตที่ Go layer แทน โดยแยก 2 เคส: nature_type คงที่ (6 แบบ) → เช็คกับ whitelist ต่อ type, nature_type = 'custom' → รับ slug ใดก็ได้ที่ผ่าน regex `^[a-z][a-z0-9_]{1,29}$`
+**หมายเหตุ (แก้ 2026-09-20):** ตัด `custom` ออกแล้ว → `state` เป็นชุดปิด 4 ค่า สามารถใส่ `CHECK (state IN ('idle','sway_light','sway_strong','falling'))` ได้เลยแบบเดียวกับ `tb_pet_animation.slot` · จะเช็คที่ Go layer ด้วยก็ได้ (`NatureAllowedStates` ต่อ type) แต่ DB CHECK เป็นตาข่ายกันพลาดชั้นสุดท้าย
+
+**`frame_count`/`frame_rate` มี DEFAULT** เพราะ **ไม่มี UI ให้กรอก** (มติ 2026-09-20) — ภาพนิ่ง interim = `frame_count = 1` พอดีกับ default · `frame_rate = 12` เป็นค่ากลางในช่วง CHECK ที่ไม่ถูกใช้จริงเมื่อ `frame_count = 1` (ข้าม animation loop ตาม [§5.2.1](#521--interim-2026-09-17--รับสไปรต์ขนาดใหญ่ถึง-1000px-ระหว่างที่-asset-ยังไม่เสร็จ))
 
 `base_intensity_multiplier` ใช้ `NUMERIC(3,2)` (0.10–5.00) ตรงกับ spec "decimal" ของ HP-04 ตรงตัว
 
@@ -149,65 +152,96 @@ export const buildCellsFromHitbox = (
 
 ---
 
-## 4. Nature Type → Required/Optional States (shared constant)
+## 4. Animation states — required / optional / fallback (ตัดสินแล้ว 2026-09-20)
 
-ต้องประกาศ map เดียวกัน 2 ที่ (Go + TS) เหมือนที่ `TYPE_CONFIG`/`OBJECT_TYPES` ทำอยู่แล้วสำหรับ object type ปกติ:
+**กติกาที่เคาะแล้ว:**
+1. **required = `idle` ตัวเดียว** ทุก nature_type (ไม่ใช่ 3 ตัวตาม spec เดิม)
+2. **state ที่ยังไม่มีไฟล์ → ใช้ `idle` แทนตอน render** ทั้งใน preview และใน Virtual Office จริง
+3. **ไม่มี `custom`** — เหลือ nature_type 6 ตัว
+4. state ที่ 3 เก็บ key `sway_strong` แต่ **label ที่ผู้ใช้เห็นคือ `Sway normal`** (ต่างกันได้ เพราะแยก key/label)
 
 ```go
 // internal/model/object.go (เพิ่มใหม่)
 const (
-    NatureTypeBigTree     = "big_tree"
-    NatureTypePineTree    = "pine_tree"
-    NatureTypeBush        = "bush"
+    NatureTypeBigTree      = "big_tree"
+    NatureTypePineTree     = "pine_tree"
+    NatureTypeBush         = "bush"
     NatureTypeSheddingTree = "shedding_tree"
-    NatureTypeBamboo      = "bamboo"
-    NatureTypeFlowerBush  = "flower_bush"
-    NatureTypeCustom      = "custom"
+    NatureTypeBamboo       = "bamboo"
+    NatureTypeFlowerBush   = "flower_bush"
+    // ไม่มี custom — ตัดออกตามมติ 2026-09-20 (Figma dropdown มี 6 ตัว)
 
     AnimStateIdle       = "idle"
     AnimStateSwayLight  = "sway_light"
-    AnimStateSwayStrong = "sway_strong"
+    AnimStateSwayStrong = "sway_strong" // label ที่ผู้ใช้เห็น = "Sway normal"
     AnimStateFalling    = "falling"
 )
 
-// NatureRequiredStates / NatureOptionalStates: nil slice ของ nature_type == "custom"
-// แปลว่า "ไม่มี required list ตายตัว — Admin เพิ่มเองได้ทุก state" (ดู §6.3)
-var NatureRequiredStates = map[string][]string{
+// required มีตัวเดียวเท่ากันทุก type — ไม่ต้องมี map ต่อ type อีกแล้ว
+const NatureRequiredState = AnimStateIdle
+
+var NatureTypes = []string{
+    NatureTypeBigTree, NatureTypePineTree, NatureTypeBush,
+    NatureTypeSheddingTree, NatureTypeBamboo, NatureTypeFlowerBush,
+}
+
+// state ที่ upload ได้ต่อ type (idle บังคับ, ที่เหลือ optional ทั้งหมด)
+var NatureAllowedStates = map[string][]string{
     NatureTypeBigTree:      {AnimStateIdle, AnimStateSwayLight, AnimStateSwayStrong},
     NatureTypePineTree:     {AnimStateIdle, AnimStateSwayLight, AnimStateSwayStrong},
     NatureTypeBush:         {AnimStateIdle, AnimStateSwayLight},
-    NatureTypeSheddingTree: {AnimStateIdle, AnimStateSwayLight, AnimStateSwayStrong},
+    NatureTypeSheddingTree: {AnimStateIdle, AnimStateSwayLight, AnimStateSwayStrong, AnimStateFalling},
     NatureTypeBamboo:       {AnimStateIdle, AnimStateSwayLight, AnimStateSwayStrong},
     NatureTypeFlowerBush:   {AnimStateIdle, AnimStateSwayLight},
-    NatureTypeCustom:       nil,
-}
-
-var NatureOptionalStates = map[string][]string{
-    NatureTypeSheddingTree: {AnimStateFalling},
 }
 ```
 
 ```ts
-// zyra-app/lib/api/objects.ts (เพิ่มใหม่ — 1:1 กับ Go ด้านบน)
+// zyra-app/lib/api/objects.ts (1:1 กับ Go ด้านบน)
 export type NatureType =
-  | "big_tree" | "pine_tree" | "bush" | "shedding_tree" | "bamboo" | "flower_bush" | "custom"
-export type AnimationState = "idle" | "sway_light" | "sway_strong" | "falling" | (string & {})
+  | "big_tree" | "pine_tree" | "bush" | "shedding_tree" | "bamboo" | "flower_bush"
+export type AnimationState = "idle" | "sway_light" | "sway_strong" | "falling"
 
-export const NATURE_REQUIRED_STATES: Record<NatureType, AnimationState[]> = {
+export const NATURE_REQUIRED_STATE: AnimationState = "idle"
+
+export const NATURE_ALLOWED_STATES: Record<NatureType, AnimationState[]> = {
   big_tree: ["idle", "sway_light", "sway_strong"],
   pine_tree: ["idle", "sway_light", "sway_strong"],
   bush: ["idle", "sway_light"],
-  shedding_tree: ["idle", "sway_light", "sway_strong"],
+  shedding_tree: ["idle", "sway_light", "sway_strong", "falling"],
   bamboo: ["idle", "sway_light", "sway_strong"],
   flower_bush: ["idle", "sway_light"],
-  custom: [],
-}
-export const NATURE_OPTIONAL_STATES: Partial<Record<NatureType, AnimationState[]>> = {
-  shedding_tree: ["falling"],
 }
 ```
 
-Grid size ต่อ nature_type (จาก spec.md) เป็น **default เริ่มต้นตอนสร้าง** ไม่ใช่ constraint ตายตัว (spec HP-02 ให้ Admin ปรับ grid_width/height เองได้อยู่แล้วเหมือน object ทั่วไป):
+**`AnimationState` ไม่มี `(string & {})` ต่อท้ายแล้ว** — ตัด `custom` ออกแปลว่า state เป็น union ปิด ไม่รับ slug อิสระอีก · regex `^[a-z][a-z0-9_]{1,29}$` ที่เคยออกแบบไว้สำหรับ custom slug **ไม่ต้องเขียน**
+
+### 4.1 Fallback ไป `idle` — ต้องทำที่ไหนบ้าง
+
+state ที่ยังไม่ upload **ไม่ใช่ error** แต่ให้ resolve ไปที่ `idle` แทน:
+
+| จุด | พฤติกรรม |
+|---|---|
+| Preview modal (HP-05) | resolver เลือก state ตามลม/สภาพอากาศ → ถ้า state นั้นไม่มีไฟล์ ใช้ `idle` |
+| Virtual Office จริง | เหมือนกัน — engine ขอ state ไหนก็ตาม ถ้าไม่มีให้ตกมาที่ `idle` |
+| ถ้า `idle` เองก็ไม่มี | object นั้น **ไม่ควรมีสถานะ active ตั้งแต่แรก** (ดู [§6.1](#61-active-gating--กันสองชั้น)) — ถ้าหลุดมาได้ให้ไม่ render แทนที่จะ crash |
+
+**resolve ที่ client** ไม่ต้องมี endpoint พิเศษ — `GET /:id/animations` ส่ง state ที่มีจริงมาให้ครบอยู่แล้ว client เลือกเองได้
+
+### 4.2 Label ↔ key
+
+| key (DB, S3, API) | label ที่ผู้ใช้เห็น | i18n key |
+|---|---|---|
+| `idle` | Idle | `natureAnimStateIdle` |
+| `sway_light` | Sway light | `natureAnimStateSwayLight` |
+| `sway_strong` | **Sway normal** | `natureAnimStateSwayStrong` |
+| `falling` | Falling | `natureAnimStateFalling` |
+
+**ห้าม** เอา label ไปเก็บใน DB หรือใช้เป็น S3 key — เปลี่ยน label ทีหลังได้ฟรี เปลี่ยน key ต้อง migrate data + copy object บน R2
+
+### 4.3 Grid size default ต่อ nature_type
+
+จาก spec.md เป็น **ค่าเริ่มต้นตอนสร้าง** ไม่ใช่ constraint (admin ปรับ grid_width/height เองได้เหมือน object ทั่วไป):
 
 | nature_type | grid_width × grid_height default |
 |---|---|
@@ -217,7 +251,6 @@ Grid size ต่อ nature_type (จาก spec.md) เป็น **default เ�
 | shedding_tree | 2 × 3 |
 | bamboo | 1 × 3 |
 | flower_bush | 1 × 1 |
-| custom | 1 × 1 (Admin ปรับเอง) |
 
 ---
 
@@ -230,9 +263,9 @@ Grid size ต่อ nature_type (จาก spec.md) เป็น **default เ�
 | Field | เดิม/ใหม่ | หมายเหตุ |
 |---|---|---|
 | `type=nature` | ใช้ enum เดิม เพิ่มค่า | ต้องเพิ่มใน `model.IsValidObjectType`/`validObjectTypes` |
-| `nature_type` | **ใหม่** | required เมื่อ `type=nature`, ต้องอยู่ใน `NatureRequiredStates` key หรือ `"custom"` — ไม่ส่งมาเมื่อ type อื่น |
-| `composition` / `sprites[]`/`tints[]` | เดิม | **ไม่ส่งสำหรับ Nature** (ดู §3) — validate ที่ handler: ถ้า `type=nature` และมี composition มาด้วย → reject `ErrCompositionNotAllowedForNature` |
-| `status` | เดิม | มี gate เพิ่ม: `status=active` ถูก reject ด้วย `ErrRequiredAnimationStatesIncomplete` ถ้า nature_type ที่ไม่ใช่ custom ยังขาด required state (ดู §6.4) |
+| `nature_type` | **ใหม่** | required เมื่อ `type=nature`, ต้องอยู่ใน `model.NatureTypes` (6 ตัว) — **ไม่มี `custom`** (มติ 2026-09-20) · ไม่ส่งมาเมื่อ type อื่น |
+| `composition` / `sprites[]`/`tints[]` | เดิม | **Nature ส่ง composition ได้ตามปกติ** (มติ 2026-09-17 — ใช้กลไก collision เดิม ดู [§3](#3-nature-เดินได้เสมอ--ใช้กลไก-collision-เดิม-ตัดสินแล้ว-2026-09-17)) · `deriveCollisionModeFromType("nature")` ต้องคืน `walkable` → cells default เป็น walkable · sentinel `ErrCompositionNotAllowedForNature` **ไม่ต้องมี** |
+| `status` | เดิม | มี gate เพิ่ม: `status=active` ถูก reject ด้วย `ErrRequiredAnimationStatesIncomplete` ถ้ายังไม่มี state `idle` (ดู [§6.1](#61-active-gating--กันสองชั้น)) |
 
 HP-06 AC "Category, nature_type เปลี่ยนไม่ได้หลังสร้าง ยกเว้นยังไม่มี animation state ใดๆ" → `UpdateObject` ต้อง reject การเปลี่ยน `type`/`nature_type` ถ้า `SELECT COUNT(*) FROM tb_object_animation WHERE object_id=$1` > 0 (`ErrNatureTypeLocked`)
 
@@ -250,8 +283,8 @@ PUT  /api/admin/objects/:id/animations/:state     → upsert 1 state (สร้�
 | Field | Required | Validate |
 |---|---|---|
 | `file` | เฉพาะตอนอัปโหลด/แทนที่สไปรต์ใหม่ (ไม่บังคับถ้าแก้แค่ config — HP-04 เคสไม่มีไฟล์ใหม่) | PNG magic bytes, ≤ 2MB (`maxNatureSpritesheetSize`, **แยกจาก `maxSpriteSize` เดิมที่ 1MB**) · dimension ≤ 1000px ตาม [§5.2.1](#521--interim-2026-09-17--รับสไปรต์ขนาดใหญ่ถึง-1000px-ระหว่างที่-asset-ยังไม่เสร็จ) |
-| `frame_count` | ใช่ | 1–64, `image_width % frame_count == 0` (คำนวณจาก `image.DecodeConfig` เหมือน `UploadPiece` เดิม) |
-| `frame_rate` | ใช่ | 4–24 |
+| `frame_count` | **ไม่** (default `1`) | 1–64, `image_width % frame_count == 0` — **ไม่มี UI ให้กรอก** (มติ 2026-09-20) client จึงไม่ส่งมา ปล่อยเป็น default · รับไว้ใน API เผื่ออนาคต |
+| `frame_rate` | **ไม่** (default `12`) | 4–24 — **ไม่มี UI ให้กรอก** เช่นกัน · ค่า default ต้องอยู่ในช่วง CHECK ของ DB |
 | `wind_threshold_kmh` | ไม่ (default 0) | 0–200 |
 | `base_intensity_multiplier` | ไม่ (default 1.0) | 0.1–5.0, ต้องเพิ่ม `parseFloatFormValue` helper (ของเดิมมีแต่ `parseIntFormValue`) |
 
@@ -325,7 +358,6 @@ S3 object เดิมถูก **overwrite ที่ key เดิม** (เห
 var (
     ErrInvalidNatureType                 = errors.New("invalid nature_type")
     ErrNatureTypeRequired                = errors.New("nature_type is required when type is nature")
-    ErrCompositionNotAllowedForNature    = errors.New("nature objects cannot have a composition")
     ErrNatureTypeLocked                  = errors.New("nature_type cannot change after any animation state exists")
     ErrInvalidAnimationState             = errors.New("invalid animation state for this nature_type")
     ErrFrameWidthNotDivisible            = errors.New("image width is not evenly divisible by frame_count")
@@ -334,6 +366,19 @@ var (
 ```
 
 Error message ที่ handler แปลงเป็น user-facing text ต้อง match ข้อความใน EP-01 เป๊ะ (ตาม spec.md §EP-01) เช่น `"Width ({W}px) ต้องหารด้วย frame_count ({N}) ลงตัว — frame width = {W/N}px"` — ต้อง format string ที่ handler ไม่ใช่ error message ดิบจาก Go (pattern เดียวกับที่ `object_handler.go` แปลง `err.Error()` เป็น message ที่ frontend แสดงอยู่แล้ว)
+
+---
+
+### 6.1 Active gating — กันสองชั้น
+
+มติ 2026-09-20: **server guard ไว้ทั้งสองทาง** — ไม่ว่า UI จะบล็อกที่ toggle หรือที่ปุ่ม Save ก็ตาม API ต้องกันเองเสมอ ห้ามเชื่อ client
+
+| ชั้น | ที่ไหน | พฤติกรรม |
+|---|---|---|
+| **Server (บังคับ)** | `CreateObject` / `UpdateObject` | `status=active` ขณะที่ยังไม่มีแถว `tb_object_animation` ที่ `state='idle'` → reject ด้วย `ErrRequiredAnimationStatesIncomplete` |
+| **Client (UX)** | ฟอร์ม | ปุ่ม Save disabled จนกว่าจะ upload `idle` สำเร็จ (ตาม Figma node `6034:345420` → `6035:352007`) · toggle Status ปล่อยให้กดได้อิสระ ไม่ต้องล็อก |
+
+เงื่อนไขเดียวคือ **มี `idle` หรือยัง** — ไม่ต้องเช็ค required list ต่อ type อีกแล้ว (ดู [§4](#4-animation-states--required--optional--fallback-ตัดสินแล้ว-2026-09-20))
 
 ---
 
@@ -414,6 +459,8 @@ test(app): vitest สำหรับ nature-animation-manager form validation + 
 ---
 
 ## 10. Open items ที่ยังไม่ตัดสินใจ (ต้องถาม PM/ยืนยันก่อน implement จริง)
+
+> **อัปเดต 2026-09-20:** ข้อที่กระทบ schema **ปิดหมดแล้ว** (ดู header) · ที่เหลือด้านล่างเป็นเรื่อง UI/behaviour ที่เริ่มโค้ด backend ไปก่อนได้
 
 1. สี badge ของ `TYPE_CONFIG["nature"]` — ยังไม่มี hex จาก Figma token ที่ตรวจแล้ว ต้องดึงจาก `get_design_context`/`get_variable_defs` ตาม [10-figma-fidelity.md](../../../.claude/rules/10-figma-fidelity.md) ก่อนเขียนโค้ดจริง (spec.md ยังมีแค่ node id ของ layout ไม่ใช่สี)
 2. `base_intensity_multiplier` เป็น global ต่อ state หรือ override ได้ต่อ placement (`tb_map_object`) ด้วย — spec HP-04/EC-01 พูดถึงระดับ object definition เท่านั้น ("Placed objects ที่ใช้ config เดิม: inherit config ใหม่จาก object definition อัตโนมัติ") → ยืนยันว่า**ไม่มี per-placement override** เก็บที่ `tb_object_animation` ระดับเดียวพอ (ออกแบบไว้แบบนี้แล้วในเอกสารนี้ — แจ้งไว้เป็น assumption ที่ยังไม่ถาม PM ตรงๆ)

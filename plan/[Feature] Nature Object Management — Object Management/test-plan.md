@@ -25,20 +25,22 @@
 
 ## 0. สิ่งที่ห้ามล็อกค่าใน test จนกว่า PM จะเคาะ
 
-ข้อขัดแย้งใน [ux-ui-plan §14.1](ux-ui-plan.md#141-ต้องตัดสินก่อนเริ่มโค้ด-กระทบ-schema--api--flow) **ยังเปิดอยู่ทั้ง 12 ข้อ ณ 2026-09-17** — เทสในไฟล์นี้ที่แตะหัวข้อพวกนี้ต้องเขียนแบบ **อ่านค่าจาก constant กลาง (`NatureRequiredStates` / `NATURE_REQUIRED_STATES`) ไม่ใช่ hardcode รายชื่อ state ในไฟล์เทส** เพื่อให้เปลี่ยนคำตอบแล้วแก้ที่เดียว
+> **อัปเดต 2026-09-20 — ข้อ 1, 2, 3, 7, 8, 14a เคาะแล้ว** (ดู [technical-design §4](technical-design.md#4-animation-states--required--optional--fallback-ตัดสินแล้ว-2026-09-20)) เทสที่อิงข้อพวกนี้ **ล็อกค่าได้แล้ว** · ที่เหลือในตารางยังห้ามล็อก
+
+ข้อขัดแย้งใน [ux-ui-plan §14.1](ux-ui-plan.md#141-ต้องตัดสินก่อนเริ่มโค้ด-กระทบ-schema--api--flow) ที่ **ยังเปิด** — เทสในไฟล์นี้ที่แตะหัวข้อพวกนี้ต้องเขียนแบบ **อ่านค่าจาก constant กลาง (`NatureRequiredStates` / `NATURE_REQUIRED_STATES`) ไม่ใช่ hardcode รายชื่อ state ในไฟล์เทส** เพื่อให้เปลี่ยนคำตอบแล้วแก้ที่เดียว
 
 | # (§14.1) | ห้ามล็อก | เขียนเทสยังไงแทน |
 |---|---|---|
-| 1 | จำนวน required state (spec = 3 ตัว · Figma = `idle` ตัวเดียว) | เทส **พฤติกรรม**: "ขาด required ตัวใดตัวหนึ่ง → `ErrRequiredAnimationStatesIncomplete`" โดย feed required list จาก constant · เทส parity Go↔TS ว่าสองฝั่ง map ตรงกัน ไม่ใช่เทสว่าเท่ากับ 3 |
-| 2 | key ของ state ที่ 3 (`sway_strong` vs `sway_normal`) | อ้าง `model.AnimStateSwayStrong` / constant ฝั่ง TS เสมอ ห้ามพิมพ์ string ตรงในเทส |
-| 3 | frame_count/frame_rate มาจากฟอร์ม หรือ derive จากรูป / เก็บต่อ state หรือต่อ object | เทส validator (`1–64`, `4–24`, `width % frame_count == 0`) เป็น **pure function** แยกจากที่มาของค่า |
-| 7 | มี `custom` nature_type ไหม | เทส `custom` แยกเป็น test case ที่ skip ได้ด้วย flag เดียว (`t.Skip` + คอมเมนต์อ้างข้อ 7) |
-| 8 | status default (`hidden` ตาม spec vs toggle `active` ตาม Figma) และจุด gating (create vs save) | เทสว่า **"object ที่ required ไม่ครบ ต้องไม่ได้ active"** ไม่ว่าจะถูกบล็อกที่ไหน — assert ผลลัพธ์สุดท้ายใน DB/response ไม่ใช่ assert ว่าปุ่มไหน disabled |
+| ~~1~~ | ~~จำนวน required state~~ | **เคาะแล้ว: `idle` ตัวเดียว** → เทสตรง ๆ ได้: ไม่มี `idle` → `ErrRequiredAnimationStatesIncomplete` · มี `idle` อย่างเดียว → active ได้ · **เพิ่มเทส fallback**: ขอ state ที่ไม่มีไฟล์ → คืน `idle` |
+| ~~2~~ | ~~key ของ state ที่ 3~~ | **เคาะแล้ว: key `sway_strong` label `Sway normal`** → เทสได้ว่า DB/S3 key เป็น `sway_strong` และ i18n `natureAnimStateSwayStrong` = `"Sway normal"` · เทสว่า **label ไม่เคยถูกเขียนลง DB** |
+| ~~3~~ | ~~frame_count/frame_rate~~ | **เคาะแล้ว: ไม่มี UI** → เทสว่า client **ไม่ส่ง** 2 field นี้ · server ใช้ DEFAULT `1`/`12` · validator ยังเทสช่วง 1–64 / 4–24 ไว้เผื่ออนาคต |
+| ~~7~~ | ~~มี `custom` ไหม~~ | **เคาะแล้ว: ไม่มี** → ลบเทส custom slug regex ทิ้ง · เพิ่มเทสว่า `nature_type='custom'` → `ErrInvalidNatureType` · `state` นอก 4 ค่า → reject |
+| ~~8~~ | ~~status default / จุด gating~~ | **เคาะแล้ว: กันสองชั้น** → เทส server reject `status=active` เมื่อไม่มี `idle` (บังคับ) **และ** เทส component ว่าปุ่ม Save disabled จนกว่าจะมี `idle` |
 | 10 | transparency = warning (spec) หรือ error บล็อก (Figma) | เทสว่า detect ได้ถูกต้อง (มี/ไม่มี alpha channel) แยกจากเทสว่า "บล็อกหรือไม่" — อันหลังใส่ `t.Skip`/`it.todo` ไว้ก่อน |
 | 11 | preview controls (state buttons / Current State label / playback) | เทสเฉพาะ **state-resolver เป็น pure function** (wind → state, + fallback เป็น `idle` เมื่อ state นั้นยังไม่ upload ตาม AC ใหม่รอบที่ 2) ยังไม่เทส UI control ที่ Figma ไม่มี |
 | 12 | mapping weather 5 ตัว → state | เทส resolver ด้วย **table ที่ประกาศในโค้ด** ไม่ใช่ตารางที่เขียนซ้ำในเทส · เคส `Strong rain`/`Thunderstorm` ใส่ `it.todo` รอ PM |
 | 14 | name max length (100 vs code ปัจจุบัน 50) | เทส boundary โดยอ้าง `MAX_NAME_LENGTH` จากโค้ด ไม่ใช่เลข |
-| 14a | Nature มี hitbox/composition ได้ไหม ("สี/ประเภท box") | **ยังไม่เขียนเทส composition ของ Nature เลย** · เทสที่มีตอนนี้คือ `ErrCompositionNotAllowedForNature` ตาม [technical-design §5.1](technical-design.md#51-object-crud-เดิม--ขยาย-ไม่สร้างใหม่) — ถ้า PM ตอบว่ากำหนดได้ เทสข้อนี้ต้องกลับด้าน |
+| ~~14a~~ | ~~Nature มี composition ได้ไหม~~ | **เคาะแล้ว 2026-09-17: ได้ เหมือน `decoration`** → ลบเทส `ErrCompositionNotAllowedForNature` · แทนด้วยเทส `deriveCollisionModeFromType("nature") === "walkable"` และ cells default เป็น `walkable` |
 
 **เทสที่เขียนได้เลยตอนนี้โดยไม่ต้องรอ PM:** §1.1 (constants/validation parity), §1.3 (image/frame validator), §1.4 (sentinel errors), §2 (envelope + guard), §3.1–3.2 (API client), §5 (EC-01 broadcast contract), §6 (regression ของเดิมต้องไม่พัง)
 
@@ -63,9 +65,10 @@
 | `TestNatureRequiredStates_KeysMatchNatureTypes` | — | ทุก key ใน `NatureRequiredStates` เป็น nature type ที่ประกาศไว้ และครบทุกตัว |
 | `TestNatureOptionalStates_SubsetOfKnownStates` | — | optional state ทุกตัวอยู่ในชุด state ที่รู้จัก (`idle/sway_light/sway_strong/falling`) |
 | `TestNatureRequiredStates_NoDuplicateWithinType` | — | ไม่มี state ซ้ำใน slice เดียวกัน และไม่ทับกับ optional ของ type เดียวกัน |
-| `TestValidateNatureType` | `big_tree` … `flower_bush` / `custom` / `sakura_tree` / `""` | 6 ตัวแรก ok · `custom` ตามข้อ 7 (§0) · `sakura_tree` → `ErrInvalidNatureType` (**ชื่อเก่า ต้องถูกปฏิเสธ**) · `""` เมื่อ `type=nature` → `ErrNatureTypeRequired` |
+| `TestValidateNatureType` | `big_tree` … `flower_bush` / `custom` / `sakura_tree` / `""` | 6 ตัวแรก ok · **`custom` → `ErrInvalidNatureType`** (ตัดออกแล้ว มติ 2026-09-20) · `sakura_tree` → `ErrInvalidNatureType` (ชื่อเก่า) · `""` เมื่อ `type=nature` → `ErrNatureTypeRequired` |
 | `TestValidateAnimationState_FixedType` | state ที่อยู่/ไม่อยู่ใน required∪optional ของ type นั้น | ไม่อยู่ → `ErrInvalidAnimationState` |
-| `TestValidateAnimationState_CustomSlug` | `leaf_drop` / `A_bad` / `x` / 30 ตัวอักษร / 31 ตัวอักษร | ผ่าน regex `^[a-z][a-z0-9_]{1,29}$` เท่านั้น — boundary 2 และ 30 ตัวต้องผ่าน, 1 และ 31 ต้องไม่ผ่าน |
+| `TestValidateAnimationState_ClosedSet` | `leaf_drop` / `sway_normal` / `petal_fall` / `""` | **ทุกตัว → `ErrInvalidAnimationState`** — state เป็นชุดปิด 4 ค่า (`idle`/`sway_light`/`sway_strong`/`falling`) ไม่มี slug อิสระแล้ว · `sway_normal` ต้องถูกปฏิเสธด้วย (เป็น **label** ไม่ใช่ key) |
+| `TestResolveStateFallsBackToIdle` | ขอ `sway_light` แต่มีแต่ `idle` | คืน `idle` · ขอ state ที่ไม่มีและไม่มี `idle` ด้วย → คืน `nil`/ไม่ render (ไม่ panic) |
 | `TestNatureDefaultGridSize` | ทุก nature_type | ตรงตารางใน [technical-design §4](technical-design.md#4-nature-type--requiredoptional-states-shared-constant) |
 
 ### 1.2 `object_service` — CRUD ที่ขยาย (mock DB ผ่าน interface)
@@ -74,14 +77,12 @@
 |---|---|
 | `TestCreateObject_NatureRequiresNatureType` | `type=nature`, ไม่ส่ง `nature_type` → `ErrNatureTypeRequired`, ไม่มี INSERT ถูกยิง |
 | `TestCreateObject_NatureTypeOnNonNatureRejected` | `type=decoration` + `nature_type=big_tree` → error, ไม่ INSERT |
-| `TestCreateObject_NatureRejectsComposition` | `type=nature` + composition → `ErrCompositionNotAllowedForNature` (**ผูกกับ §0 ข้อ 14a**) |
-| `TestCreateObject_NatureWritesNoCompositionRow` | สร้างสำเร็จ → ไม่มี query แตะ `object_compositions` เลย (assert จาก recorder) — นี่คือสิ่งที่ทำให้ walkable อัตโนมัติ ([technical-design §3](technical-design.md#3-เหตุผลที่-nature-เดินได้เสมอโดยไม่ต้องเขียนโค้ดเพิ่ม)) |
+| `TestCreateObject_NatureWritesWalkableComposition` | สร้าง Nature → composition ที่บันทึกมี cells `type="walkable"` ทั้งหมด (ไม่ใช่ไม่มีแถว — มติ 2026-09-17 ดู [§3](technical-design.md#3-nature-เดินได้เสมอ--ใช้กลไก-collision-เดิม-ตัดสินแล้ว-2026-09-17)) |
 | `TestCreateObject_NatureDefaultStatus` | status ที่ถูกเขียนลง DB ตรงกับค่าที่ constant กำหนด (**ห้าม assert `"hidden"` ตรง ๆ** — §0 ข้อ 8) |
 | `TestUpdateObject_NatureTypeLockedWhenAnimationExists` | count > 0 → `ErrNatureTypeLocked`, ไม่มี UPDATE |
 | `TestUpdateObject_NatureTypeChangeAllowedWhenEmpty` | count = 0 → UPDATE ผ่าน (HP-06 AC ข้อยกเว้น) |
 | `TestUpdateObject_ActivateBlockedWhenRequiredMissing` | `status=active` ขณะ required ขาด → `ErrRequiredAnimationStatesIncomplete` |
 | `TestUpdateObject_ActivateAllowedWhenRequiredComplete` | required ครบ → ผ่าน |
-| `TestUpdateObject_CustomTypeSkipsRequiredGate` | `nature_type=custom` → ไม่บล็อก (ตาม `nil` required list) |
 | `TestListObjects_FilterByNatureType` | filter `types=nature` → WHERE มี `type = 'nature'`; ไม่มี filter → พฤติกรรมเดิมไม่เปลี่ยน |
 | `TestDeleteObject_NatureSoftDeleteCascade` | soft delete → ลบ `tb_map_object` ที่ reference + ไม่ hard delete แถว `tb_object` (พฤติกรรมเดิม) |
 
