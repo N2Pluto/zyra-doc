@@ -1,6 +1,64 @@
 # SC-OBJ-NAT-01 · Progress — Nature Object Management (Admin)
 
-> entry ใหม่อยู่**บนสุด** · ClickUp main: [86d446fw1](https://app.clickup.com/t/86d446fw1) · **ยังเป็น planning only — ไม่มีโค้ด implement ในทุก repo**
+> entry ใหม่อยู่**บนสุด** · ClickUp main: [86d446fw1](https://app.clickup.com/t/86d446fw1) · **implement เริ่มแล้ว 2026-09-20** — 3 PR แรกเปิดแล้ว (schema + collision bugfix + enum/badge/filter), ยังไม่ merge/deploy
+
+---
+
+## รอบที่ 8 — 2026-09-20 (implement เริ่มแล้ว — 3 PR แรก)
+
+**ทำอะไร:** ลงมือเขียนโค้ด 3 งานที่ไม่ขึ้นกับ blocker ที่เหลือ (§14.1 ที่ยังไม่ตัดสินเป็นเรื่อง UI ล้วน — ดูรอบที่ 7)
+
+**ถึงไหน — เปิด PR แล้ว 3 ใบ:**
+
+| PR | Repo | ทำอะไร |
+|---|---|---|
+| [zyra-api#130](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/130) | zyra-api | migration `105_object_nature.sql` (`tb_object.nature_type`) + `106_object_animation.sql` (`tb_object_animation`, DB `CHECK` บน `state` เพราะไม่มี custom แล้ว) · `model.ObjectTypeNature` เข้า `validObjectTypes` · 6 `NatureType*` + 4 `AnimState*` constants · `NatureAllowedStates`/`NatureDefaultGridSize`/`IsValidNatureType`/`IsValidAnimationState` · table-driven test ครบ (`object_nature_test.go`) |
+| [zyra-app#425](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/425) | zyra-app | แก้บั๊ก collision default ที่วัด prod แล้ว 2,453 placement (รอบที่ 5–6) — `buildCellsFromHitbox(hitbox, mode)` ไม่ hardcode `"blocked"` อีกต่อไป · เป็น prerequisite ของ HP-02 |
+| [zyra-app#426](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/426) | zyra-app | เพิ่ม `"nature"` เข้า `ObjectType` + `TYPE_CONFIG` badge (สี `#2C5AE4` Navy/500 จาก Figma จริง ไม่ใช่เดา) + filter checkbox + icon `TreePine` + `deriveCollisionModeFromType` + `DEFAULT_Z_INDEX.nature=3` — **ตั้งใจไม่เพิ่มเข้า `OBJECT_TYPES`** (Category dropdown ในฟอร์มสร้าง) เพราะยังไม่มี special-case `category==="nature"` (ux-ui-plan §3.4) ถ้าเปิดตอนนี้จะสร้าง object ที่ไม่มี nature_type และ upload ไม่ได้ |
+
+**เจอระหว่างทำ:** migration เลข `103` ที่ technical-design ออกแบบไว้ถูก branch อื่น (`feat/admin-roadmap-api`) ใช้ไปแล้วบน `develop` → ต้อง renumber เป็น **105/106** (แก้ทั้งไฟล์ migration และ comment ในโค้ดที่อ้างเลขเดิม)
+
+**verify ถึงไหน:**
+- zyra-api: `go build ./...` · `go vet ./...` · `go test ./...` (ทุก package) · `gofmt -l` เขียวหมด
+- zyra-app: `npx tsc --noEmit` ไม่มี error ใหม่ (error เดิม 6 ตัวใน `environment-weather-fx`/`pet-creation-wizard`/`pixi-game-scene` ไม่เกี่ยวกับที่แก้) · `npx vitest run` 180 files ผ่านหมดทั้ง 2 branch · `npx eslint` clean
+- **build เขียวเท่านั้น — ยังไม่ได้ deploy/live-test บน dev environment**
+
+**ต่อจากนี้:**
+1. รอ PR ทั้ง 3 ใบ review + merge เข้า `develop`
+2. งานถัดไปตาม task breakdown ([technical-design §9](technical-design.md#9-task-breakdown-แนะนำ-ตาม-01-planmd--แบ่งให้จบใน-1-prtask)): animation sub-resource endpoints (`GET/PUT /:id/animations`) + `nature-animation-manager.tsx` (ต้องรอ category=nature special-case ก่อน)
+3. blocker ที่เหลือใน §14.1 (5, 9–14 + ค่า `ต้องดึง` §15) ยังเป็นเรื่อง UI ล้วน ไม่บล็อกงาน backend ที่เหลือ
+
+**ติดอะไร:** ไม่มี — งานเดินต่อได้ปกติ
+
+---
+
+## รอบที่ 7 — 2026-09-20 (เคาะครบ 5 blocker · schema ปลดล็อก)
+
+**ทำอะไร:** รับคำตอบ 5 ข้อสุดท้ายที่บล็อก schema แล้วเขียนลงเอกสารทุกไฟล์
+
+**ถึงไหน — ทั้ง 5 ข้อปิดหมด:**
+
+| # | มติ | ผลต่อโค้ด |
+|---|---|---|
+| 1 | **required = `idle` ตัวเดียว** ทุก type · state ที่ไม่มีไฟล์ **fallback ไป `idle`** ตอน render (ทั้ง preview และ VO จริง) | `NatureRequiredStates` map ยุบเหลือ `const NatureRequiredState = AnimStateIdle` · ต้องทำ fallback resolver ฝั่ง client |
+| 2 | key `sway_strong` · label **`Sway normal`** — **แยก key กับ label มี 4 state ไม่ใช่ 5** | i18n `natureAnimStateSwayStrong` = "Sway normal" · ห้ามเอา label ลง DB/S3 |
+| 3 | **ไม่ต้องมี frame_count/frame_rate เลย** ทั้ง field และ dropdown (ตัด dropdown read-only ออกจากฟอร์มด้วย) | คอลัมน์มี `DEFAULT 1` / `DEFAULT 12` · client ไม่ส่ง · API ยังรับไว้เผื่ออนาคต |
+| 4 | **ไม่มี `custom`** เหลือ 6 nature_type | `state` เป็นชุดปิด 4 ค่า → ใส่ DB `CHECK` ได้ · ตัด regex slug ทิ้ง |
+| 5 | active gating **กันทั้ง server และ client** | server reject `status=active` เมื่อไม่มี `idle` + client disable Save ([§6.1](technical-design.md#61-active-gating--กันสองชั้น)) |
+
+**ไฟล์ที่แก้:** [technical-design.md](technical-design.md) — เขียน §4 ใหม่ทั้งหัวข้อ (states/fallback/label map/grid default) · §2.2 schema (DEFAULT + CHECK + ตัด custom) · §5.1–5.2 (nature_type 6 ตัว · frame fields optional · Nature ส่ง composition ได้) · §6.1 ใหม่ (gating 2 ชั้น) · ตัด sentinel `ErrCompositionNotAllowedForNature` · [ux-ui-plan §14.1](ux-ui-plan.md) ปิดข้อ 1/2/3/7/8 · [test-plan §0 + §1.1 + §1.2](test-plan.md) ปลดล็อกเทสที่เคยห้ามล็อกค่า + เพิ่มเทส fallback
+
+**PR:** ต่อจาก [#27](https://github.com/N2Pluto/zyra-doc/pull/27)
+
+**verify ถึงไหน:** เอกสารล้วน ยังไม่แตะโค้ด — **แต่ตอนนี้ §14.1 ไม่เหลือข้อที่กระทบ schema/API แล้ว = เขียน migration 103/104 ได้จริง**
+
+**ต่อจากนี้:**
+1. `feat(api)`: migration 103 (`tb_object.nature_type`) + 104 (`tb_object_animation` พร้อม DEFAULT/CHECK) + `"nature"` เข้า `validObjectTypes`
+2. `fix(app)`: บั๊ก collision default (`buildCellsFromHitbox` รับ `mode`) — prerequisite ของ HP-02 มีผลวัด prod แล้ว 2,453 placement
+3. `feat(app)`: `"nature"` เข้า enum/badge/filter + `deriveCollisionModeFromType`
+4. ที่ยังเปิดคือเรื่อง UI ล้วน (§14.1 ข้อ 5, 9–14 + ค่า `ต้องดึง` ใน §15) ไม่บล็อก backend
+
+**ติดอะไร:** ยังไม่ได้แก้ spec ใน ClickUp ให้ตรงกับมติทั้งหมด (HP-07 delete, `petal_fall`, required states, frame config) — ต้องให้ PM แก้ · ทีมยังไม่เคาะเรื่อง backfill 24 object
 
 ---
 
