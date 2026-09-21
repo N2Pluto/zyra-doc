@@ -1,7 +1,44 @@
 # Roadmap (admin) — Progress / Handoff
 
 > **สถานะรวม:** UI 2 หน้า + API ครบ (feature CRUD, scene, asset library, public read) ต่อกันแล้ว · **ตารางสร้างบน dev แล้ว** (DDL อยู่ใน `internal/database/postgres.go` จึงขึ้นเองตอน service start ทุก env) · ฝั่ง landing ยังไม่ต่อ
-> **อัปเดตล่าสุด:** 2026-09-17 · **คนล่าสุด:** rif (pair กับ Claude Code)
+> **อัปเดตล่าสุด:** 2026-09-21 · **คนล่าสุด:** rif (pair กับ Claude Code)
+
+## 2026-09-21 (รอบ 6) · rif — ไล่เคส "landing ไม่ยิง API เลย"
+
+- **อาการที่แจ้ง:** เปิดหน้าแรกแล้ว section 07 ไม่ขึ้น และ DevTools → Fetch/XHR ว่างเปล่า (0 request)
+- **สาเหตุจริง:** section 07 ถูกใส่ไว้ใน **`output/index.html`** แต่หน้าที่ผู้ใช้เปิดคือ **`output/Feature.html`** ซึ่งเป็นหน้าที่มี section 01–06 (Figma บอกว่า "ต่อจาก 06" = หน้า Feature) — ไม่มี markup/สคริปต์ของ 07 อยู่เลย จึงไม่มีอะไรไปยิง API (ไม่เกี่ยวกับ summary box ที่เพิ่งเพิ่ม: renderer รองรับ kind `summary` อยู่แล้ว)
+- **แก้:** ย้าย section 07 + `<link css/spotlight.css>` + `<script component/spotlight.min.js>` ไปที่ `Feature.html` (วางต่อจาก 06 ก่อน `#testimonials`) และถอดออกจาก `index.html`; ปรับ markup ให้ใช้คลาสของหน้านั้น (`fx-feature center` / `fx-wm` / `fx-head` / `fx-title` / `fx-lead`) แล้วลบ `.sp-ghost`/`.sp-head` ที่ไม่ได้ใช้ออกจาก `spotlight.css` · bump `?v=3` (ทั้ง `tools/build.js` V map)
+- **เช็คด้วยว่าไม่ใช่:** prod `https://zyra-world.com` ซึ่งยังไม่ได้ deploy สาขา `feat/roadmap-spotlight` — ตัว HTML บน prod ไม่มี markup ของ section 07 และไม่มี `component/spotlight.min.js` เลย จึงไม่มีอะไรไปยิง API (เทียบ: prod ข้ามจาก 06 ไป `#testimonials` ตรง ๆ, ไฟล์ local มี `id="spotlight"` คั่นอยู่) — โค้ดฝั่ง local ทำงานปกติ
+- **verify:** render ด้วย headless Chrome ทั้ง `Feature.html` และ `th/Feature.html` — section เปิด, ยิง API สำเร็จ, วัตถุครบ 30 ชิ้นรวมกล่อง summary, การ์ด `test-01`/`test-02`, วันที่ `17 Sep 2026` · ต้องเปิดผ่าน http เท่านั้น (เช่น Live Server :5500 หรือ `python3 -m http.server` ใน `output/`) — `file://` origin เป็น `null` แล้วโดน CORS บล็อก
+- **แก้เพิ่มระหว่างทาง (zyra-landing):**
+  - `output/component/spotlight.js` — เดิมเงียบสนิททุกเคสที่ไม่ผ่าน ทำให้แยกไม่ออกว่า "ไม่มี markup / ไม่มี API_URL / API ล้ม / ไม่มีข้อมูล"; ตอนนี้ warn ใน console เป็น `[spotlight] ...` ทุกเคส (ยังซ่อน section เหมือนเดิม)
+  - เลือกการ์ดเริ่มต้นเป็นฟีเจอร์ล่าสุดที่ **`status === "released"`** เท่านั้น — เดิมดูแค่ `release_date <= today` จึงเผลอเปิดมาที่ตัว upcoming/teaser แล้วเห็นเป็นเงา `?` ทั้งที่มีฉากอยู่
+  - ป้ายไตรมาสและกล่อง summary เดิมใช้ font-size คงที่ (12/10/14px) พอจอแคบวัตถุย่อแต่ตัวอักษรไม่ย่อ → ข้อความล้นกล่อง; เปลี่ยนเป็น `container-type: inline-size` บน `.sp-obj` + `clamp(..cqw..)` ให้ย่อตามขนาดวัตถุเหมือนตอนจัดฉาก (เบราว์เซอร์เก่าตกไปใช้ px เดิม)
+- **ไทม์ไลน์: ยึดฟีเจอร์ที่ปล่อยล่าสุดไว้กลางจอ** (ตามที่ผู้ใช้ขอ) — ซ้าย = ที่ปล่อยไปแล้ว, ขวา = upcoming เลื่อนไปดูได้
+  - `.sp-rail` / `.sp-thumbs` เปลี่ยนจาก `justify-content: center` เป็น `flex-start` + `padding-inline: calc(50% - 80px)` (จอ ≤600px ใช้ `calc(50% - 56px)` ตามการ์ด active ที่แคบลง) — การ์ดที่เลือกจึงเลื่อนมากึ่งกลางได้เสมอแม้เป็นอันแรก/อันสุดท้าย
+  - `syncActive(scrollIntoView, instant)` — ครั้งแรกเลื่อนแบบไม่อนิเมต, กดการ์ดอื่นค่อยเลื่อนแบบ smooth (เคารพ `prefers-reduced-motion` เหมือนเดิม)
+  - API เรียงมาตาม `release_date ASC` อยู่แล้ว (`roadmap_service.go`) ลำดับซ้าย→ขวาจึงเป็นอดีต→อนาคตตรงตามที่ต้องการ
+  - verify ด้วย mock 5 ฟีเจอร์ (released 3 / upcoming 2): เปิดมาการ์ด `released-C` อยู่กลางจอพอดี มีของเก่า 2 ใบซ้าย ของใหม่ 2 ใบขวา
+- **เส้นไทม์ไลน์ + ปุ่มเลื่อนซ้าย/ขวา ตาม Figma**
+  - `.sp-rail::before` จากแถบหนา 8px `--surface-2` → เส้น 1px `#d9d9d9` (จุดวางทับบนเส้น)
+  - เพิ่มปุ่ม `.sp-nav` (44px r10 ขอบ `#e3e4e6` พื้นขาว, จอ ≤600px เหลือ 36px) วางชิดขอบจอด้วย `left/right: calc(50% - 50vw + clamp(8px, 4vw, 64px))` และกึ่งกลาง stage ด้วยตัวแปรใหม่ `--sp-stage-h` (500/320/220 ตาม breakpoint แทน height ที่ hardcode)
+  - ปุ่มเกาะกับกรอบ stage โดยตรง: `buildNav()` ห่อ `.sp-stage` ด้วย `.sp-stage-row` (position: relative) แล้ววางปุ่ม `top: 50%` ในแถวนั้น — รอบแรกผูกไว้กับ `.sp-panel` + `top: calc(var(--sp-stage-h)/2)` แล้วบางเครื่องปุ่มไปเกาะขอบบน (ถ้า custom property/containing block ไม่เป็นไปตามที่คิด abs child ของ flex จะตกไปที่มุมบนซ้าย) ตอนนี้ไม่พึ่งตัวแปรแล้ว · ต้องมีแถวครอบเพราะ `.sp-stage` เองเป็น `overflow: hidden`
+  - ปุ่มสร้างจาก JS (`buildNav()` ใน `spotlight.js`) ใช้ svg chevron ไม่ต้องพึ่ง icon lib และได้ aria-label ไทย/อังกฤษตาม `isTH()` โดยไม่ต้องแก้ markup สองหน้า · `disabled` อัตโนมัติเมื่ออยู่ใบแรก/ใบสุดท้าย · มีฟีเจอร์เดียวไม่สร้างปุ่ม
+- **ไล่เช็กงานทั้งหมดอีกรอบ:** `go build` + `go vet` + `go test -count=1 ./internal/...` เขียว (เจอ `https://www.zyra-world.com` หายไปจาก allowlist ของ `public_cors.go` อีกครั้ง — ใส่กลับแล้ว test ผ่าน) · app `tsc` เหลือแต่ error เดิมใน `__tests__/*` ที่ไม่เกี่ยว roadmap, `eslint`/`prettier` เขียว, `vitest __tests__/roadmap-feature.test.ts` 3 เคสผ่าน · ฝั่ง landing ตรวจ `spotlight.js`/`spotlight.css` ว่าไม่มีคลาสตายค้าง (`.sp-ghost`, `.sp-head` และใน media query) และแก้ warn ซ้ำสองครั้งตอน API ตอบไม่ 200
+- **สถานะ branch:** api `feat/admin-roadmap-api` merge เข้า develop ไปแล้ว (PR #128) เหลือของใหม่ที่ยัง uncommitted (kind `summary`, `sheet_width/height`, CORS www) · app `feat/admin-product-updates` มี commit ถึง `00d275d` เหลือไฟล์ roadmap ที่แก้รอบ summary ยัง uncommitted · landing `feat/roadmap-spotlight` commit `47dfe7e` แล้ว เหลือการย้ายไป Feature.html ยัง uncommitted
+- **ต่อจากนี้:** commit/push 3 repo แล้วเปิด PR · ตั้ง `ROADMAP_ENABLED` (api) + `NEXT_PUBLIC_ROADMAP` (app) + `API_URL` ของ landing บน uat/prod ก่อนถึงจะเห็น section 07 บนโดเมนจริง
+
+## 2026-09-21 (รอบ 5) · rif — landing section 07 + object ชนิด summary
+
+- **ทำอะไร:**
+  1. **zyra-landing** (branch `feat/roadmap-spotlight` แตกจาก main) — section 07 "Zyra Spotlight" ตาม Figma node `2567:28420`: ghost 07, capsule, หัวข้อ/คำโปรย, stage, บรรทัดวันที่, รางจุด (ปกติ 16px `#D9D9D9` / active 24px `#58D68D`), การ์ดฟีเจอร์ (120×74 opacity .5 → active 160×100 + gradient + ชื่อ)
+     - `component/spotlight.js` ดึง `GET {API_URL}/api/public/roadmap` แล้ววาดฉากจาก objects ด้วยพิกัด % เดียวกับที่จัดในหน้า admin (sprite เล่นตาม frames/fps) · ไม่มี API / flag ปิด / ไม่มีข้อมูล = ซ่อน section เงียบ ๆ
+     - **กับดัก:** `index.html` โหลด `css/bundle.min.css` ซึ่งเป็น artifact ที่ commit ไว้และไม่มีตัว generate ใน repo → แก้ `styles.css` แล้วไม่มีผล จึงแยกเป็น `css/spotlight.css` + `<link>` (คอมเมนต์เตือนไว้ในไฟล์)
+     - พื้น stage เป็น **สีขาว** ตามที่ทีมขอ (Figma เป็น #EBECED) และฉากวาดในกรอบ `.sp-canvas` **16:9** ซ้อนใน stage — ถ้าวาดลงกรอบ 2.53:1 ของ Figma ตรง ๆ ตำแหน่งวัตถุจะเพี้ยนจากที่จัดไว้
+  2. **CORS**: `middleware/public_cors.go` เดิมรับแค่ `https://zyra.center` + `POST` → เพิ่ม `https://zyra-world.com`, `www.`, `http://localhost:*`/`127.0.0.1:*` และเมธอด `GET` (+ test 3 เคส)
+  3. **object ชนิดใหม่ `summary`** — กล่องดำโปร่งแสง `rgba(0,0,0,.45)` โชว์ข้อความ summary ของฟีเจอร์ (ไม่ต้องพิมพ์ซ้ำต่อวัตถุ) เป็น default object ในคลังของ scene editor: เพิ่ม kind ใน CHECK constraint (มี `ALTER ... DROP/ADD CONSTRAINT` ให้ตารางเดิมบน dev), model/validator ฝั่ง API, preset + visual ฝั่ง admin, และ renderer ฝั่ง landing
+- **verify:** zyra-api `go build` + `go test ./internal/...` เขียว (CHECK ใหม่ apply บน dev แล้ว) · zyra-app `tsc`/`eslint`/`vitest`/`npm run build` ผ่าน · zyra-landing `npm run build` ผ่าน และตรวจการเรนเดอร์จริงด้วย Chrome + mock API (ฉาก 2 วัตถุ, สลับการ์ด, teaser)
+- **ติดอะไร:** ยังไม่มีฟีเจอร์ที่ `is_visible = true` บน dev (มี `test-01` แต่ยังปิดอยู่) landing จึงยังซ่อน section · asset ที่อัปก่อน 2026-09-17 ไม่มี `sheet_width/height` ต้องอัปใหม่ถึงจะตัดเฟรมตรง
 
 ## 2026-09-17 (รอบ 4) · rif — feature flag เปิด/ปิดทั้งฟีเจอร์
 
