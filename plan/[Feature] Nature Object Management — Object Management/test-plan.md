@@ -1,6 +1,6 @@
 # SC-OBJ-NAT-01 · Test Plan — Nature Object Management (Admin)
 
-> **สถานะ:** test plan เท่านั้น — **ยังไม่มีไฟล์เทสจริงสักตัว และยังไม่มีโค้ด feature ให้เทส** (ยืนยันจากการตรวจ repo 2026-09-17: ไม่มี `tb_object_animation`, ไม่มี `nature` ใน `validObjectTypes`) · **วันที่:** 2026-09-17
+> **สถานะ:** โค้ด feature อยู่บน `develop` แล้ว และมีไฟล์เทสจริงแล้วบางส่วน (2026-09-22) — `object_nature_test.go`, `object-nature-enum/api`, `nature-upload-validation`, `nature-preview-state` · ส่วนที่ยังเป็นแผนเปล่าคือ component test, E2E และ regression · **วันที่ร่าง:** 2026-09-17 · **อัปเดตล่าสุด:** 2026-09-22
 > **Scope:** HP-01, HP-02, HP-03, HP-05, HP-06, HP-07, EP-01, EC-01 (8 scenario — **HP-04 descoped** ตาม [spec.md §รอบที่ 3](spec.md#รอบที่-3--2026-09-17-status-เปลี่ยนเป็น-in-progress))
 > **Repo ที่กระทบ:** `zyra-api` (Go) · `zyra-app` (Vitest + Playwright + `zyra-engine`) · `zyra-ws` (Go, relay 1 บรรทัด)
 > **อ่านคู่กัน:** [spec.md](spec.md) (AC ต้นทางจาก ClickUp) · [technical-design.md](technical-design.md) (schema/API/error ที่เทสอ้าง) · [ux-ui-plan.md](ux-ui-plan.md) (Figma — **ขัด spec 12 ข้อที่ยังไม่เคาะ**)
@@ -189,14 +189,25 @@ Validator ต้องเป็น pure function (`ValidateSpritesheet(cfg image
 
 ### 3.4 Preview state-resolver (HP-05, pure function)
 
-| Test | Input | Expected |
-|---|---|---|
-| `resolveState(wind, uploaded)` ตาม threshold | wind ต่ำ/กลาง/สูง | คืน state ตาม threshold ที่มาจาก config **ไม่ใช่เลขที่เขียนซ้ำในเทส** |
-| **fallback เป็น idle** (AC ใหม่ รอบที่ 2) | state ที่ resolver เลือก ยังไม่ upload | คืน `idle` |
-| ไม่มี `idle` เลย | uploaded ว่าง | คืน `null` + UI แสดง empty state (ไม่ crash) |
-| boundary ที่ threshold พอดี | wind = threshold | ตัดสินทิศทางเดียวสม่ำเสมอ (`>=`) |
-| weather → state mapping | Clear / Cloudy / Rain | ตาม PM HP-01 · **`Strong rain` / `Thunderstorm` = `it.todo`** (§0 ข้อ 12) |
-| `falling` เฉพาะ shedding_tree | type อื่น | ไม่ถูกเลือกไม่ว่ากรณีใด |
+> **✅ เขียนแล้ว 2026-09-22** — `__tests__/nature-preview-state.test.ts` (10 case) ทดสอบ `resolveNaturePreviewState(weather, natureType, available)` ที่ export จาก `nature-preview-modal.tsx`
+> **หมายเหตุ signature:** ของจริงรับ **weather** ไม่ใช่ **wind** — ค่า wind ไม่ได้คุม state ในรอบนี้ (Rain default 29 ขัดกับ `sway_strong ≥ 30` ในตัว spec เอง ดู [ux-ui-plan §14.1 ข้อ 12](ux-ui-plan.md#141-ต้องตัดสินก่อนเริ่มโค้ด-กระทบ-schema--api--flow)) → เคส `boundary ที่ threshold พอดี` **ยังไม่ applicable** จนกว่า PM จะเคาะตาราง band
+
+| Test | Input | Expected | สถานะ |
+|---|---|---|---|
+| weather → state mapping | Clear / Cloudy / Rain | `idle` / `sway_light` / `sway_strong` ตาม PM HP-01 | ✅ |
+| **fallback เป็น idle** (AC ใหม่ รอบที่ 2) | state ที่ resolver เลือก ยังไม่ upload | คืน `idle` | ✅ |
+| type ที่ไม่มี state นั้นเลย | `bush` + Rain (bush ไม่มี `sway_strong`) | คืน `idle` | ✅ |
+| ไม่มีสไปรต์เลย | `available` ว่าง | คืน `undefined` → canvas วาดแต่ tile ไม่ crash | ✅ |
+| ไม่มี `idle` แต่มี state อื่น | `available = [sway_light]` | คืน `sway_light` (ดีกว่า canvas เปล่า) | ✅ |
+| `falling` เฉพาะ shedding_tree | Thunderstorm + `big_tree` | คืน `sway_strong` ไม่ใช่ `falling` | ✅ |
+| **sweep: ห้ามคืน state ที่ type ไม่มี** | ทุก weather × ทุก 6 type | ผลลัพธ์อยู่ใน `NATURE_ALLOWED_STATES[type]` เสมอ | ✅ |
+| `Strong rain` / `Thunderstorm` mapping | — | ~~`it.todo`~~ → **ล็อกค่าตามสมมติฐาน "แรงอย่างน้อยเท่า Rain"** · ถ้า PM ตอบต่างต้องแก้ทั้ง `WEATHER_OPTIONS` และเทส | ⚠️ อิงสมมติฐาน |
+| boundary ที่ wind threshold | — | ยังไม่ applicable (wind ไม่คุม state) | ⏸ รอ PM |
+
+### 3.4.1 Geometry ของ modal (HP-05) — ยังไม่มีเทสอัตโนมัติ
+
+วัดด้วยมือรอบที่ 10 ผ่าน dev harness ชั่วคราว (ดู [progress.md รอบที่ 10](progress.md)) ไม่ได้เขียนเป็น test: canvas 868×487 · wind block 260×50 · tile ↔ sprite bottom-centre ตรงกันที่ zoom 50–200% · dropdown 161 กว้าง เปิดขึ้นบน
+ถ้าจะกันการ regress ต้องเป็น visual/DOM test ซึ่งยังไม่มี infra — **อย่าเคลมว่าเทสคลุมเรื่อง layout**
 
 ### 3.5 Cache-busting (EC-01)
 

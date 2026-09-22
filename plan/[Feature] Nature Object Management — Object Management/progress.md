@@ -1,6 +1,64 @@
 # SC-OBJ-NAT-01 · Progress — Nature Object Management (Admin)
 
-> entry ใหม่อยู่**บนสุด** · ClickUp main: [86d446fw1](https://app.clickup.com/t/86d446fw1) · **อยู่บน dev แล้ว 2026-09-22** — schema + API + UI ตาม Figma ครบ 7 node, merge เข้า `develop` และ deploy ขึ้น dev แล้ว · **ยังไม่ได้ verify ด้วยตาบนเบราว์เซอร์**
+> entry ใหม่อยู่**บนสุด** · ClickUp main: [86d446fw1](https://app.clickup.com/t/86d446fw1) · **UI ครบทุก node แล้ว 2026-09-22** — schema + API + UI ตาม Figma ครบ (HP-05 preview modal ปิดรอบที่ 10) · §14.1 เหลือเปิดข้อเดียว (ข้อ 12 weather mapping รอ PM ยืนยัน) · **ยังไม่ได้เปิดดูในหน้า admin จริง** เพราะ AI login ไม่ได้
+
+---
+
+## รอบที่ 10 — 2026-09-22 (HP-05 preview modal — node สุดท้าย + ปิด §14.1 ที่เหลือ)
+
+**ทำอะไร:** ผู้ใช้สั่ง "ทำทั้งหมด ต่อให้เสร็จ" → เก็บงานที่ค้างจากรอบ 9 ทั้งหมดที่ทำได้เอง: implement HP-05 ซึ่งเป็น node เดียวที่ยังไม่ได้ทำ, ปิดข้อที่เหลือใน §14.1, และ **verify ด้วยตาให้ได้โดยไม่ต้อง login**
+
+**ถึงไหน:** [zyra-app#432](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/432)
+
+| ไฟล์ | ทำอะไร |
+|---|---|
+| `nature-preview-modal.tsx` (ใหม่) | HP-05 node `5199:369528` + dropdown `5219:751880` — shell 900×600 · canvas 868×488 grid 40px · tile 1×1 ที่พิกัด Figma · sprite **bottom-centre anchored** บน tile (zoom แล้วเท้ายังติดพื้น) · wind thresholds block · weather picker เปิดขึ้นบน · zoom pill |
+| `nature-canvas.tsx` (ใหม่) | ดึง zoom pill + grid 40px ที่ซ้ำกันระหว่าง HP-03 กับ HP-05 ออกมาเป็นของกลาง ([rule 09](../../../.claude/rules/09-component-reuse.md)) — HP-03 พฤติกรรมไม่เปลี่ยน |
+| `nature-upload-modal.tsx` | footer `Preview` ส่ง **draft ของ modal เอง** ขึ้นไป (ไฟล์ที่เพิ่งเลือกยังไม่เข้า state ของฟอร์ม — ถ้าส่งของฟอร์มจะ preview ผิดตัว) |
+| `object-add-form.tsx` · `object-detail-content.tsx` | ปุ่ม `Preview` บน header ทั้งโหมด create/edit และ view (เฉพาะ nature) · disabled เมื่อยังไม่มี sprite สักตัว |
+| `constants.ts` | `MAX_NAME_LENGTH` 50 → **100** (§14.1 ข้อ 14) |
+| `__tests__/nature-preview-state.test.ts` (ใหม่) | 10 case ของ `resolveNaturePreviewState` รวม sweep ว่า **ไม่มีทางคืน state ที่ `nature_type` นั้นไม่มี** |
+
+### §14.1 ปิดเพิ่ม 6 ข้อ — เหลือเปิดข้อเดียว
+
+| ข้อ | สรุป |
+|---|---|
+| 5 · entry point | ปิด — ทำตาม Figma: ไม่มี route/tab/sidebar ใหม่ Nature เป็น category ที่ 10 |
+| 9 · delete confirm | ปิด — code เดิมตรง Figma อยู่แล้ว ไม่ต้องแก้ · **spec ClickUp ยังผิด** |
+| 10 · transparency | ปิด — บล็อกทั้ง client และ server ตาม Figma |
+| 11 · preview controls | ปิด — ทำตาม Figma (ไม่มี state buttons / playback) + idle fallback · **AC 3 ข้อใน ClickUp ยังค้าง** |
+| 13 · "(Hidden)" badge | ปิด — **ตัดทิ้ง** ไม่มีทั้งใน Figma และ code เดิม และกระทบ object ทุกชนิด ไม่ใช่ scope นี้ |
+| 14 · name 100 | ปิด — spec + Figma ตรงกัน และ DB เป็น `VARCHAR(100)` อยู่แล้ว |
+| **12 · weather mapping** | **ยังเปิด** — ทำไปด้วยสมมติฐาน (ดูด้านล่าง) รอ PM ยืนยัน |
+
+### จุดที่ตัดสินเองเพราะไม่มีค่าจริง (บันทึกไว้ให้แก้ทีเดียวถ้า PM/designer ตอบมา)
+
+1. **Strong rain / Thunderstorm → state ไหน** — ไม่เคยมี mapping ที่ไหนเลย · ตีความว่า "แรงอย่างน้อยเท่า Rain" แล้ว resolve ไป state แรงสุดเท่าที่ `nature_type` มี ⇒ มีแต่ `shedding_tree` ที่ถึง `falling` ที่เหลือกลับมา `sway_strong`
+2. **wind slider 0–90** — best-fit จาก 6 เฟรม (9→23px, 80→215px, ไม่ linear) · เลือก weather แล้ว slider เด้งไปค่าของเฟรมนั้น แต่ **ค่า wind ไม่ได้เปลี่ยน state** เพราะ Rain default 29 ขัดกับ `sway_strong ≥ 30` ในตัว spec เอง — ถ้าให้ wind คุม state จะได้ผลไม่ตรง mapping ของ PM
+3. **weather icon = lucide monochrome** — Figma เป็นภาพประกอบมีสี (sun gradient, cloud raster, bolt `#FFED8D`) แต่ [rule 12](../../../.claude/rules/12-icons.md) บังคับ lucide-only · ยอมรับว่า fidelity ตกตรงนี้ ถ้าจะเอาของ Figma ต้อง export 5 SVG ลง `components/ui/icon.tsx`
+4. **ปุ่ม Preview ใช้ h-40 ไม่ใช่ 42** — ให้เท่ากับ Cancel/Save ที่อยู่ข้างกัน (§7.2 เองก็เป็น h-40) ไม่งั้นแถวปุ่มจะสูงไม่เท่ากัน
+
+### verify ถึงไหน — คราวนี้**เห็นของจริงแล้ว** (ต่างจากรอบ 9)
+
+รอบ 9 ติดว่า AI login หน้า admin ไม่ได้ (ใส่รหัสผ่านแทนผู้ใช้ไม่ได้) เลย verify ได้แค่ build เขียว · รอบนี้แก้ด้วยการ mount modal ใน harness ชั่วคราวใต้ `app/dev/` (public เฉพาะ dev) แล้ว**อ่านค่า geometry จริงจาก DOM มาเทียบ Figma** แล้วลบ harness ทิ้งก่อน commit
+
+| วัดอะไร | Figma | ที่ render จริง |
+|---|---|---|
+| canvas | 868×488 | 868×**487** — ต่าง 1px เพราะ Figma วาด divider เป็นเส้น 1px ที่สูง 0, CSS สูง 1px จริง |
+| wind block | 260×50 @ y 530 | 260×50 @ y **529** (ตอนแรกได้ 56 — wrapper ของค่า km/h ไม่ได้ `text-[0px]` ตาม Figma ทำให้แถวสูงเกิน 6px → แก้แล้ว) |
+| tile ↔ sprite | bottom-centre ตรงกัน | ตรงกันที่ zoom 50–200% (เช็ค 150%: tile bottom 482 = sprite bottom 482, centre 601 = 601) |
+| dropdown | 161 กว้าง, เปิดขึ้นบน, x เดียวกับ trigger | ตรง |
+
+- `vitest` **185 files / 2518 tests** ผ่าน (เดิม 183/2501) · `tsc --noEmit` ไม่มี error ใหม่ · `eslint` clean · `next build` ผ่าน
+- **ยังไม่ได้เปิดดูใน `/admin/object-management` จริง** — harness พิสูจน์ตัว modal เอง ไม่ได้พิสูจน์ว่าปุ่ม Preview ในหน้าจริงเปิดมันขึ้นมาถูกตัว/ถูกสถานะ
+
+**ต่อจากนี้:**
+1. merge #432 → `develop` แล้วเช็ค dev
+2. เปิด `/admin/object-management` ด้วยตาคน (ต้องมี login) — จุดเดียวที่เหลือของ Figma fidelity
+3. ขอ PM แก้ ClickUp 4 จุด: HP-02 ที่ยังเขียน redirect ไป Animation Manager · HP-05 AC 3 ข้อ (state buttons / Current State / playback) ที่ design ไม่มี · HP-07 delete condition · mapping ของ Strong rain / Thunderstorm
+4. ตัดสินเรื่อง backfill 24 object / 2,453 placement ที่โดนบั๊ก `buildCellsFromHitbox` (prod write — ต้องขอ sign-off)
+
+**ติดอะไร:** login หน้า admin (ต้องเป็นผู้ใช้ทำเอง) · §14.1 ข้อ 12 และ §15 ที่เหลือรอ PM/designer
 
 ---
 
