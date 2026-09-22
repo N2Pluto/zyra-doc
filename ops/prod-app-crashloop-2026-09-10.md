@@ -1,6 +1,6 @@
 # prod zyra-app ดับ "no available server" — liveness probe ฆ่า Next.js ตอน node CPU แย่งกัน (2026-09-10)
 
-> สถานะ: **แก้แล้ว 05:02 UTC (12:02 ไทย) · เว็บ 200 ต่อเนื่อง · pod ใหม่ restart 0 แม้ load node กลับไป 10 อีกครั้งตอน 05:11 · alert + probe ใหม่ apply แล้ว 05:11** — root cause = probe default 1 วิ + CPU request 100m บน node ที่ SFU กิน CPU · **CPU rebalance (item 2) ปิดแล้ว 15:37 UTC (22:37 ไทย)** PR #28 merged → node requests 3850m (96%) → **3480m (87%)** · **ยังไม่ปิด: capacity ของ node** (4 core, PSI CPU 30–40%, load avg 8–10 ตอนเวลางาน) ต้องตัดสินใจขยาย/แยก SFU
+> สถานะ: **แก้แล้ว 05:02 UTC (12:02 ไทย) · เว็บ 200 ต่อเนื่อง · pod ใหม่ restart 0 แม้ load node กลับไป 10 อีกครั้งตอน 05:11 · alert + probe ใหม่ apply แล้ว 05:11** — root cause = probe default 1 วิ + CPU request 100m บน node ที่ SFU กิน CPU · **CPU rebalance (item 2) ปิดแล้ว 15:37 UTC (22:37 ไทย)** PR #28 merged → node requests 3850m (96%) → **3480m (87%)** · **live check 2026-09-22 10:36 ไทย (รอบที่ 4): node cpu requests ยังนิ่งที่ 3480m/4000m (87%) เป๊ะ, CFS throttle 0%, zyra-app restart 0 ครั้งสะสม 12 วัน (วัดสดผ่าน Prometheus จริง ไม่ใช่ประมาณ)** — **ยังไม่ปิด: capacity ของ node** (4 core) เพราะมีสาเหตุใหม่มากดดันอีก (SFU video fan-out โต 2 เท่า, zyra-app p95 636ms แม้นอก peak hour — ดู [node-saturation-2026-09-18.md](node-saturation-2026-09-18.md)) ต้องตัดสินใจขยาย/แยก SFU
 > กระทบ: prod `app.zyraworld.co` (frontend เท่านั้น) · zyra-infra (chart + prod app values + observability)
 > สรุปสำหรับผู้บริหาร (PM → MD): [exec-brief-capacity-2026-09-10.md](exec-brief-capacity-2026-09-10.md) · หน้าเว็บ https://zyra-exec-brief-2026-09-10.vercel.app
 
@@ -125,3 +125,39 @@ gcloud compute ssh zyra-k3s --zone asia-southeast1-b --project gather-dev-458614
 - **ลำดับ rollout สำคัญ**: prod `zyra-api` เป็น RollingUpdate → pod ใหม่ (300m) **ค้าง Pending ~1 นาที** จนกว่า SFU (Recreate) จะลงและคืน 1500m ให้ node ถึงจะ schedule ได้ — เห็นเป็น `0/1 Pending` ชั่วคราวเป็นเรื่องปกติของ PR นี้ ไม่ใช่ error
 - ตอนอ่านค่าทันทีหลัง hard refresh, Argo ยังโชว์ `OutOfSync` อยู่ครู่หนึ่งก่อน sync จริงจะจบ — ต้องรอ `rollout status` ไม่ใช่ตัดสินจาก column เดียว
 - ยังไม่ปิด: **item 3 capacity** (node เหลือ headroom 520m ที่ 87% — พอสำหรับ surge pod 500m ของ app rolling update แบบเฉียดฉิว), item 4 profile Next.js, item 5 `probe:` ให้ prod api/ws/notifications
+
+---
+
+## รอบที่ 4 — 2026-09-22 (ผลหลัง CPU rebalance 12 วัน — status check ตามคำขอ report ผล, ไม่มี action ใหม่)
+
+ผู้ใช้ขอ report สรุปว่า item 2 (ลด CPU request ของ dev/uat ไปเพิ่มให้ prod) ทำงานเป็นยังไงหลังผ่านไปหลายวัน
+
+**ทำอะไร**: ไม่มีการแก้โค้ด/config — ตรวจสอบผลของ `a9e112d`/PR #28 (รอบที่ 3) เท่านั้น
+
+**verify ถึงไหน**:
+- ✅ **config ไม่ถูก revert**: อ่านไฟล์ `gitops/envs/{dev,uat}/services/{api,app,ws,notifications}/values.yaml` และ `gitops/envs/prod/services/{api,ws,sfu}/values.yaml` ตรงในเครื่องวันนี้ (2026-09-22) — ทุกค่ายังเป็นค่าหลัง PR #28 เป๊ะ (dev/uat = 10m ทุก service, prod api/ws = 300m, sfu request/limit = 1000m/2500m) ไม่มี commit ใดแตะ resources ของไฟล์เหล่านี้อีกเลยนับจาก 09-10
+- ✅ **หลักฐานอิสระว่ายังนิ่งอยู่ 8 วันให้หลัง**: [node-saturation-2026-09-18.md](node-saturation-2026-09-18.md) (คนละทีมสืบสวนคนละปัญหา — SFU video fan-out) วัด node cpu requests ซ้ำที่ 09-16 และ 09-18 ได้ **3480m/4000m (87%) เท่ากันทั้งคู่** — ตรงกับเป้าที่ตั้งไว้ตอนปิด item 2 พอดี ไม่ได้ขยับกลับ · CFS throttle ของทุก pod รวม SFU **0.00%** (ก่อนหน้านี้ค่านี้คือสิ่งที่ทำให้ app ตายที่ 100m)
+- ✅ **ไม่มี crash-loop กลับมาซ้ำ**: `sum(increase(kube_pod_container_status_restarts_total{namespace="prod",container="app"}[12d]))` = **0** — ไม่มี ops doc ใหม่เรื่อง `zyra-app` restart/503 ตั้งแต่ 09-10 เช่นกัน — เทียบกับก่อนแก้ที่ restart 12+10 ครั้งใน 12 ชม.
+- ✅ **ผู้ใช้ `gcloud auth login` ใหม่ระหว่างคุยกัน** → เปิด IAP tunnel ได้จริง (`gcloud compute ssh zyra-k3s -- -N -L 3000:127.0.0.1:8300` หลัง `sudo k3s kubectl -n monitoring port-forward` บน VM) → query Prometheus ผ่าน Grafana datasource proxy ได้ตัวเลขสดของวันนี้ **2026-09-22 03:36 UTC (10:36 ไทย — นอก peak hour, livekit participants = 0 ตอนนี้)** ด้วย SA token เดิมใน `.mcp.json` (เหมือนที่ mcp-grafana ใช้) แล้วปิด tunnel คืนหลังดึงเสร็จ
+
+**Before/After รวม (item 2 — CPU rebalance, ไม่รวม SFU video-fan-out ซึ่งเป็นปัญหาคนละตัว)**
+
+| Metric | Before (09-10, 22:24 ICT) | After ทันที (09-10, 22:44 ICT) | **Live วันนี้ (09-22, 10:36 ไทย)** |
+|---|---|---|---|
+| node cpu requests (Running only) | 3850m / 4000m (96%) | 3480m / 4000m (87%) | **3480m / 4000m (87%)** — เป๊ะเท่าตอนปิด item 2 ไม่ขยับเลยใน 12 วัน |
+| node cpu limits (Running only) | 3000m (75%) | 2500m (62%) | **2500m (62%)** |
+| dev cpu ใช้จริง (rate 1h) | ~0.02-0.03c (ไม่เปลี่ยนจาก request เดิม เพราะแทบไม่มีคนใช้อยู่แล้ว) | เท่าเดิม | **0.00974c** |
+| uat cpu ใช้จริง (rate 1h) | เท่าเดิม | เท่าเดิม | **0.00757c** |
+| prod (app+api+ws+notif) cpu ใช้จริง | — | — | 0.319c |
+| sfu cpu ใช้จริง | — | — | 0.265c (นอก peak — ดู [node-saturation-2026-09-18.md](node-saturation-2026-09-18.md) สำหรับค่าที่ 17:00 peak ซึ่งขึ้นไปถึง 1.095c) |
+| CFS throttle ทุก pod (รวม SFU) | ไม่ได้วัดตอนนั้น | ไม่ได้วัดตอนนั้น | **0%** (`rate(container_cpu_cfs_throttled_periods_total[5m]) / rate(container_cpu_cfs_periods_total[5m])` = 0) |
+| zyra-app restart (prod) | 12+10 ครั้ง / 12 ชม. | 0 (ถึง 05:12 UTC วันเดียวกัน) | **0 ครั้งสะสมตลอด 12 วัน** (`increase(...[12d])` = 0) |
+| zyra-app p95 (prod, 1h) | — (ตอน incident คือ 503 ทั้งหมด ไม่ใช่ latency) | — | 636ms — ยังสูงกว่าเป้า <150ms (สาเหตุ = SFU video fan-out ที่ยังไม่ปิด ไม่ใช่ item 2) |
+| zyra-api p95 (prod, 1h) | — | — | 95ms — ปกติ นิ่งเหมือนเดิม |
+
+**สรุปตรง ๆ**: item 2 ใช้ได้ผลและอยู่ตัว — headroom 370m ที่คืนมายังอยู่ครบเป๊ะ 12 วัน (วัดสดตรง ไม่ใช่เดา), zyra-app ไม่มี restart กลับมาแม้แต่ครั้งเดียวตลอดช่วงนี้, CFS throttle 0% ทุก pod
+แต่ **capacity ของ node โดยรวมกลับมาตึงอีกจากสาเหตุคนละตัว** (SFU video fan-out โต 2 เท่าใน 3 วัน ดู [node-saturation-2026-09-18.md](node-saturation-2026-09-18.md)) — zyra-app p95 ตอนนี้ (636ms) ยังไม่กลับไปที่เป้า แม้ตอนวัด (10:36 ไทย) จะเป็นนอก peak hour และไม่มี participant เลยก็ตาม — ห้ามอ่านว่า "แก้ปัญหา capacity จบแล้ว" เพราะ item 2 แก้แค่การแบ่งสัดส่วน CPU ระหว่าง service ไม่ได้เพิ่ม CPU ทั้งก้อนของ node (ยังเป็น e2-standard-4 4 core เท่าเดิม)
+
+**ต่อจากนี้**: ตาม item 1 (camera 720p) ที่ยังค้าง uat รอขึ้น prod ต่อใน [node-saturation-2026-09-18.md](node-saturation-2026-09-18.md) — ถ้า p95 ไม่กลับไป <150ms หลัง 720p ขึ้น prod ค่อยพิจารณา item 5 (ขยาย/แยก node) ตามลำดับที่เขียนไว้
+
+**ติดอะไร**: ไม่มีแล้ว — ผู้ใช้ `gcloud auth login` ใหม่ระหว่างคุยกัน ดึงเลขสดได้ครบ ปิด tunnel คืนเรียบร้อย
