@@ -27,6 +27,12 @@
 - **Teaser mode ของฟีเจอร์ใหม่เริ่มที่ปิด** (เดิมเปิดไว้ตั้งแต่แรก ทำให้ของที่เพิ่งสร้างโชว์เป็นเงา `?` บน landing ทั้งที่จัดฉากไว้แล้ว)
   - app: draft ใน `hero-roadmap.tsx` → `teaser: false` (ค่าอื่นคงเดิม: `status: upcoming`, `visible: false`)
   - api: `is_teaser` default เป็น `FALSE` ทั้ง `migrations/103_roadmap.sql` และ DDL ตอน service start + `ALTER TABLE tb_roadmap_feature ALTER COLUMN is_teaser SET DEFAULT FALSE` สำหรับตารางที่สร้างไปแล้ว (มีผลหลังรีสตาร์ต service)
+- **ไทม์ไลน์แยกกลุ่มตามสถานะ — เรียงที่ API ไม่ใช่ที่ client**
+  - เพิ่ม sort mode `"timeline"` ใน `roadmapOrderSQL()` (แยกออกมาจาก `ListFeatures`): `CASE WHEN f.status = 'released' THEN 0 ELSE 1 END, f.release_date ASC, f.created_at ASC` → ปล่อยแล้วทั้งกลุ่มมาก่อน แล้วค่อย upcoming ไม่ปนกันแม้วันปล่อยจะคาบเกี่ยว
+  - `ListPublic` ตั้ง `Sort: "timeline"` ตายตัว (ไม่ให้ query string เปลี่ยนลำดับของ landing) · `/api/admin/roadmap` ยังเลือก sort ได้เหมือนเดิม
+  - **ทำรอบแรกผิดที่**: ไปเรียงใน `spotlight.js` หลัง fetch ซึ่งใช้ไม่ได้เพราะผลลัพธ์แบ่งหน้า (`limit=100`) — เรียงฝั่ง client จะได้แค่หน้าที่โหลดมา ย้ายมาไว้ที่ SQL แล้วถอดโค้ดเรียงฝั่ง landing ออก
+  - การ์ดเริ่มต้น = ตัวสุดท้ายของกลุ่ม released (จุดรอยต่อพอดี) ยังคำนวณฝั่ง client เพราะเป็นเรื่องการแสดงผล
+  - verify: unit test `TestRoadmapOrderSQL` (5 เคส) · รัน API ชั่วคราวที่พอร์ต 3009 ยิง `/api/public/roadmap` จริง — SQL รันผ่านบน Postgres ได้ 200 · ก่อนหน้านี้เคยลอง mock 5 ฟีเจอร์ที่จงใจสลับวัน ได้ `released × 3 | upcoming × 2` ตามที่ต้องการ
 - **ไล่เช็กงานทั้งหมดอีกรอบ:** `go build` + `go vet` + `go test -count=1 ./internal/...` เขียว (เจอ `https://www.zyra-world.com` หายไปจาก allowlist ของ `public_cors.go` อีกครั้ง — ใส่กลับแล้ว test ผ่าน) · app `tsc` เหลือแต่ error เดิมใน `__tests__/*` ที่ไม่เกี่ยว roadmap, `eslint`/`prettier` เขียว, `vitest __tests__/roadmap-feature.test.ts` 3 เคสผ่าน · ฝั่ง landing ตรวจ `spotlight.js`/`spotlight.css` ว่าไม่มีคลาสตายค้าง (`.sp-ghost`, `.sp-head` และใน media query) และแก้ warn ซ้ำสองครั้งตอน API ตอบไม่ 200
 - **สถานะ branch:** api `feat/admin-roadmap-api` merge เข้า develop ไปแล้ว (PR #128) เหลือของใหม่ที่ยัง uncommitted (kind `summary`, `sheet_width/height`, CORS www) · app `feat/admin-product-updates` มี commit ถึง `00d275d` เหลือไฟล์ roadmap ที่แก้รอบ summary ยัง uncommitted · landing `feat/roadmap-spotlight` commit `47dfe7e` แล้ว เหลือการย้ายไป Feature.html ยัง uncommitted
 - **ต่อจากนี้:** commit/push 3 repo แล้วเปิด PR · ตั้ง `ROADMAP_ENABLED` (api) + `NEXT_PUBLIC_ROADMAP` (app) + `API_URL` ของ landing บน uat/prod ก่อนถึงจะเห็น section 07 บนโดเมนจริง
