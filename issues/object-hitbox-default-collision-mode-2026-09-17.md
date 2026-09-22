@@ -1,8 +1,8 @@
 # Object hitbox — default collision mode ไม่ถูกบันทึกลง cells
 
-> **สถานะ:** พบจากการอ่านโค้ด (2026-09-17) ระหว่างออกแบบ [SC-OBJ-NAT-01](../plan/%5BFeature%5D%20Nature%20Object%20Management%20%E2%80%94%20Object%20Management/technical-design.md) — **ยังไม่แก้ · วัดกับ prod แล้ว ยืนยันว่าเกิดจริง: 24 object · 2,453 placement · 47 workspace** (ดู [ผลการวัด](#ผลการวัดกับ-prod-จริง-2026-09-17))
+> **สถานะ:** **แก้โค้ดแล้ว 2026-09-20 ([zyra-app#425](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/425) `6b0523c`) อยู่บน dev แล้ว — แต่เป็นการแก้ไปข้างหน้าอย่างเดียว ของเก่าบน prod ยังผิดอยู่ทั้ง 2,453 จุด** · การ backfill **ยังไม่ตัดสิน** (ดู [รอบที่ 2](#รอบที่-2--2026-09-22-ยืนยันว่าแก้โค้ดครบแล้ว--เหลือแค่ตัดสินใจ-backfill))
 > **Repo ที่กระทบ:** `zyra-app` (admin object management)
-> **ความรุนแรง:** object ที่ควรเดินทะลุได้ ถูกบันทึกเป็นกำแพง — **กระทบ gameplay จริงบน prod 2,453 จุดใน 47 workspace**
+> **ความรุนแรง:** object ที่ควรเดินทะลุได้ ถูกบันทึกเป็นกำแพง — **ยังกระทบ gameplay จริงบน prod 2,453 จุดใน 47 workspace จนกว่าจะ backfill หรือ admin ไล่แก้เอง**
 
 ---
 
@@ -75,7 +75,15 @@ export const buildCellsFromHitbox = (
 
 ## Before/After
 
-**After ยังไม่มี** — ยังไม่ได้แก้โค้ด · Before วัดแล้วด้านล่าง ([18-before-after-metrics](../../.claude/rules/18-before-after-metrics.md))
+**After ยังไม่เปลี่ยน และจะไม่เปลี่ยนเอง** — การแก้เป็นแบบไปข้างหน้าอย่างเดียว (object ที่ save **หลัง** `6b0523c` เท่านั้นที่ได้ cells ถูก) ตัวเลข prod ด้านล่างจึงยัง**เท่าเดิม**จนกว่าจะ backfill หรือ admin เปิดแต่ละตัวมา save ใหม่ · **ห้ามเคลมว่าตัวเลขดีขึ้นเพราะ merge PR แล้ว** ([18-before-after-metrics](../../.claude/rules/18-before-after-metrics.md))
+
+| Metric | Before (2026-09-17) | After (2026-09-22) | Δ |
+|---|---|---|---|
+| object ที่ทุก cell เป็น blocked ทั้งที่ type ควร walkable | 24 | **ยังไม่ได้วัดซ้ำ** — ต้องรันด้วยสิทธิ์ผู้ใช้ | — |
+| placement ที่ได้รับผลกระทบ | 2,453 | **ยังไม่ได้วัดซ้ำ** | — |
+| object ที่ **สร้างใหม่** แล้วได้ cells ผิด | เกิดได้ทุกตัว | **0 ตามโค้ด** (`buildCellsFromHitbox(hitbox, collisionMode)` + เทส `object-collision-default.test.ts`) — ยังไม่ได้ยืนยันด้วยข้อมูล prod หลัง deploy | — |
+
+**วัดยังไง:** SQL 4 ชุดด้านล่าง รันผ่าน `zyra-service/prod-db.sh query` (read-only)
 
 **SQL ที่ใช้วัด** — นับ object ที่ type ควร walkable แต่ cells เป็น blocked (รันผ่าน `zyra-service/prod-db.sh` ดู [prod-db-access.md](../guides/prod-db-access.md)):
 
@@ -190,6 +198,35 @@ object ที่ **ไม่มี cell `walkable` เลยแม้แต่�
 ### ผลต่อการตัดสินใจ backfill
 
 เดิมเสนอว่า "แก้ไปข้างหน้าอย่างเดียว" — ตัวเลข 2,453 placement ใน 47 workspace **ใหญ่พอที่ควรพิจารณา backfill** สำหรับ 24 object ที่ไม่มี cell walkable เลย (ความเสี่ยงต่ำกว่าที่ประเมินไว้ตอนแรก เพราะกลุ่มผสม 8 ตัวที่ admin ตั้งใจระบาย แยกออกได้ด้วยเงื่อนไข `walkable_cells = 0`) — **ต้องให้ PM/ทีมเคาะ** ว่าจะ backfill หรือให้ admin ไล่แก้เอง 24 ตัว
+
+---
+
+## รอบที่ 2 — 2026-09-22 (ยืนยันว่าแก้โค้ดครบแล้ว · เหลือแค่ตัดสินใจ backfill)
+
+**ทำอะไร:** ตรวจ `develop` ซ้ำเพราะหัวเอกสารยังเขียนว่า "ยังไม่แก้" ซึ่งไม่จริงแล้ว
+
+**แก้ครบทั้ง 2 จุดที่ระบุไว้ใน root cause:**
+
+| จุด | สถานะบน `develop` (`ac10f3a`) |
+|---|---|
+| `constants.ts` — `buildCellsFromHitbox(hitbox, mode = "blocked")` | ✅ รับ mode แล้ว · default เดิมไว้ให้ call site เก่าไม่เปลี่ยนพฤติกรรม |
+| `object-add-form.tsx` (save path) | ✅ ส่ง `collisionMode` เข้าไปทั้ง 2 จุด (`:441`, `:921`) |
+| `object-preview-canvas.tsx` (display path) | ✅ ตัว local `buildCellsFromHitbox` ใช้ `collisionMode` แล้ว — footprint ของ decoration/nature ไม่โชว์เป็นสีแดงอีก |
+| เทส | ✅ `__tests__/object-collision-default.test.ts` |
+
+**ยังเหลืออยู่จุดเดียว — ตัดสินใจ backfill** (เป็น production write ต้องมีคนเคาะ ไม่ใช่ AI ตัดสิน):
+
+| ทางเลือก | ได้ | เสีย |
+|---|---|---|
+| **A · ไม่ backfill** | ไม่แตะ prod เลย ความเสี่ยงศูนย์ | ผู้เล่นยังชนของ 2,453 จุดใน 47 workspace ต่อไปเรื่อย ๆ จนกว่าจะมีคนเปิด object มา save ใหม่ทีละตัว |
+| **B · backfill 24 ตัวที่ไม่มี cell walkable เลย** | แก้ได้ทีเดียวครบ 2,453 จุด · เกณฑ์ `walkable_cells = 0` กันกลุ่มที่ admin ตั้งใจระบาย (8 ตัว) ออกได้ | **แยกไม่ออก 100%** ระหว่าง fallback กับ admin ที่ตั้งใจระบาย blocked ทั้งแผง — ถ้ามีตัวที่ตั้งใจจริง จะกลายเป็นเดินทะลุของที่ควรกัน |
+| **C · ให้ admin ไล่แก้เอง 24 ตัว** | คนตัดสินทีละตัวได้ว่าอันไหนควร walkable จริง | ใช้แรงคน · ระหว่างนั้น prod ยังผิดอยู่ |
+
+**ก่อนตัดสินควรทำ:** รันชุด SQL เดิมซ้ำเพื่อดูว่า 5 วันที่ผ่านมาตัวเลขขยับไหม (มี object ใหม่ที่สร้างหลัง `6b0523c` เข้ามาหรือยัง) — ผู้ใช้ต้องรันเอง เพราะการเข้า prod DB ผ่าน IAP tunnel ต้องใช้สิทธิ์ของผู้ใช้
+
+**ถ้าเลือก B** — ต้องเป็น script ที่มี dry-run + snapshot ของ `object_compositions` ก่อนเขียน และ rollback plan ที่เอา JSON เดิมกลับได้รายตัว · ห้ามเขียนเป็น migration ที่รันอัตโนมัติตอน deploy
+
+**ติดอะไร:** รอ PM/ทีมเคาะ A/B/C
 
 ## เกี่ยวข้องกับ
 

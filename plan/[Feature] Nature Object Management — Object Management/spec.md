@@ -1,6 +1,6 @@
 # SC-OBJ-NAT-01 · Nature Object Management — Object Management (Admin)
 
-> **สถานะ:** ถอด spec จาก ClickUp ทั้งหมดแล้ว (2026-09-16) — **ยังไม่ implement** · ยังไม่ verify กับโค้ดจริง
+> **สถานะ:** ถอด spec จาก ClickUp ทั้งหมดแล้ว (2026-09-16) · **implement ครบแล้วและอยู่บน dev (2026-09-22)** — แต่ **description ใน ClickUp ยังไม่ถูกแก้ให้ตรงกับที่ทำจริง 4 จุด** ดู [§ขอ PM แก้ ClickUp](#ขอ-pm-แก้-clickup--4-จุดที่-spec-ยังขัดกับของที่-implement-ไปแล้ว-2026-09-22)
 > **🔄 รอบที่ 2 — ดึงใหม่ 2026-09-16 ~11:09 หลัง PM แก้ ClickUp:** main task ถอด **HP-04 ออกจากตาราง Subtasks** (ตัว subtask ยัง Closed อยู่) · **HP-03** เพิ่ม AC 2 ข้อ + แก้ 1 ข้อ (กด Upload → Modal · Object Status fallback idle · หลังบันทึกกำหนดสี/ประเภท box ได้) + ตาราง Required เปลี่ยน `sakura_tree` → `shedding_tree` แล้ว (แต่ `petal_fall` ยังไม่แก้) · **HP-05** step 1 เป็น "กด Preview บนหน้า Upload แล้วแสดง popup" + **ลบ ASCII mock ของ preview panel ออก** · **HP-06** `date_updated` เปลี่ยนแต่เนื้อหาเหมือนเดิม · HP-01/02/07, EP-01, EC-01 ไม่เปลี่ยน · รายละเอียดดู [§รอบที่ 2](#รอบที่-2--2026-09-16-pm-update-clickup)
 > **🔄 รอบที่ 3 — ดึงใหม่ 2026-09-17 ~10:36:** **ไม่มีการแก้ description ใดๆ ทั้ง main และ 8 subtask** (เทียบกับรอบที่ 2 แล้วตรงทุกตัว) — เปลี่ยนแค่ **status: `pending` → `in progress` ทั้ง 9 task** (HP-04 ยัง `Closed` เหมือนเดิม) = PM เปิดงานให้เริ่มทำแล้ว · **ข้อขัดแย้ง Figma ↔ spec 12 ข้อใน [ux-ui-plan §14.1](ux-ui-plan.md#141-ต้องตัดสินก่อนเริ่มโค้ด-กระทบ-schema--api--flow) ยังไม่ถูกตอบเลย** (ไม่มี comment ใหม่ใน ClickUp) → ยังต้องเคลียร์กับ PM ก่อนแตะ schema · รายละเอียดดู [§รอบที่ 3](#รอบที่-3--2026-09-17-status-เปลี่ยนเป็น-in-progress)
 > **วันที่สร้าง task:** 2026-08-24 · **อัปเดตล่าสุดใน ClickUp:** 2026-09-17 · **ClickUp (main):** [86d446fw1](https://app.clickup.com/t/86d446fw1) (`in progress`)
@@ -453,6 +453,27 @@ Admin replace sway_light.png ด้วยไฟล์ใหม่ที่ปร
 ### UX/UI
 
 [Figma — node 5230-791935](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=5230-791935&t=okyGm4FNbcCs9sTo-0)
+
+---
+
+## ขอ PM แก้ ClickUp — 4 จุดที่ spec ยังขัดกับของที่ implement ไปแล้ว (2026-09-22)
+
+> โค้ดขึ้น dev ครบแล้ว และทุกจุดด้านล่างทำ**ตาม Figma + มติที่เคาะกันไว้** ไม่ได้ทำตาม AC ที่เขียนค้างไว้ · ถ้าไม่แก้ ClickUp **QA จะ fail ตาม AC ที่ design ไม่เคยมี**
+> AI แก้ ClickUp เองไม่ได้ ([CLAUDE.md](../../../CLAUDE.md) — read-only) ข้างล่างคือข้อความพร้อมวางให้ PM
+
+| # | Task | AC ที่ค้าง | ของจริงที่ทำ | ทำไม |
+|---|---|---|---|---|
+| 1 | **HP-02** | "ปุ่ม *บันทึกและตั้งค่า Animation* → redirect ไป Animation Manager" | ไม่มีปุ่มนี้และไม่มีหน้า Animation Manager · เป็น section inline + modal บนฟอร์มเดิม | Figma ไม่มีทั้ง 2 อย่าง · PM เองแก้ HP-03/HP-05 ให้เป็น modal ไปแล้วรอบที่ 2 แต่ HP-02 ตกค้าง |
+| 2 | **HP-05** | 3 ข้อ: state buttons · "Current State: X (reason)" · playback pause/step/speed 0.25x–2x | ไม่มีทั้ง 3 · มีแค่ weather dropdown + wind slider + zoom ตาม Figma | PM ลบ ASCII mock ออกแล้วรอบที่ 2 แต่ AC 3 ข้อยังอยู่ — design ไม่มีเฟรมไหนที่มี control พวกนี้เลย |
+| 3 | **HP-07** | delete ให้พิมพ์ชื่อยืนยัน **เฉพาะเมื่อ** `placed_objects_count > 0` | พิมพ์ชื่อยืนยัน**ทั้ง 2 เงื่อนไข** | Figma + code เดิมตรงกันว่าบังคับทั้งคู่ · ไม่ได้แก้โค้ดให้ต่างไปจากเดิม |
+| 4 | **HP-03 / HP-04** | ชื่อ state ยังเขียน `petal_fall` และ `sakura_tree` ในเนื้อ description | ใช้ `falling` / `shedding_tree` | ยืนยันกับผู้ใช้ไปแล้ว 2026-09-16 · ตาราง Required ใน HP-03 แก้ `sakura_tree` แล้วแต่ `petal_fall` ยังค้าง |
+
+**เรื่องที่ต้องให้ PM *ตอบ* ไม่ใช่แค่แก้ — mapping ของ weather 2 ตัว**
+
+HP-01 ระบุ mapping ไว้แค่ Idle:Clear · Sway light:Cloudy · Sway normal:Rain · Falling: shedding เท่านั้น แต่ Figma มี **5 weather** — `Strong rain` กับ `Thunderstorm` ไม่เคยถูก map ไป state ไหนเลย
+
+ตอนนี้ implement ด้วยสมมติฐาน **"แรงอย่างน้อยเท่า Rain"** → resolve ไป state ที่แรงที่สุดเท่าที่ `nature_type` นั้นมี ⇒ `shedding_tree` ได้ `falling` · type อื่นกลับมาที่ `sway_strong`
+ถ้า PM ต้องการอย่างอื่น แก้ที่ `WEATHER_OPTIONS` ใน `nature-preview-modal.tsx` + `__tests__/nature-preview-state.test.ts` ที่เดียว
 
 ---
 
