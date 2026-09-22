@@ -64,6 +64,7 @@ static HTML บน Vercel
 |---|---|---|
 | `onboarding/` (คู่มือคนใหม่ TH/EN) | https://zyra-onboarding.vercel.app | **อัตโนมัติ** — push เข้า `main` แล้ว Vercel build ให้เลย (~1s) |
 | `vo-audio-fixes-summary/` | https://vo-audio-fixes-summary.vercel.app | ด้วยมือ — `cd web/vo-audio-fixes-summary && vercel deploy --prod` |
+| `team-charter/` (Vision + กฎการทำงานทีม) | https://zyra-team-charter.vercel.app | ด้วยมือ — `cd web/team-charter && vercel deploy --prod` |
 
 **onboarding auto-deploy ทำงานยังไง:** project `zyra-onboarding` ต่อ GitHub repo นี้ไว้ · Root Directory ของ project เป็น `.` เลยชี้ปลายทางผ่าน [`vercel.json`](vercel.json) → `outputDirectory: web/onboarding` และ [`.vercelignore`](.vercelignore) จำกัดให้ upload แค่โฟลเดอร์นั้น — **ถ้าย้าย/เปลี่ยนชื่อโฟลเดอร์ `web/onboarding` ต้องแก้ 2 ไฟล์นั้นด้วย ไม่งั้นเว็บ live พัง**
 

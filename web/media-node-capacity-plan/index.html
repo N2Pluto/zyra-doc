@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="แผนขยาย capacity ของ prod node zyra-k3s — สานต่อ 3 PR ที่ค้างไว้ 11 วัน เทียบกับการขยาย node เดิม พร้อม runbook ละเอียด">
+<meta name="robots" content="noindex">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  img, svg { display: block; max-width: 100%; }
+  code { font-family: inherit; }
+</style>
+<title>Capacity Plan</title>
+<style>
+  :root {
+    --ground: #F1F4F3;
+    --surface: #FFFFFF;
+    --surface-2: #E7EDEA;
+    --line: #D5DEDA;
+    --line-strong: #BCC8C3;
+    --ink: #192026;
+    --ink-2: #5B6A74;
+    --ink-3: #7D8B94;
+    --accent: #12855A;
+    --accent-ink: #0B5B3D;
+    --accent-soft: rgba(18, 133, 90, 0.10);
+    --alert: #B23A2F;
+    --alert-soft: rgba(178, 58, 47, 0.09);
+    --warn: #A8710A;
+    --warn-soft: rgba(168, 113, 10, 0.10);
+    --shadow: 0 1px 2px rgba(25, 32, 38, 0.05), 0 8px 24px rgba(25, 32, 38, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #1B2228; --surface: #242B32; --surface-2: #2B3540;
+      --line: rgba(255,255,255,0.10); --line-strong: rgba(255,255,255,0.20);
+      --ink: #EDF1F3; --ink-2: #A3B0BA; --ink-3: #8C99A6;
+      --accent: #58D68D; --accent-ink: #7CE3A8; --accent-soft: rgba(88,214,141,0.12);
+      --alert: #F2726A; --alert-soft: rgba(242,114,106,0.12);
+      --warn: #E3A63E; --warn-soft: rgba(227,166,62,0.12);
+      --shadow: 0 1px 2px rgba(0,0,0,0.30), 0 8px 24px rgba(0,0,0,0.28);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1B2228; --surface: #242B32; --surface-2: #2B3540;
+    --line: rgba(255,255,255,0.10); --line-strong: rgba(255,255,255,0.20);
+    --ink: #EDF1F3; --ink-2: #A3B0BA; --ink-3: #8C99A6;
+    --accent: #58D68D; --accent-ink: #7CE3A8; --accent-soft: rgba(88,214,141,0.12);
+    --alert: #F2726A; --alert-soft: rgba(242,114,106,0.12);
+    --warn: #E3A63E; --warn-soft: rgba(227,166,62,0.12);
+    --shadow: 0 1px 2px rgba(0,0,0,0.30), 0 8px 24px rgba(0,0,0,0.28);
+  }
+  :root {
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Sukhumvit Set", "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, sans-serif;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.7; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 56px 24px 96px; display: flex; flex-direction: column; gap: 52px; }
+  @media (max-width: 600px) { .wrap { padding: 36px 18px 72px; gap: 40px; } }
+
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin: 0; }
+  h1 { font-size: clamp(26px, 4.6vw, 36px); line-height: 1.25; letter-spacing: -.02em; font-weight: 700; margin: 8px 0 0; text-wrap: balance; }
+  h2 { font-size: 21px; line-height: 1.4; letter-spacing: -.01em; font-weight: 700; margin: 0; text-wrap: balance; }
+  h3 { font-size: 16px; font-weight: 700; margin: 0; line-height: 1.5; }
+  p { margin: 0; }
+  a { color: var(--accent-ink); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  .lede { color: var(--ink-2); font-size: 16.5px; }
+  .num { font-variant-numeric: tabular-nums; font-family: var(--mono); }
+
+  header { display: flex; flex-direction: column; gap: 18px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+  .tag { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px 11px; white-space: nowrap; }
+  .tag--warn { border-color: transparent; background: var(--warn-soft); color: var(--warn); font-weight: 600; }
+  .tag--live { border-color: transparent; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+
+  section { display: flex; flex-direction: column; gap: 18px; }
+  .section-head { display: flex; flex-direction: column; gap: 6px; }
+
+  /* cards */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; }
+  .cause { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow); display: grid; gap: 12px; }
+  .cause-head { display: flex; flex-direction: column; gap: 4px; }
+  .chip { align-self: flex-start; font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); border: 1px solid var(--line); border-radius: 4px; padding: 2px 7px; }
+  .cause-body { color: var(--ink-2); font-size: 15px; }
+  .fix { display: flex; gap: 10px; align-items: baseline; border-top: 1px solid var(--line); padding-top: 12px; font-size: 15px; }
+  .fix-key { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); white-space: nowrap; padding-top: 2px; }
+
+  /* discovery banner */
+  .banner { background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; }
+  .banner-title { font-weight: 700; color: var(--warn); font-size: 15.5px; display:flex; align-items:center; gap:8px; }
+  .banner p { font-size: 15px; color: var(--ink-2); }
+
+  /* tables */
+  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--line); box-shadow: var(--shadow); }
+  table.data { width: 100%; min-width: 560px; border-collapse: collapse; background: var(--surface); font-size: 14px; }
+  table.data.wide { min-width: 760px; }
+  table.data th, table.data td { padding: 11px 16px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.data tbody tr:last-child th, table.data tbody tr:last-child td { border-bottom: none; }
+  table.data thead th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); background: var(--surface-2); font-weight: 600; white-space: nowrap; }
+  table.data tbody th { font-weight: 600; color: var(--ink); white-space: nowrap; }
+  table.data td.recommend { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+  table.data td.dim { color: var(--ink-3); }
+  .table-caption { font-size: 13px; color: var(--ink-3); }
+
+  /* status grid */
+  .status { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  @media (max-width: 560px) { .status { grid-template-columns: 1fr; } }
+  .status > div { background: var(--surface); padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; }
+  .status ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 14.5px; }
+  .status li { margin-bottom: 4px; }
+  .status-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot--ok { background: var(--accent); }
+  .dot--open { background: var(--alert); }
+  .dot--warn { background: var(--warn); }
+  .dot--neutral { background: var(--ink-3); }
+
+  .callout { background: var(--alert-soft); border: 1px solid color-mix(in srgb, var(--alert) 35%, transparent); border-radius: 12px; padding: 16px 20px; display: flex; flex-direction: column; gap: 6px; }
+  .callout-title { font-weight: 700; color: var(--alert); font-size: 15px; }
+  .callout p { font-size: 15px; color: var(--ink-2); }
+  .callout--accent { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+  .callout--accent .callout-title { color: var(--accent-ink); }
+
+  /* runbook */
+  ol.plan { margin: 0; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 10px; }
+  ol.plan li { counter-increment: step; display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; font-size: 15px; box-shadow: var(--shadow); }
+  ol.plan li::before { content: counter(step); font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--accent-ink); background: var(--accent-soft); border-radius: 6px; text-align: center; line-height: 24px; height: 24px; }
+  .expect { display: block; color: var(--ink-3); font-size: 13.5px; margin-top: 4px; }
+  .runbook-title { display: flex; align-items: center; gap: 10px; }
+  .runbook-title .chip { font-size: 11px; }
+
+  pre { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
+  pre code { font-family: var(--mono); color: var(--ink); white-space: pre; }
+  .inline-code { font-family: var(--mono); font-size: .92em; background: var(--surface-2); border-radius: 4px; padding: 1px 5px; }
+
+  footer { border-top: 1px solid var(--line); padding-top: 20px; color: var(--ink-3); font-size: 13.5px; display: flex; flex-direction: column; gap: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Infra · Capacity Planning · zyra-k3s</p>
+    <h1>แผนขยาย capacity ของ prod node</h1>
+    <p class="lede">
+      เอกสารนี้คือ <strong>แผน</strong> เท่านั้น — ยังไม่ได้ merge PR, ยังไม่ได้ apply terraform,
+      และยังไม่ได้เปลี่ยน config ใด ๆ ในเครื่อง ทุกอย่างด้านล่างมาจากของจริงที่ตรวจสอบวันนี้
+      (2026-09-22): งานที่ค้างไว้ 3 PR ตั้งแต่ 2026-09-11, เกณฑ์ตัดสินใจที่ทีมเคยวางไว้เอง,
+      และตัวเลข capacity สดจาก Prometheus
+    </p>
+    <div class="meta">
+      <span class="tag tag--warn">3 PR ค้างมา 11 วัน ไม่มีความเคลื่อนไหวเลย</span>
+      <span class="tag tag--live">MD approved cost แล้วตั้งแต่ 09-10</span>
+      <span class="tag">แผนอย่างเดียว — ไม่ execute</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">สถานะ node วันนี้</p>
+      <h2>ยังเป็นคอขวดเดิม — จัดสัดส่วนเสร็จแล้ว แต่ core ไม่ได้เพิ่ม</h2>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Metric</th><th>ค่าวันนี้ (09-22, 10:36 ไทย)</th><th>บริบท</th></tr></thead>
+        <tbody>
+          <tr><th>node</th><td><span class="num">1× e2-standard-4</span> (4 vCPU / 15.6 GiB)</td><td class="dim">zyra-k3s, asia-southeast1-b</td></tr>
+          <tr><th>cpu requests</th><td><span class="num">3480m / 4000m (87%)</span></td><td class="dim">นิ่งมาตั้งแต่ CPU rebalance 09-10 — ดู capacity-cpu-rebalance</td></tr>
+          <tr><th>node load1</th><td><span class="num">8.93</span> (load/core ≈ 2.2)</td><td class="dim">นอก peak hour — peak เย็นเคยขึ้นถึง ~10</td></tr>
+          <tr><th>SFU cpu ใช้จริง</th><td><span class="num">0.265 core</span> (ตอนนี้, 0 participants)</td><td class="dim">7d peak (PR #29, 09-11): <span class="num">1.51 core</span> · peak 17:00 (09-18): <span class="num">1.095 core</span></td></tr>
+          <tr><th>zyra-app p95</th><td><span class="num">636ms</span></td><td class="dim">เป้า &lt;150ms — สาเหตุ = SFU แย่ง CPU ตอน peak</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-caption">ที่มา: capacity-cpu-rebalance report (วัดสดวันเดียวกัน) และ zyra-doc/ops/node-saturation-2026-09-18.md</p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">สิ่งที่พบ — สำคัญที่สุดในเอกสารนี้</p>
+      <h2>มีแผนที่สร้างไว้แล้ว 90% ตั้งแต่ 2026-09-11 — แค่ไม่มีใครสานต่อ</h2>
+    </div>
+    <div class="banner">
+      <span class="banner-title">⚠ อย่าตั้งต้นวางแผนใหม่ทั้งหมด — ของเดิมมีอยู่แล้วและถูก approve แล้ว</span>
+      <p>
+        หนึ่งวันหลังเหตุการณ์ 2026-09-10 มีคนเปิด 3 PR ใน <span class="inline-code">zyra-infra</span> ทำ “แยก SFU ไป node ของตัวเอง”
+        (option 2 ในเอกสาร node-saturation) ไว้ครบ ทั้งเหตุผล ตัวเลขวัดจริง โค้ด terraform/chart และ runbook verify/rollback
+        แต่ตั้งแต่วันที่เปิด (2026-09-11 07:27 ICT) ไม่มี commit เพิ่ม ไม่มี comment ไม่มี review ใด ๆ อีกเลยจนถึงวันนี้ (11 วัน)
+        เอกสารแผน <span class="inline-code">zyra-doc/ops/second-node-rollout-plan-2026-09-11.md</span> ที่ทั้ง 3 PR อ้างถึง
+        ก็ไม่มีอยู่จริงในทั้ง local และ remote ของ zyra-doc — เขียนไว้ในหัว/บทสนทนาตอนนั้นแต่ไม่เคย commit
+      </p>
+    </div>
+    <div class="table-wrap">
+      <table class="data wide">
+        <thead><tr><th>PR</th><th>ชื่อ</th><th>สถานะ</th><th>เนื้อหา</th></tr></thead>
+        <tbody>
+          <tr>
+            <th><a href="https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/29" target="_blank" rel="noopener">#29</a></th>
+            <td>terraform: เพิ่ม k3s media node</td>
+            <td>OPEN</td>
+            <td class="dim">สร้าง VM ตัวที่ 2 (agent), static IP, secret join-token, ผูกเข้า TURN instance group — <strong>cloud layer อย่างเดียว ยังไม่ apply</strong></td>
+          </tr>
+          <tr>
+            <th><a href="https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/30" target="_blank" rel="noopener">#30</a></th>
+            <td>chart: nodeSelector/tolerations passthrough</td>
+            <td>OPEN</td>
+            <td class="dim">verify แล้วว่า helm template ของ 13 env×service combo <strong>byte-identical</strong> กับก่อนแก้ — merge ได้โดยไม่กระทบอะไร</td>
+          </tr>
+          <tr>
+            <th><a href="https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/31" target="_blank" rel="noopener">#31</a></th>
+            <td>ย้าย SFU ไป media node + resize</td>
+            <td>DRAFT</td>
+            <td class="dim">ตัวที่ย้ายจริงและ resize request/limit — “ห้าม merge จนกว่า node #29 จะ Ready” ยังไม่ un-draft</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-caption">ตรวจสอบ 2026-09-22: ทั้ง 3 PR mergeable status = UNKNOWN (GitHub ยังไม่ compute ใหม่ ปกติสำหรับ PR ที่นิ่งนาน) · CI ที่รันคือ CodeRabbit เท่านั้น (ผ่าน 1 ตัว, ที่เหลือโดน rate-limit ของ free tier)</p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">เกณฑ์ตัดสินใจที่ทีมวางไว้เอง</p>
+      <h2>ยังไม่ถึงจุดที่ควร “กดปุ่ม” จ่ายเงิน/ทำ downtime</h2>
+    </div>
+    <div class="cause">
+      <div class="cause-head">
+        <span class="chip">จาก node-saturation-2026-09-18.md</span>
+        <h3>ลำดับที่ตัดสินใจไว้แล้ว: ลองของฟรีก่อน วัดผล แล้วค่อยจ่ายเงิน</h3>
+      </div>
+      <p class="cause-body">
+        ทีมสรุปไว้เองว่า SFU โต CPU 2 เท่าใน 3 วันอาจมาจาก video fan-out ที่ “ถาวรหรือชั่วคราวก็ยังไม่รู้”
+        ทางแก้ที่ทำก่อนคือลด camera capture จาก 1080p → 720p (ฟรี, ไม่มี downtime, revert ง่าย)
+        แล้วค่อยดูว่า CPU ของ SFU คืนมาพอไหม — ถ้าไม่พอหรือโหลดยังโตต่อ ค่อยเข้าสู่ตัวเลือกที่ต้องจ่ายเงิน (PR #29-31 หรือขยาย node เดิม)
+      </p>
+      <div class="fix">
+        <span class="fix-key">เกตวันนี้</span>
+        <span>
+          720p <strong>live บน dev/uat เท่านั้น</strong> (ขึ้น uat 09-20) <strong>ยังไม่ขึ้น prod</strong> —
+          แปลว่ายังไม่เคยวัดผลจริงบนโหลดจริงเลยสักครั้ง เกตนี้ยังไม่ผ่าน
+        </span>
+      </div>
+    </div>
+    <div class="callout callout--accent">
+      <span class="callout-title">ข้อเสนอ: ให้เกตนี้เป็นเงื่อนไขก่อนสาน PR #29-31 หรือขยาย node</span>
+      <p>
+        ขึ้น 720p บน prod (merge <span class="inline-code">develop → main</span> แล้ว tag <span class="inline-code">v*</span>) →
+        รอ 3-5 วันทำการที่มี peak hour จริง → วัด SFU cores ที่ 17:00 เทียบ baseline เดิม (1.095 core, 09-18)
+        ถ้ายังเกิน ~0.8-0.9 core ที่ participants ใกล้เคียงเดิม (40-50 คน) แปลว่า workload โตจริงไม่ใช่แค่ 1080p ลาก —
+        ให้เข้าสู่แผน Option B ด้านล่างทันที
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">สองทางเลือกที่เหลือ (ถ้าเกตผ่าน)</p>
+      <h2>เทียบ Option A (ขยาย node เดิม) กับ Option B (แยก node ให้ SFU)</h2>
+    </div>
+    <div class="table-wrap">
+      <table class="data wide">
+        <thead><tr><th></th><th>Option A · Vertical resize</th><th>Option B · Dedicated media node</th></tr></thead>
+        <tbody>
+          <tr><th>งานที่เหลือต้องทำ</th><td>เปลี่ยน 1 ตัวแปร + apply</td><td class="recommend">สาน 3 PR ที่มีโค้ดพร้อมแล้ว</td></tr>
+          <tr><th>Effort โดยประมาณ</th><td>~30 นาที (ทำได้ทันที)</td><td class="recommend">~2-3 ชม. (ส่วนใหญ่คือรอ verify หลัง merge แต่ละ PR)</td></tr>
+          <tr><th>ต้นทุน/เดือน</th><td><span class="num">+$120</span></td><td><span class="num">+$125.5</span> (MD approved แล้ว 09-10)</td></tr>
+          <tr><th>Downtime</th><td class="dim">~5 นาที <strong>ทั้ง cluster</strong> (ต้อง stop VM)</td><td class="recommend">~30 วิ <strong>เฉพาะ SFU</strong> (Recreate) — web/api/ws ไม่กระทบเลย</td></tr>
+          <tr><th>ผลลัพธ์</th><td>ทุก service มี core เพิ่มเท่ากัน (4→8 รวม)</td><td class="recommend">SFU ได้เครื่องทั้งตัว (~3.5 core ใช้ได้) + web tier ได้ 4 core คืนเต็ม ๆ</td></tr>
+          <tr><th>ceiling ใหม่ (โดยประมาณ, ยังไม่ load-test)</th><td class="dim">ไม่ได้คำนวณไว้ (เพิ่มทุก service เท่ากัน)</td><td>~90-100 concurrent (จาก 71 วัดจริง 09-11) — <strong>เป็นเลขคำนวณ ไม่ใช่วัดจริง</strong></td></tr>
+          <tr><th>ความเสี่ยงหลัก</th><td class="dim">ต้อง stop/start VM ตรง ๆ — พลาดง่ายกว่าถ้าไม่มี maintenance window ชัดเจน</td><td>terraform state อยู่ local + gitignored — apply ผิดที่เสี่ยง recreate ทั้ง cluster/AlloyDB (ดูคำเตือนล่าง)</td></tr>
+          <tr><th>งานที่ยังไม่ได้เตรียม</th><td class="dim">ไม่มี — พร้อมทำได้เลยถ้าเกตผ่าน</td><td>PR-4 (reclaim node1 cores คืน app/ws/api หลังย้าย SFU ออก) และ PR-5 (per-node alert) <strong>ยังไม่ได้เปิด</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="table-caption">
+      คำแนะนำ: Option B คือของที่ทีมตั้งใจทำมาตั้งแต่แรก (ตรงกับ comment ใน gitops/envs/prod/services/sfu/values.yaml ว่า
+      “SFU ต้องพังก่อน web/api”) และจ่ายเงินไปแล้วในรูปเวลาวิศวกร + MD approve ไว้แล้ว — การสานต่อ “ถูกกว่า” ในทุกมิติยกเว้นเวลาที่ใช้ตอนนี้
+      Option A เหมาะถ้าต้องการ buffer เร็ว ๆ ระหว่างรอสาน Option B ให้เสร็จ ไม่ใช่ทางเลือกแทนกัน
+    </p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">Runbook ละเอียด</p>
+      <h2 class="runbook-title">Option B — สาน PR #29 → #30 → #31 <span class="chip">แนะนำ</span></h2>
+    </div>
+
+    <div class="cause">
+      <div class="cause-head"><span class="chip">Blocker ที่ต้องแก้ก่อนอันดับแรก</span><h3>terraform.tfstate อยู่ที่ไหน — ต้องรู้ก่อน apply แม้แต่ครั้งเดียว</h3></div>
+      <p class="cause-body">
+        PR #29 เตือนไว้ตรง ๆ ว่า <span class="inline-code">terraform.tfstate</span> เป็น local + gitignored และ<strong>ไม่อยู่ใน checkout นี้</strong> —
+        ถ้า apply จากเครื่องที่ไม่มี state ไฟล์เดิม Terraform จะเข้าใจว่ายังไม่มีอะไรอยู่เลย แล้วพยายามสร้าง <span class="inline-code">zyra-k3s</span>,
+        IP, firewall, AlloyDB <strong>ใหม่ทั้งหมด</strong> — ทับของจริงที่รันอยู่
+      </p>
+      <div class="fix"><span class="fix-key">ต้องทำก่อน</span><span>หา state ไฟล์ตัวจริงว่าใครรัน apply ล่าสุดจากเครื่องไหน แล้ว migrate ไป GCS backend (มี block <span class="inline-code">backend "gcs"</span> comment ไว้รอแล้วใน terraform/versions.tf:17) ในการ apply เดียวกับที่เพิ่ม media node — ห้ามข้ามขั้นตอนนี้ไม่ว่ากรณีใด</span></div>
+    </div>
+
+    <ol class="plan">
+      <li><span>ยืนยันตำแหน่ง state จริง + migrate เข้า GCS backend ตามที่เตรียม comment ไว้ใน <span class="inline-code">versions.tf</span>
+        <span class="expect">คาดหวัง: <span class="inline-code">terraform plan</span> จากเครื่องไหนก็ได้ผลตรงกัน ไม่มี resource ที่จะถูก "สร้างใหม่" ทั้งที่มีอยู่แล้ว</span></span></li>
+      <li><span>merge <a href="https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/29" target="_blank" rel="noopener">PR #29</a> แล้ว apply — สร้าง VM ตัวที่ 2 เท่านั้น ยังไม่มี workload ย้าย
+        <span class="expect">คาดหวัง: <span class="inline-code">kubectl get nodes</span> เห็น node ใหม่ label <span class="inline-code">zyra.center/role=media</span> พร้อม taint สถานะ Ready · node1 ยังทำงานปกติทุกอย่างเหมือนเดิม</span></span></li>
+      <li><span>เติม join token เข้า Secret Manager ตามคำสั่งที่ระบุไว้ใน <span class="inline-code">k3s-agent-vm.tf</span> (SSH เข้า server node ดึง <span class="inline-code">/var/lib/rancher/k3s/server/node-token</span>)
+        <span class="expect">คาดหวัง: agent node join สำเร็จโดยไม่ต้อง reboot ซ้ำ</span></span></li>
+      <li><span>merge <a href="https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/30" target="_blank" rel="noopener">PR #30</a> (chart passthrough) — ตาม PR เอง verify แล้วว่า byte-identical กับปัจจุบัน
+        <span class="expect">คาดหวัง: Argo ไม่ sync อะไรเลยสักตัว (no diff) — ถ้ามี diff แปลว่ามีอะไรผิดจากที่ PR อ้าง ต้องหยุดตรวจก่อน</span></span></li>
+      <li><span><strong>นอกเวลางาน</strong> (หลัง 22:00 ไทย หรือช่วงเดียวกับ SFU nightly restart 04:00) un-draft แล้ว merge <a href="https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/31" target="_blank" rel="noopener">PR #31</a> — จุดเดียวที่มี downtime จริง
+        <span class="expect">คาดหวัง: ~30 วินาที ห้องประชุมสดทุกห้องหลุด แล้วกลับมาเชื่อมต่อใหม่บน media node</span></span></li>
+      <li><span>Verify ครบตามที่ PR #31 กำหนดไว้เอง: <span class="inline-code">kubectl get pod -n sfu -o wide</span> อยู่บน media node ·
+        ประชุมจริง 2 เครื่องคนละเน็ต ทดสอบเสียง/วิดีโอ/แชร์จอ · <span class="inline-code">chrome://webrtc-internals</span> selected candidate ต้องเป็น IP ของ media node ·
+        บังคับ TURN relay (บล็อก UDP) แล้วเช็ค backend service HEALTHY
+        <span class="expect">ถ้า webrtc-internals ยังโชว์ IP node เดิม = <span class="inline-code">rtc.use_external_ip</span> ผิด ต้องแก้ livekit-prod.yaml ก่อนไปต่อ</span></span></li>
+      <li><span>รอ 24 ชม. แล้วเติมตาราง before/after ลงในเอกสารนี้ (prod restart ต้องยังเป็น 0)
+        <span class="expect">คาดหวัง: node1 cpu requests ลดลงเยอะ (ไม่มี SFU 1000-2000m ค้างอยู่แล้ว) — เก็บตัวเลขไว้เทียบ</span></span></li>
+      <li><span>เปิด PR-4 (ยังไม่มี): คืน cpu request/limit ของ prod app/api/ws บน node1 กลับไปใกล้เคียงค่าก่อนเหตุการณ์ 09-10 เพราะไม่ต้องแย่งกับ SFU อีกแล้ว
+        <span class="expect">ผล: node1 มี headroom เยอะขึ้นมาก เผื่อ scale prod เพิ่ม replica ได้ในอนาคต</span></span></li>
+      <li><span>เปิด PR-5 (ยังไม่มี): alert แยกต่อ node (media node ล้ม / node1 ล้ม แยกกัน) ตามที่ PR #29 วางลำดับไว้
+        <span class="expect">ผล: รู้ทันทีว่า node ไหนมีปัญหา ไม่ต้อง SSH เข้าไปดูเอง</span></span></li>
+    </ol>
+
+    <div class="callout">
+      <span class="callout-title">Rollback (จาก PR #31 เอง)</span>
+      <p>Revert PR #31 → Argo ย้าย SFU pod กลับไป node1 อัตโนมัติ (ไม่มี taint กันไว้) แลกกับ downtime อีก ~30 วิ · TURN ไม่หลุดเพราะ instance group ใน PR #29 ถือทั้ง 2 node ไว้อยู่แล้วไม่ว่า SFU จะอยู่ node ไหน</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">Runbook ละเอียด</p>
+      <h2 class="runbook-title">Option A — ขยาย node เดิม (สำรอง/เร็วกว่า)</h2>
+    </div>
+    <ol class="plan">
+      <li><span>นัด maintenance window นอกเวลางาน แจ้งทีมล่วงหน้าว่า cluster จะ downtime ทั้งก้อน ~5 นาที
+        <span class="expect">ไม่มี partial rollout ได้ — VM ต้อง stop เพื่อเปลี่ยน machine type</span></span></li>
+      <li><span>แก้ default ใน <span class="inline-code">terraform/variables.tf:320</span> (<span class="inline-code">k3s_machine_type</span>) จาก <span class="inline-code">e2-standard-4</span> → <span class="inline-code">e2-standard-8</span>
+        <span class="expect">ตรวจ terraform plan ต้องขึ้นแค่ "update in-place" ของ machine_type ไม่ใช่ replace</span></span></li>
+      <li><span><span class="inline-code">gcloud compute instances stop zyra-k3s ...</span> → <span class="inline-code">terraform apply</span> → <span class="inline-code">gcloud compute instances start zyra-k3s ...</span>
+        <span class="expect">boot กลับมาใน ~1-2 นาที k3s server + ทุก pod restart ตามธรรมชาติของ reboot</span></span></li>
+      <li><span>ตรวจ <span class="inline-code">kubectl get nodes</span> Ready · <span class="inline-code">argocd app list</span> ทุกตัว Synced/Healthy · health check ทุก domain (app/api/ws/sfu) ตอบ 200
+        <span class="expect">ระวัง Argo อาจโชว์ OutOfSync ชั่วครู่ก่อน sync จริงจบ — รอ rollout status ไม่ตัดสินจาก column เดียว (บทเรียนจาก 09-10 รอบ 3)</span></span></li>
+    </ol>
+    <div class="callout">
+      <span class="callout-title">Rollback</span>
+      <p>เปลี่ยน default กลับเป็น <span class="inline-code">e2-standard-4</span> แล้วทำซ้ำ stop → apply → start อีกรอบ (อีก ~5 นาที downtime)</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">สรุป</p>
+      <h2>สิ่งที่ต้องทำต่อ เรียงตามลำดับ</h2>
+    </div>
+    <div class="status">
+      <div>
+        <span class="status-title"><span class="dot dot--ok"></span>ทำได้เลยตอนนี้ (ฟรี, ไม่มี downtime)</span>
+        <ul>
+          <li>ดัน camera 720p (PR #423/#424) ขึ้น prod ด้วย tag <span class="inline-code">v*</span></li>
+          <li>เริ่มนับวันสำหรับ decision gate (3-5 วันทำการ, peak hour)</li>
+        </ul>
+      </div>
+      <div>
+        <span class="status-title"><span class="dot dot--warn"></span>รอเกตผ่านก่อน (มีต้นทุน/downtime)</span>
+        <ul>
+          <li>ถ้า SFU cores ที่ peak ยังสูงอยู่หลัง 720p → สาน Option B (PR #29-31 + เปิด PR-4, PR-5)</li>
+          <li>ถ้าต้องการ buffer เร็วระหว่างรอ → Option A คั่นได้ก่อน ไม่ขัดกัน</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout callout--accent">
+      <span class="callout-title">คนถัดไปที่มาอ่านเอกสารนี้</span>
+      <p>ก่อนเปิด PR ใหม่หรือวางแผน node ที่ 2 ใหม่ ให้เช็ค <a href="https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/29" target="_blank" rel="noopener">PR #29</a>/<a href="https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/30" target="_blank" rel="noopener">#30</a>/<a href="https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/31" target="_blank" rel="noopener">#31</a> ก่อนเสมอ — งานอยู่ตรงนั้นแล้ว 90%</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>ที่มา: zyra-infra PR #29 / #30 / #31 (เปิด 2026-09-11, ยังไม่ merge) · zyra-doc/ops/node-saturation-2026-09-18.md · zyra-doc/ops/prod-app-crashloop-2026-09-10.md · ตัวเลขสดวัด 2026-09-22</p>
+    <p>เอกสารนี้เป็นแผนอย่างเดียว — การสร้างไฟล์นี้ไม่ได้ merge / apply / เปลี่ยน config หรือแตะ production ใด ๆ ทั้งสิ้น</p>
+  </footer>
+</div>
+</body>
+</html>
