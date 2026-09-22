@@ -1,6 +1,58 @@
 # SC-OBJ-NAT-01 · Progress — Nature Object Management (Admin)
 
-> entry ใหม่อยู่**บนสุด** · ClickUp main: [86d446fw1](https://app.clickup.com/t/86d446fw1) · **implement เริ่มแล้ว 2026-09-20** — 3 PR แรกเปิดแล้ว (schema + collision bugfix + enum/badge/filter), ยังไม่ merge/deploy
+> entry ใหม่อยู่**บนสุด** · ClickUp main: [86d446fw1](https://app.clickup.com/t/86d446fw1) · **อยู่บน dev แล้ว 2026-09-22** — schema + API + UI ตาม Figma ครบ 7 node, merge เข้า `develop` และ deploy ขึ้น dev แล้ว · **ยังไม่ได้ verify ด้วยตาบนเบราว์เซอร์**
+
+---
+
+## รอบที่ 9 — 2026-09-22 (UI จริงตาม Figma + merge/deploy ครบทั้ง backend และ frontend)
+
+**ทำอะไร:** ผู้ใช้ทักว่า UI ที่ทำรอบที่ 8 เป็นของเก่า/เวอร์ชันย่อ ไม่ใช่ design จริง → ดึง Figma ใหม่ผ่าน MCP ทั้ง 7 node แล้ว implement ใหม่ให้ตรง พร้อมปิดงาน backend ที่ทำให้ "สร้าง object ได้จริง"
+
+**ถึงไหน — merge เข้า `develop` + deploy ขึ้น dev ครบแล้ว 3 PR:**
+
+| PR | Repo | merge commit | ทำอะไร |
+|---|---|---|---|
+| [zyra-api#131](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/131) | zyra-api | `800e8ef` | `CreateObject`/`UpdateObject` รับ `nature_type` + batch upload sprite ในคำขอเดียว · endpoint ใหม่ `GET /:id/animations` + `PUT /:id/animations/:state` · active-gating บังคับที่ server · ล็อก `nature_type` เมื่อมี animation แล้ว |
+| [zyra-app#427](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/427) | zyra-app | `a24f31d` | เปิด `"nature"` ใน Category dropdown + save path แยกสำหรับ nature (ไม่มี composer) |
+| [zyra-app#429](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/429) | zyra-app | `44f9079` | **UI จริงตาม Figma ทั้ง 7 node** (รายละเอียดด้านล่าง) |
+
+### UI ที่ทำตาม Figma (PR #429)
+
+| Node | Screen | สิ่งที่ทำ |
+|---|---|---|
+| `5167:320033` → `5167:331415` | HP-02 create | Nature type คู่กับ Z-index แถวเดียว · Status ลงแถวเอง · section `Upload stage & animation` (title+Info, subtitle, ปุ่ม `+ Upload` เขียว, Frame count/rate read-only, Object files 256px + preview grid 425px) · ดึง Status toggle เป็นตัวแปรเดียวใช้ 2 ที่ ไม่ให้มี switch ซ้ำใน DOM |
+| `5184:334464` → `6034:345420` | HP-03 upload modal | `nature-upload-modal.tsx` ใหม่ 900×600 — tab ต่อ state + badge นับไฟล์ · canvas + zoom pill · pills X/Y/W/H · banner PNG · dropzone/file row · footer Preview ǀ Cancel · Save · ไฟล์ staged แล้วส่งไปพร้อม Save ของฟอร์ม (ตอนสร้าง object ยังไม่มีใน DB) |
+| `5008:246597` → `5045:273291` | HP-01 tree card | `State : N` (= จำนวน state ที่ type นั้น**มี** ตาม §14.2 ข้อ 17 — derive จาก `NATURE_ALLOWED_STATES` ไม่ต้องแก้ backend) + tag `nature_type` สี Blue/500 แทน grid size + tint + category tag |
+| `5230:775889` | EP-01 error toasts | `nature-upload-validation.ts` ใหม่ + toast ต่อ error code copy ตรงจาก design · transparency เป็น **error บล็อก** ตาม design (ไม่ใช่ warning ตาม spec เก่า — §14.1 ข้อ 10 ปิด) |
+| `5230:791935` → `6037:509126` | EC-01 replace | `replace-spritesheet-dialog.tsx` ใหม่ — เด้ง**ก่อน**เปิด file picker เมื่อ sprite นั้น live อยู่ใน workspace แล้ว |
+| `5219:753640` → `5219:760257` | HP-06 saved/edit | view mode ดึง sprite ที่ save แล้วมาโชว์ (ผ่าน `listObjectAnimations`) ควบกับไฟล์ที่ staged · preview fallback เป็น idle ที่บันทึกไว้ |
+| `5219:761384` | HP-07 hide/delete | **มีครบอยู่แล้ว ไม่ต้องแก้** — panel 384px "Affected Workspaces & Maps" + confirm-name modal ใน `delete-object-dialog.tsx` ตรง Figma |
+
+### จุดที่ตั้งใจไม่ทำตาม Figma (บันทึกไว้เพื่อไม่ให้รอบหน้ามาแก้กลับ)
+
+1. **Frame count / rate โชว์ `1` / `12` ไม่ใช่ `50` / `24` ตาม mock** — 1/12 คือค่าที่ API เก็บจริง (`tb_object_animation` default; ไม่มีช่องกรอกตามมติ 2026-09-20) โชว์ 50/24 = UI บอกข้อมูลเท็จกับ admin · ถ้าจะเอา 50/24 จริงต้องเปลี่ยน DB default ด้วย
+2. **HP-06 ยังมีปุ่ม Delete** ทั้งที่เฟรม view mode ไม่มี — Figma ขัดกันเองเรื่องจุดกด Delete (§14.3 ข้อ 28 `ต้องดึง`) และถ้าเอาออกจะไม่เหลือทางลบ object เลย
+3. **ปุ่ม Preview ยังไม่ทำงาน** — HP-05 (`5196:368373`) ไม่อยู่ใน 7 node ที่สั่ง · ใน modal ทำเป็น disabled ไว้, บน header ยังไม่ใส่ (ปุ่มตายแย่กว่าไม่มี)
+
+### เจอระหว่างทาง
+
+- **เลข migration ชนกัน** — `103` ที่ technical-design จองไว้ถูก `feat/admin-roadmap-api` ใช้ไปแล้วบน develop → renumber เป็น **`105_object_nature.sql` / `106_object_animation.sql`** (แก้ทั้งชื่อไฟล์ เลขใน comment และ reference ในโค้ด Go)
+- **`CreateObject` ไม่มี unit test มาก่อนเลย** และ `ObjectService` ถือ `*pgxpool.Pool` ตรง ๆ → แยก logic ที่ไม่แตะ DB ออกเป็น `internal/service/object_nature.go` เพื่อให้ table-driven test ได้ตาม test-plan §1.0
+
+**verify ถึงไหน:**
+- zyra-api: `go build` · `go vet` · `go test ./...` เขียว
+- zyra-app: `tsc --noEmit` ไม่มี error ใหม่ · `vitest` 183 files / 2501 tests ผ่าน · `eslint` clean · `next build` ผ่าน · CI ครบทุก check รวม CodeRabbit
+- **deploy ขึ้น dev จริงแล้ว ตรวจ health ยืนยัน version ตรง sha:** `api.dev.zyra.center/api/health` → `dev-800e8ef` · `app.dev.zyra.center/api/health` → `dev-44f9079` (ไล่ครบ GitHub Actions → `zyra-infra` values.yaml → Argo CD sync → pod rollout)
+- ⚠️ **ยังไม่ได้ verify ด้วยตาบนเบราว์เซอร์** — CI เช็คแค่ build/test ไม่ได้เทียบภาพกับ Figma · หน้า admin ต้อง login ซึ่ง AI ทำเองไม่ได้ (นโยบายห้ามกรอกรหัสผ่าน) → **ยังไม่ถือว่า Figma fidelity ผ่าน จนกว่าจะมีคนเปิดดูจริง**
+
+**ต่อจากนี้:**
+1. เปิด `app.dev.zyra.center` → Object management → Category = Nature ดูของจริง แล้วแจ้งจุดที่เพี้ยน
+2. HP-05 preview modal (`5196:368373`) ถ้าจะทำ — ปุ่ม Preview 2 จุดรออยู่
+3. blocker UI ที่เหลือใน §14.1 (5, 9–14) + ค่า `ต้องดึง` ใน §15 ยังไม่ได้เคลียร์กับ PM
+4. ยังไม่ได้แก้ spec ใน ClickUp ให้ตรงมติ (HP-07 delete, `petal_fall`, required states, frame config)
+5. ยังไม่ได้ตัดสินเรื่อง backfill 24 object ที่โดนบั๊ก collision (2,453 placement)
+
+**ติดอะไร:** ไม่มีที่บล็อกงาน — เหลือแค่รอคนเปิดดู UI จริงกับรอ PM ตอบข้อที่ค้าง
 
 ---
 
