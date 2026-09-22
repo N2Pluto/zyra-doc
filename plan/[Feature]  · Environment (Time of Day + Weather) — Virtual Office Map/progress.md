@@ -2,6 +2,80 @@
 
 > entry ใหม่อยู่**บนสุด** · แยก "build เขียว" ออกจาก "live-test ผ่าน" ให้ชัดทุกครั้ง
 
+## รอบที่ 24 — 2026-09-22 · icon จริงจากดีไซน์ + ป้ายใหม่ + ชื่อสถานที่ภาษาเดียว
+
+### 1. icon สภาพอากาศ — เลิกใช้ lucide ใช้ไฟล์ที่ดีไซน์ส่งมา (app)
+
+ปิดคำถามข้อ 49 (“3D icon ยังไม่ส่ง”) — ได้ครบ 11 ตัวแล้ว วางไว้ที่ **`zyra-app/public/environment/weather/*.svg`**
+
+**ทำไมไม่เอาขึ้น R2 เหมือน sprite ของแมพ** — คนละประเภทของงาน: sprite เป็น GIF หลายเมกะไบต์ โหลดตาม condition และเปลี่ยนได้เองโดยไม่แตะโค้ด · ชุดนี้ทั้งชุด **46 KB** ต้องขึ้นพร้อม HUD ทันทีที่วาด และชื่อไฟล์ถูกอ้างจากโค้ด (`weatherIconKey`) ⇒ อยู่ใน image เดียวกับโค้ดที่เรียกมัน ไม่มี network hop ไม่มีทางหลุดคนละเวอร์ชันกัน
+
+**ต้อง normalize ก่อนใช้** — artboard ที่ส่งมากว้างไม่เท่ากันเลย (40×32 ถึง 72×112) ทั้งที่ตัวรูปขนาดพอ ๆ กัน ถ้าใส่กล่องเดียวกันตรง ๆ thunder-storm จะเล็กกว่า cloudy เห็นชัด · วัด bounding box จริงด้วยการ rasterize ที่ 4× แล้วไล่ alpha ทีละพิกเซล (ไม่ใช่ `getBBox` ซึ่งไม่นับ blur) แล้วตั้ง `viewBox` ใหม่ = กรอบเนื้อรูป + 18% กันเงา glow โดนตัด · **path ไม่ถูกแตะเลย** แก้เฉพาะ `viewBox`/`width`/`height` บรรทัดแรก
+
+| condition | ไฟล์ | หมายเหตุ |
+|---|---|---|
+| clear (วัน/คืน) | `day-clear` / `night-clear` | |
+| partly_cloudy (วัน/คืน) | `day-cloudy` / `night-cloudy` | |
+| cloudy | `cloudy` | |
+| fog | `fog` | |
+| drizzle | `rain` | ชุดนี้มีฝน 2 ระดับ และแมพก็แยกอยู่แล้ว (`drizzle` เม็ดเดี่ยว / `rain` ขยาย+ถี่) |
+| rain | `strong-rain` | |
+| thunderstorm | `thunder-storm` | |
+| snow | `snowflake` | |
+| windy | `wind` | |
+
+การ์ดใน panel ก็เปลี่ยนตาม (กล่อง glyph 64×51 เดิม ไม่ขยับ layout) · มี test ที่ไล่ทุก condition แล้วเช็กว่าไฟล์ที่ชี้ไปมีอยู่จริงบนดิสก์ — พิมพ์ชื่อผิด = รูปแตกบนแมพ ซึ่งไม่มีอย่างอื่นจับได้
+
+### 2. ป้ายมุมขวาบนของแมพ — ทำใหม่ตาม Figma `6182:724026` (app)
+
+ป้ายเดิมไม่มี node ของตัวเอง (ทำจาก token ที่เดาจากการ์ด) ตอนนี้มีแล้ว: 248px · tile 38×40 ซ้ายมือ · อุณหภูมิ 16/22 bold + คำบรรยายสภาพอากาศ (ของใหม่) · ชื่อที่ + นาฬิกา
+
+tile คือ component `6182:724001` 4 variant — **เวลา**เลือกสี และ**อากาศแย่ทับได้**:
+
+| variant | gradient | ใช้เมื่อ |
+|---|---|---|
+| Morning | `#03AFFF → #BAF1FF` | morning / afternoon |
+| Evening | `#EE8B3F → #F2ED8F` | evening **และ dawn** (ดวงอาทิตย์ต่ำเหมือนกัน design มีโทนอุ่นโทนเดียว) |
+| Night | `#0D1825 → #3875BB` | night |
+| Negative weather (`6182:724014`) | `#373B3F → #7B8EA1` | drizzle / rain / thunderstorm / fog / snow — ทับทุกช่วงเวลา |
+
+`cloudy` กับ `windy` **ไม่**นับเป็นอากาศแย่ (ตามที่ตกลง) · stage ที่ใช้คือ stage ที่ client เดินเองระหว่าง push ไม่ใช่ค่าที่ค้างจาก fetch ล่าสุด ⇒ tile เปลี่ยนสีพร้อมท้องฟ้าบนแมพ
+
+**2 จุดที่ไม่ตรง design เป๊ะ และเหตุผล**
+- **ปุ่มจับลาก** design ไม่มี แต่ของเดิมมีเพราะมีคนรายงานว่าไม่รู้ว่าลากได้ ⇒ คงไว้แบบ**โผล่ตอน hover** และวางนอกกรอบ 248px (`-left-15px`) เพื่อไม่กินพื้นที่ที่ design จัดไว้
+- **ความกว้าง** design ตรึง 248px ซึ่งพอดีกับ “Asoke District” แต่ของจริงยาวกว่านั้น (“Khet Thon Buri” ขาดคำท้ายไปแล้ว) ⇒ `min-w-248px / max-w-320px` โตได้เท่าที่ชื่อต้องการ ไม่เคยเล็กกว่าที่ design กำหนด แล้วค่อย truncate
+
+### 3. ชื่อสถานที่ — ภาษาเดียวทั้งระบบ (api + migration)
+
+**root cause:** reverse-geocode ไม่เคยส่ง `language=` ⇒ Google ตอบเป็นภาษาท้องถิ่นของจุดนั้น และ “ท้องถิ่น” ของมันไม่คงเส้นคงวา — prod เก็บ **“เขตบางกระปิ”** กับ **“Khet Bang Kapi”** ซึ่งเป็นเขตเดียวกัน ไว้คนละแบบ
+
+- `GeocodeLanguage = "en"` ติดไปกับทุก geocode call
+- label ถูก resolve **ครั้งเดียวตอน save** ⇒ แก้เฉย ๆ ไม่ช่วยของเก่า · migration **107** เพิ่ม `env_place_lang` (`tb_workspace` + `tb_user`) บันทึกว่า label นั้น resolve ด้วยภาษาอะไร
+- `BackfillPlaceLabels` วิ่งบน alert tick เดิม (lock เดิม) ครั้งละ 20 แถว re-resolve เฉพาะแถวที่ `env_place_lang IS DISTINCT FROM 'en'` แล้ว stamp ทิ้งไว้ ⇒ **จบในตัว** ไม่วนซ้ำ แม้แต่ที่ที่ชื่ออังกฤษกับชื่อท้องถิ่นสะกดเหมือนกัน
+- label อยู่ใน broadcast signature อยู่แล้ว ⇒ หลัง relabel เรียก `GetSnapshot` ให้ workspace นั้น คนที่เปิดอยู่เห็นชื่อใหม่โดยไม่ต้อง reload
+
+#### Before/After
+
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| label ที่ไม่ใช่อักษรละติน (`tb_workspace` + `tb_user`) | **1 / 16 แถว** (workspace 1/3 · member 0/13) | ยังไม่ได้วัด — ต้อง deploy + รอ poller | เป้า 0 |
+| เขตเดียวกันถูกเก็บกี่แบบ | **2** (`เขตบางกระปิ` / `Khet Bang Kapi`) | ยังไม่ได้วัด | เป้า 1 |
+| แถวที่ยังไม่ stamp ภาษา | **16 / 16** | ยังไม่ได้วัด | เป้า 0 |
+
+**วัดยังไง**: `SELECT count(*) FILTER (WHERE env_place_label ~ '[^\x00-\x7F]')` บน `tb_workspace` + `tb_user`
+**ช่วงเวลา**: before = 2026-09-22 14:30 (+07) ก่อน merge · after = ยังไม่ได้วัด
+**แหล่งข้อมูล**: prod AlloyDB ผ่าน `zyra-service/prod-db.sh query` (read-only)
+
+### สถานะ
+
+- ✅ `go build` + `go vet` + `go test ./...` ผ่าน · `vitest` 185 ไฟล์ / 2526 เคส ผ่าน · `next build` ผ่าน · eslint 0 error (เหลือแต่ warning เดิมของ hero) · prettier ผ่าน
+- ✅ ตรวจรูป icon ด้วยการ render จริงทั้ง 11 ตัวลงกล่อง 24×21 (tile) และ 64×51 (การ์ด) — ขนาดสม่ำเสมอแล้ว · ป้ายใหม่ render จริงเทียบกับ Figma ครบ 4 โทน (เช้า/เย็น/คืน/อากาศแย่) รวมเคสชื่อยาวและคำบรรยายภาษาไทย
+- ⛔ **ยังไม่ได้ live-test บน dev** — ทั้งป้าย, การ backfill และการ relabel ต้องดูของจริงหลัง deploy
+- ⛔ after ของตาราง before/after ยังวัดไม่ได้จนกว่าจะ deploy + poller วิ่งครบรอบ
+- ⚠️ migration 107 ต้องรันบน prod **ก่อน** ปล่อย api รอบนี้ (คอลัมน์ถูกอ่าน/เขียนในทุก load/save ของ environment)
+
+---
+
 ## รอบที่ 23 — 2026-09-14 · TMD เป็น provider ตัวแรกของไทย + บัค debug alert + scrim
 
 ### 1. TMD credential มาแล้ว — แต่เป็นคนละ service กับที่เดาไว้ (api [#116](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/116))
