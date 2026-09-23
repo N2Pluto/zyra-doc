@@ -218,15 +218,26 @@ Validator ต้องเป็น pure function (`ValidateSpritesheet(cfg image
 
 ---
 
-### 3.6 Render ของสไปรต์ interim (frame_count = 1 · contain scaling)
+### 3.6 การหั่น spritesheet เป็นเฟรม (asset จริง 2026-09-23)
 
-| Test | Input | Expected |
-|---|---|---|
-| `frame_count === 1` → ไม่ animate | sprite 1 เฟรม | ไม่สร้าง animation loop / ticker (แค่วาดภาพนิ่ง) |
-| scaling = contain | ภาพ 1000×1000 บน grid 3×4 (96×128px) | ย่อพอดีกรอบ **รักษาสัดส่วน** (scale = min(96/1000, 128/1000)) ไม่บิดภาพ · มีช่องว่างได้ |
-| scaling ของภาพที่สัดส่วนตรงอยู่แล้ว | 3:4 บน grid 3×4 | เต็มกรอบพอดี ไม่มีช่องว่าง |
+> **✅ เขียนแล้ว** — `__tests__/nature-spritesheet.test.ts` (17 case) ฝั่ง TS · `internal/service/nature_sprite_strip_test.go` (4 ชุด table-driven) ฝั่ง Go
+> **หัวข้อเดิม "สไปรต์ interim (frame_count = 1 · contain scaling)" ใช้ไม่ได้แล้ว** — asset จริงเป็น strip 6 เฟรม ไม่ใช่ภาพนิ่ง ดู [technical-design §5.2.2](technical-design.md#522--asset-จริงมาแล้ว-2026-09-23--normalise-spritesheet-ตอน-upload)
 
-> อ้าง [technical-design §5.2.1](technical-design.md#521--interim-2026-09-17--รับสไปรต์ขนาดใหญ่ถึง-1000px-ระหว่างที่-asset-ยังไม่เสร็จ) · `TILE_SIZE = 32` ต้องอ่านจาก `zyra-engine/constants.ts` ห้ามพิมพ์ 32 ในเทส
+| Test | Input | Expected | สถานะ |
+|---|---|---|---|
+| ชีตจริง 6 เฟรม | run คอลัมน์ที่วัดจาก `Tree Animation.png` จริง | `frame_count = 6`, cell = 1000/6, content แถว 16–237 | ✅ ทั้ง Go และ TS |
+| ชีตเฟรมเดียวชิดขอบ | `Tree idle.png` 160×222 | 1 เฟรม · **ไบต์เดิมไม่ถูก re-encode** | ✅ |
+| เฟรมเดียวแต่มี padding | 1000×1000 มีภาพแถว 16–237 | crop เหลือสูง 222 | ✅ |
+| strip ที่ไม่มีช่องว่างคั่น | 4 บล็อกชิดกัน | **fallback 1 เฟรม** (แยกจากภาพเดี่ยวไม่ออก — ห้ามเดา) | ✅ ตั้งชื่อเทสกำกับไว้ |
+| ระยะห่างไม่สม่ำเสมอ | 2 ก้อนกองอยู่ครึ่งซ้าย | fallback 1 เฟรม | ✅ |
+| คลาดเคลื่อน 1px ต่อเซลล์ | ขอบเลยเซลล์ 1px | ยังนับเป็น strip (tolerance 2px) | ✅ |
+| **เฟรมต้องคงระยะเยื้องในเซลล์** | แต่ละเฟรมเอนเพิ่มทีละ 1px | ระยะเยื้องเท่าเดิมทุกเฟรมหลัง normalise (ระยะเยื้อง = animation) | ✅ Go |
+| metadata ต้องตรงกับไบต์ที่เก็บจริง | ทุกเคส | `frame_width × frame_count` = ความกว้างชีตที่ออกมา | ✅ Go |
+| `frame_count = 0` จาก API | ข้อมูลเสีย | คืน 1 ไม่หารศูนย์ | ✅ TS |
+
+**กติกา:** ค่า tolerance และเงื่อนไข fallback ของ Go กับ TS **ต้องตรงกันเสมอ** — ถ้าไม่ตรง client จะ preview ที่ pitch ที่ server ไม่ได้เก็บ ซึ่งแย่กว่าไม่มี preview
+
+**ยังไม่มีเทส:** การวาดจริงของ `NatureSpriteFrame` (ขนาดกล่อง, `background-position` ต่อเฟรม, การ step ตาม frame rate) — verify ด้วยมือผ่าน dev harness รอบที่ 11 · ฝั่ง VO/Phaser/Pixi ยังไม่ได้แตะเลย ทั้งโค้ดและเทส
 
 ---
 
