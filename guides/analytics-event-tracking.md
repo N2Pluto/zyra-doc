@@ -161,6 +161,38 @@ trackAppEvent(AppEvent.WorkspaceCreated, { template: "open-office" })
 
 ---
 
+## ตั้งค่า GTM ให้อ่านค่าที่ส่งไป (ต้องทำ ไม่งั้น GA4 ได้แต่ชื่อ event เปล่า)
+
+โค้ดส่ง property ครบทุกตัวไปกับ dataLayer อยู่แล้ว:
+
+```js
+dataLayer.push({ event: "ui_click", label: "sidebar-settings", tag: "button", path: "/workspace/…/play" })
+```
+
+แต่ **GTM จะไม่เห็นค่าพวกนี้จนกว่าจะสร้าง Data Layer Variable ให้แต่ละตัว** — แท็บ "ตัวแปร" ใน Tag Assistant แสดงเฉพาะตัวแปรที่สร้างไว้ใน container เท่านั้น ถ้าอยากดูว่าโค้ดส่งอะไรไปจริง ให้ดูแท็บ **"ชั้นข้อมูล" (Data Layer)** แทน
+
+> หมายเหตุ: ตัวแปร **"ชื่อสภาพแวดล้อม"** ที่ขึ้นว่า `Preview Environment N …` เป็นตัวแปร built-in ของ GTM ที่บอกว่ากำลัง preview อยู่ — คนละตัวกับ `environment` (`dev`/`uat`/`prod`) ที่แอปส่งให้
+
+### วิธีเร็วที่สุด — import container ที่เตรียมไว้
+
+ไฟล์ [`assets/gtm-zyra-analytics-container.json`](assets/gtm-zyra-analytics-container.json) มีครบ:
+
+- Data Layer Variable 31 ตัว (`label`, `tag`, `path`, `trackId`, `setting`, `value`, `enabled`, `surface`, …)
+- Trigger ที่ match event ของแอปทั้ง 47 ตัว
+- GA4 Event tag ที่ map ทุก property เป็น event parameter
+
+ขั้นตอน: GTM → **Admin** → **Import Container** → เลือกไฟล์ → Workspace: `Default Workspace` → **Merge** (ห้ามเลือก Overwrite) → Preview ดูก่อน → ค่อย Submit
+
+> ไฟล์นี้ยังไม่เคยถูก import จริง (คนทำไม่มีสิทธิ์เข้า container) — ถ้า import แล้วติด error ให้สร้างเองตามด้านล่างแทน
+
+### ถ้าสร้างเอง
+
+1. **Variables** → New → **Data Layer Variable** → Data Layer Variable Name = `label` → ตั้งชื่อ `DLV - label` → ทำซ้ำกับ property ที่ต้องการ
+2. **Triggers** → New → **Custom Event** → Event name = `.*` (ติ๊ก use regex) หรือใส่ชื่อ event เฉพาะที่สนใจ
+3. **Tags** → New → **GA4 Event** → Event Name = `{{Event}}` → Event Parameters: เพิ่มแถว `label` = `{{DLV - label}}` (และตัวอื่นตามต้องการ) → Trigger = ที่สร้างไว้
+
+---
+
 ## วิธีตรวจว่าทำงานจริง
 
 ```js
