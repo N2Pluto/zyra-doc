@@ -27,6 +27,7 @@
 | [zyra-app#458](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/458) | zyra-app | ปุ่ม Preview (Figma 5196:368373) → เปิด `NaturePreviewModal` (Figma 5199:369528) โหมดใหม่ `pieces` (โหมด sprite เดิมยังอยู่) · `NatureWindTree`: ต้นไม้โยกตามลม + ใบไม้ pixel ตกด้วย CSS ล้วน · weather dropdown ↔ wind slider ผูกกันผ่าน band |
 | [zyra-app#459](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/459) | zyra-app | Preview ใช้ได้ทุก category (ไม่ใช่ nature → `ObjectComposerPreviewModal` เดิม, ปุ่ม "Back to edit" เป็น optional) · pan/zoom ใน nature preview · sway ลื่นขึ้น (ease-in-out alternate, แถว 2px, ไม่ snap พิกเซล) |
 | [zyra-app#460](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/460) | zyra-app | ย้ายปุ่ม Preview ไปใต้รายการ Object files (ซ่อนถ้ายังไม่อัป) + preview ไฟล์ที่เลือก · ปลดล็อก Nature type ตอน edit · marker นอกจอแบบ VO · ใบไม้ตกต่าง nature_type · sway 4/5 ของความสูงต้นไม้จริง (ลำต้นขยับด้วย) |
+| [zyra-app#461](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/461) | zyra-app | ปุ่ม Preview ย้ายออกจาก list ที่ scroll → ปักไว้**ล่างสุดของกรอบ Object files** · ไฟล์เยอะแล้ว list scroll เองในกรอบ ปุ่มอยู่ที่เดิม ไม่ได้ scroll ไปด้วย (2026-09-24) |
 
 ### กติกาของ Nature preview (ตั้งใจทำแบบนี้ ห้ามพัง)
 
@@ -61,7 +62,7 @@
 
 **Marker นอกจอ** — ใช้ `computeIndicatorPlacement` ของ VO (`views/user/virtual-office/utils/offscreen-indicator.ts`) ตัวเดียวกัน ไม่ copy · ขึ้นเมื่อต้นไม้พ้นจอ **หรือหลบอยู่หลังแถบ control ล่าง (50px)** · กดแล้ว glide 300ms ให้ต้นไม้กลับมากลางจอ (zoom เท่าเดิม)
 
-**ปุ่ม Preview** — อยู่ใต้รายการ Object files ในกรอบเดียวกัน · **ไม่แสดงเลย** ถ้ายังไม่อัป (nature: ดูที่ piece ทิศ south ของไฟล์ที่เลือก · อื่นๆ: piece ใดก็ได้) · preview ไฟล์ที่ถูกเลือกอยู่ · ใช้ได้ทั้งหน้า add / edit / detail (read-only)
+**ปุ่ม Preview** — ปักอยู่**ล่างสุด**ของกรอบ Object files (อยู่นอก list ที่ scroll — ไฟล์เยอะแล้ว list scroll เองในกรอบ ปุ่มไม่ขยับ) · **ไม่แสดงเลย** ถ้ายังไม่อัป (nature: ดูที่ piece ทิศ south ของไฟล์ที่เลือก · อื่นๆ: piece ใดก็ได้) · preview ไฟล์ที่ถูกเลือกอยู่ · ใช้ได้ทั้งหน้า add / edit / detail (read-only)
 
 **Nature type ตอน edit** — client เคยล็อกทุก object ที่ save แล้ว (มาจาก HP-06 ยุค animation) → ปลดแล้ว · server ยังล็อก **เฉพาะ object ที่มีแถวใน `tb_object_animation`** (object เก่าจาก flow animation) — object ที่ทำผ่าน composer เปลี่ยนได้ปกติ
 
@@ -82,7 +83,7 @@
 | วัดอะไร | ผล |
 |---|---|
 | test / build | api `go build`/`vet`/`test ./...` เขียว · app `vitest` 188 files / 2610 tests · `tsc` (ไม่มี error ใหม่ — มีของเดิมใน `environment-weather-fx`/`pet-creation-wizard`/`pixi-game-scene` test อยู่แล้วบน develop) · `eslint` · `next build` เขียว · CI ทุก PR เขียว |
-| ฟอร์ม (dev harness mount `ObjectAddForm` จริง — ลบแล้ว) | Nature → Nature type → Object Composer → S/N/E/W → Save ใช้ได้ Status=Active · ปุ่ม Preview อยู่ในกรอบ Object files ใต้รายการ · ไม่อัป = ไม่มีปุ่ม · สลับ Green → Autumn แล้ว preview เปลี่ยน (สีใบไม้เปลี่ยนตาม) · Nature type เปิด/เปลี่ยนได้ตอน edit |
+| ฟอร์ม (dev harness mount `ObjectAddForm` จริง — ลบแล้ว) | Nature → Nature type → Object Composer → S/N/E/W → Save ใช้ได้ Status=Active · ปุ่ม Preview อยู่ล่างสุดของกรอบ Object files · ไฟล์ 20 ไฟล์: กรอบสูงคงที่ 425px, list scroll (เนื้อหา 840px ในพื้นที่ 327px), ปุ่มห่างขอบล่าง 8px ทั้งก่อนและหลัง scroll (จอเล็ก กรอบ 220px ก็เหมือนกัน) · ไม่อัป = ไม่มีปุ่ม · สลับ Green → Autumn แล้ว preview เปลี่ยน (สีใบไม้เปลี่ยนตาม) · Nature type เปิด/เปลี่ยนได้ตอน edit |
 | ลม (Web Animations API — pane ซ่อน เลย step เวลาเอง) | 80 km/h: ยอด 19px · กลางพุ่ม 10px · ต้นลำต้น ~3px · กลางลำต้น ~1px · โคน 0 · band จบที่ 75.3% ของภาพ = 4/5 ของต้นจริง (ภาพมี padding 10% บน/ล่าง) |
 | ใบไม้ | 9 km/h: 3 ใบ · 80 km/h: 17 ใบ · pine 7 เข็ม 1px ไม่หมุน · bamboo 9 ใบยาว · shedding 22 ใบ · flower กลีบสีชมพูตามดอก ไม่มีเขียว · หลังแก้ ไม่มีสีน้ำตาลลำต้นหลุดมาเป็นใบ |
 | pan/zoom | ลาก +60/+30 → view เลื่อนตรง · swipe 2 นิ้ว = pan · wheel 1 notch → 116% รอบเคอร์เซอร์ · pinch → 95% (`preventDefault` แล้ว) · ลากบน slider ไม่ pan |
