@@ -1,6 +1,102 @@
 # SC-OBJ-NAT-01 · Progress — Nature Object Management (Admin)
 
-> entry ใหม่อยู่**บนสุด** · ClickUp main: [86d446fw1](https://app.clickup.com/t/86d446fw1) · **asset จริงมาแล้วและรองรับแล้ว 2026-09-23** (รอบที่ 11 — spritesheet 6 เฟรม) · UI ครบทุก Figma node ตั้งแต่รอบที่ 10 · §14.1 เหลือเปิดข้อเดียว (ข้อ 12 weather mapping รอ PM) · **ยังไม่ได้เปิดดูในหน้า admin จริง** เพราะ AI login ไม่ได้ · **VO/in-game ยังวาดสไปรต์เป็นภาพเดียว ยังไม่รองรับเฟรม**
+> entry ใหม่อยู่**บนสุด** · ClickUp main: [86d446fw1](https://app.clickup.com/t/86d446fw1) · **เปลี่ยนทิศ 2026-09-23 (รอบที่ 12): Nature ใช้ Object Composer แบบเดียวกับ category อื่น 100% — ต่างแค่มีช่อง Nature type** · ระบบ animation-state upload (`tb_object_animation` ฯลฯ) **เก็บไว้เฉยๆ ไม่ได้เรียกใช้แล้ว** · Nature preview (ลม + ใบไม้ตก + pan/zoom) อยู่บน `develop` แล้ว · **ยังไม่ได้เปิดดูในหน้า admin จริงแบบ login** · **ลม/ใบไม้มีแค่ใน preview — VO/in-game ยังไม่มี**
+
+---
+
+## รอบที่ 12 — 2026-09-23 → 09-24 (เปลี่ยนทิศ: Nature ใช้ composer ปกติ + Nature preview ใหม่)
+
+### ทำไมเปลี่ยนทิศ
+
+ผู้ใช้สั่งตรงๆ (2026-09-23): "Upload stage & animation ทั้งหมด ไปใช้ของเก่า … ตอนเก็บข้อมูลก็แบบเก่าทั้งหมด ทุก step ตอน upload ต้องเหมือนกับ Category อื่น แค่ Category nature มี Nature type เพิ่มขึ้นมา" · ยืนยันผ่านคำถามแล้ว 3 ข้อ:
+
+| คำถาม | ผู้ใช้เลือก |
+|---|---|
+| เหมือน object ปกติแค่ไหน | **100%** — composer เดิม (South/North/East/West), เก็บลง `fileStore`/composition เดิม |
+| ของ animation ที่ทำไปแล้ว (`tb_object_animation`, endpoints, `nature-upload-modal`, `nature-preview-modal` ฯลฯ) | **เก็บโค้ดไว้ ไม่ลบ** — แค่เลิกเรียกจาก create/edit |
+| gate "ต้องมี Idle ก่อน Active" (`validateActiveGating`) | **ปิดสำหรับ nature** — flow ใหม่ไม่มีการอัป animation เลย ถ้าไม่ปิด nature จะ Active ไม่ได้ตลอดไป |
+
+ก่อนหน้านี้ในวันเดียวกันยังทำ placement/resize ของสไปรต์ใน upload modal ไป ([zyra-app#451](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/451) · [zyra-api#140](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/140), merged) และ refactor ให้อัปสไปรต์ก่อน create ([zyra-api#141](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/141) · [zyra-app#452](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/452), **ยัง open**) — **ทั้งหมดถูกแทนที่ด้วยการเปลี่ยนทิศนี้** · #141/#452 ควรปิดทิ้ง
+
+### ที่ทำ
+
+| PR | Repo | ทำอะไร |
+|---|---|---|
+| [zyra-api#142](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/142) | zyra-api | เอา `validateActiveGating` ออกจาก `CreateObject`/`UpdateObject` — ตัวฟังก์ชัน + sentinel + เทสยังอยู่ (dormant) |
+| [zyra-app#457](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/457) | zyra-app | `object-add-form.tsx` ตัด section "Upload stage & animation" + `handleConfirmSaveNature` ทิ้ง → nature เดิน save path เดียวกับทุก category + ส่ง `natureType` · fix `konva-canvas.tsx` Transformer sync ขาด `imgs` ใน deps (piece ที่ถูก select ก่อนรูปโหลดเสร็จจะไม่มี handle — กระทบ composer ทุก category) |
+| [zyra-app#458](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/458) | zyra-app | ปุ่ม Preview (Figma 5196:368373) → เปิด `NaturePreviewModal` (Figma 5199:369528) โหมดใหม่ `pieces` (โหมด sprite เดิมยังอยู่) · `NatureWindTree`: ต้นไม้โยกตามลม + ใบไม้ pixel ตกด้วย CSS ล้วน · weather dropdown ↔ wind slider ผูกกันผ่าน band |
+| [zyra-app#459](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/459) | zyra-app | Preview ใช้ได้ทุก category (ไม่ใช่ nature → `ObjectComposerPreviewModal` เดิม, ปุ่ม "Back to edit" เป็น optional) · pan/zoom ใน nature preview · sway ลื่นขึ้น (ease-in-out alternate, แถว 2px, ไม่ snap พิกเซล) |
+| [zyra-app#460](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/460) | zyra-app | ย้ายปุ่ม Preview ไปใต้รายการ Object files (ซ่อนถ้ายังไม่อัป) + preview ไฟล์ที่เลือก · ปลดล็อก Nature type ตอน edit · marker นอกจอแบบ VO · ใบไม้ตกต่าง nature_type · sway 4/5 ของความสูงต้นไม้จริง (ลำต้นขยับด้วย) |
+
+### กติกาของ Nature preview (ตั้งใจทำแบบนี้ ห้ามพัง)
+
+**ลม ↔ สภาพอากาศ** (`views/admin/object-management/nature-wind.ts`) — ค่าจาก Figma (Clear 9 · Cloudy 10/19 · Rain 29 · Strong rain 49 · Thunderstorm 80 km/h) + sticky PM "เลือก Cloudy = ≥10 → ตั้งเป็น 10":
+
+| Weather | ช่วงลม (km/h) | เลือก weather แล้ว slider ไปที่ |
+|---|---|---|
+| Clear | 0–9 | 9 |
+| Cloudy | 10–28 | 10 |
+| Rain | 29–48 | 29 |
+| Strong rain | 49–79 | 49 |
+| Thunderstorm | ≥ 80 (slider max 90) | 80 |
+
+ลาก slider แล้ว dropdown เปลี่ยนตาม band · เลือก dropdown แล้ว slider กระโดดไปค่าของ band นั้น
+
+**ต้นไม้โยก** — composite ทุก piece (ทิศ south) เป็นภาพเดียวผ่าน `/api/img` (ต้องผ่าน proxy ไม่งั้น canvas อ่าน pixel ไม่ได้) · หาแถวบน/ล่างที่ทึบจริง (`opaqueRows`) แล้วโยก **4/5 บนของต้นไม้จริง** (`SWAY_FRACTION`) — 1/5 ล่างนิ่ง · หั่นเป็นแถว 2px แต่ละแถวเอียง `rowLean` = t^1.2 (ยอดเอียงสุด โคนไม่ขยับ) · ขนาด/ความเร็วตามลม (`swayParams`) · animate ผ่าน `@property --nature-sway` ใน `app/globals.css`
+
+**ใบไม้ตก** — สีจากภาพเอง (`pickLeafColors` = สีที่เจอบ่อยสุดใน**ครึ่งบน** ไม่เอาดำ/โปร่งใส · ดอกไม้ใช้ `pickPetalColors` = สีที่ไม่ใช่เขียวใบไม้และไม่มืด) · ตกแบบ `steps(8)` ให้ดูเป็น pixel · จำนวน/ระยะปลิวตามลม · แยกตาม nature_type (`LEAF_PROFILES`):
+
+| nature_type | ลักษณะ |
+|---|---|
+| big_tree | ใบสี่เหลี่ยม 3–4px (ค่า default) |
+| shedding_tree | ×2 จำนวน ร่วงหนัก |
+| pine_tree | เข็มสน 1×3–4px ไม่หมุน ตกตรงกว่า เร็วกว่า |
+| bush | ใบเล็ก 2–3px น้อย ตกจากต่ำ ระยะสั้น |
+| bamboo | ใบยาวบาง 4–5×1–2px ร่อนไกล |
+| flower_bush | กลีบดอกสีดอกไม้ ลอยช้า |
+
+`prefers-reduced-motion` → ปิดทั้ง sway และใบไม้
+
+**Pan / zoom** (`nature-view.ts`) — คลิกค้างลาก หรือ 2 นิ้ว trackpad = เลื่อน · wheel เมาส์ หรือ pinch = zoom รอบเคอร์เซอร์ (25–300%) · Safari pinch ใช้ `gesture*` events · แยกเมาส์กับ trackpad ด้วย heuristic (`classifyWheel`: ctrlKey / deltaMode / deltaX / `wheelDeltaY` ±120) — **browser ไม่บอกตรงๆ ว่ามาจากอะไร ถ้าเมาส์รุ่นไหนกลายเป็นเลื่อนแทน zoom ให้ไล่ที่ฟังก์ชันนี้** · control (wind/weather/zoom) ติด `data-no-pan`
+
+**Marker นอกจอ** — ใช้ `computeIndicatorPlacement` ของ VO (`views/user/virtual-office/utils/offscreen-indicator.ts`) ตัวเดียวกัน ไม่ copy · ขึ้นเมื่อต้นไม้พ้นจอ **หรือหลบอยู่หลังแถบ control ล่าง (50px)** · กดแล้ว glide 300ms ให้ต้นไม้กลับมากลางจอ (zoom เท่าเดิม)
+
+**ปุ่ม Preview** — อยู่ใต้รายการ Object files ในกรอบเดียวกัน · **ไม่แสดงเลย** ถ้ายังไม่อัป (nature: ดูที่ piece ทิศ south ของไฟล์ที่เลือก · อื่นๆ: piece ใดก็ได้) · preview ไฟล์ที่ถูกเลือกอยู่ · ใช้ได้ทั้งหน้า add / edit / detail (read-only)
+
+**Nature type ตอน edit** — client เคยล็อกทุก object ที่ save แล้ว (มาจาก HP-06 ยุค animation) → ปลดแล้ว · server ยังล็อก **เฉพาะ object ที่มีแถวใน `tb_object_animation`** (object เก่าจาก flow animation) — object ที่ทำผ่าน composer เปลี่ยนได้ปกติ
+
+### เหตุการณ์ระหว่างทาง (process — ไม่ใช่บั๊กแอป)
+
+`zyra-app` working directory ถูกใช้พร้อมกันโดย Claude Code **2 session** (account เดียวกัน) · session อื่นที่แก้ VO sky colour ทำ `git add -A` แล้ว**กวาดไฟล์ nature ที่ยังไม่ commit** ของรอบนี้ไปรวมใน commit ตัวเอง → merge เป็น zyra-app#453 (+#454 เข้า main) → แล้ว session นั้นเปิด #455 "restore" ไฟล์กลับเป็น**ของก่อนเปลี่ยนทิศ** → งานรอบนี้หายจาก develop ต้องทำใหม่เป็น #457 · **บทเรียน:** ถ้าหลาย session ใช้ checkout เดียวกัน ให้ commit เร็ว อย่าปล่อยไฟล์ค้าง uncommitted นาน · stage ไฟล์ทีละชื่อ ห้าม `git add -A`
+
+### Before/After
+
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| — | — | — | — |
+
+**ยังไม่ได้วัด** — เหตุผล: เป็นงาน UI ฝั่ง admin (preview) ไม่ใช่ incident/perf และยังไม่ขึ้น prod · ตัวเลขที่วัดได้ตอนนี้เป็นพฤติกรรม ไม่ใช่ before/after (ดูตารางล่าง)
+
+### verify ถึงไหน
+
+| วัดอะไร | ผล |
+|---|---|
+| test / build | api `go build`/`vet`/`test ./...` เขียว · app `vitest` 188 files / 2610 tests · `tsc` (ไม่มี error ใหม่ — มีของเดิมใน `environment-weather-fx`/`pet-creation-wizard`/`pixi-game-scene` test อยู่แล้วบน develop) · `eslint` · `next build` เขียว · CI ทุก PR เขียว |
+| ฟอร์ม (dev harness mount `ObjectAddForm` จริง — ลบแล้ว) | Nature → Nature type → Object Composer → S/N/E/W → Save ใช้ได้ Status=Active · ปุ่ม Preview อยู่ในกรอบ Object files ใต้รายการ · ไม่อัป = ไม่มีปุ่ม · สลับ Green → Autumn แล้ว preview เปลี่ยน (สีใบไม้เปลี่ยนตาม) · Nature type เปิด/เปลี่ยนได้ตอน edit |
+| ลม (Web Animations API — pane ซ่อน เลย step เวลาเอง) | 80 km/h: ยอด 19px · กลางพุ่ม 10px · ต้นลำต้น ~3px · กลางลำต้น ~1px · โคน 0 · band จบที่ 75.3% ของภาพ = 4/5 ของต้นจริง (ภาพมี padding 10% บน/ล่าง) |
+| ใบไม้ | 9 km/h: 3 ใบ · 80 km/h: 17 ใบ · pine 7 เข็ม 1px ไม่หมุน · bamboo 9 ใบยาว · shedding 22 ใบ · flower กลีบสีชมพูตามดอก ไม่มีเขียว · หลังแก้ ไม่มีสีน้ำตาลลำต้นหลุดมาเป็นใบ |
+| pan/zoom | ลาก +60/+30 → view เลื่อนตรง · swipe 2 นิ้ว = pan · wheel 1 notch → 116% รอบเคอร์เซอร์ · pinch → 95% (`preventDefault` แล้ว) · ลากบน slider ไม่ pan |
+| marker | พ้นจอแล้วขึ้น, ลูกศรชี้ถูกทิศ, มีรูปต้นไม้ · กดแล้วต้นไม้กลับกลาง (434,244 vs กลางจอ 433,243) · ขึ้นด้วยเมื่อต้นไม้อยู่หลังแถบ control |
+
+**ยังไม่ได้ verify:** หน้า admin จริงแบบ login (AI login ไม่ได้) · เมาส์จริง + trackpad MacBook จริง (heuristic) · ภาพต้นไม้จริงหลายแบบใน composer
+
+### ต่อจากนี้
+
+1. เปิดหน้า admin บน dev ด้วยตา + ลองเมาส์/trackpad จริง
+2. ปิด [zyra-api#141](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/141) · [zyra-app#452](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/452) (ถูกแทนที่แล้ว)
+3. **ลม/ใบไม้ใน VO/in-game ยังไม่มี** — ตอนนี้ nature บน map แสดงเหมือน object ธรรมดา (composer pieces) · ถ้าจะให้โยกตามสภาพอากาศจริงต้องทำใน `zyra-engine` (งาน frame-aware rendering จากรอบ 11 **ไม่จำเป็นแล้ว** เพราะไม่ได้ใช้ spritesheet)
+4. ClickUp spec ขัดกับของจริงมากขึ้น: ไม่มี animation state / Frame count / Frame rate / required Idle แล้ว · Preview ใช้กับทุก category · weather band ข้างบนยังไม่ได้ให้ PM ยืนยัน (§14.1 ข้อ 12 เดิมเรื่อง weather → animation state หมดความหมายแล้ว)
+5. ตัดสินใจว่าจะลบระบบ animation ที่ dormant (`tb_object_animation`, `/objects/:id/animations`, `nature-upload-modal`, `nature_sprite_strip.go` ฯลฯ) หรือเก็บไว้ต่อ — ตอนนี้เก็บตามที่ผู้ใช้สั่ง
 
 ---
 
