@@ -3,6 +3,15 @@
 > **สถานะรวม:** spec draft · seeder + WS + office journey + form login + lt01–lt09 + Spotlight lt10–lt12 / media ใช้ได้ · verify แบบย่อ (≤41 VU) บน local→dev ครบทุกตัวยกเว้น lt06 (ต้อง seed หลาย workspace) · ยังไม่ได้รันขนาดเต็ม
 > **อัปเดตล่าสุด:** 2026-09-25 · **คนล่าสุด:** rif (ร่วมกับ Claude Code)
 
+## 2026-09-25 (รอบ 4) · rif (ร่วมกับ Claude Code) — ไฟล์ผลต่อรอบ + สรุปด้วย AI
+
+- **ทำอะไร** (`zyra-loadtest`, ยังไม่ commit):
+  - ทุก `make smoke`/`run` ได้โฟลเดอร์ `reports/<scenario>-<ts>/` มี `summary.json` + `report.html` (k6 dashboard export, ไม่ต้อง `D=1`) + `samples.json.gz` (`--out json`, `SAMPLES=0` ปิด) · ย้ายผลเก่าเข้าโฟลเดอร์แล้ว
+  - **แก้ token หลุด:** k6 ใส่ WS URL (มี `?token=<JWT>`) เป็น tag `url`/`name` ของทุก sample → `ws.js` ตั้ง `tags.name = 'WS /ws'` + `SYSTEM_TAGS` (ไม่เก็บ `url`) ในทุก scenario · verify: 3 ไฟล์ 0 token · ผลที่รันก่อนแก้ (`lt12-spotlight-reconnect-20260925-145152`) ยังมี token — ห้ามแชร์
+  - `analyze/` (Go, Anthropic Go SDK v1.75, `claude-opus-5`, `fallbacks: "default"`): `make summarize [RUN=] [DRY=1]` / `AI=1` หลัง `smoke`/`run` → `analysis.md` ภาษาไทย · ส่ง summary แบบย่อ (threshold เป็น PASS/FAIL, rate metric เป็น true/false เพราะ `passes/fails` ของ k6 อ่านกลับด้าน) + หัวไฟล์ scenario + รอบก่อน + host · ไม่ส่ง samples
+- **verify:** `make check` (seeder + analyze + scenarios) · dry-run ข้อมูลที่ส่งถูกต้อง · ไม่มี key → error บอกวิธีแก้ ไม่เขียนไฟล์ · `AI=1` คง exit code ของ k6 (0)
+- **ยังไม่ได้ verify:** เรียก Claude API จริง — เครื่องนี้ยังไม่มี `ANTHROPIC_API_KEY` / `ant auth login`
+
 ## 2026-09-25 (รอบ 3) · rif (ร่วมกับ Claude Code) — Spotlight load test (spec §12)
 
 - **ผู้ใช้สั่ง:** load test Spotlight ทุกขั้น หาว่ารับได้กี่คน · ทั้ง ws/api + LiveKit · LiveKit local ก่อน · seeder สร้าง zone · LiveKit อยู่ใน `docker-compose.yaml` ที่ root

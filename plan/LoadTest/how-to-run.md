@@ -47,6 +47,7 @@ make spotlight-media [option...]       # ภาพ/เสียง (LiveKit)
 | Option | ทำอะไร | ตัวอย่าง |
 |---|---|---|
 | `D=1` | dashboard สดที่ http://127.0.0.1:5665 (เปิดได้เฉพาะตอนเทสรันอยู่) | `make run S=lt02-baseline-50 D=1` |
+| `AI=1` | หลังเทสจบให้ Claude อ่านผลแล้วเขียน `analysis.md` (ภาษาไทย) ลงโฟลเดอร์ของรอบนั้น — ต้องมี `ANTHROPIC_API_KEY` ใน `.env` · ทำงานแม้เทสไม่ผ่าน และไม่เปลี่ยนผล exit code ของเทส · ตั้ง `AI=1` ใน `.env` ถ้าอยากให้สรุปทุกรอบ | `make run S=lt11-spotlight-audience VUS=40 AI=1` |
 | `SAMPLES=0` | ไม่เขียนไฟล์ `samples.json.gz` (ข้อมูลทุกจุด) — ใช้กับรอบใหญ่/ยาวที่ไม่ต้องการกราฟเอง | `make run S=lt08-soak SAMPLES=0` |
 | `VIA=api` \| `app` | `api` = ยิง REST ตรง zyra-api · `app` = ผ่าน Next.js เหมือน browser | `make smoke VIA=app` |
 | `BASE_URL` / `API_URL` / `WS_URL` | ที่อยู่ app / api / ws (default `localhost:3000` / `3002` / `3003`) | `make smoke API_URL=http://localhost:4002` |
@@ -300,7 +301,31 @@ User ทดสอบ: `lt_NNNN@loadtest.invalid` / `LoadTest#2026` — เปิ
 
 ---
 
-## 5. ดูผล
+## 5. สรุปผลด้วย AI (`analysis.md`)
+
+ให้ Claude อ่านผลของรอบหนึ่งแล้วเขียนสรุปภาษาไทยเป็น `reports/<รอบ>/analysis.md` — สรุปผ่าน/ไม่ผ่าน, ตารางเกณฑ์, ตัวเลขที่ควรดู, เทียบกับรอบก่อนของ scenario เดียวกัน, สาเหตุที่เป็นไปได้, ทำอะไรต่อ
+
+```bash
+make run S=lt02-baseline-50 VUS=10 AI=1                       # สรุปอัตโนมัติหลังรันจบ
+make summarize                                                # สรุปรอบล่าสุดใน reports/
+make summarize RUN=reports/lt11-spotlight-audience-20260925-132244
+make summarize RUN=reports/spotlight-media-20260925-134524    # ใช้กับผล media ได้ (อ่าน summary.md)
+make summarize DRY=1                                          # ดูข้อมูลที่จะส่งให้ AI โดยไม่ส่งจริง
+```
+
+| ตั้งค่า (`.env`) | ทำอะไร |
+|---|---|
+| `ANTHROPIC_API_KEY` | key ของ Claude API (จำเป็น) |
+| `LT_AI_MODEL` | model ที่ใช้ (default `claude-opus-5`) |
+| `AI=1` | สรุปทุกรอบโดยไม่ต้องพิมพ์ `AI=1` |
+
+**ส่งอะไรไปบ้าง:** `summary.json` แบบย่อ (ค่าสถิติ + เกณฑ์ที่คิดเป็น PASS/FAIL แล้ว + check ที่ล้ม), คำอธิบายหัวไฟล์ scenario, ผลรอบก่อนของ scenario เดียวกัน และ host ที่ยิง (ไม่มี path/token) · **ไม่ส่ง** `samples.json.gz`
+**ค่าใช้จ่าย:** เสียเงินทุกครั้งที่เรียก (ข้อมูลที่ส่งเล็ก — ไม่กี่พัน token ต่อครั้ง)
+**AI สรุปจากตัวเลขที่ให้เท่านั้น** ส่วน "สาเหตุที่เป็นไปได้" เป็นข้อสันนิษฐาน อ่านทวนก่อนส่งต่อ
+
+---
+
+## 6. ดูผล
 
 - **เทอร์มินัล:** ส่วน `THRESHOLDS` ตอนจบ — ✓ ผ่าน · ✗ ไม่ผ่าน
 - **เช็กเร็ว:** `echo $?` หลังจบ — `0` ผ่านทุกเกณฑ์ · `99` มีเกณฑ์ไม่ผ่าน
@@ -310,6 +335,7 @@ User ทดสอบ: `lt_NNNN@loadtest.invalid` / `LoadTest#2026` — เปิ
   |---|---|---|
   | `summary.json` | ค่าสรุปตอนจบ (p95, rate, ผ่าน/ไม่ผ่าน) | editor / script |
   | `report.html` | dashboard ของ k6 แบบบันทึกไว้ — กราฟตามเวลาของทั้งรอบ | ดับเบิลคลิกเปิดใน browser · เทสสั้นกว่า ~30 วินาทีจะไม่ได้ไฟล์นี้ |
+  | `analysis.md` | สรุปจาก AI (มีเมื่อใช้ `AI=1` หรือ `make summarize`) | editor / preview Markdown |
   | `samples.json.gz` | ทุกค่าที่วัดได้พร้อมเวลา 1 บรรทัดต่อ 1 จุด (k6 `--out json`) — ไว้ทำกราฟเอง | `zcat < samples.json.gz \| head` · รอบใหญ่/ยาวไฟล์ใหญ่มาก `SAMPLES=0` ถ้าไม่ต้องการ |
 
   `make spotlight-media` เขียนแยกที่ `reports/spotlight-media-<เวลา>/summary.md`
