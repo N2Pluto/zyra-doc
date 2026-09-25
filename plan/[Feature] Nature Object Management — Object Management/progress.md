@@ -1,6 +1,58 @@
 # SC-OBJ-NAT-01 · Progress — Nature Object Management (Admin)
 
-> entry ใหม่อยู่**บนสุด** · ClickUp main: [86d446fw1](https://app.clickup.com/t/86d446fw1) · **เปลี่ยนทิศ 2026-09-23 (รอบที่ 12): Nature ใช้ Object Composer แบบเดียวกับ category อื่น 100% — ต่างแค่มีช่อง Nature type** · ระบบ animation-state upload (`tb_object_animation` ฯลฯ) **เก็บไว้เฉยๆ ไม่ได้เรียกใช้แล้ว** · Nature preview (ลม + ใบไม้ตก + pan/zoom) อยู่บน `develop` แล้ว · **ยังไม่ได้เปิดดูในหน้า admin จริงแบบ login** · **ลม/ใบไม้มีแค่ใน preview — VO/in-game ยังไม่มี**
+> entry ใหม่อยู่**บนสุด** · ClickUp main: [86d446fw1](https://app.clickup.com/t/86d446fw1) · **เปลี่ยนทิศ 2026-09-23 (รอบที่ 12): Nature ใช้ Object Composer แบบเดียวกับ category อื่น 100% — ต่างแค่มีช่อง Nature type** · **nature_type มี 7 แบบแล้ว (+`coconut_tree` 2026-09-24, รอบที่ 13)** · ระบบ animation-state upload (`tb_object_animation` ฯลฯ) **เก็บไว้เฉยๆ ไม่ได้เรียกใช้แล้ว** · Nature preview (ลม + ใบไม้ตก + pan/zoom) อยู่บน `develop` แล้ว · **ยังไม่ได้เปิดดูในหน้า admin จริงแบบ login** · **ลม/ใบไม้มีแค่ใน preview — VO/in-game ยังไม่มี**
+
+---
+
+## รอบที่ 13 — 2026-09-24 → 09-25 (เพิ่ม Coconut tree + ใบมะพร้าวร่วงแบบใบจริง · แก้ขอบการ์ดที่เลือก)
+
+### ที่ทำ
+
+| PR | Repo | ทำอะไร |
+|---|---|---|
+| [zyra-app#462](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/462) | zyra-app | ขอบเขียวของการ์ด object ที่เลือกโดนตัด — เดิมใช้ `ring-1` (box-shadow วาดนอกการ์ด) ซึ่ง list ที่ `overflow-y-auto` ตัดทิ้ง → เปลี่ยนเป็น `border` 1px ของการ์ดเอง (โปร่งใสตอนไม่เลือก ไม่มี layout shift) |
+| [zyra-api#143](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/143) | zyra-api | nature_type ใหม่ `coconut_tree` · allowed states `idle/sway_light/sway_strong/falling` (มะพร้าวร่วงทาง) · default grid 2×4 · **ไม่มี migration** — nature_type validate ที่ Go อย่างเดียว ไม่มี DB CHECK (`105_object_nature.sql`) · merge ก่อน app |
+| [zyra-app#463](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/463) | zyra-app | เพิ่ม Coconut tree / ต้นมะพร้าว ใน type, dropdown, badge · leaf profile ของตัวเอง · keyframes ใบไม้เพิ่ม `rotate(var(--leaf-tilt, 0deg))` (default 0 — type อื่นไม่เปลี่ยน) · parity test: `falling` อนุญาตสำหรับ shedding_tree **และ** coconut_tree |
+| [zyra-app#464](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/464) | zyra-app | ผู้ใช้ติว่าใบที่ร่วงเป็น "ไม้" ไม่ใช่ใบมะพร้าว → วาดใบมะพร้าวแบบ pixel art จริง (`buildFrond`) แทนแท่งสี่เหลี่ยม · สีจากเขียวของต้นเท่านั้น (`pickFoliageColors` — ไม่เอาน้ำตาลลำต้น) · ครึ่งชี้ซ้าย ครึ่งชี้ขวา (`mirrorGrid`) |
+| [zyra-app#465](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/465) | zyra-app | ผู้ใช้บอกใบเล็กมาก → เปลี่ยนจากคำนวณตาม pixel ของภาพ เป็น **ครึ่งหนึ่งของความกว้างต้นไม้บนจอเสมอ** · style ของ sprite (stretch/no-repeat/pixelated/no shadow) ใส่ inline ด้วย |
+
+### ใบมะพร้าว — ทำไมทำแบบนี้ (ห้ามพัง)
+
+**ทำไมไม่ตัดใบจากภาพจริง:** ใบในพุ่มมะพร้าวซ้อนกันหมด ตัดออกมาใบเดียวไม่ได้ (ได้ก้อนพุ่มครึ่งๆ) → วาดใบเองด้วยโครงเดียวกับที่คนวาด pixel palm วาด
+
+**รูปใบ (`buildFrond`, 24 cell · `FROND_CELLS`):** ใบโค้งกว้างสุดราว 1/4 จากโคนแล้วเรียวเป็นปลายแหลม · ก้านกลางสีเข้มกว่าโค้งลงหาปลาย · ปลายใบย่อยหยักทั้งสองขอบ (ทุก 3 คอลัมน์ยื่น 1px) · ลายใบย่อยเฉียงย้อนไปหาโคน · บนสว่าง ล่างเงา · ขอบดำ 1px
+
+**ขนาด:** `FROND_WIDTH_SHARE = 0.5` = ยาว **ครึ่งหนึ่งของความกว้างต้นบนจอ** เสมอ ไม่สนความละเอียดภาพ · **บั๊กที่เจอ (#464 → #465):** เดิมคิดขนาด cell จาก pixel ของภาพต้นทาง (composer unit ÷ `naturalWidth`) + cap 48 cell → asset ที่ export ความละเอียดสูง (เช่นกว้าง 500px แต่วางแค่ ~100 unit) ได้ใบเหลือไม่กี่ px · อีกทางที่ใบจะดูเล็ก: ถ้า CSS ของ `.nature-leaf-sprite` ไม่โหลด ภาพจะ tile 1px ต่อ cell เต็มกล่อง → ใส่ inline แล้ว
+
+**การร่วง (`LEAF_PROFILES.coconut_tree`):** น้อย (×0.2 ของจำนวนปกติ อย่างน้อย 1) · เริ่มจากยอด (บนสุด 25%) · ไม่พลิกหน้าเร็วแบบใบเล็ก (`flutter: false`) แต่ **โยกเอียง ±35°** (`--leaf-tilt`) + ส่ายกว้าง 10px (`--leaf-wobble`) · ร่วงช้า (speed ×1.6)
+
+### nature_type ตอนนี้ (7 แบบ)
+
+big_tree · pine_tree · bush · shedding_tree · bamboo · flower_bush · **coconut_tree** — ต้องตรงกันระหว่าง Go (`internal/model/object.go`) กับ TS (`lib/api/objects.ts`) มี parity test ทั้ง 2 ฝั่ง · **⚠️ spec ของ SC-NAT-01 "Animated Nature & Plant Trees" (ฝั่ง VO — `plan/[Feature]  Animated Nature & Plant Trees/`, ถอดเมื่อ 2026-09-25 ตอนนี้ยังไม่ได้ commit) ยังเขียน "6 nature type"** — ถ้าจะทำฝั่ง VO ต้องรวม coconut_tree ด้วย
+
+### Before/After
+
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| ความยาวใบมะพร้าวที่ร่วง (preview 200%, asset ทดสอบ export 10×) | ~12px (ขนาดจาก pixel ภาพ, cap 48 cell) | 140px (= ½ ความกว้างต้น) | ×~11 |
+
+**วัดยังไง:** อ่าน `style.width` ของ `.nature-leaf-sprite` ใน dev harness (Playwright + Chrome) ด้วยต้นมะพร้าววาดเอง 56×72 art px export เป็น 560×720 · ค่า before คำนวณจากสูตรเดิม (48 cell × 0.2 unit × 1.25 × zoom 2) ไม่ได้วัดบน asset จริง · **ยังไม่ได้วัดกับ asset มะพร้าวจริงบน dev** (ต้อง login)
+
+### verify ถึงไหน
+
+| วัดอะไร | ผล |
+|---|---|
+| test / build | api `go build`/`vet`/`test ./...` เขียว · app `vitest` 188 files / 2620 tests (+ รูปใบ/สี/ก้าน/mirror/ขนาด, foliage colours, sprite เฉพาะ coconut) · `tsc` (ไม่มี error ใหม่) · `eslint` · `next build` · CI ทุก PR เขียว |
+| ขอบการ์ด (harness ใน list ที่ scroll) | การ์ดที่เลือก border 1px `#58D68D` ไม่มี box-shadow · ครบ 4 ด้านทั้งการ์ดบนสุดและกลาง list |
+| ใบมะพร้าว (harness) | ขยาย 8× ดูแล้วเป็นรูปใบ (ก้าน+ขอบหยัก+ปลายแหลม) · สีเขียวล้วน ไม่มีน้ำตาลลำต้น · 80 km/h ร่วง 3 ใบ เอียง 35° · ยาว ½ ความกว้างต้น ไม่ tile |
+
+**ยังไม่ได้ verify:** asset มะพร้าวจริงบน dev (ต้อง login) · หน้า list จริงหลัง login (ขอบการ์ด)
+
+### ต่อจากนี้
+
+1. เปิด Coconut tree ด้วย asset จริงบน dev แล้วดูว่าใบร่วงเข้ากับภาพไหม — ถ้าอยากปรับขนาด แก้ `FROND_WIDTH_SHARE` ใน `nature-wind.ts`
+2. แจ้งเจ้าของ SC-NAT-01 (ฝั่ง VO) ว่า nature_type มี 7 แบบแล้ว
+3. ที่ค้างจากรอบ 12 ยังเหมือนเดิม: ลม/ใบไม้ใน VO · ปิด api#141/app#452 · แก้ spec ใน ClickUp
 
 ---
 
