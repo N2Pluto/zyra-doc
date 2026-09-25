@@ -1,7 +1,27 @@
 # Load Test — Progress / Handoff
 
-> **สถานะรวม:** spec draft · seeder + WS + office journey + form login + lt01–lt09 ใช้ได้ · verify แบบย่อ (≤13 VU) บน local→dev ครบทุกตัวยกเว้น lt06 (ต้อง seed หลาย workspace) · ยังไม่ได้รันขนาดเต็ม
+> **สถานะรวม:** spec draft · seeder + WS + office journey + form login + lt01–lt09 + Spotlight lt10–lt12 / media ใช้ได้ · verify แบบย่อ (≤41 VU) บน local→dev ครบทุกตัวยกเว้น lt06 (ต้อง seed หลาย workspace) · ยังไม่ได้รันขนาดเต็ม
 > **อัปเดตล่าสุด:** 2026-09-25 · **คนล่าสุด:** rif (ร่วมกับ Claude Code)
+
+## 2026-09-25 (รอบ 3) · rif (ร่วมกับ Claude Code) — Spotlight load test (spec §12)
+
+- **ผู้ใช้สั่ง:** load test Spotlight ทุกขั้น หาว่ารับได้กี่คน · ทั้ง ws/api + LiveKit · LiveKit local ก่อน · seeder สร้าง zone · LiveKit อยู่ใน `docker-compose.yaml` ที่ root
+- **ทำอะไร** (`zyra-loadtest@feat/smoke-structure`, ยังไม่ commit · workspace root `docker-compose.yaml`):
+  - seeder `spotlight` (seed เรียกเองด้วย): เพิ่ม `lt_spotlight` 2×2 tile ลง main map ของ `lt_ws_*` ที่ owner เป็น lt user (idempotent) + เขียน `vo:zones:<ws>` ใหม่ทั้ง workspace รูปแบบเดียวกับ api `publishWorkspaceZones` · `lt_ws_01` ได้ zone ที่ tile 41,24 · ถ้าเพิ่ม zone ไม่ได้ seed แค่เตือน (ไม่ทิ้ง tokens)
+  - `k6/lib/spotlight.js` + `lt10`/`lt11`/`lt12`: presenter = scenario แยก 1 VU (k6 ไม่รับประกันว่า VU id ไหนอยู่ scenario ไหน) · ไลฟ์ตามตารางเวลาเดียวกันทุก VU → วัด `ได้รับ − เวลานัด` · metric `spotlight_{start,state,bell,meeting,end,resume}_ok` + `_ms` + media-token · คนในห้องประชุมทุกคนกด meetingJoin (server idempotent) · วัด latency เฉพาะรอบที่คนดูอยู่ก่อนเริ่มไลฟ์ · `LT_DEBUG=1` log event
+  - `lib/api/media.js` (mint token เท่านั้น k6 ไม่ต่อ LiveKit) · `visit` ส่ง `onMessage` ต่อได้
+  - `scripts/spotlight-media.sh` + `make spotlight-media` / `livekit-up` / `livekit-down` (SC-LT-13): ไล่คนดู 10→200 ขั้นละ 60s หยุดเมื่อ loss > 2% / มี error · เก็บ CPU/mem ของ container · กัน URL ไม่ใช่ local (`LT_ALLOW_REMOTE_SFU`, `LT_ALLOW_SHARED_NODE` สำหรับ `*.zyra.center`) · LiveKit local รัน `lk` ใน network ของ container (`livekit/livekit-cli`)
+  - `.env` เพิ่ม `LIVEKIT_*` · สร้าง `.env.example` (เดิมไม่มีในไฟล์จริง ทั้งที่ progress รอบ 09-24 เขียนว่ามี)
+- **บั๊กของ script ที่เจอและแก้ระหว่าง verify:** จับคู่ event กับรอบผิด (ช่วงรอบแรกกว้างเกิน) · รอบที่ presenter หลุดแล้วกลับมาไม่ส่ง stop → ไลฟ์ค้างข้ามรอบ · late joiner ได้ snapshot/กระดิ่งแล้วถูกนับเป็น latency (bell p95 81s ปลอม) · CPU sample เพี้ยนจาก `docker stats` (ตัดค่าที่เกิน 100% × core)
+- **verify (local app :3000 → api :3002 / ws :3003 → dev DB · LiveKit local docker):**
+  - lt10 1 presenter + 4 viewers: ทุก rate 100% · fanout 1ms · กระดิ่ง ~145ms · meetingJoin 2ms · media-token ~200ms
+  - lt12 5 viewers: resume 5/5 session เดิม · หลุดไม่กลับ → `stopped` ตรง grace 2 นาที (debug log: หลุด +110s → stopped +230s) · bell/end 10/10
+  - lt11 40 viewers / 8m / 3 รอบ / 20% ในห้องประชุม: ทุก rate 100% · fanout p95 1ms · กระดิ่ง p95 300ms · meeting p95 4ms · media-token p95 311ms · http fail 0/1848
+  - media (lk ใน docker network, high, 1 video + 1 audio): 10 → 0% · 25 → 0% (1.4 Mbps/คน) · 50 → 0.05% · 100 → 0.6% (285–437 kbps/คน = LiveKit ลด simulcast layer) · **150 → 2.3% หยุด** · lk จาก host ผ่าน Docker proxy ตันก่อน (25 คน loss 1%) จึงไม่ใช้
+  - `make check` · `git diff --check` · `make clean-dry` (500 users, rollback, ไม่ติด FK — zone/กระดิ่ง cascade)
+- **ความหมายของตัวเลข:** control plane 40 คนยังสบายมาก ยังไม่ถึงเพดาน · media 100–150 คนดูคือเพดานของ **MacBook เครื่องนี้** (lk + LiveKit แย่ง CPU 8 core เดียวกัน) ไม่ใช่ของ server จริง
+- **ยังไม่ได้รัน:** lt11 ขนาดเต็ม (500 viewers — ต้อง seed 501 user และ DB เป็น dev ที่ยังไม่รู้ว่าแชร์กับ prod ไหม: Q1) · media บน SFU จริง · `SCREEN=1`
+- **ต่อจากนี้:** ตัดสิน Q1 → `make seed USERS=501` → lt11 เต็ม · media บน VM/SFU แยกด้วย `LIVEKIT_URL` + `LT_ALLOW_REMOTE_SFU=1`
 
 ## 2026-09-25 (รอบ 2) · rif (ร่วมกับ Claude Code) — form login, lt06 spread, verify lt03/04/08
 

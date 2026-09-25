@@ -4,6 +4,7 @@
 > **repo ที่เกี่ยว:** `zyra-loadtest` (`feat/smoke-structure`, ยังไม่ commit) · อ่านอย่างเดียว: `zyra-api`, `zyra-ws`, `zyra-app`, `zyra-notifications`, `zyra-landing`
 > **ClickUp:** — (ยังไม่มี task)
 > **ข้อมูลใน §3 มาจากการอ่านโค้ด 2026-09-24** ตาม branch ปัจจุบันของแต่ละ repo (api `feat/admin-roadmap-api`, ws/notifications `feat/spotlight`, app `feat/tree-sway`) — ไม่ใช่ `develop` ทุกตัว ก่อนเริ่มเขียน script ให้เทียบกับ `develop` อีกรอบ
+> **วิธีรัน + option ทุกตัว:** [how-to-run.md](how-to-run.md)
 > **ต้องตอบ [§10 Open Questions](#10-open-questions) ข้อ Q1–Q3 ก่อนเริ่ม implement**
 
 ---
@@ -289,3 +290,55 @@
 - [x] `progress.md`
 - [x] โครง `zyra-loadtest` + SC-LT-01 smoke (`GET /api/user/me`) ผ่าน
 - [ ] สร้าง `task-breakdown.md`
+- [x] Spotlight §12: seeder zone + lt10–lt12 + media (SC-LT-13) — ใช้ได้และ verify แบบย่อแล้ว 2026-09-25 (ดู progress)
+- [ ] Spotlight ขนาดเต็ม: lt11 500 viewers (รอ Q1) · media บน SFU จริง
+
+---
+
+## 12. Spotlight (เพิ่ม 2026-09-25)
+
+> **ผู้ใช้สั่ง 2026-09-25:** load test Spotlight "ทุกขั้นตอน" หาว่ารับได้กี่คน · วัดทั้ง control plane (k6) + media plane (LiveKit) · LiveKit ยิง **local ก่อน** (เปลี่ยน env ทีหลังได้) · seeder สร้าง Spotlight zone เอง
+> → media plane ของ Spotlight **เข้า scope** (แคบกว่า Q5: เฉพาะห้อง `spotlight:<floorId>` ไม่รวม meeting)
+> feature: [Spotlight/spec.md](../Spotlight/spec.md) · progress 2026-09-16
+
+### 12.1 ของจริงในโค้ด (baseline, อ่าน 2026-09-25)
+
+| ขั้น | อะไรเกิดขึ้น | ที่มา |
+|---|---|---|
+| ขึ้นเวที | client ยืนบน spotlight tile → กด Play → countdown 5s → `POST .../rooms/spotlight:<floorId>/media-token` → WS `ws:spotlight:start {notify}` | app `hero-virtual-office.tsx`, `lib/api/media.ts` |
+| ws ตรวจ | `HasZoneType("spotlight", tile)` จาก Redis `vo:zones:<ws>` (ไม่มี key = fail open) · เปิด session ใหม่ถ้า floor เงียบ | ws `hub/spotlight.go` `handleSpotlightStart` |
+| fanout | `ws:spotlight:stateUpdate` (speakers ทั้ง set + `session_id` + `accepted_meeting_ids`) ส่งทุกคนบน floor | `broadcastSpotlightState` |
+| กระดิ่ง | session ใหม่ → ws `POST /api/internal/spotlight/broadcasts` (recipients = ทุกคนบน floor − presenter) → api insert N แถว `tb_notification` + push `vo:notify` → `chat:notification:new` ถึง N คน | `notifySpotlightStarted`, `notification_service.go` |
+| คนดู | นอกห้องประชุม: auto-listen → mint token ห้อง spotlight → ต่อ LiveKit subscribe-only · ในห้องประชุม: รอคนในห้องกด `ws:spotlight:meetingJoin {room_id}` | `use-spotlight-broadcast.ts` |
+| จบ | `ws:spotlight:stop` → stateUpdate `stopped` → `POST .../broadcasts/:sessionId/end` (stamp ended + push แถวที่อัปเดต N ครั้ง) | `endSpotlightSpeaker`, `notifySpotlightEnded` |
+| หลุด | presenter หลุด → `paused` · กลับภายใน 2 นาที = `resumed` session เดิม · เกิน = จบเอง | `spotlightGracePeriod` |
+| media | LiveKit ห้อง `spotlight:<floorId>`: presenter publish mic/กล้อง/จอ → คนดู N คน subscribe | LiveKit (dev/prod = `sfu.zyra.center` บน node เดียวกับ prod) |
+
+- template "Zyra World" **ไม่มี spotlight zone** (private 96 / meeting 18 / room 8 / teleport 1)
+- bot ที่ไม่ส่ง tile จะเกิดที่ tile 0,0 · `spawn_override=1` ทำให้ tile ที่ส่งไปเป็นของจริง (ข้าม Redis last-position)
+
+### 12.2 Scenarios
+
+| ID | ไฟล์ | คำถาม | ทำอะไร | เกณฑ์ (ข้อเสนอ — Q4) |
+|---|---|---|---|---|
+| SC-LT-10 | `lt10-spotlight-smoke` | ทุกขั้นทำงานไหม | presenter 1 + คนดู 4 (1 คนอยู่ห้องประชุม) · 1 รอบ start → fanout → token → กระดิ่ง → meetingJoin → stop → ended | ทุก check ผ่าน 100% |
+| SC-LT-11 | `lt11-spotlight-audience` | 1 เวที คนดูได้กี่คน (control plane) | คนดูเพิ่มเป็นขั้น 50→100→250→500 บน floor เดียว · presenter เปิด/ปิดไลฟ์ทุกรอบ (ค่าเริ่ม 2 นาที) · 20% ของคนดูอยู่ในห้องประชุม | ได้ stateUpdate ≥ 99%, fanout p95 < 1s, กระดิ่ง p95 < 3s, media-token p95 < 500ms, http fail < 1% · บันทึกขั้นที่เริ่มตก |
+| SC-LT-12 | `lt12-spotlight-reconnect` | presenter หลุดแล้วคนดูเห็นถูกไหม | presenter ตัด WS กลางไลฟ์ 2 แบบ: กลับใน 30s (ต้อง `paused`→`resumed` session เดิม) · หายเกิน grace (ต้องได้ `stopped` เอง) | คนดูได้ event ครบ ≥ 99%, session id ไม่เปลี่ยนตอน resume |
+| SC-LT-13 | `make spotlight-media` | LiveKit 1 presenter ส่งให้กี่คนก่อนภาพ/เสียงแย่ | `lk load-test` ห้อง `spotlight:<floorId>` · publisher 1 (video+audio, เลือกแชร์จอเพิ่มได้) · subscribers 10→25→50→100→… | บันทึก packet loss / bitrate / CPU ของ LiveKit ต่อขั้น · หยุดขั้นที่ loss > 2% หรือ CPU อิ่ม |
+
+**วิธีวัดเวลา fanout (k6 ไม่มี shared memory ข้าม VU):** ทุก VU คำนวณเวลาเริ่มไลฟ์รอบที่ k จากเวลาเริ่ม test เดียวกัน (`testStart + k × period`) → presenter ส่ง `start` ตรงเวลานั้น คนดูวัด `ได้รับ − เวลาที่นัด` (เหมือน SC-LT-09)
+
+### 12.3 Seeder
+
+- `seeder spotlight` (และ `seed` เรียกให้อัตโนมัติ): ต่อ workspace `lt_ws_*` เพิ่ม zone `lt_spotlight` type `spotlight` ขนาด 2×2 tile ในจุดที่ไม่ทับ zone อื่น (ข้ามถ้ามีแล้ว = idempotent) แล้วเขียน `vo:zones:<ws>` ใหม่ให้ครบทุก zone รูปแบบเดียวกับ api `publishWorkspaceZones` (ws จะตรวจ tile จริง ไม่ fail open)
+- clean: zone ลบตาม `tb_map` (cascade) · แถว `tb_notification` ลบตาม user (cascade) · Redis `vo:*<ws>*` ลบอยู่แล้ว
+
+### 12.4 Safety เพิ่ม
+
+- k6 ไม่ต่อ LiveKit — แค่ mint token (โหลดอยู่ที่ api) · `sfu.zyra.center` ไม่โดนจาก k6
+- `make spotlight-media` ยอมเฉพาะ `LIVEKIT_URL` ที่เป็น localhost/127.0.0.1 · host อื่นต้อง `LT_ALLOW_REMOTE_SFU=1` · `*.zyra.center` ต้อง `LT_ALLOW_SHARED_NODE=1` เพิ่มอีกชั้น (S-02)
+- LiveKit local: service `livekit` (profile `livekit`) ใน `docker-compose.yaml` ที่ root ของ workspace · `--dev` key/secret · `lk` รันในภาพ `livekit/livekit-cli` บน network ของ container (Docker Desktop UDP proxy ตันก่อน LiveKit) · `lk` บน host (brew) ใช้เมื่อยิง SFU อื่น
+
+### 12.5 ไม่ครอบคลุม
+
+- การต่อ LiveKit จริงของคนดูใน k6 (แยกวัดใน SC-LT-13) · Spotlight screen share หยุด meeting share (HP-06) · หลาย floor/หลายเวทีพร้อมกัน · UI/render ฝั่ง browser
