@@ -47,6 +47,7 @@ make spotlight-media [option...]       # ภาพ/เสียง (LiveKit)
 | Option | ทำอะไร | ตัวอย่าง |
 |---|---|---|
 | `D=1` | dashboard สดที่ http://127.0.0.1:5665 (เปิดได้เฉพาะตอนเทสรันอยู่) | `make run S=lt02-baseline-50 D=1` |
+| `SAMPLES=0` | ไม่เขียนไฟล์ `.samples.json.gz` (ข้อมูลทุกจุด) — ใช้กับรอบใหญ่/ยาวที่ไม่ต้องการกราฟเอง | `make run S=lt08-soak SAMPLES=0` |
 | `VIA=api` \| `app` | `api` = ยิง REST ตรง zyra-api · `app` = ผ่าน Next.js เหมือน browser | `make smoke VIA=app` |
 | `BASE_URL` / `API_URL` / `WS_URL` | ที่อยู่ app / api / ws (default `localhost:3000` / `3002` / `3003`) | `make smoke API_URL=http://localhost:4002` |
 | `LT_ALLOW_SHARED_NODE=1` | ยอมให้ยิง `*.zyra.center` เกิน 5 คน (node เดียวกับ prod) — ใช้เมื่อทีมอนุมัติเท่านั้น | — |
@@ -303,5 +304,13 @@ User ทดสอบ: `lt_NNNN@loadtest.invalid` / `LoadTest#2026` — เปิ
 
 - **เทอร์มินัล:** ส่วน `THRESHOLDS` ตอนจบ — ✓ ผ่าน · ✗ ไม่ผ่าน
 - **เช็กเร็ว:** `echo $?` หลังจบ — `0` ผ่านทุกเกณฑ์ · `99` มีเกณฑ์ไม่ผ่าน
-- **ไฟล์ผล:** `reports/<scenario>-<วันที่-เวลา>.json`
+- **ไฟล์ผล:** ทุกครั้งที่ `make smoke` / `make run` ได้ 3 ไฟล์ชื่อขึ้นต้นเดียวกัน `reports/<scenario>-<วันที่-เวลา>`
+
+  | ไฟล์ | คืออะไร | เปิดยังไง |
+  |---|---|---|
+  | `.json` | ค่าสรุปตอนจบ (p95, rate, ผ่าน/ไม่ผ่าน) | editor / script |
+  | `.html` | dashboard ของ k6 แบบบันทึกไว้ — กราฟตามเวลาของทั้งรอบ | ดับเบิลคลิกเปิดใน browser (ไม่ต้องเปิด server) · เทสสั้นกว่า ~30 วินาทีจะไม่ได้ไฟล์นี้ (k6 ข้ามเพราะข้อมูลไม่พอ) |
+  | `.samples.json.gz` | ทุกค่าที่วัดได้พร้อมเวลา 1 บรรทัดต่อ 1 จุด (k6 `--out json`) — ไว้ทำกราฟเอง | `zcat < ไฟล์ \| head` · รอบใหญ่/ยาวไฟล์ใหญ่มาก ใส่ `SAMPLES=0` ถ้าไม่ต้องการ |
+
+  `make spotlight-media` เขียนแยกที่ `reports/spotlight-media-<เวลา>/summary.md`
 - **Progress bar ค้าง 0% จนจบ = ปกติ:** bot แต่ละตัวทำงานรอบเดียวยาว ๆ · ดูเวลาจากบรรทัด `running (…)` หรือใช้ `D=1` · ✓ หน้าชื่อ scenario ในแถบ = รันจบ ไม่ใช่ผ่านเกณฑ์
