@@ -1,7 +1,50 @@
 # Load Test — Progress / Handoff
 
-> **สถานะรวม:** spec draft · โครง `zyra-loadtest` เสร็จ · smoke 1 endpoint ผ่าน · seeder `seed`/`clean` ใช้ได้ (verify บน dev) · k6 ส่วนอื่นยังเป็น stub
-> **อัปเดตล่าสุด:** 2026-09-24 · **คนล่าสุด:** rif (ร่วมกับ Claude Code)
+> **สถานะรวม:** spec draft · seeder + WS + office journey + form login + lt01–lt09 ใช้ได้ · verify แบบย่อ (≤13 VU) บน local→dev ครบทุกตัวยกเว้น lt06 (ต้อง seed หลาย workspace) · ยังไม่ได้รันขนาดเต็ม
+> **อัปเดตล่าสุด:** 2026-09-25 · **คนล่าสุด:** rif (ร่วมกับ Claude Code)
+
+## 2026-09-25 (รอบ 2) · rif (ร่วมกับ Claude Code) — form login, lt06 spread, verify lt03/04/08
+
+- **ทำอะไร** (`zyra-loadtest@feat/smoke-structure`, ยังไม่ commit):
+  - `k6/flows/login.js` (แทน stub) + `lib/api/auth.js` `postLogin` — `POST /api/authen/login` form-data ตาม `auth_handler.go` · metric `login_ms`/`login_ok` · กัน S-07: `setup()` login user แรก 1 ครั้งก่อน ถ้ารหัสผิดหยุดทันที · VU ไหนโดนปฏิเสธ credential (body.status 400/403/423) → abort ทั้ง test · 5xx/timeout = นับเป็นผล แล้วใช้ token ที่ mint ต่อ
+  - poller เรียก `GET /api/authen/session-state` ทุก 30s เมื่อ login จริง (refresh_token cookie ใน jar ของ VU) → ปิด gap "session-state ไม่ครอบคลุม"
+  - `lt07` ใช้ form login เป็นค่าเริ่มต้น (spec §7 token B) · `LOGIN=0/1` override ได้ทุก scenario · กัน `LOGIN=1` กับ DURATION > 14m (access token อายุ 15m, bot ไม่ refresh)
+  - `lib/users.js` — `single` (default): ใช้เฉพาะ user ของ workspace แรกใน tokens.json · `spread` (lt06): round-robin ทุก workspace → เดิม lt06 ที่ VUS < จำนวน user จะไปกองที่ workspace แรก และ scenario 1 office จะหลุดไป workspace อื่นถ้า seed หลาย workspace
+  - Makefile `TTL=` ส่งให้ `seed`/`refresh` (lt08 2h ต้อง `make refresh TTL=3h`)
+- **verify (local app :3000 → api :3002 / ws :3003 → dev DB, 500 lt_ users / 1 workspace):**
+  - `make check` ผ่าน · `git diff --check` สะอาด
+  - lt07 `LT_PASSWORD` ผิด → ส่ง login 1 ครั้งแล้ว setup หยุด (`lt_0001` attempts=1 แล้วรีเซ็ตตอน login ถูกรอบถัดไป)
+  - lt07 5 VU 1m: login 5/5, session-state 200 ทุกครั้ง, checks 251/251 · **enter p95 1.72s ✗** — 5 VU ก็ยังเกิน → เป็น latency (api local → dev DB, `/me` ~180ms/รอบ × 4 รอบ) ไม่ใช่ load
+  - lt03 10 VU 1m ✓ · lt04 VUS=12 → 13 VU ครบ 5 step / 2m30s ✓ (goto ชนผนัง 3) · lt08 5 VU 1m ✓ · smoke 3 VU ✓ (regression)
+  - lt06: ทดสอบ offline ด้วย tokens ปลอม 3 workspace → VU กระจาย ws1/ws2/ws3 ถูก · single abort เมื่อ user ไม่พอ · **ยังไม่ได้ยิงจริง** (ต้อง clean + seed `WORKSPACES>1`)
+- **ยังไม่ได้รัน:** ทุก scenario ขนาดเต็ม · lt06 จริง · lt04/lt05 flag `VO_TICK_*` off/on
+- **ไม่ครอบคลุม:** `/api/img` (ผ่าน Next เท่านั้น), meeting/media (Q5)
+- **สถานะ dev ตอนนี้:** lt_ users 500 คน / `lt_ws_01` (seed 11:52) ยังค้าง — `make clean YES=1` เมื่อเลิกใช้
+- **ต่อจากนี้:** ตัดสิน Q1 ก่อนยิงขนาดเต็ม · lt06 ต้อง `make clean YES=1` → `make seed … USERS=100 WORKSPACES=4 YES=1` · หาสาเหตุ lt07 ช้า (ลองยิงจาก network เดียวกับ DB)
+
+## 2026-09-25 · rif (ร่วมกับ Claude Code) — WS + office journey + lt02–lt09
+
+- **ทำอะไร** (`zyra-loadtest@feat/smoke-structure`, ต่อจาก commit `16af079` ของ rif — ยังไม่ commit ส่วนนี้):
+  - `k6/lib/ws.js` — ต่อ `/ws` (ส่ง `Origin` = BASE_URL ไม่งั้น ws ตอบ 403), รอ `welcome`, `ping` 300ms/1.2s/ทุก 3s, อ่านทุก frame (text + binary), metric `ws_welcome_ok`/`ws_welcome_ms`/`ws_ping_rtt_ms`/`ws_errors`/`ws_goto_rejected`
+  - `k6/lib/api/` แยกตามหมวด (user, workspace, map, chat, auth) + `getMany` (parallel แบบ `Promise.all` ของ app) · body.status รับทั้ง `200` และ `"success"` (chat, members ตอบแบบหลัง)
+  - `k6/lib/poller.js` — maintenance 10s, app presence 30s, workspace presence 30s (start แบบ random offset)
+  - `k6/flows/enterOffice.js` — ลำดับเดียวกับ app: workspace∥maps → zones∥objects → me∥conversations∥unread∥avatars∥default avatar∥members∥objects/all → workspace presence · `k6/flows/visit.js` — entry → polling → WS → behavior → ออก
+  - `k6/behaviors/` — idle · walker (movement v2 `input` + keepalive 150ms, `goto` บ้าง, โหมด cluster) · chatter (`chat:join` → typing → REST POST message → WS `chat:message` relay, 1 ข้อความ/10–20s)
+  - `k6/lib/scenario.js` — builder ที่ lt02–lt09 ใช้ร่วม (steps + spread, `VUS`/`DURATION`/`MIX` override) · เขียน lt02–lt09 ตาม spec §6
+  - seeder: สร้าง `#general` + สมาชิกครบตอน seed (ปิด gap "ไม่สร้าง #general" ของรอบก่อน) · `refresh` (re-mint token จาก `seed.json` ไม่แตะ DB) · token มี `display_name`
+  - local ws = **:3003** (`zyra-ws/.env`) ไม่ใช่ 3004 (3004 = zyra-notifications) → แก้ `.env` + default ใน `config.js`
+- **verify (local api :3002 / ws :3003 → dev DB):**
+  - smoke 5 VU 30s + WS: ทุก threshold ผ่าน, welcome 5/5, ping p95 51ms
+  - lt02 10 VU 2m: check 570/570, http fail 0%, `/me` p95 344ms, enter office p95 1.51s, welcome 10/10 · chatter ส่งจริง 9 ข้อความ (เห็นใน clean-dry `tb_message`)
+  - lt09 10 VU 2m (drop ที่ 1m): 20 sessions, welcome 100%, http fail 0%
+  - lt05 6 VU 1m: ผ่าน · goto ชนผนัง 52 ครั้ง → นับแยก `ws_goto_rejected` (server ตอบ `error: no path to destination`)
+  - lt07 10 VU 1m: **enter office p95 1.71s ✗ เกินเกณฑ์ 1s** — ที่ 10 คน · entry มี 4 รอบต่อกัน แต่ละรอบ ~300–500ms (api บนเครื่อง → dev DB ข้ามเน็ต) → ต้องแยกว่าช้าที่ DB/network หรือที่ api ก่อนสรุป
+  - clean-dry หลังเทส: ลบ `tb_message` 9, `tb_conversation` 1 (#general), workspace, user ได้ครบ (rollback)
+  - แก้ bug ระหว่างทาง: idle behavior คืน stop ผิดชั้น · `DURATION` สั้นกว่าเวลาเริ่ม step ทำ maxDuration ติดลบ (ตอนนี้ step start ยืด/หดตาม DURATION) · lt09 เดิม drop ตามเวลาเริ่มของแต่ละ VU (ไม่พร้อมกัน) → เปลี่ยนเป็นเวลาเดียวกันของทั้ง test
+- **ยังไม่ได้รัน:** lt02 เต็ม (50/15m), lt03, lt04 (ต้อง 1000 user), lt06, lt08 · lt04/lt05 flag `VO_TICK_*` off/on
+- **ไม่ครอบคลุม:** `session-state` (ต้องใช้ refresh cookie — token ที่ mint ไม่มี), form login (`flows/login.js` ยัง stub), `/api/img` (มีแค่ผ่าน Next), meeting/media (Q5)
+- **สถานะ dev ตอนนี้:** มี lt_ users 100 คน + `lt_ws_01` ค้างอยู่ (seed 10:46) — ลบด้วย `make clean YES=1` เมื่อเลิกใช้
+- **ต่อจากนี้:** รัน lt02 เต็ม → lt03 → เช็คผล lt07 ว่าช้าที่ไหน · ตัดสิน Q1 ก่อนยิงเกิน ~100 คน (MacBook เครื่องเดียวรันทั้ง k6 + api/ws)
 
 ## 2026-09-24 (รอบ 2) · rif (ร่วมกับ Claude Code) — seeder seed/clean
 
