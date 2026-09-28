@@ -3,6 +3,16 @@
 > **สถานะรวม:** spec draft · seeder + WS + office journey + form login + lt01–lt09 + Spotlight lt10–lt12 / media ใช้ได้ · verify แบบย่อ (≤41 VU) บน local→dev ครบทุกตัวยกเว้น lt06 (ต้อง seed หลาย workspace) · ยังไม่ได้รันขนาดเต็ม
 > **อัปเดตล่าสุด:** 2026-09-25 · **คนล่าสุด:** rif (ร่วมกับ Claude Code)
 
+## 2026-09-28 (รอบ 3) · rif (ร่วมกับ Claude Code) — AI สรุปผลครอบคลุมขึ้น
+
+- **ผู้ใช้สั่ง:** แก้ prompt ของ AI ตอนสรุปให้ครอบคลุมที่สุด
+- **ทำอะไร** (`zyra-loadtest@feat/meeting-loadtest` · แก้เฉพาะ `analyze/` + Makefile แยก commit ได้):
+  - `analyze/samples.go` ใหม่: ย่อ `samples.json.gz` บนเครื่อง → ตารางต่อ k6 scenario (step), timeline (≤30 ช่วง), error แยก endpoint+status / ws_errors reason / check ที่ล้ม · percentile จาก reservoir ≤5000 ค่า/ช่อง · ไม่ส่งไฟล์ดิบ
+  - prompt ใหม่: glossary ของ metric ทุกกลุ่ม (office / spotlight / meeting / media) · ข้อเท็จจริงของ setup (DB ต่อทุก request, ws ถาม api ทุก connect, k6/lk อยู่เครื่องเดียวกับ server, LiveKit v1.13.0 goroutine) · วิธีหาจุดพังจาก step/timeline, drift ตามเวลา, แยกผลของเครื่องทดสอบ, ติดป้าย จากข้อมูล/สันนิษฐาน + วิธียืนยัน · output 9 หัวข้อ (เพิ่ม จุดที่เริ่มพัง/แนวโน้ม, error ที่เจอ, ความน่าเชื่อถือของผล)
+  - `make smoke`/`run` บันทึก `run-options.txt` (VUS/DURATION/MEETINGS/PEOPLE/PROFILE/… ที่ตั้งไว้ ไม่มีค่าลับ) → ส่งให้ AI ตัดสินจากโหลดที่รันจริง ไม่ใช่ค่า default
+- **verify:** dry-run lt15 ได้ตาราง step/timeline/error ถูก · เรียกจริง (claude-sonnet-5) กับ lt15: ได้ครบ 9 หัวข้อ, บอก "ไม่พบจุดพัง" พร้อมตารางต่อ step, เช็ก drift, จับได้เองว่ารอบถูกย่อขนาดและ n เล็ก · `run-options.txt` เขียนจริงจาก lt14 · `go vet`
+- **ข้อสังเกต:** lt14 รอบหลัง media-token p95 1.12s (เดิม ~270ms) ขณะเครื่อง load average 20–35 (Chrome ฯลฯ) — เป็นเครื่อง/เครือข่าย ไม่ได้เกี่ยวกับโค้ด · มี k6 ค้างสถานะ T จาก 2026-09-25 อยู่ 4 ตัว (PID 14646, 16797, 17383, 53396) ไม่กิน CPU แต่ควร kill
+
 ## 2026-09-28 (รอบ 2) · rif (ร่วมกับ Claude Code) — Meeting load test (spec §13)
 
 - **ผู้ใช้สั่ง:** "มีกี่ห้องถึงพัง" · ครอบคลุมทุกกรณี (เสียง / กล้องทุกคน / กล้อง + แชร์จอ) · LiveKit เวอร์ชันเดียวกับ prod · เกณฑ์ตามที่เสนอ · รวมแชร์จอ · **แยก branch**
