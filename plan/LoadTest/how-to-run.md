@@ -469,10 +469,10 @@ make summarize DRY=1                                          # ดูข้อ�
 | ตั้งค่า (`.env`) | ทำอะไร |
 |---|---|
 | `ANTHROPIC_API_KEY` | key ของ Claude API (จำเป็น) |
-| `LT_AI_MODEL` | model ที่ใช้ เช่น `claude-sonnet-5` (ไม่ใส่ = `claude-opus-5`) |
+| `LT_AI_MODEL` | model ที่ใช้ เช่น `claude-opus-5` (ไม่ใส่ = `claude-sonnet-5`) |
 | `AI=1` | สรุปทุกรอบโดยไม่ต้องพิมพ์ `AI=1` |
 
-- **ค่าใช้จ่ายต่อครั้งโดยประมาณ:** `claude-sonnet-5` ~1 บาท · `claude-opus-5` ~3 บาท
+- **ค่าใช้จ่ายต่อครั้งโดยประมาณ:** `claude-sonnet-5` ~1–2 บาท · `claude-opus-5` ~3–5 บาท (รอบยาว/หลาย step ข้อมูลเยอะขึ้น แพงขึ้นเล็กน้อย)
 - **ส่งอะไรไปบ้าง:**
   - ค่าสรุปของรอบ (เกณฑ์คิดเป็น PASS/FAIL แล้ว)
   - **ตารางย่อจาก `samples.json.gz`** ที่ทำบนเครื่อง: ต่อ step, ต่อช่วงเวลา และ error แยกตาม endpoint/status/สาเหตุ (ไม่ส่งไฟล์ดิบ)
