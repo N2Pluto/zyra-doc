@@ -1,6 +1,7 @@
 # SC-OBJ-NAT-01 · Test Plan — Nature Object Management (Admin)
 
 > **สถานะ:** โค้ด feature อยู่บน `develop` แล้ว และมีไฟล์เทสจริงแล้วบางส่วน (2026-09-22) — `object_nature_test.go`, `object-nature-enum/api`, `nature-upload-validation`, `nature-preview-state` · ส่วนที่ยังเป็นแผนเปล่าคือ component test, E2E และ regression · **วันที่ร่าง:** 2026-09-17 · **อัปเดตล่าสุด:** 2026-09-22
+> **⚠️ เปลี่ยนทิศ 2026-09-23 ([progress รอบที่ 12](progress.md#รอบที่-12--2026-09-23--09-24-เปลี่ยนทิศ-nature-ใช้-composer-ปกติ--nature-preview-ใหม่)):** Nature ใช้ Object Composer แบบเดียวกับ category อื่น 100% (ต่างแค่ช่อง Nature type) — ส่วนที่พูดถึง animation state / upload modal / Frame count-rate / required Idle / ล็อก nature_type **ไม่ตรงกับโค้ดแล้ว** (โค้ดนั้นเก็บไว้แต่ไม่ได้เรียกใช้) · Preview ตอนนี้ = composed object + ลม/ใบไม้ CSS + pan/zoom
 > **Scope:** HP-01, HP-02, HP-03, HP-05, HP-06, HP-07, EP-01, EC-01 (8 scenario — **HP-04 descoped** ตาม [spec.md §รอบที่ 3](spec.md#รอบที่-3--2026-09-17-status-เปลี่ยนเป็น-in-progress))
 > **Repo ที่กระทบ:** `zyra-api` (Go) · `zyra-app` (Vitest + Playwright + `zyra-engine`) · `zyra-ws` (Go, relay 1 บรรทัด)
 > **อ่านคู่กัน:** [spec.md](spec.md) (AC ต้นทางจาก ClickUp) · [technical-design.md](technical-design.md) (schema/API/error ที่เทสอ้าง) · [ux-ui-plan.md](ux-ui-plan.md) (Figma — **ขัด spec 12 ข้อที่ยังไม่เคาะ**)
