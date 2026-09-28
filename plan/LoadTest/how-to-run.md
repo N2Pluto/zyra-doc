@@ -24,14 +24,15 @@ cp .env.example .env     # แล้วใส่ TOKEN_KEY และ DATABASE_UR
 | zyra-api | 3002 | ทุก scenario | รันตามปกติ |
 | zyra-ws | 3003 | ทุก scenario (ยกเว้น lt07 และ lt01 ที่ใส่ `WS=0`) | รันตามปกติ |
 | zyra-app | 3000 | เฉพาะ `VIA=app` | รันตามปกติ |
-| LiveKit | 7880 | เฉพาะ `make spotlight-media` | `make livekit-up` |
+| LiveKit | 7880 (+ metrics 6789) | `make spotlight-media` / `meeting-media` / `meeting-churn` | `make livekit-up` (v1.13.0 เหมือน prod) |
 
 **รูปแบบคำสั่ง**
 
 ```bash
 make smoke [option...]                 # lt01
-make run S=<ชื่อไฟล์> [option...]        # lt02–lt12
-make spotlight-media [option...]       # ภาพ/เสียง (LiveKit)
+make run S=<ชื่อไฟล์> [option...]        # lt02–lt17
+make spotlight-media [option...]       # ภาพ/เสียง Spotlight (LiveKit)
+make meeting-media [option...]         # ภาพ/เสียง meeting หลายห้อง (LiveKit)
 make summarize [RUN=...]               # ให้ AI สรุปผลของรอบที่รันไปแล้ว
 ```
 
@@ -318,6 +319,119 @@ make livekit-down
 
 ---
 
+### lt14-meeting-smoke
+
+- **ทดสอบอะไร:** meeting ทำงานครบทุกขั้นไหม — เข้าห้อง → ขอ media token → ได้ข้อมูลห้อง → ไมค์/กล้อง/ยกมือ/emoji/แชท → แชร์จอ → ออก
+- **ทำไมต้องมี:** เช็กความพร้อมก่อนรัน meeting ตัวอื่น
+- **คำสั่ง:** `make run S=lt14-meeting-smoke`
+- **ค่าเริ่มต้น:** 1 ห้อง 3 คน เปิดกล้อง + คนแรกแชร์จอ ทำทุกอย่างภายใน ~1 นาที รวม 1 นาทีครึ่ง
+- **ต้องมี user:** 3
+
+**ดูผล:** ทุกข้อ 100% — `meeting_enter_ok`, `meeting_echo_ok`, `meeting_share_ok`
+
+### lt15-meeting-count
+
+- **ทดสอบอะไร:** มีกี่ห้องประชุมพร้อมกันถึงเริ่มพัง (ฝั่ง ws/api)
+- **ทำไมต้องมี:** ทุกห้องมีคนพูด เปิดกล้อง ยกมือ แชท แชร์จอ พร้อมกัน และทุกครั้งที่มีคนเข้า-ออกห้อง ws แจ้งทั้ง workspace
+- **คำสั่ง:** `make run S=lt15-meeting-count`
+- **ค่าเริ่มต้น:** เพิ่มห้องทีละขั้น 1 → 5 → 10 → 18 ห้อง ห้องละ 5 คน ขั้นละ 3 นาที รวม 12 นาที · รูปแบบ `mixed`
+- **ต้องมี user:** ห้อง × คน (ค่าเริ่มต้น 90)
+
+| Option | ทำอะไร |
+|---|---|
+| `PROFILE=audio` \| `camera` \| `share` \| `mixed` | `audio` ไมค์อย่างเดียว · `camera` ทุกคนเปิดกล้อง · `share` เปิดกล้อง + คนแรกของห้องแชร์จอ · `mixed` ทุก 10 ห้อง = แชร์จอ 1 / กล้อง 3 / เสียง 6 (default) |
+| `MEETINGS=36` | จำนวนห้องรวม — ทุกขั้นย่อ/ขยายตามสัดส่วน (ปัดต่อขั้น อย่างน้อยขั้นละ 1) |
+| `PEOPLE=6` | คนต่อห้อง |
+| `DURATION=6m` | ระยะเวลารวม |
+| `WORKSPACES_MAX=2` | ใช้กี่ workspace (เกิน 18 ห้องต้อง seed หลาย workspace) |
+
+```bash
+make run S=lt15-meeting-count PROFILE=camera
+make run S=lt15-meeting-count MEETINGS=6 PEOPLE=3 DURATION=4m
+make clean YES=1 && make seed SOURCE=<id> USERS=400 WORKSPACES=4 YES=1
+make run S=lt15-meeting-count MEETINGS=60 PROFILE=share            # เกิน 18 ห้อง
+```
+
+**ดูผล:** `meeting_enter_ms` p95 < 2s · `meeting_enter_ok` / `meeting_echo_ok` / `meeting_share_ok` ≥ 99% · media-token p95 < 500ms · error < 1% — ดูว่าขั้นไหนเริ่มตก (`report.html`)
+
+### lt16-meeting-size
+
+- **ทดสอบอะไร:** ห้องประชุมเดียวรับได้กี่คน
+- **ทำไมต้องมี:** ทุกข้อความในห้อง (ไมค์/กล้อง/ยกมือ/แชท) ต้องส่งถึงทุกคน ภาระโตตามจำนวนคนในห้อง · LiveKit รับได้ 50 คนต่อห้อง
+- **คำสั่ง:** `make run S=lt16-meeting-size`
+- **ค่าเริ่มต้น:** ห้องเดียว 5 → 10 → 20 → 50 คน ขั้นละ 3 นาที รวม 12 นาที · เปิดกล้องทุกคน
+- **ต้องมี user:** 50
+
+| Option | ทำอะไร |
+|---|---|
+| `PEOPLE=20` | ขนาดห้องขั้นสุดท้าย (ขั้นก่อนหน้าย่อตาม) |
+| `PROFILE=share` | รูปแบบ (เหมือน lt15) |
+| `DURATION=6m` | ระยะเวลารวม |
+
+**ดูผล:** เหมือน lt15
+
+### lt17-meeting-churn
+
+- **ทดสอบอะไร:** คนเดินเข้า-ออกห้องประชุมบ่อย ๆ แล้วระบบยังไหวไหม
+- **ทำไมต้องมี:** ทุกครั้งที่เข้าห้องต้องขอ token ใหม่ และ ws แจ้งทั้ง workspace · prod เคยเจอปัญหาจากการเข้า-ออกถี่
+- **คำสั่ง:** `make run S=lt17-meeting-churn`
+- **ค่าเริ่มต้น:** 5 ห้อง × 5 คน 10 นาที · ทุกคนอยู่ 20–40 วินาที ออก 3–8 วินาที แล้วกลับเข้าใหม่
+- **ต้องมี user:** 25
+
+| Option | ทำอะไร |
+|---|---|
+| `MEETINGS` / `PEOPLE` / `DURATION` / `PROFILE` | เหมือน lt15 |
+
+**ดูผล:** `meeting_enter_ms` p95 < 2s ตลอดรอบ ไม่แย่ลงตามเวลา (ดูกราฟใน `report.html`) · `meeting_enters` = จำนวนครั้งที่เข้าห้องทั้งหมด
+
+### meeting-media (`scripts/meeting-media.sh`)
+
+- **ทดสอบอะไร:** **มีกี่ห้องประชุมพร้อมกันถึงพัง แยกตามรูปแบบการใช้** (ฝั่ง LiveKit) — เสียงอย่างเดียว / เปิดกล้องทุกคน / เปิดกล้อง + แชร์จอ
+- **ทำไมต้องมี:** ภาพและเสียงหนักที่ LiveKit ไม่ใช่ ws/api · ทุกคนในห้องต้องได้ stream ของทุกคน
+- **คำสั่ง:** `make livekit-up` แล้ว `make meeting-media`
+- **ค่าเริ่มต้น:** ทุกรูปแบบ (`audio camera share`) · ห้อง 1 → 2 → 5 → 10 → 20 → 40 · ห้องละ 5 คน · ขั้นละ 60 วินาที · รูปแบบไหนห้องแย่สุด loss > 2% หรือมี error ก็หยุดรูปแบบนั้น
+
+| Option | ทำอะไร |
+|---|---|
+| `PROFILES="camera share"` | รูปแบบที่จะทดสอบ |
+| `ROOMS="5 10 15 20"` | จำนวนห้องแต่ละขั้น |
+| `PEOPLE=6` | คนต่อห้อง |
+| `STEP=90` | วินาทีต่อขั้น |
+| `RESOLUTION=high` | ความละเอียดกล้อง (default `medium`) |
+| `SHARE_RESOLUTION=medium` | ความละเอียดจอที่แชร์ (default `high`) |
+| `LAYOUT=4x4` | layout ของคนดู (default `3x3`) |
+| `MAX_LOSS=5` | หยุดเมื่อ loss เกินกี่ % (default 2) |
+| `LIVEKIT_*` / `LT_ALLOW_REMOTE_SFU` / `LT_ALLOW_SHARED_NODE` | เหมือน spotlight-media |
+
+```bash
+make meeting-media
+make meeting-media PROFILES=share ROOMS="5 10 15 20" PEOPLE=6
+```
+
+**ดูผล:** `reports/meeting-media-<เวลา>/summary.md` — ตารางแยกรูปแบบ × จำนวนห้อง (loss ห้องแย่สุด/เฉลี่ย, bitrate ต่อคน, CPU/RAM/goroutine ของ LiveKit) และท้ายไฟล์บอกว่า **แต่ละรูปแบบพังที่กี่ห้อง**
+**ข้อจำกัด:** ใน `lk load-test` คนส่งกับคนดูเป็นคนละ connection — ห้อง 5 คนเปิดกล้อง = 15 connection (stream ที่ LiveKit ส่งต่อใกล้ของจริง แต่จำนวน connection มากกว่า) · ผลบน MacBook ใช้ดูแนวโน้ม
+
+### meeting-churn (`scripts/meeting-churn.sh`)
+
+- **ทดสอบอะไร:** คนเข้า-ออกห้อง LiveKit ซ้ำ ๆ แล้ว goroutine ค้างไม่คืนเหมือนที่ prod เจอไหม
+- **ทำไมต้องมี:** prod (v1.13.0, 2026-08-20) ค้าง ~15.5 goroutine ต่อการ join 1 ครั้ง คืนเฉพาะตอนห้องปิดสนิท — เป็นต้นเหตุ CPU ของ LiveKit ไม่ใช่การส่ง media
+- **คำสั่ง:** `make meeting-churn`
+- **ค่าเริ่มต้น:** ห้องเดียว มี 1 คนอยู่ค้างให้ห้องไม่ปิด · คนชุดเดิม 5 คนเข้า-ออก 30 รอบ รอบละ 10 วินาที · แล้วรอห้องว่าง 330 วินาที (LiveKit ปิดห้องว่างหลัง 300 วินาที)
+
+| Option | ทำอะไร |
+|---|---|
+| `CYCLES=60` | จำนวนรอบเข้า-ออก |
+| `PEOPLE=8` | คนต่อรอบ |
+| `CYCLE_SECS=20` | อยู่ในห้องกี่วินาทีต่อรอบ |
+| `IDLE=60` | รอห้องว่างกี่วินาทีตอนจบ |
+| `PROFILE=camera` | `audio` (default) / `camera` |
+| `ANCHOR=0` | ไม่มีคนอยู่ค้าง (ห้องปิดได้ระหว่างรอบ) |
+| `SAME_PEOPLE=0` | ใช้คนใหม่ทุกรอบแทนคนชุดเดิม |
+
+**ดูผล:** `reports/meeting-churn-<เวลา>/summary.md` — goroutine ค้างต่อ 1 join (เทียบ 15.5 ของ prod) และหลังห้องว่าง · ≈ 0 = ไม่เจอปัญหา · > 0 แล้วคืนหลังห้องว่าง = แบบเดียวกับ prod · ยังสูงหลังห้องว่าง = รั่วจริง
+
+---
+
 ## 4. คำสั่งจัดการข้อมูลทดสอบ
 
 | คำสั่ง | ทำอะไร |
@@ -331,6 +445,7 @@ make livekit-down
 | `make clean YES=1` | ลบ user/workspace/ข้อมูลทดสอบ `lt_` ทั้งหมด (DB + Redis) |
 | `make livekit-up` / `make livekit-down` | เปิด/ปิด LiveKit บนเครื่อง (service `livekit` ใน `docker-compose.yaml` ที่ root) |
 | `make summarize [RUN=reports/<รอบ>] [DRY=1]` | ให้ AI สรุปผลของรอบนั้น (ไม่ใส่ `RUN` = รอบล่าสุด) · `DRY=1` ดูข้อมูลที่จะส่งโดยไม่ส่งจริง |
+| `make meeting-media` / `make meeting-churn` | ทดสอบภาพ/เสียงของ meeting (ดูส่วนที่ 3) |
 | `make check` | เช็ก seeder, ตัวสรุป AI และทุก scenario |
 
 ไม่ใส่ `YES=1` = ไม่เขียนอะไรลง DB (dry run)

@@ -3,6 +3,31 @@
 > **สถานะรวม:** spec draft · seeder + WS + office journey + form login + lt01–lt09 + Spotlight lt10–lt12 / media ใช้ได้ · verify แบบย่อ (≤41 VU) บน local→dev ครบทุกตัวยกเว้น lt06 (ต้อง seed หลาย workspace) · ยังไม่ได้รันขนาดเต็ม
 > **อัปเดตล่าสุด:** 2026-09-25 · **คนล่าสุด:** rif (ร่วมกับ Claude Code)
 
+## 2026-09-28 (รอบ 2) · rif (ร่วมกับ Claude Code) — Meeting load test (spec §13)
+
+- **ผู้ใช้สั่ง:** "มีกี่ห้องถึงพัง" · ครอบคลุมทุกกรณี (เสียง / กล้องทุกคน / กล้อง + แชร์จอ) · LiveKit เวอร์ชันเดียวกับ prod · เกณฑ์ตามที่เสนอ · รวมแชร์จอ · **แยก branch**
+- **branch:** `zyra-loadtest@feat/meeting-loadtest` (แตกจาก `develop` ที่มีงาน Spotlight/AI แล้ว) · `zyra-doc@rif` · ยังไม่ commit · workspace root `docker-compose.yaml`
+- **ทำอะไร:**
+  - LiveKit local → `livekit/livekit-server:v1.13.0` (เดิม `latest`) + `max_participants 50`, `empty_timeout 300`, `prometheus_port 6789` (อ่าน `go_goroutines`) · ตอนว่าง 115 goroutine (prod ว่าง 114)
+  - `scripts/lib/livekit.sh` (guard, lk ใน docker, sampler CPU/RAM แบบ stream + goroutine ทุก 1s, parse ผล lk) · `spotlight-media.sh` ย้ายมาใช้ lib + คอลัมน์ goroutine
+  - `scripts/meeting-media.sh` (SC-LT-18): `PROFILES` audio/camera/share × `ROOMS` 1→40 พร้อมกัน, ห้องละ `PEOPLE` · หยุดรูปแบบนั้นเมื่อห้องแย่สุด loss > 2% · สรุป "แต่ละรูปแบบพังที่กี่ห้อง"
+  - `scripts/meeting-churn.sh` (SC-LT-19): คนชุดเดิมเข้า-ออกห้องซ้ำ + anchor ให้ห้องไม่ปิด → goroutine ค้างต่อ join, หลังห้องว่าง
+  - `k6/lib/meeting.js` + `lt14`–`lt17` (ไฟล์เลขตรง SC ID): room_enter → media token → `ws:room:enter` → `ws:meeting:ownerUpdate` · ไมค์/กล้อง/ยกมือวัดแบบ echo (broadcast ในห้องถึงคนส่งด้วย) · meeting chat ใส่เวลาส่ง · แชร์จอ (คนแรกของห้อง) · churn · `PROFILE=audio|camera|share|mixed` · `sameMeeting` สำหรับ lt16 · `users.js userAt()` (เลือก user ตามลำดับ ไม่ใช้เลข VU)
+  - 401 ตอน setup (token หมด) บอกให้ `make refresh` แทนข้อความผิดว่า "ไม่มี zone" (meeting + spotlight)
+- **บั๊กของ script ที่เจอระหว่าง verify:** sampler `docker stats --no-stream` ช้าจนได้ 0–2 ตัวอย่าง → เปลี่ยนเป็น stream · goroutine sampler ตายเพราะ `awk exit` → curl SIGPIPE + `pipefail` · เอามือลงหลังออกห้อง → `not in this media room` · `mixed` วางห้องแชร์จอลำดับที่ 10 (รอบเล็กไม่มีเลย) → ย้ายขึ้นก่อน · รัน meeting-media ค่าเต็มโดยไม่ตั้งใจ 1 ครั้ง (local เท่านั้น) หยุดแล้ว ลบผล
+- **verify (local → dev DB, 1000 lt_ users / 1 workspace):** lt14 3 คน: 100% ทุกข้อ (เข้าห้อง ~250ms ≈ เวลาขอ token) · lt15 7 ห้อง × 3 / 4m ✓ (เข้าห้อง p95 317ms) · lt16 10 คน share / 3m ✓ · lt17 2 × 3 churn / 2m ✓ (21 enters) · `meeting-media` รอบเล็ก (audio/camera/share 1–2 ห้อง) ✓ · `meeting-churn` 8 รอบ × 4 คน: ค้าง 0.1/join (lk client ไม่ reproduce ปัญหา prod — prod น่าจะมาจากพฤติกรรม browser client เช่น join ซ้ำใน < 10s / departure timeout) · `make check`
+- **`meeting-media` เต็มชุดบน MacBook (v1.13.0, ห้องละ 5 คน, 60s/ขั้น):** เสียงอย่างเดียวเสียที่ 5 ห้อง (loss 11%) · กล้องและกล้อง + แชร์จอเสียตั้งแต่ 1 ห้อง (loss 3–3.5%) · CPU ของ LiveKit พุ่ง 700%+ จาก 8 core
+- **A/B v1.13.0 กับ `latest` (โหลดเดียวกัน camera/audio 1 และ 3 ห้อง, 30s):** ทั้งสองเวอร์ชันเสียที่ ~3 ห้อง (15 คน) · ผลไม่นิ่ง (v1.13.0 audio 1 ห้อง track 17/25) · `latest` CPU ต่ำกว่าเล็กน้อยตอนโหลดน้อย (audio 1 ห้อง 30% vs 124%) แต่ที่ 3 ห้องพอกัน
+- **สรุป:** ตัวเลข media ของ meeting บนเครื่องนี้ = **เพดานของ MacBook ไม่ใช่ของ LiveKit** — meeting หนักกว่า Spotlight มาก เพราะทุกคนต้องได้ stream ของทุกคน (P × P) และตัวจำลอง lk ใช้ 3 connection ต่อคน (ห้อง 3 ห้อง = 45 connection) ทั้งหมดแย่ง CPU กับ LiveKit ใน Docker 8 core เดียวกัน · **ต้องรันบน env ที่ทีม clone จาก prod** (LiveKit แยกเครื่อง + ตัวยิงบน VM อีกเครื่อง) ถึงจะได้คำตอบ "กี่ห้องถึงพัง" ที่เชื่อได้ · ฝั่ง ws/api (lt14–lt17) วัดบนเครื่องได้ตามปกติ
+- **ยังไม่ได้รัน:** lt15–lt17 ขนาดเต็ม · lt15 เกิน 18 ห้อง (ต้อง seed หลาย workspace) · meeting-media / spotlight-media บนเครื่องแยก
+
+## 2026-09-28 · rif (ร่วมกับ Claude Code) — แก้ meetingJoin ใน Spotlight load test
+
+- **บั๊ก:** lt10–lt12 ให้คนดูในห้องประชุม**ทุกคน**กด `ws:spotlight:meetingJoin` แต่ zyra-ws `handleSpotlightMeetingJoin` broadcast state ทั้ง floor ทุกครั้ง (กดซ้ำก็ส่ง) → lt11 ขนาดเต็ม 100 คน × 500 viewer ≈ 50,000 ข้อความต่อรอบ เทียบของจริง 1 คน/ห้อง (5 ห้อง ≈ 2,500) — ภาระเกินจริง ~20 เท่า
+- **แก้ (`k6/lib/spotlight.js`):** สมาชิกห้องเรียงลำดับ คนแรกกด +2s, สำรองคนถัดไป +1s ต่อคน (สูงสุด 5) และกดเฉพาะเมื่อห้องยังไม่ถูกรับ · เพิ่ม counter `spotlight_meeting_joins` (ควร ≈ ห้อง × รอบ)
+- **verify:** lt11 40 viewers / 8m / 3 รอบ: joins = 7 (เดิมทุกคนกดทุกรอบ) · meeting_ok 7/7 · state/bell/end 32/32 · http fail 0 · `make check`
+- **สถานะ dev:** seed ใหม่เป็น 1000 user (ผู้ใช้ seed เอง) → lt11 ขนาดเต็ม (501) และ lt04 (1000) มี user พอแล้ว
+
 ## 2026-09-25 (รอบ 4) · rif (ร่วมกับ Claude Code) — ไฟล์ผลต่อรอบ + สรุปด้วย AI
 
 - **ทำอะไร** (`zyra-loadtest`, ยังไม่ commit):

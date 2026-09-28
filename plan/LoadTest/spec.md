@@ -292,6 +292,7 @@
 - [ ] สร้าง `task-breakdown.md`
 - [x] Spotlight §12: seeder zone + lt10–lt12 + media (SC-LT-13) — ใช้ได้และ verify แบบย่อแล้ว 2026-09-25 (ดู progress)
 - [ ] Spotlight ขนาดเต็ม: lt11 500 viewers (รอ Q1) · media บน SFU จริง
+- [ ] Meeting §13: lt14–lt17 + meeting-media + meeting-churn — กำลังทำ 2026-09-28
 
 ---
 
@@ -342,3 +343,49 @@
 ### 12.5 ไม่ครอบคลุม
 
 - การต่อ LiveKit จริงของคนดูใน k6 (แยกวัดใน SC-LT-13) · Spotlight screen share หยุด meeting share (HP-06) · หลาย floor/หลายเวทีพร้อมกัน · UI/render ฝั่ง browser
+
+---
+
+## 13. Meeting (เพิ่ม 2026-09-28)
+
+> **ผู้ใช้สั่ง 2026-09-28:** load test meeting — "มีกี่ห้องถึงเริ่มพัง" · ครอบคลุมทุกกรณี (เสียงอย่างเดียว / เปิดกล้องทุกคน / กล้อง + แชร์จอ) · LiveKit **เวอร์ชันเดียวกับ prod** · เกณฑ์ตามที่เสนอ · รวมแชร์จอ
+> คำถามหลัก: **หลายห้องพร้อมกันที่แชร์จอ/เปิดกล้อง ระบบพังตอนไหน** → ผลเป็นตาราง จำนวนห้อง × รูปแบบการใช้
+
+### 13.1 ของจริงในโค้ด (baseline, อ่าน 2026-09-28)
+
+| ขั้น | อะไรเกิดขึ้น | ที่มา |
+|---|---|---|
+| เข้าห้อง | client เดินเข้า meeting zone → WS `room_enter {room_id}` (presence — **broadcast ทั้ง workspace** `room_entered`) → `POST .../rooms/<zoneId>/media-token` → ต่อ LiveKit → WS `ws:room:enter {room_id}` | ws `room.go handleRoomEnter`, `audio.go handleMediaRoomEnter` |
+| ws ตรวจ | `zoneClaimTileOK` (tile ต้องอยู่ใน zone) · ส่ง snapshot ของสมาชิก (audio/video/hand) + `ws:meeting:ownerUpdate` ให้คนเข้า · `moved` ให้คนในห้อง | `audio.go` |
+| ในห้อง | `ws:audio:muteChanged` / `ws:video:cameraChanged` / `ws:hand:changed` / `ws:reaction:send` → broadcast ในห้อง (รวมคนส่ง) · meeting chat `meeting_chat:join/send` → `meeting_chat:append` (ชั่วคราวใน ws ไม่ลง DB) | `audio.go`, `meetingchat.go` |
+| แชร์จอ | `ws:share:start {room_id}` (ต้องอยู่ใน media room) → `ws:share:started` ทั้งห้อง · สูงสุด 2 คน/ห้อง (`maxPresentersIn`) เกินได้ `ws:share:denied` | `screenshare.go` |
+| ออก | `ws:room:leave` → `room_exit` (broadcast ทั้ง workspace `room_exited`) | |
+| media | LiveKit 1 room ต่อ 1 meeting zone · prod image **v1.13.0** (`zyra-sfu/Dockerfile:13`, ops 2026-08-20) · `max_participants 50` · `empty_timeout 5m` · client เปิด simulcast/dynacast/adaptiveStream | ops/livekit-sfu-capacity-2026-08-20.md, RTE technical-design/00 |
+
+- template Zyra World มี **meeting zone 18 ห้อง** ต่อ map → เกิน 18 ห้องต้องใช้หลาย workspace (`WORKSPACES=N`)
+- **ปัญหาที่ prod เคยเจอ (ops 2026-08-20):** CPU ของ LiveKit ไม่ได้ขึ้นตามจำนวนคน แต่ goroutine ค้าง ~15.5 ตัวต่อ 1 join (คืนเมื่อห้องปิดสนิทเท่านั้น) · peak 28,633 goroutine ที่ 44 คน · client join ซ้ำถี่ (gap < 10s)
+- **เอกสารขัดกัน:** RTE technical-design/00 เขียน image `v1.8` · ops/guides/onboarding เขียน `v1.13` (วัดจากของจริง) → ยึด **v1.13.0**
+
+### 13.2 Scenarios
+
+| ID | ไฟล์ | คำถาม | ทำอะไร | เกณฑ์ |
+|---|---|---|---|---|
+| SC-LT-14 | `lt14-meeting-smoke` | meeting ทำงานครบทุกขั้นไหม | 1 ห้อง 3 คน: เข้า → token → snapshot → ไมค์/กล้อง/ยกมือ/emoji/chat → แชร์จอ → ออก | ทุก check 100% |
+| SC-LT-15 | `lt15-meeting-count` | **มีกี่ห้องพร้อมกันถึงเริ่มพัง** (ws/api) | เพิ่มห้องทีละขั้น (default 1 → 5 → 10 → 18 ห้องละ 5 คน · เกิน 18 ด้วย `WORKSPACES`) · `PROFILE=audio\|camera\|share\|mixed` | เข้าห้อง p95 < 2s · state ถึงครบ ≥ 99% · error < 1% · บันทึกขั้นที่เริ่มตก |
+| SC-LT-16 | `lt16-meeting-size` | ห้องเดียวรับได้กี่คน | ห้องเดียว 5 → 10 → 20 → 50 คน ทุกคนพูด/ยกมือ/emoji/แชท | เหมือน SC-LT-15 |
+| SC-LT-17 | `lt17-meeting-churn` | เข้า-ออกห้องบ่อยไหวไหม | bot เข้า-ออกห้องวน (default ทุก 20–40s) | เข้าห้อง p95 < 2s ตลอดรอบ ไม่แย่ลงตามเวลา |
+| SC-LT-18 | `make meeting-media` | **media: กี่ห้องถึงพัง แยกตามรูปแบบ** | `lk load-test` หลายห้องพร้อมกัน ห้องละ `PEOPLE` คน · ไล่ `ROOMS` 1 → 2 → 5 → 10 → 20 → 40 · ทุก `PROFILES` (`audio`, `camera`, `share` = กล้องทุกคน + แชร์จอ 1 คน) | ต่อขั้น: loss, bitrate/คน, CPU/RAM, goroutine ของ LiveKit · หยุดโปรไฟล์นั้นที่ loss > 2% หรือ error |
+| SC-LT-19 | `make meeting-churn` | goroutine ค้างตาม join ไหม (ปัญหา prod) | ห้องเดียว เข้า-ออก LiveKit ซ้ำ `CYCLES` รอบ แล้วรอห้องว่าง | goroutine ต่อ join หลังรอบ + หลังห้องว่าง (เทียบ 15.5/join ของ prod) |
+
+**วิธีวัด latency ในห้อง (k6):** echo — คนส่งได้ broadcast ของตัวเองกลับ (กล้อง/ยกมือ) → `meeting_echo_ms` · meeting chat ใส่เวลาส่งในข้อความ → คนรับวัด `meeting_chat_ms` (นาฬิกาเครื่องเดียวกัน) · แชร์จอเริ่มตามตารางเวลา → คนในห้องวัด `meeting_share_ms`
+
+**ข้อจำกัดของ `lk load-test` (SC-LT-18/19):** publisher กับ subscriber เป็นคนละ participant → ห้อง 5 คนที่เปิดกล้องทุกคน = video publisher 5 + audio publisher 5 + subscriber 5 (15 participant) · ปริมาณ stream ที่ SFU ส่งต่อใกล้ของจริง (P × P) แต่จำนวน connection มากกว่า
+
+### 13.3 LiveKit local = prod version
+
+- `docker-compose.yaml` ที่ root: `livekit/livekit-server:v1.13.0` (เดิม `latest`) + config ตามที่เอกสารบอก (`max_participants 50`, `empty_timeout 300`) + `prometheus_port` สำหรับอ่าน `go_goroutines`
+- ผล Spotlight media เดิม (2026-09-25) รันบน `latest` → ควรรันซ้ำบน v1.13.0
+
+### 13.4 ไม่ครอบคลุม
+
+- UI/render ฝั่ง browser · knock (ห้องล็อก) · kick/mute-all · proximity circle (`cs_*`) · TURN/เน็ตไม่ดี
