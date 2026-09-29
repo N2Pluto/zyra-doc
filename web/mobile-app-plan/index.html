@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zyra Mobile Plan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: single reading column (max 880px) with wide comparison tables allowed to scroll on their own.
+     Dark-first, mirroring the Zyra app palette (#1A1B1E / #242B32 / accent #58D68D). */
+  :root {
+    --bg: #1A1B1E;
+    --surface: #242B32;
+    --surface-2: #2B3540;
+    --line: rgba(255,255,255,0.12);
+    --fg: #F2F4F6;
+    --muted: #8C99A6;
+    --accent: #58D68D;
+    --accent-ink: #0F2A1B;
+    --warn: #F5B84B;
+    --bad: #F03A3A;
+    --font-body: "IBM Plex Sans Thai", "Sarabun", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #F5F7F8; --surface: #FFFFFF; --surface-2: #EAF0F2; --line: rgba(20,30,40,0.14);
+      --fg: #1A1B1E; --muted: #5B6875; --accent: #1F9E5B; --accent-ink: #FFFFFF;
+      --warn: #B8790E; --bad: #C62828; color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F5F7F8; --surface: #FFFFFF; --surface-2: #EAF0F2; --line: rgba(20,30,40,0.14);
+    --fg: #1A1B1E; --muted: #5B6875; --accent: #1F9E5B; --accent-ink: #FFFFFF;
+    --warn: #B8790E; --bad: #C62828; color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.65; }
+  .wrap { max-width: 880px; margin: 0 auto; padding-block: 40px 80px; padding-inline: 20px; }
+
+  h1, h2, h3 { text-wrap: balance; line-height: 1.25; margin: 0; }
+  h1 { font-size: clamp(28px, 5vw, 38px); font-weight: 700; letter-spacing: -0.01em; }
+  h2 { font-size: 22px; font-weight: 600; margin-block: 56px 16px; padding-top: 24px; border-top: 1px solid var(--line); }
+  h3 { font-size: 16px; font-weight: 600; margin-block: 24px 8px; }
+  p { margin: 0 0 12px; max-width: 68ch; }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--muted); }
+  code { font-family: var(--font-mono); font-size: 0.86em; background: var(--surface-2); padding: 1px 6px; border-radius: 4px; }
+  strong { font-weight: 600; }
+  a { color: var(--accent); }
+
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; color: var(--muted); font-size: 13px; font-family: var(--font-mono); }
+
+  .verdict { margin-top: 28px; padding: 20px 22px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); }
+  .verdict .eyebrow { color: var(--accent); margin-bottom: 6px; }
+  .verdict p:last-child { margin-bottom: 0; }
+
+  .tablewrap { overflow-x: auto; margin-block: 12px 20px; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th { background: var(--surface-2); font-weight: 600; font-size: 13px; }
+  tr:last-child td { border-bottom: 0; }
+  td.k { white-space: nowrap; font-weight: 500; }
+  td.effect { color: var(--muted); }
+
+  .options { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
+  .opt { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; min-width: 0; }
+  .opt.pick { border-color: var(--accent); }
+  .opt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .opt-head h3 { margin: 0; font-size: 18px; }
+  .pill { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .pill.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  .opt .sub { color: var(--muted); font-size: 13px; margin: 4px 0 14px; }
+  .pc { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .pc > div { min-width: 0; }
+  .pc h4 { margin: 0 0 6px; font-size: 12px; font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+  .pc .pro h4 { color: var(--accent); }
+  .pc .con h4 { color: var(--bad); }
+  .pc ul { padding-left: 18px; font-size: 14px; }
+  @media (max-width: 560px) { .pc { grid-template-columns: 1fr; } }
+
+  .score { font-family: var(--font-mono); letter-spacing: 2px; white-space: nowrap; }
+  .score b { color: var(--accent); font-weight: 400; }
+  .score i { color: var(--line); font-style: normal; }
+  td.center { text-align: center; }
+
+  .phases { display: grid; gap: 14px; margin-top: 16px; }
+  .phase { display: grid; grid-template-columns: 96px 1fr; gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .phase .num { font-family: var(--font-mono); font-size: 13px; color: var(--muted); line-height: 1.4; }
+  .phase .num b { display: block; font-size: 22px; color: var(--fg); font-weight: 500; }
+  .phase .body { min-width: 0; }
+  .phase h3 { margin-top: 0; }
+  .phase .scope { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+  .phase ol { font-size: 14px; }
+  @media (max-width: 560px) { .phase { grid-template-columns: 1fr; gap: 6px; } }
+
+  .risk { display: grid; gap: 10px; }
+  .risk > div { display: grid; grid-template-columns: 8px 1fr; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  .risk > div::before { content: ""; border-radius: 4px; background: var(--warn); }
+  .risk > div.hard::before { background: var(--bad); }
+
+  .note { color: var(--muted); font-size: 13px; }
+  .footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+
+  .nav { display:flex; flex-wrap:wrap; gap:6px 18px; font-family: var(--font-mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:28px; }
+  .nav a { color: var(--muted); text-decoration:none; padding-bottom:3px; border-bottom:2px solid transparent; }
+  .nav a.on { color: var(--fg); border-color: var(--accent); }
+  .nav a:hover { color: var(--fg); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav">
+    <a class="on" href="./">1 · เลือกแนวทาง + แผน</a>
+    <a href="comparison.html">2 · เปรียบเทียบตัวเลือก</a>
+    <a href="native-features.html">3 · Background WS / Audio / Reconnect</a>
+    <a href="native-inventory.html">4 · Native feature inventory จากโค้ดทั้งหมด</a>
+  </nav>
+
+  <div class="eyebrow">Zyra World · Mobile app · แผนตัดสินใจ</div>
+  <h1>Zyra Mobile Plan</h1>
+  <p style="margin-top:12px; color: var(--muted);">เลือกแนวทางทำ Zyra World เป็นแอปมือถือที่ขึ้น App Store และ Play Store พร้อม Virtual Office เต็มรูปแบบ เปรียบเทียบ Expo, Flutter, Capacitor และตัวเลือกอื่น โดยอิงจากโค้ดจริงใน zyra-app</p>
+  <div class="meta">
+    <span>วันที่ 2026-09-29</span>
+    <span>scope: Full Virtual Office</span>
+    <span>target: iOS + Android store</span>
+    <span>ทีม: ทำได้ทุก stack</span>
+  </div>
+
+  <div class="verdict">
+    <div class="eyebrow">มติ 2026-09-29 — เลือก Capacitor + native feature จริง</div>
+    <p><strong>ไป Capacitor (โหมด remote URL) เป็น Phase 1</strong> เพราะเป็นทางเดียวที่ขึ้น store ทั้งสองพร้อม Full VO ได้โดยไม่ต้อง rewrite โค้ด ~76k บรรทัด (engine 27k + HUD 49k) และงาน Phase 0 (ทำ mobile web ให้ใช้ได้จริง) ต้องทำก่อนอยู่แล้วไม่ว่าจะเลือกตัวไหน</p>
+    <p><strong>เก็บ Expo ไว้เป็น Plan B</strong> ถ้าวัดแล้ว WebView performance ไม่ผ่านเกณฑ์ หรือ Apple ปฏิเสธข้อ 4.2 หลังใส่ native feature ครบ งาน Phase 0 และ push backend ยังใช้ต่อได้ทั้งหมด</p>
+  </div>
+
+  <h2>1. ข้อเท็จจริงจากโค้ดที่ตัดสินใจเลือก</h2>
+  <p>ทุกข้อด้านล่างมาจากการอ่านโค้ดใน zyra-app และ repo ข้างเคียง ไม่ใช่การประเมินลอย ๆ</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>เรื่อง</th><th>ของจริง</th><th>ผลต่อการเลือก</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Game engine</td><td>PixiJS 8 ใน <code>zyra-engine/pixi-game/</code> ~27k บรรทัด (<code>scene.ts</code> 11k) ผูก <code>window</code>/<code>document</code> events</td><td class="effect">RN/Flutter ต้อง rewrite engine ทั้งก้อน PixiJS v8 ไม่รันบน RN/Flutter</td></tr>
+        <tr><td class="k">HUD ของ VO</td><td><code>views/user/virtual-office/</code> ~49k บรรทัด React + Tailwind</td><td class="effect">RN/Flutter rewrite UI ทั้งหมด Capacitor ใช้ซ้ำได้แต่ต้องทำ responsive</td></tr>
+        <tr><td class="k">WebRTC</td><td>livekit-client ผ่าน <code>lib/api/sfu-client.ts</code> 1.9k + <code>use-meeting-media.ts</code> 2.6k บรรทัด</td><td class="effect">WebView รองรับ mic/cam แล้ว แต่ screen share (getDisplayMedia) ไม่รองรับ</td></tr>
+        <tr><td class="k">Realtime</td><td>raw WebSocket ตัวเดียว <code>lib/api/workspace-ws.ts</code></td><td class="effect">ใช้ได้ทุก platform</td></tr>
+        <tr><td class="k">Auth</td><td>cookie <code>zyra_token</code> + refresh httpOnly cookie, <code>proxy.ts</code> เช็คฝั่ง server</td><td class="effect">WebView โหลดจาก domain จริง cookie ใช้ได้ ถ้า bundle ไฟล์ใน app จะพัง</td></tr>
+        <tr><td class="k">Google login</td><td>implicit flow ทำเอง แล้ว POST <code>/api/authen/login_google</code> ด้วย id_token</td><td class="effect">Google block OAuth ใน embedded WebView ต้องใช้ native sign-in แล้วส่ง id_token เข้า endpoint เดิม</td></tr>
+        <tr><td class="k">Next.js</td><td><code>output: "standalone"</code>, rewrite <code>/api/*</code> ไป backend, มี server route <code>/api/img</code></td><td class="effect">static export ไม่ได้ทันที Capacitor ต้องใช้โหมด remote URL</td></tr>
+        <tr><td class="k">Mobile ตอนนี้</td><td>overlay บล็อกทุกหน้า &lt; 768px, engine มี pinch/pan แต่ไม่มี joystick</td><td class="effect">ต้องทำ mobile layout + touch control ก่อนเสมอ</td></tr>
+        <tr><td class="k">Push</td><td>ไม่มีเลย zyra-notifications ส่ง email อย่างเดียว</td><td class="effect">ต้องเพิ่ม device token + FCM ทั้ง backend และ app</td></tr>
+        <tr><td class="k">PWA</td><td>manifest + <code>sw.js</code> แบบ pass-through ไม่มี offline/push</td><td class="effect">ไม่ช่วยเรื่อง store แต่ Phase 0 ทำให้ PWA ดีขึ้นฟรี</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>2. เปรียบเทียบตัวเลือกหลัก</h2>
+  <p>ตารางคะแนน 8 เกณฑ์ ข้อดี/ข้อเสียของ Capacitor, Expo/React Native, Flutter และตัวเลือกอื่นที่ปัดตก แยกไว้ที่หน้า <a href="comparison.html">2 · เปรียบเทียบตัวเลือก</a></p>
+
+  <h2>3. แผนงานเป็น Phase</h2>
+  <p>Phase 0 เป็นงานก้อนใหญ่สุดและไม่ขึ้นกับ framework ทำก่อนเสมอ Phase 1 กับ 2 ทำคู่ขนานได้</p>
+  <div class="phases">
+    <div class="phase">
+      <div class="num"><b>0</b>zyra-app เท่านั้น</div>
+      <div class="body">
+        <h3>Mobile web ใช้ได้จริง</h3>
+        <div class="scope">ต้องทำก่อนทุกอย่าง ไม่ว่าจะเลือก framework ไหน</div>
+        <ol>
+          <li><strong>เอา overlay ออกแบบมี flag</strong> เปิดเฉพาะหน้า VO ผ่าน <code>NEXT_PUBLIC_MOBILE_VO=1</code> ไม่กระทบ prod ระหว่างทำ</li>
+          <li><strong>Touch control ใน engine</strong> virtual joystick + tap-to-walk map เข้า input เดิมของ PixiGameScene ค่า tuning ไป <code>zyra-engine/constants.ts</code></li>
+          <li><strong>Viewport + safe area</strong> เพิ่ม <code>viewport-fit=cover</code> เฉพาะหน้า VO ใช้ safe-area-inset ใน HUD</li>
+          <li><strong>Responsive HUD ของ VO</strong> chat, member list, meeting bar, zone modal เป็น bottom sheet ต้องมี Figma mobile design ก่อน (rule 10 ห้ามเดา)</li>
+          <li><strong>Meeting บนมือถือ</strong> ซ่อน screen share เมื่อไม่มี getDisplayMedia, ปิด blur / noise-suppressor บนเครื่องอ่อน, เลือกกล้องหน้า/หลัง</li>
+          <li><strong>Performance</strong> profile PixiJS บน iPhone 12 และ Android กลาง ลด resolution, cull, ปิด filters, ลด nature/pet layer บันทึกตัวเลข FPS/memory จริง</li>
+          <li><strong>Playwright mobile viewport test</strong> login → enter workspace → เดิน → เข้า zone</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="num"><b>1</b>repo ใหม่ zyra-mobile</div>
+      <div class="body">
+        <h3>Capacitor shell ขึ้น store</h3>
+        <div class="scope">repo แยกเพราะ CI ต้องใช้ macOS runner และ signing secret คนละชุด</div>
+        <ol>
+          <li><code>capacitor.config.ts</code> ตั้ง <code>server.url</code> ต่อ env (dev/uat/prod) และ <code>allowNavigation</code> เฉพาะ domain ของเรา</li>
+          <li><strong>Native sign-in</strong> Google plugin ได้ id_token แล้วเรียก <code>/api/authen/login_google</code> เดิม ฝั่งเว็บเช็ค <code>Capacitor.isNativePlatform()</code> เพื่อสลับปุ่ม และต้องเพิ่ม <strong>Sign in with Apple</strong> (Apple บังคับเมื่อมี Google login) → endpoint ใหม่ <code>/api/authen/login_apple</code></li>
+          <li><strong>Push</strong> <code>@capacitor/push-notifications</code> ส่ง FCM token ไป <code>POST /api/user/devices</code></li>
+          <li><strong>Lifecycle</strong> appStateChange → reconnect WorkspaceWSClient และ SFUClient, iOS เปิด <code>UIBackgroundModes: audio</code>, keep-awake ตอนอยู่ใน VO</li>
+          <li><strong>Native polish สำหรับ 4.2</strong> splash, status bar, haptics ตอน wave/knock, deep link <code>zyra://workspace/&lt;id&gt;</code> + universal links, หน้า offline native</li>
+          <li><strong>Permission</strong> camera / microphone / notifications ทั้งสอง platform</li>
+          <li><strong>CI</strong> GitHub Actions macOS build iOS + fastlane ขึ้น TestFlight, Android AAB ขึ้น Play internal track, version ผูกกับ tag <code>v*</code> เดียวกับเว็บ</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="num"><b>2</b>zyra-api · zyra-notifications · zyra-ws</div>
+      <div class="body">
+        <h3>Push backend</h3>
+        <div class="scope">ทำคู่ขนานกับ Phase 1 ได้</div>
+        <ol>
+          <li><strong>zyra-api</strong> migration <code>tb_user_device</code> (user_id, platform, fcm_token, app_version, last_seen_at) + route <code>POST/DELETE /api/user/devices</code> ภายใต้ UserGuard + table-driven test</li>
+          <li><strong>zyra-notifications</strong> เพิ่ม provider FCM HTTP v1 (ครอบ APNs และ Android) ข้าง SMTP endpoint ภายใน <code>POST /push</code> secret ผ่าน env JSON</li>
+          <li><strong>zyra-ws</strong> trigger: DM/mention ตอน user offline, knock, meeting invite → ส่งต่อ zyra-notifications</li>
+          <li>Notification settings ที่มีอยู่ต้องคุมการส่ง push ด้วย</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="num"><b>3</b>หลัง store approve</div>
+      <div class="body">
+        <h3>วัดผลและตัดสินใจต่อ</h3>
+        <ol>
+          <li>วัด crash-free / FPS จาก Sentry + Mixpanel ที่มีอยู่แล้วบนเครื่องจริง</li>
+          <li>ตัดสินใจอยู่ Capacitor ต่อ หรือย้ายเฉพาะ screen ที่ performance ไม่พอไป native ตาม Plan B</li>
+          <li>Screen share บน mobile ผ่าน native plugin ถ้ามี demand</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <h2>4. ความเสี่ยงที่ต้องเคลียร์ก่อนเริ่ม Phase 1</h2>
+  <div class="risk">
+    <div class="hard"><div><strong>Apple 4.2 minimum functionality</strong> ถ้ากังวลมาก ทางลดความเสี่ยงคือ bundle web asset ใน app ซึ่งต้องแก้ Next.js ให้ export ได้ (ย้าย <code>/api/img</code> ไป zyra-api, เปลี่ยน rewrite proxy เป็นเรียก API ตรง, auth เป็น bearer) งานเพิ่มราว 1 sprint ทำหลัง Phase 1 ได้</div></div>
+    <div class="hard"><div><strong>Figma mobile design ยังไม่มี</strong> Phase 0 ข้อ 4 บล็อกทันทีถ้าไม่มี design เพราะ rule 10 ห้ามเดา spacing/layout</div></div>
+    <div><div><strong>Sign in with Apple เป็นข้อบังคับ</strong> ต้องมี Apple Developer account และ Google Play account ก่อนเริ่ม Phase 1</div></div>
+    <div><div><strong>Screen share บนมือถือ</strong> อยู่นอก scope รอบแรก ต้องแจ้งลูกค้าล่วงหน้า</div></div>
+  </div>
+
+  <h2>5. Verification</h2>
+  <h3>Phase 0 (วัดบน iPhone 12 และ Android กลาง เช่น Pixel 6a ผ่าน Safari/Chrome)</h3>
+  <ul>
+    <li>login → enter workspace → เดินด้วย joystick → นั่งเก้าอี้ → เข้า zone → เปิด mic/cam → ออก ทำได้ครบไม่มี overlay</li>
+    <li>FPS ≥ 30 คงที่ในแมพ 20 คน, memory &lt; 400 MB บันทึกตัวเลขจริงลง <code>progress.md</code> (before คือ "ใช้ไม่ได้ / ถูกบล็อก")</li>
+    <li>Playwright mobile viewport test ผ่านใน CI</li>
+  </ul>
+  <h3>Phase 1</h3>
+  <ul>
+    <li>TestFlight + Play internal build ติดตั้งได้, Google/Apple sign-in native ผ่าน, push ถึงเครื่องเมื่อมี DM ตอน app อยู่ background</li>
+    <li>iOS: ออกจาก app กลางประชุม 30 วินาที กลับมาเสียงยังต่อ, WS reconnect ภายใน 5 วินาที</li>
+    <li><code>GET /api/health</code> version ตรงกับ app build</li>
+  </ul>
+  <h3>Plan B trigger (ย้ายไป Expo)</h3>
+  <ul>
+    <li>FPS &lt; 20 บน device เป้าหมายหลังปรับ Phase 0 ข้อ 6 แล้ว</li>
+    <li>Apple reject 4.2 สองรอบหลังใส่ native feature ครบ</li>
+  </ul>
+
+  <h2>6. เอกสารที่ต้องสร้าง</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>ไฟล์</th><th>เนื้อหา</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><code>zyra-doc/plan/MobileApp/spec.md</code></td><td>scope Full VO บน mobile, acceptance criteria ต่อ phase, out of scope (screen share mobile)</td></tr>
+        <tr><td class="k"><code>zyra-doc/plan/MobileApp/technical-design.md</code></td><td>ตารางเปรียบเทียบ + สถาปัตยกรรม Capacitor remote URL + auth/push flow</td></tr>
+        <tr><td class="k"><code>zyra-doc/plan/MobileApp/task-breakdown.md</code></td><td>Phase 0–2 แตกเป็น PR ขนาด 1 PR ต่อ task</td></tr>
+        <tr><td class="k"><code>zyra-doc/plan/MobileApp/progress.md</code></td><td>entry แรก + ตาราง before/after ตอนปิดแต่ละ phase</td></tr>
+        <tr><td class="k"><code>zyra-doc/plan/README.md</code></td><td>เพิ่ม 1 บรรทัด</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">แผนนี้อิงจากสถานะโค้ด ณ 2026-09-29 (Next.js 16.2.4, React 19, PixiJS 8.18, livekit-client 2.20) ถ้า stack เปลี่ยนให้ทบทวนตารางข้อ 1 ก่อนใช้ตัดสินใจ</div>
+</div>
+
+</body>
+</html>
