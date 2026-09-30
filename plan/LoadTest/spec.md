@@ -389,3 +389,34 @@
 ### 13.4 ไม่ครอบคลุม
 
 - UI/render ฝั่ง browser · knock (ห้องล็อก) · kick/mute-all · proximity circle (`cs_*`) · TURN/เน็ตไม่ดี
+
+---
+
+## 14. Dashboard รวมผล + แชท AI (เพิ่ม 2026-09-30)
+
+### 14.1 Requirement (ผู้ใช้)
+
+- 2026-09-30: "อยากมี dashboard รวมของทุกอัน" → วางแผนก่อน: หน้ารวมทุก scenario + ประวัติรอบ, อ่านจาก `reports/`, ไม่ต้องมี infra เพิ่ม
+- 2026-09-30: "ทำเลย อยากให้อิง UI จาก app กับ landing และอยากให้มี AI แชทบอทสำหรับถาม"
+
+### 14.2 Decision (Agent เลือก — ผู้ใช้ยังไม่ได้ตอบคำถามข้อ 2–4 ของแผน)
+
+| เรื่อง | เลือก | เหตุผล |
+|---|---|---|
+| รูปแบบ | local server `make dashboard` (`analyze serve`, 127.0.0.1:5666) แทน static `index.html` ในแผนแรก | แชทต้องมี server ถือ API key · ได้ผลพลอยได้คืออ่าน `reports/` สดทุกครั้ง ไม่ต้อง generate/เขียนทับไฟล์ |
+| ที่อยู่โค้ด | subcommand ใน `analyze/` | reuse `reduceSummary`, `digestSamples`, `scenarioHeader`, `runName`, prompt ความรู้เรื่อง metric (แยกเป็น `readingGuide` ใช้ร่วม — prompt ของ `analyze` ยังเหมือนเดิมทุกตัวอักษร) |
+| Frontend | HTML/CSS/JS ล้วน ฝังด้วย `go:embed` · icon lucide ฝังในไฟล์ · กราฟ SVG เขียนเอง | ไม่ต้อง build, เปิด offline ได้ (ยกเว้น Google Fonts ที่มี fallback) |
+| แชท | Claude + tool อ่านอย่างเดียว (`list_scenarios`, `list_runs`, `get_run`), stream ทีละคำ, model `LT_AI_MODEL` | AI ไปหาข้อมูลเองตามคำถาม, ข้อมูลที่ส่งเท่ากับ `analyze` |
+| ผล media | แสดง `summary.md` ตามที่เป็น (สถานะ = media) | ไม่แตะ scripts — ถ้าอยากได้สถานะผ่าน/ไม่ผ่านของ media ต้องให้ scripts เขียน JSON เพิ่ม (ยังไม่ทำ) |
+| แชร์ให้ทีม | ยังไม่ทำ (ดูในเครื่องที่รันเท่านั้น) | ผูกกับ Q6 — ยังไม่ได้ตัดสินที่เก็บผล |
+
+### 14.3 Acceptance
+
+- [x] ภาพรวมแสดงทุก scenario (รวมที่ยังไม่รัน) + สถานะรอบล่าสุด
+- [x] หน้า scenario: กราฟ p95 ข้ามรอบ + ตารางทุกรอบ · หน้า run: เกณฑ์, ตัวเลขหลัก, analysis.md / summary.md, ลิงก์ report.html
+- [x] รันเสร็จแล้วรีโหลดก็เห็น ไม่ต้องสั่ง generate
+- [x] แชทตอบจากข้อมูลจริงใน `reports/` โดยเรียก tool เอง, รู้ว่ากำลังดูหน้าไหน
+- [x] ไม่ส่ง/ไม่เสิร์ฟ `samples.json.gz`, `summary.json` (setup_data), `.env` · bind 127.0.0.1
+- [ ] ผู้ใช้เปิดดูกับข้อมูลจริงของตัวเองแล้ว ok
+
+วิธีใช้: [how-to-run.md §7](how-to-run.md#7-dashboard-รวมผล--แชทถาม-ai-make-dashboard)

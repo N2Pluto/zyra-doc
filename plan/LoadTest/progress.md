@@ -1,7 +1,48 @@
 # Load Test — Progress / Handoff
 
 > **สถานะรวม:** spec draft · seeder + WS + office journey + form login + lt01–lt09 + Spotlight lt10–lt12 / media ใช้ได้ · verify แบบย่อ (≤41 VU) บน local→dev ครบทุกตัวยกเว้น lt06 (ต้อง seed หลาย workspace) · ยังไม่ได้รันขนาดเต็ม
-> **อัปเดตล่าสุด:** 2026-09-25 · **คนล่าสุด:** rif (ร่วมกับ Claude Code)
+> **อัปเดตล่าสุด:** 2026-09-30 · **คนล่าสุด:** rif (ร่วมกับ Claude Code)
+
+## 2026-09-30 (รอบ 4) · rif (ร่วมกับ Claude Code) — บอกว่าแต่ละ scenario ทดสอบอะไร (ภาษาไทย)
+
+- **ผู้ใช้สั่ง:** "อยากให้บอกด้วยแต่ละอัน test อะไร ภาษาไทย"
+- **ทำอะไร:** `web/metrics.js` เพิ่ม `SCENARIOS_TH` (คำถาม / ทำอะไร / ทำไมต้องมี / ผ่านเมื่อ ของทั้ง 19 scenario — ย่อจาก spec §6.1 / §12.2 / §13.2) · ภาพรวมแสดงคำถามไทยใต้ชื่อแทนคำอธิบายอังกฤษ · หน้า scenario แสดงครบ 3 บรรทัด · หน้า run แสดงคำถามใต้ชื่อ + รายละเอียดในหัวข้อ "Scenario นี้ทดสอบอะไร"
+- **verify:** `make check` ผ่าน · `node --check` · screenshot ภาพรวม / scenario / run ไม่มี JS error
+- **หมายเหตุ:** ข้อความไทยซ้ำกับ spec — แก้ spec แล้วต้องแก้ `SCENARIOS_TH` ด้วย
+
+## 2026-09-30 (รอบ 3) · rif (ร่วมกับ Claude Code) — รื้อ UI ใหม่แบบ minimal
+
+- **ผู้ใช้สั่ง:** "แก้ UI ใหม่หมด เอาให้สวย ๆ อ่านง่าย ๆ ไม่รก minimal"
+- **ทำอะไร** (`feat/dashboard`, ยังไม่ commit): เขียน `web/index.html`, `app.css`, `app.js`, `run.js` ใหม่ — ตัด sidebar เหลือแถบบน + คอลัมน์เดียว · เส้นบางแทนกล่อง · ชื่อ scenario เป็นภาษาคน · หน้า run เริ่มด้วยคำตัดสินเป็นประโยค → ตัวเลขหลัก 4 ตัว → เกณฑ์ → กราฟ แล้วพับรายละเอียดที่เหลือ · แชทเป็น drawer ทับหน้า (Esc/กดนอกกรอบปิด) · ข้อมูลเท่าเดิม ไม่แตะ Go/API — รายละเอียด [how-to-run §7](how-to-run.md#7-dashboard-รวมผล--แชทถาม-ai-make-dashboard)
+- **verify:** `make check` ผ่าน · `node --check` ทุกไฟล์ · screenshot ภาพรวม / scenario / run (lt14 จริง + lt07 ปลอมมี error) / media / แชท / มือถือ 390px — ไม่มี JS error, ไม่มี scroll แนวนอน
+- **ยังไม่ได้ verify:** ผู้ใช้ยังไม่ได้เปิดดูกับข้อมูลของตัวเอง
+
+## 2026-09-30 (รอบ 2) · rif (ร่วมกับ Claude Code) — หน้า run แสดงข้อมูลครบ + อ่านง่ายขึ้น
+
+- **ผู้ใช้สั่ง:** "แสดงข้อมูลให้ครบหน่อย ข้อมูลดูยากมาก"
+- **ทำอะไร** (`feat/dashboard`, ยังไม่ commit):
+  - หน้า run เขียนใหม่ (`web/run.js`): สรุป 6 ช่อง · เกณฑ์เป็นภาษาคน + แถบเทียบเกณฑ์ · กราฟตลอดการรัน (small multiples) + ตารางราย step · ทุก metric แยกหมวดพร้อม avg/min/med/p90/p95/max/n · error · check ราย endpoint · แถบลัดไปแต่ละส่วน — วิธีอ่าน [how-to-run §7](how-to-run.md#7-dashboard-รวมผล--แชทถาม-ai-make-dashboard)
+  - `web/metrics.js`: ชื่อไทย + คำอธิบาย + หมวด ของทุก metric ที่ scenario ส่งออก · หน้าภาพรวม/scenario ใช้ชื่อไทยแทนชื่อ metric ดิบ
+  - API: `/api/runs/{name}` ส่งทุก metric + checks · ใหม่ `/api/runs/{name}/timeline` (digest ของ `samples.json.gz` เป็น JSON)
+  - `samples.go`: แยก `collectSamples` (เก็บข้อมูล) ออกจากการเขียนข้อความ — ข้อความที่ `analyze` ส่งให้ AI เหมือนเดิมทุกตัวอักษร (เทียบ lt14 จริง 2 รอบก่อน/หลังแล้ว)
+- **verify:** `make check` ผ่าน · `node --check` ทุกไฟล์ JS · `git diff --check` · screenshot หน้า run ของ lt14 จริง + lt07 ปลอมแบบ 3 step มี error (desktop + มือถือ 390px ไม่มี scroll แนวนอน, ไม่มี JS error)
+- **ยังไม่ได้ verify:** รอบใหญ่จริง (samples หลายร้อย MB — ส่วน "ตลอดการรัน" จะโหลดช้า แต่ส่วนอื่นขึ้นก่อน) · ผู้ใช้ยังไม่ได้เปิดดูกับข้อมูลของตัวเอง
+
+## 2026-09-30 · rif (ร่วมกับ Claude Code) — Dashboard รวมผล + แชท AI
+
+- **ผู้ใช้สั่ง:** อยากมี dashboard รวมของทุกอัน (วางแผนก่อน) → "ทำเลย อิง UI จาก app กับ landing และมี AI แชทบอทสำหรับถาม"
+- **ทำอะไร** (`zyra-loadtest` branch `feat/dashboard` จาก `develop`, ยังไม่ commit):
+  - `make dashboard` → `analyze serve` — local server 127.0.0.1:5666 อ่าน `reports/` สดทุก request (ไม่ generate ไฟล์) · spec [§14](spec.md#14-dashboard-รวมผล--แชท-ai-เพิ่ม-2026-09-30) · วิธีใช้ [how-to-run §7](how-to-run.md#7-dashboard-รวมผล--แชทถาม-ai-make-dashboard)
+  - `analyze/runs.go` (index รอบ: สถานะจาก threshold, p95/rate หลัก, options, VUs, ไฟล์ที่มี) · `serve.go` (API + เสิร์ฟไฟล์เฉพาะ report.html/analysis.md/summary.md/run-options.txt, กัน Host แปลก + แชทต้อง JSON) · `chat.go` (Claude + tool อ่านอย่างเดียว 3 ตัว, stream SSE) · `web/` (หน้าเว็บฝังใน binary)
+  - `main.go`: แยก prompt ส่วน "อ่านตัวเลขยังไง + ข้อเท็จจริงของระบบ" เป็น `readingGuide` ให้แชทใช้ร่วม · `aiModel()` · subcommand `serve` — prompt ของ `analyze` เหมือนเดิมทุกตัวอักษร (เทียบกับ HEAD แล้ว)
+  - UI: dark แบบ zyra-app admin (`#1A1B1E` / `#242B32` / เขียว `#58D68D` / แดง `#F03A3A`), icon lucide (คัด path จาก lucide-react ของ app), หัวข้อ Poppins + ปุ่ม pill แบบ landing
+- **verify:**
+  - `make check` ผ่าน (go vet seeder/analyze + k6 inspect ทุก scenario) · `node --check web/app.js` · `git diff --check`
+  - API กับ `reports/` จำลองใน scratchpad (lt14 จริง 2 รอบ + lt07 ปลอม 4 รอบ + meeting-media ปลอม 1 รอบ): runs/scenarios/detail ถูก · `summary.json` → 404 · path traversal → 404 · Host `evil.com` → 403 · แชท `text/plain` → 415
+  - screenshot (Chrome headless / Playwright): ภาพรวม, scenario + กราฟ + tooltip, run, media, แผงแชท, มือถือ 390px (ไม่มี scroll แนวนอน) · ไม่มี JS error
+  - แชทจริง 2 คำถาม (`claude-sonnet-5`): เรียก `list_runs` / `get_run` เอง ตอบไทยพร้อมตาราง ถูกตามข้อมูล, บอกเองว่า load shape ไม่เท่ากันเทียบตรงไม่ได้ · ส่งผ่านหน้าเว็บ stream แสดงผลถูก
+- **ยังไม่ได้ทำ / ไม่ได้ verify:** ผู้ใช้ยังไม่ได้เปิดกับ `reports/` จริงของตัวเอง · ผล media ไม่มีสถานะผ่าน/ไม่ผ่าน (scripts เขียนแค่ summary.md) · แชร์ให้ทีม (Q6) · Google Fonts ต้องมีเน็ต (ไม่มีก็ใช้ font ระบบ)
+- **PR:** — (ยังไม่ commit)
 
 ## 2026-09-28 (รอบ 3) · rif (ร่วมกับ Claude Code) — AI สรุปผลครอบคลุมขึ้น
 
