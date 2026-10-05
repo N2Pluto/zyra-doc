@@ -30,12 +30,18 @@ index: `(feature_id, z_index)`
 ### `tb_roadmap_asset` — คลัง asset กลาง
 `name` · `kind` (`image|sprite|gif`) · `image_url` (S3) · `sprite_columns/rows/fps` · `frame_width/height` · `frames JSONB` (กรอบเฟรมที่ detect จาก alpha ด้วย `lib/sprite-grid`) · `aspect` · `preset_key` · soft delete
 
-**asset ในตัวของระบบ (`preset_key`, migration 108, 2026-10-05):** ป้ายไตรมาส (`preset_key = 'quarter_sign'`) ไม่ได้อยู่ใน `zyra-app/public/` แล้ว แต่อยู่ในคลังนี้เหมือน asset อื่น
-- รูปฝังมากับ binary ของ API (`internal/service/roadmap_assets/quarter-sign.png`, 892×516) · ตอน service start (เมื่อ `ROADMAP_ENABLED`) `RoadmapService.EnsureQuarterSignAsset` จะอัปไฟล์ขึ้น S3 แล้ว insert แถวให้ถ้ายังไม่มี โดยไม่บล็อก startup และถ้าล้มจะลองใหม่ตอน start ครั้งถัดไป
+**asset ในตัวของระบบ (`preset_key`, migration 108, 2026-10-05):** ป้ายไตรมาสและกล่อง summary อยู่ในคลังนี้เหมือน asset อื่น
+
+| `preset_key` | วัตถุ (`kind`) | ไฟล์ใน `zyra-api/internal/service/roadmap_assets/` | พื้นที่วางข้อความ |
+|---|---|---|---|
+| `quarter_sign` | `sign` | `quarter-sign.png` 892×516 | สูง 15–65%, เว้นขอบซ้าย/ขวา 14% |
+| `summary_box` | `summary` | `summary-box.png` 4528×3417 (≈4.5MB, กระดาษ + ไม้บน/ล่างประกอบเป็นรูปเดียว) | สูง 22–85%, เว้นขอบซ้าย/ขวา 11% |
+
+- รูปฝังมากับ binary ของ API · ตอน service start (เมื่อ `ROADMAP_ENABLED`) `RoadmapService.EnsurePresetAssets` จะอัปไฟล์ขึ้น S3 แล้ว insert แถวให้ถ้ายังไม่มี โดยไม่บล็อก startup และถ้าล้มจะลองใหม่ตอน start ครั้งถัดไป · seed ไม่ผ่านเพดาน 2MB ของ endpoint อัปโหลด
 - unique partial index `(preset_key) WHERE preset_key IS NOT NULL AND is_deleted = FALSE` + `ON CONFLICT DO NOTHING` กัน replica seed ซ้ำ ตัวที่แพ้จะลบไฟล์ที่เพิ่งอัปทิ้ง
-- ทุกครั้งที่ start จะผูกวัตถุ `kind = 'sign'` ที่ `asset_id IS NULL` เข้ากับ asset นี้ และตั้ง `aspect` ตามรูปใหม่
+- ทุกครั้งที่ start จะผูกวัตถุชนิดนั้น (`sign` / `summary`) ที่ `asset_id IS NULL` เข้ากับ asset และตั้ง `aspect` ตามรูป
 - `DELETE /assets/:assetId` ลบ asset ที่มี `preset_key` ไม่ได้ (ตอบ `ROADMAP_ASSET_NOT_FOUND`) · ฝั่ง admin ไม่แสดงปุ่มลบ/แก้
-- ข้อความไตรมาสและช่วงเดือนไม่ได้อยู่ในรูป client วางทับเอง (แผ่นไม้อยู่ที่ช่วง 15–65% ของความสูง และเว้นขอบซ้าย/ขวาข้างละ 14%)
+- ข้อความ (ไตรมาส/ช่วงเดือน, summary ของฟีเจอร์) ไม่ได้อยู่ในรูป client วางทับเองตามพื้นที่ในตาราง · ถ้าไม่มี asset ป้ายจะเป็นกล่องไม้สีพื้น ส่วน summary จะเป็นกล่องดำโปร่งแสงแบบเดิม
 
 **quarter** เป็นช่วง 4 เดือน: `q1` Jan–Apr · `q2` May–Aug · `q3` Sep–Dec (`service.RoadmapQuarterFromDate`) — client ส่งมาแค่ `release_date`
 

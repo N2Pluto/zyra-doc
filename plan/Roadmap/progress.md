@@ -3,6 +3,25 @@
 > **สถานะรวม:** UI 2 หน้า + API ครบ (feature CRUD, scene, asset library, public read) ต่อกันแล้ว · **ตารางสร้างบน dev แล้ว** (DDL อยู่ใน `internal/database/postgres.go` จึงขึ้นเองตอน service start ทุก env) · ฝั่ง landing ยังไม่ต่อ
 > **อัปเดตล่าสุด:** 2026-10-05 · **คนล่าสุด:** rif (pair กับ Claude Code)
 
+## 2026-10-05 (รอบ 9) · rif — ตัวอักษรบนป้ายไตรมาส
+
+- เปลี่ยนตามภาพที่ผู้ใช้ส่ง: ตัวอักษรเป็นสีขาว ฟอนต์ Poppins · บรรทัดไตรมาสตัวหนา `clamp(6px, 7.5cqw, 48px)` · บรรทัดช่วงเดือนตัวปกติ `clamp(5px, 5.6cqw, 36px)` · ระยะห่างระหว่างบรรทัด `3cqw` · ขนาดเป็น cqw จึงย่อ/ขยายตามป้าย (เดิมฝั่ง admin เป็น px ตายตัว)
+- zyra-app `SceneObjectVisual` (เพิ่ม `@container`) · zyra-landing `.sp-sign-label` / `.sp-sign-range` / `.sp-sign-text` + bump `spotlight.css?v=6`
+- **ยังไม่ทำ:** ลูกศร ˅ หลัง "2026, Q1" ในภาพ ยังไม่ได้ถามว่าเป็นแค่ตกแต่งหรือเป็น dropdown เลือกไตรมาส
+- verify: app `eslint`/`prettier`/`tsc` (ไม่มี error ใหม่) · landing `npm run build` · render ด้วย headless Chrome เทียบกับภาพตัวอย่างแล้ว
+
+## 2026-10-05 (รอบ 8) · rif — กล่อง summary เปลี่ยนเป็นกระดาษ + ไม้ (asset ในคลัง)
+
+- **โจทย์:** เปลี่ยน Summary box จากกล่องดำโปร่งแสงเป็นกระดาษมีไม้บน/ล่าง ผู้ใช้ให้มา 3 ชิ้นแยก (`frame.png`, `zyra_wood_top_with_leaves 2.png`, `zyra_wood_bottom_with_leaves 2.png`)
+- **decision ที่ผู้ใช้เลือก:** ประกอบ 3 ชิ้นเป็นรูปเดียว (ย่อขยายแบบคงสัดส่วนเหมือนเดิม ไม่ทำแบบยืดความสูง) · เก็บขนาดเต็ม ไม่ย่อ → `summary-box.png` 4528×3417 ≈4.5MB · ใช้กลไก seed เดียวกับป้ายไตรมาส
+- **ประกอบรูป:** วางกระดาษกลาง แล้ววางไม้บน/ล่างทับขอบตามสัดส่วนที่วัดจากภาพตัวอย่างที่ผู้ใช้ส่ง (ทั้ง 3 ชิ้นสเกลเดียวกันอยู่แล้ว)
+- **zyra-api:** `EnsureQuarterSignAsset` → `EnsurePresetAssets` วนตามรายการ `roadmapPresetAssetSpecs` (`quarter_sign` → `sign`, `summary_box` → `summary`) · เพิ่ม `model.RoadmapAssetPresetSummaryBox` · timeout ของ seed 30s → 60s เพราะไฟล์ใหญ่ขึ้น · เทสต์เปลี่ยนเป็น `TestRoadmapPresetAssetsEmbedded` (ทุกรูปอ่านได้, key/kind ไม่ซ้ำ)
+- **zyra-app:** `presetFromAsset` แปลงตาม `PRESET_ASSET_OBJECTS` · เอา summary ออกจาก preset ตายตัว (มาจากคลัง asset แทน) · `SceneObjectVisual` วางข้อความสี `#5C6570` ในกระดาษ (22–85%, ขอบ 11%) ถ้าไม่มีรูปจะแสดงเป็นกล่องดำแบบเดิม
+- **zyra-landing:** summary ที่มี `asset.image_url` แสดงรูป + ข้อความในกระดาษ (`.sp-summary.is-framed` / `.sp-summary-body`) ไม่มีรูปจะใช้กล่องดำแบบเดิม (ไม่ใส่รูปสำรองใน repo เพราะไฟล์ 4.5MB) · `KIND_ASPECT.summary` = 0.75 · bump `spotlight.css?v=5` / `spotlight.min.js?v=8`
+- **verify:** api `go build` + `go vet` + `go test ./internal/service -run Roadmap` เขียว · app `tsc` ไม่มี error ใหม่, `eslint` + `prettier` เขียว · landing `npm run build` ผ่าน (restore ไฟล์ blog/compare/sitemap ที่ build เขียนทับ) · render รูปพร้อมข้อความ 2 ขนาดด้วย headless Chrome แล้ว ตรงกับภาพตัวอย่าง
+- **ข้อควรรู้:** กล่อง summary ที่วางไว้แล้วจะถูกผูกกับ asset ตอน API start และ `aspect` เปลี่ยนจาก 0.5 เป็น ≈0.755 จึงสูงขึ้น ต้องจัดตำแหน่งใหม่ถ้าไปทับวัตถุอื่น · landing โหลดรูป 4.5MB ต่อหน้า (ใช้ `loading="lazy"`)
+- **ยังไม่ได้ทำ:** ยังไม่ได้รัน seed กับ S3/DB ของ dev · ยังไม่ได้เปิด editor/landing กับข้อมูลจริง · ยังไม่ commit (ต่อจาก commit ป้ายไตรมาสที่ผู้ใช้ commit ไว้แล้ว)
+
 ## 2026-10-05 (รอบ 7) · rif — ป้ายไตรมาสย้ายเข้าคลัง asset (S3) + เปลี่ยนรูปเป็น Frame Q
 
 - **โจทย์:** ป้ายไตรมาสเดิมเป็นไฟล์ `zyra-app/public/image/roadmap/sign.png` ไม่ได้อยู่บน S3 → ให้เก็บรวมกับ asset อื่น และเปลี่ยนรูปเป็น `Frame Q.png` (892×516 ป้ายไม้แนวนอนมีใบไม้)
