@@ -28,7 +28,14 @@ index: `(release_date) WHERE NOT is_deleted` · `(is_visible, release_date) WHER
 index: `(feature_id, z_index)`
 
 ### `tb_roadmap_asset` — คลัง asset กลาง
-`name` · `kind` (`image|sprite|gif`) · `image_url` (S3) · `sprite_columns/rows/fps` · `frame_width/height` · `frames JSONB` (กรอบเฟรมที่ detect จาก alpha ด้วย `lib/sprite-grid`) · `aspect` · soft delete
+`name` · `kind` (`image|sprite|gif`) · `image_url` (S3) · `sprite_columns/rows/fps` · `frame_width/height` · `frames JSONB` (กรอบเฟรมที่ detect จาก alpha ด้วย `lib/sprite-grid`) · `aspect` · `preset_key` · soft delete
+
+**asset ในตัวของระบบ (`preset_key`, migration 108, 2026-10-05):** ป้ายไตรมาส (`preset_key = 'quarter_sign'`) ไม่ได้อยู่ใน `zyra-app/public/` แล้ว แต่อยู่ในคลังนี้เหมือน asset อื่น
+- รูปฝังมากับ binary ของ API (`internal/service/roadmap_assets/quarter-sign.png`, 892×516) · ตอน service start (เมื่อ `ROADMAP_ENABLED`) `RoadmapService.EnsureQuarterSignAsset` จะอัปไฟล์ขึ้น S3 แล้ว insert แถวให้ถ้ายังไม่มี โดยไม่บล็อก startup และถ้าล้มจะลองใหม่ตอน start ครั้งถัดไป
+- unique partial index `(preset_key) WHERE preset_key IS NOT NULL AND is_deleted = FALSE` + `ON CONFLICT DO NOTHING` กัน replica seed ซ้ำ ตัวที่แพ้จะลบไฟล์ที่เพิ่งอัปทิ้ง
+- ทุกครั้งที่ start จะผูกวัตถุ `kind = 'sign'` ที่ `asset_id IS NULL` เข้ากับ asset นี้ และตั้ง `aspect` ตามรูปใหม่
+- `DELETE /assets/:assetId` ลบ asset ที่มี `preset_key` ไม่ได้ (ตอบ `ROADMAP_ASSET_NOT_FOUND`) · ฝั่ง admin ไม่แสดงปุ่มลบ/แก้
+- ข้อความไตรมาสและช่วงเดือนไม่ได้อยู่ในรูป client วางทับเอง (แผ่นไม้อยู่ที่ช่วง 15–65% ของความสูง และเว้นขอบซ้าย/ขวาข้างละ 14%)
 
 **quarter** เป็นช่วง 4 เดือน: `q1` Jan–Apr · `q2` May–Aug · `q3` Sep–Dec (`service.RoadmapQuarterFromDate`) — client ส่งมาแค่ `release_date`
 
@@ -63,7 +70,7 @@ Envelope เดียวกับ patch note: `{ status, message, data }` · err
 | DELETE | `/:featureId` | — | soft delete |
 | PUT | `/:featureId/scene` | `{ objects: [...] }` | **เขียนทับทั้งฉาก** ลำดับใน array = z-index |
 | POST | `/:featureId/thumbnail` | multipart `file` | feature (อัป S3 + ลบไฟล์เก่า) |
-| GET | `/assets` | — | คลัง asset |
+| GET | `/assets` | — | คลัง asset (มี `preset_key` เมื่อเป็น asset ในตัว) |
 | POST | `/assets` | multipart `file,name,kind,sprite_*,frame_*,frames,aspect` | 201 + asset |
 | PATCH | `/assets/:assetId` | `{ name, sprite_*, frames, aspect }` | แก้ metadata (ไฟล์เดิม) |
 | DELETE | `/assets/:assetId` | — | soft delete (ฉากที่ใช้อยู่ยังแสดงได้) |

@@ -1,7 +1,17 @@
 # Roadmap (admin) — Progress / Handoff
 
 > **สถานะรวม:** UI 2 หน้า + API ครบ (feature CRUD, scene, asset library, public read) ต่อกันแล้ว · **ตารางสร้างบน dev แล้ว** (DDL อยู่ใน `internal/database/postgres.go` จึงขึ้นเองตอน service start ทุก env) · ฝั่ง landing ยังไม่ต่อ
-> **อัปเดตล่าสุด:** 2026-09-21 · **คนล่าสุด:** rif (pair กับ Claude Code)
+> **อัปเดตล่าสุด:** 2026-10-05 · **คนล่าสุด:** rif (pair กับ Claude Code)
+
+## 2026-10-05 (รอบ 7) · rif — ป้ายไตรมาสย้ายเข้าคลัง asset (S3) + เปลี่ยนรูปเป็น Frame Q
+
+- **โจทย์:** ป้ายไตรมาสเดิมเป็นไฟล์ `zyra-app/public/image/roadmap/sign.png` ไม่ได้อยู่บน S3 → ให้เก็บรวมกับ asset อื่น และเปลี่ยนรูปเป็น `Frame Q.png` (892×516 ป้ายไม้แนวนอนมีใบไม้)
+- **decision ที่ผู้ใช้เลือก:** (1) API seed ป้ายเข้าคลังให้เองตอน start โดยระบุด้วยคอลัมน์ `preset_key` (2) ผูกวัตถุป้ายเดิมที่ `asset_id` ว่างเข้ากับ asset ใหม่ แล้วลบไฟล์ใน `public/` · รายละเอียดอยู่ที่ [technical-design.md §2](technical-design.md)
+- **zyra-api** (`feat/roadmap-quarter-sign-asset` แตกจาก develop): migration `108_roadmap_asset_preset` (+ down) และ mirror ใน `postgres.go` · `model.RoadmapAsset.PresetKey` · `roadmap_preset_assets.go` (`EnsureQuarterSignAsset` ใช้ go:embed) · `ListAssets` ส่ง `preset_key` · `DeleteAsset` ลบ preset ไม่ได้ · เรียก seed แบบ goroutine ใน `main.go` เมื่อ `ROADMAP_ENABLED`
+- **zyra-app** (`feat/roadmap-quarter-sign-asset` แตกจาก develop): `presetFromAsset` แปลง asset `quarter_sign` เป็น preset kind `sign` (width 20) · `libraryPresets()` เรียงคลังเป็น asset ที่อัปเอง → Ground → ป้าย → ที่เหลือ · ปุ่มลบในคลังแสดงเฉพาะ `kind = custom` · `SceneObjectVisual` ย้ายข้อความไปช่วง 15–65% และเว้นขอบ 14% ถ้าไม่มีรูปจะแสดงเป็นกล่องไม้สีพื้นแทน · ลบ `public/image/roadmap/sign.png` และ fallback ตาม kind ใน `sceneObjectFromDTO`
+- **zyra-landing** (`feat/roadmap-spotlight`): renderer ใช้ `object.asset.image_url` อยู่แล้ว จึงแก้แค่ตำแหน่ง `.sp-sign-text` · `KIND_ASPECT.sign` = 0.58 · เปลี่ยนรูป fallback `assets/roadmap-sign.png` เป็นรูปใหม่ · bump `spotlight.css?v=4` / `spotlight.min.js?v=7` (`npm run build` จะเขียนไฟล์ blog/compare/sitemap ใหม่ด้วย ซึ่งไม่เกี่ยวกับงานนี้ เลย restore กลับ)
+- **verify:** api `go build ./...` + `go vet` + `go test ./internal/service -run Roadmap` เขียว (เพิ่มเทสต์ `TestRoadmapQuarterSignEmbedded`) · รัน SQL ของ migration 103+108 พร้อม seed บน Postgres 16 ชั่วคราวใน docker: seed ครั้งแรกได้แถว, ครั้งที่สองชน conflict ได้ 0 แถว, ป้ายเดิมถูกผูกและได้ aspect ใหม่ ส่วน ground ไม่ถูกแตะ, ลบ preset ไม่ได้, down migration รันผ่าน · app `tsc` ไม่มี error ใหม่ (เหลือ error เดิม 7 ตัวใน `__tests__`) + `eslint` + `prettier` เขียว · render รูปพร้อมข้อความทับ 3 ขนาดด้วย headless Chrome แล้ว ข้อความอยู่กลางแผ่นไม้
+- **ยังไม่ได้ทำ/ยังไม่ verify:** ยังไม่ได้รัน seed จริงกับ S3 + DB ของ dev (ต้อง deploy หรือรัน API ที่ต่อ dev) · ยังไม่ได้เปิด scene editor และ landing ในเบราว์เซอร์กับข้อมูลจริง · ข้อความบรรทัดช่วงเดือน (`#6B4F2E`) อ่านยากบนไม้สีส้มน้ำตาลของรูปใหม่ ยังไม่ได้เปลี่ยนสีเพราะยังไม่มีแบบ · ยังไม่ commit ทั้ง 3 repo
 
 ## 2026-09-21 (รอบ 6) · rif — ไล่เคส "landing ไม่ยิง API เลย"
 
