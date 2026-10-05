@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zyra Mobile Options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: single reading column (max 880px) with wide comparison tables allowed to scroll on their own.
+     Dark-first, mirroring the Zyra app palette (#1A1B1E / #242B32 / accent #58D68D). */
+  :root {
+    --bg: #1A1B1E;
+    --surface: #242B32;
+    --surface-2: #2B3540;
+    --line: rgba(255,255,255,0.12);
+    --fg: #F2F4F6;
+    --muted: #8C99A6;
+    --accent: #58D68D;
+    --accent-ink: #0F2A1B;
+    --warn: #F5B84B;
+    --bad: #F03A3A;
+    --font-body: "IBM Plex Sans Thai", "Sarabun", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #F5F7F8; --surface: #FFFFFF; --surface-2: #EAF0F2; --line: rgba(20,30,40,0.14);
+      --fg: #1A1B1E; --muted: #5B6875; --accent: #1F9E5B; --accent-ink: #FFFFFF;
+      --warn: #B8790E; --bad: #C62828; color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F5F7F8; --surface: #FFFFFF; --surface-2: #EAF0F2; --line: rgba(20,30,40,0.14);
+    --fg: #1A1B1E; --muted: #5B6875; --accent: #1F9E5B; --accent-ink: #FFFFFF;
+    --warn: #B8790E; --bad: #C62828; color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.65; }
+  .wrap { max-width: 880px; margin: 0 auto; padding-block: 40px 80px; padding-inline: 20px; }
+
+  h1, h2, h3 { text-wrap: balance; line-height: 1.25; margin: 0; }
+  h1 { font-size: clamp(28px, 5vw, 38px); font-weight: 700; letter-spacing: -0.01em; }
+  h2 { font-size: 22px; font-weight: 600; margin-block: 56px 16px; padding-top: 24px; border-top: 1px solid var(--line); }
+  h3 { font-size: 16px; font-weight: 600; margin-block: 24px 8px; }
+  p { margin: 0 0 12px; max-width: 68ch; }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--muted); }
+  code { font-family: var(--font-mono); font-size: 0.86em; background: var(--surface-2); padding: 1px 6px; border-radius: 4px; }
+  strong { font-weight: 600; }
+  a { color: var(--accent); }
+
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; color: var(--muted); font-size: 13px; font-family: var(--font-mono); }
+
+  .verdict { margin-top: 28px; padding: 20px 22px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); }
+  .verdict .eyebrow { color: var(--accent); margin-bottom: 6px; }
+  .verdict p:last-child { margin-bottom: 0; }
+
+  .tablewrap { overflow-x: auto; margin-block: 12px 20px; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th { background: var(--surface-2); font-weight: 600; font-size: 13px; }
+  tr:last-child td { border-bottom: 0; }
+  td.k { white-space: nowrap; font-weight: 500; }
+  td.effect { color: var(--muted); }
+
+  .options { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
+  .opt { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; min-width: 0; }
+  .opt.pick { border-color: var(--accent); }
+  .opt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .opt-head h3 { margin: 0; font-size: 18px; }
+  .pill { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .pill.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  .opt .sub { color: var(--muted); font-size: 13px; margin: 4px 0 14px; }
+  .pc { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .pc > div { min-width: 0; }
+  .pc h4 { margin: 0 0 6px; font-size: 12px; font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+  .pc .pro h4 { color: var(--accent); }
+  .pc .con h4 { color: var(--bad); }
+  .pc ul { padding-left: 18px; font-size: 14px; }
+  @media (max-width: 560px) { .pc { grid-template-columns: 1fr; } }
+
+  .score { font-family: var(--font-mono); letter-spacing: 2px; white-space: nowrap; }
+  .score b { color: var(--accent); font-weight: 400; }
+  .score i { color: var(--line); font-style: normal; }
+  td.center { text-align: center; }
+
+  .phases { display: grid; gap: 14px; margin-top: 16px; }
+  .phase { display: grid; grid-template-columns: 96px 1fr; gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .phase .num { font-family: var(--font-mono); font-size: 13px; color: var(--muted); line-height: 1.4; }
+  .phase .num b { display: block; font-size: 22px; color: var(--fg); font-weight: 500; }
+  .phase .body { min-width: 0; }
+  .phase h3 { margin-top: 0; }
+  .phase .scope { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+  .phase ol { font-size: 14px; }
+  @media (max-width: 560px) { .phase { grid-template-columns: 1fr; gap: 6px; } }
+
+  .risk { display: grid; gap: 10px; }
+  .risk > div { display: grid; grid-template-columns: 8px 1fr; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  .risk > div::before { content: ""; border-radius: 4px; background: var(--warn); }
+  .risk > div.hard::before { background: var(--bad); }
+
+  .note { color: var(--muted); font-size: 13px; }
+  .footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+
+  .nav { display:flex; flex-wrap:wrap; gap:6px 18px; font-family: var(--font-mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:28px; }
+  .nav a { color: var(--muted); text-decoration:none; padding-bottom:3px; border-bottom:2px solid transparent; }
+  .nav a.on { color: var(--fg); border-color: var(--accent); }
+  .nav a:hover { color: var(--fg); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <a href="./">1 · เลือกแนวทาง + แผน</a>
+    <a class="on" href="comparison.html">2 · เปรียบเทียบตัวเลือก</a>
+    <a href="native-features.html">3 · Background WS / Audio / Reconnect</a>
+    <a href="native-inventory.html">4 · Native feature inventory จากโค้ดทั้งหมด</a>
+  </nav>
+
+  <div class="eyebrow">Zyra World · Mobile app · เปรียบเทียบตัวเลือก</div>
+  <h1>Capacitor vs Expo vs Flutter vs ตัวเลือกอื่น</h1>
+  <p style="margin-top:12px; color: var(--muted);">เปรียบเทียบจากข้อเท็จจริงในโค้ด zyra-app จริง (PixiJS engine ~27k บรรทัด, HUD ~49k บรรทัด, livekit-client, raw WebSocket, cookie auth, Next.js standalone) ไม่ใช่การเทียบ framework ลอย ๆ</p>
+  <div class="meta"><span>วันที่ 2026-09-29</span><span>scope: Full Virtual Office</span><span>target: iOS + Android store</span></div>
+
+  <div class="verdict">
+    <div class="eyebrow">มติ</div>
+    <p><strong>Capacitor + native feature จริง</strong> เพราะเป็นทางเดียวที่ขึ้น store ทั้งสองพร้อม Full VO ได้โดยไม่ rewrite โค้ด ~76k บรรทัด · <strong>Expo เป็น Plan B</strong> เมื่อชน trigger (FPS &lt; 20 หลัง tuning หรือ Apple reject 4.2 สองรอบ) · <strong>Flutter ไม่เลือก</strong> เพราะ rewrite ทั้งหมดเป็น Dart และแชร์กับ zyra-app ไม่ได้เลย</p>
+  </div>
+
+  <h2>สิ่งที่ตัดสินใจเลือกจริง ๆ</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>ข้อเท็จจริงในโค้ด zyra-app</th><th>Capacitor</th><th>Expo / RN</th><th>Flutter</th></tr></thead>
+    <tbody>
+      <tr><td class="k">PixiJS 8 engine ~27k บรรทัด ผูก window/document</td><td>ใช้ซ้ำได้ทั้งก้อน</td><td><strong>rewrite ทั้งก้อน</strong> ไม่มี PixiJS renderer บน RN</td><td><strong>rewrite เป็น Flame</strong></td></tr>
+      <tr><td class="k">HUD React + Tailwind ~49k บรรทัด</td><td>ใช้ซ้ำ + ทำ responsive</td><td>rewrite เป็น RN component</td><td>rewrite เป็น Widget</td></tr>
+      <tr><td class="k">livekit-client mic/cam/screen share/blur/noise</td><td>รันใน WebView ได้ ยกเว้น screen share</td><td>@livekit/react-native official ครบ</td><td>livekit_client official ครบ</td></tr>
+      <tr><td class="k">raw WebSocket ตัวเดียว + reconnect ครบ</td><td>ใช้ได้เลย</td><td>ใช้ได้ถ้าแยก DOM ออก</td><td>เขียนใหม่เป็น Dart</td></tr>
+      <tr><td class="k">cookie auth + proxy.ts</td><td>ใช้ได้ (remote URL)</td><td>เปลี่ยนเป็น bearer + SecureStore</td><td>เปลี่ยนเป็น bearer</td></tr>
+      <tr><td class="k">Google login implicit flow ทำเอง</td><td>native plugin → endpoint เดิม</td><td>expo-auth-session → endpoint เดิม</td><td>google_sign_in → endpoint เดิม</td></tr>
+      <tr><td class="k">Next.js standalone + rewrite proxy + /api/img</td><td>ต้องใช้โหมด remote URL</td><td>ไม่เกี่ยว (แอปแยก)</td><td>ไม่เกี่ยว</td></tr>
+      <tr><td class="k">ไม่มี push, mobile layout, joystick</td><td>ทำใหม่ทั้งสาม</td><td>ทำใหม่ทั้งสาม</td><td>ทำใหม่ทั้งสาม</td></tr>
+      <tr><td class="k">ทีมเป็น React/TS</td><td>ทำได้ทันที</td><td>ทำได้ เรียน RN เพิ่ม</td><td>เรียน Dart ใหม่</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>บรรทัดล่างสุด:</strong> งานที่หนักที่สุด (mobile layout, touch control, performance, push backend) ต้องทำเท่ากันทั้งสามตัว สิ่งที่ต่างคือ Expo/Flutter ต้องบวก rewrite ~76k บรรทัดเข้าไปอีก</p>
+
+  <h2 style="margin-top:32px;border-top:0;padding-top:0">ตารางคะแนน + ข้อดี/ข้อเสีย</h2>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>เกณฑ์</th><th class="center">Capacitor</th><th class="center">Expo / RN</th><th class="center">Flutter</th></tr></thead>
+      <tbody>
+        <tr><td class="k">ใช้โค้ดเดิมได้</td><td class="center score"><b>●●●●●</b></td><td class="center score"><b>●</b><i>●●●●</i></td><td class="center score"><i>●●●●●</i></td></tr>
+        <tr><td class="k">เวลาถึง store</td><td class="center score"><b>●●●●●</b></td><td class="center score"><b>●●</b><i>●●●</i></td><td class="center score"><b>●●</b><i>●●●</i></td></tr>
+        <tr><td class="k">Performance ในแมพใหญ่</td><td class="center score"><b>●●●</b><i>●●</i></td><td class="center score"><b>●●●●</b><i>●</i></td><td class="center score"><b>●●●●●</b></td></tr>
+        <tr><td class="k">Native feel</td><td class="center score"><b>●●</b><i>●●●</i></td><td class="center score"><b>●●●●</b><i>●</i></td><td class="center score"><b>●●●●</b><i>●</i></td></tr>
+        <tr><td class="k">Meeting / background audio</td><td class="center score"><b>●●●</b><i>●●</i></td><td class="center score"><b>●●●●●</b></td><td class="center score"><b>●●●●●</b></td></tr>
+        <tr><td class="k">ค่าดูแลระยะยาว (codebase เดียว)</td><td class="center score"><b>●●●●●</b></td><td class="center score"><b>●●</b><i>●●●</i></td><td class="center score"><b>●</b><i>●●●●</i></td></tr>
+        <tr><td class="k">ความเสี่ยง App Store review</td><td class="center score"><b>●●</b><i>●●●</i></td><td class="center score"><b>●●●●●</b></td><td class="center score"><b>●●●●●</b></td></tr>
+        <tr><td class="k">Update โดยไม่ submit ใหม่</td><td class="center score"><b>●●●●●</b></td><td class="center score"><b>●●●●</b><i>●</i></td><td class="center score"><b>●●</b><i>●●●</i></td></tr>
+        <tr><td class="k">ทีมเริ่มได้ทันที</td><td class="center score"><b>●●●●●</b></td><td class="center score"><b>●●●</b><i>●●</i></td><td class="center score"><b>●</b><i>●●●●</i></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">คะแนนเป็นการประเมินเชิงคุณภาพเทียบกันใน 3 ตัว ยังไม่ได้วัดจริงบนเครื่อง ตัวเลข FPS/memory จริงจะได้จาก Phase 0 ข้อ 6</p>
+
+  <div class="options">
+    <div class="opt pick">
+      <div class="opt-head"><h3>Capacitor (Ionic)</h3><span class="pill go">แนะนำ</span></div>
+      <div class="sub">WebView shell ครอบ zyra-app ที่มีอยู่ โหลดจาก URL จริงของแต่ละ env</div>
+      <div class="pc">
+        <div class="pro"><h4>ข้อดี</h4><ul>
+          <li>ใช้โค้ดเดิม 100% ทั้ง engine, HUD, livekit, ws, auth deploy เว็บ = deploy mobile</li>
+          <li>ขึ้น store ทั้งสองจาก project เดียว plugin official ครบ: push, haptics, status bar, splash, keep-awake, deep link</li>
+          <li>WebRTC + WebGL รันใน WKWebView / Android WebView ได้ (iOS 14.3+)</li>
+          <li>Google/Apple sign-in ผ่าน native plugin แล้วยิง id_token เข้า endpoint เดิม ไม่ต้องแก้ backend</li>
+          <li>ทีม React/TS เดิมทำได้ทันที ไม่มี second codebase</li>
+          <li>โหมด remote URL แก้บั๊กเว็บแล้ว mobile ได้ทันที ไม่ต้อง submit store ใหม่</li>
+          <li>reconnect / visibility handling ที่มีอยู่แล้วใน workspace-ws.ts, use-meeting-media.ts, hero, engine ใช้ต่อได้ ~90%</li>
+        </ul></div>
+        <div class="con"><h4>ข้อเสีย / ความเสี่ยง</h4><ul>
+          <li>Apple Guideline 4.2: แอปที่เป็นแค่เว็บใน WebView โดนปฏิเสธได้ ต้องมี native feature จริง</li>
+          <li>Performance ต่ำกว่า native โดยเฉพาะ Android เครื่องล่าง ต้อง profile บนเครื่องจริง</li>
+          <li>Screen share บนมือถือทำไม่ได้ใน WebView ต้องเขียน native plugin เอง (งานใหญ่)</li>
+          <li>iOS background: WebView ถูก suspend นอกประชุม WebSocket ค้างไม่ได้ ต้องแก้ด้วย grace period ฝั่ง zyra-ws</li>
+          <li>Background audio ต้อง iOS ≥ 17.5 (ต่ำกว่านั้น mic mute ตอน background) · CallKit ใช้กับ WebRTC ใน WKWebView ไม่ได้</li>
+          <li>Remote URL: server ล่ม = app ล่ม และต้อง whitelist navigation</li>
+          <li>Native feel ต่ำสุดในสามตัว transition / keyboard ต้องปรับเอง</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <div class="opt">
+      <div class="opt-head"><h3>Expo / React Native</h3><span class="pill">Plan B</span></div>
+      <div class="sub">แอป native ด้วย React เขียน UI และ engine ใหม่ แชร์ได้เฉพาะ lib ที่ไม่แตะ DOM</div>
+      <div class="pc">
+        <div class="pro"><h4>ข้อดี</h4><ul>
+          <li>Native UI, performance ดีกว่า WebView ทีม React ใช้ tanstack-query / zustand เดิมได้</li>
+          <li><code>@livekit/react-native</code> SDK official รองรับ background audio ดีกว่า WebView มาก</li>
+          <li>EAS Build / Submit / Update ครบ build ทั้งสอง platform บน cloud และ OTA update JS ได้</li>
+          <li>แชร์ types, ws client, api client ได้ถ้า refactor ให้ไม่แตะ DOM</li>
+          <li>ไม่มีปัญหา 4.2 และไม่มีปัญหา WebView suspend</li>
+        </ul></div>
+        <div class="con"><h4>ข้อเสีย / ความเสี่ยง</h4><ul>
+          <li>ต้อง rewrite game engine 27k บรรทัด PixiJS v8 ไม่มี RN renderer ต้องใช้ react-native-skia หรือ expo-gl + engine ใหม่</li>
+          <li>ต้อง rewrite HUD 49k บรรทัด (Tailwind → StyleSheet / NativeWind, radix → RN component)</li>
+          <li>Two codebases ถาวร feature ใหม่ทำ 2 รอบ บั๊ก VO desync ต้องไล่ 2 ที่</li>
+          <li>Auth ต้องเปลี่ยนจาก cookie เป็น bearer + SecureStore</li>
+          <li>เวลาถึง store นานที่สุด (หลักเดือน)</li>
+        </ul></div>
+      </div>
+    </div>
+
+    <div class="opt">
+      <div class="opt-head"><h3>Flutter</h3><span class="pill">ไม่แนะนำ</span></div>
+      <div class="sub">Rewrite ทั้งหมดเป็น Dart ใช้ Flame เป็น game engine</div>
+      <div class="pc">
+        <div class="pro"><h4>ข้อดี</h4><ul>
+          <li>Performance และความสม่ำเสมอ iOS/Android ดีที่สุด (Impeller render เอง)</li>
+          <li><code>livekit_client</code> SDK official, Flame เหมาะกับ 2D tile map</li>
+          <li>Tooling ครบ hot reload ดี</li>
+        </ul></div>
+        <div class="con"><h4>ข้อเสีย / ความเสี่ยง</h4><ul>
+          <li>Rewrite ทั้งหมด ~76k บรรทัด TS → Dart แชร์กับ zyra-app ไม่ได้แม้แต่ types</li>
+          <li>ทีมต้องรักษา 2 ภาษา 2 stack sprite/asset pipeline ทำใหม่</li>
+          <li>ไม่มี OTA อย่างเป็นทางการ (Shorebird เป็น third-party)</li>
+          <li>เวลาถึง store นานเท่ากับหรือมากกว่า RN</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>ตัวเลือกอื่นที่พิจารณาแล้ว</h3>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>ตัวเลือก</th><th>สรุป</th><th>ทำไมไม่เลือก</th></tr></thead>
+      <tbody>
+        <tr><td class="k">PWA อย่างเดียว</td><td>ต่อยอด manifest / sw.js เดิม iOS 16.4+ ทำ web push ได้</td><td class="effect">ไม่ขึ้น store, iOS PWA ไม่มี background audio และ getUserMedia ใน standalone มีบั๊ก</td></tr>
+        <tr><td class="k">RN shell + WebView</td><td>native navigation/push, VO อยู่ใน WebView</td><td class="effect">ได้ข้อเสีย WebView ทั้งหมดบวกต้องดูแล RN เพิ่ม ไม่คุ้มกว่า Capacitor</td></tr>
+        <tr><td class="k">Kotlin / Compose Multiplatform</td><td>native แท้ 2 platform</td><td class="effect">rewrite ทั้งหมด ecosystem WebRTC/LiveKit บน KMP ยังไม่ mature</td></tr>
+        <tr><td class="k">Tauri 2 mobile</td><td>เบากว่า Capacitor (Rust)</td><td class="effect">plugin mobile ยังน้อย push/sign-in ต้องเขียนเอง เสี่ยงกว่าโดยไม่ได้อะไรเพิ่ม</td></tr>
+        <tr><td class="k">Unity / Godot</td><td>game engine เต็มรูปแบบ</td><td class="effect">overkill rewrite ทั้งหมด HUD/chat/meeting ทำยากมากใน game engine</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  
+  <div class="footer">รายละเอียดเต็มและเหตุผลต่อข้ออยู่ใน zyra-doc/plan/MobileApp/technical-design.md §1–2</div>
+</div>
+</body>
+</html>

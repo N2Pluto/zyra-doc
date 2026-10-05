@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zyra Mobile Native Features</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: single reading column (max 880px) with wide comparison tables allowed to scroll on their own.
+     Dark-first, mirroring the Zyra app palette (#1A1B1E / #242B32 / accent #58D68D). */
+  :root {
+    --bg: #1A1B1E;
+    --surface: #242B32;
+    --surface-2: #2B3540;
+    --line: rgba(255,255,255,0.12);
+    --fg: #F2F4F6;
+    --muted: #8C99A6;
+    --accent: #58D68D;
+    --accent-ink: #0F2A1B;
+    --warn: #F5B84B;
+    --bad: #F03A3A;
+    --font-body: "IBM Plex Sans Thai", "Sarabun", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #F5F7F8; --surface: #FFFFFF; --surface-2: #EAF0F2; --line: rgba(20,30,40,0.14);
+      --fg: #1A1B1E; --muted: #5B6875; --accent: #1F9E5B; --accent-ink: #FFFFFF;
+      --warn: #B8790E; --bad: #C62828; color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F5F7F8; --surface: #FFFFFF; --surface-2: #EAF0F2; --line: rgba(20,30,40,0.14);
+    --fg: #1A1B1E; --muted: #5B6875; --accent: #1F9E5B; --accent-ink: #FFFFFF;
+    --warn: #B8790E; --bad: #C62828; color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.65; }
+  .wrap { max-width: 880px; margin: 0 auto; padding-block: 40px 80px; padding-inline: 20px; }
+
+  h1, h2, h3 { text-wrap: balance; line-height: 1.25; margin: 0; }
+  h1 { font-size: clamp(28px, 5vw, 38px); font-weight: 700; letter-spacing: -0.01em; }
+  h2 { font-size: 22px; font-weight: 600; margin-block: 56px 16px; padding-top: 24px; border-top: 1px solid var(--line); }
+  h3 { font-size: 16px; font-weight: 600; margin-block: 24px 8px; }
+  p { margin: 0 0 12px; max-width: 68ch; }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--muted); }
+  code { font-family: var(--font-mono); font-size: 0.86em; background: var(--surface-2); padding: 1px 6px; border-radius: 4px; }
+  strong { font-weight: 600; }
+  a { color: var(--accent); }
+
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 14px; color: var(--muted); font-size: 13px; font-family: var(--font-mono); }
+
+  .verdict { margin-top: 28px; padding: 20px 22px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); }
+  .verdict .eyebrow { color: var(--accent); margin-bottom: 6px; }
+  .verdict p:last-child { margin-bottom: 0; }
+
+  .tablewrap { overflow-x: auto; margin-block: 12px 20px; border: 1px solid var(--line); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  th { background: var(--surface-2); font-weight: 600; font-size: 13px; }
+  tr:last-child td { border-bottom: 0; }
+  td.k { white-space: nowrap; font-weight: 500; }
+  td.effect { color: var(--muted); }
+
+  .options { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
+  .opt { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; min-width: 0; }
+  .opt.pick { border-color: var(--accent); }
+  .opt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .opt-head h3 { margin: 0; font-size: 18px; }
+  .pill { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .pill.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  .opt .sub { color: var(--muted); font-size: 13px; margin: 4px 0 14px; }
+  .pc { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .pc > div { min-width: 0; }
+  .pc h4 { margin: 0 0 6px; font-size: 12px; font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+  .pc .pro h4 { color: var(--accent); }
+  .pc .con h4 { color: var(--bad); }
+  .pc ul { padding-left: 18px; font-size: 14px; }
+  @media (max-width: 560px) { .pc { grid-template-columns: 1fr; } }
+
+  .score { font-family: var(--font-mono); letter-spacing: 2px; white-space: nowrap; }
+  .score b { color: var(--accent); font-weight: 400; }
+  .score i { color: var(--line); font-style: normal; }
+  td.center { text-align: center; }
+
+  .phases { display: grid; gap: 14px; margin-top: 16px; }
+  .phase { display: grid; grid-template-columns: 96px 1fr; gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .phase .num { font-family: var(--font-mono); font-size: 13px; color: var(--muted); line-height: 1.4; }
+  .phase .num b { display: block; font-size: 22px; color: var(--fg); font-weight: 500; }
+  .phase .body { min-width: 0; }
+  .phase h3 { margin-top: 0; }
+  .phase .scope { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+  .phase ol { font-size: 14px; }
+  @media (max-width: 560px) { .phase { grid-template-columns: 1fr; gap: 6px; } }
+
+  .risk { display: grid; gap: 10px; }
+  .risk > div { display: grid; grid-template-columns: 8px 1fr; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  .risk > div::before { content: ""; border-radius: 4px; background: var(--warn); }
+  .risk > div.hard::before { background: var(--bad); }
+
+  .note { color: var(--muted); font-size: 13px; }
+  .footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+
+  .nav { display:flex; flex-wrap:wrap; gap:6px 18px; font-family: var(--font-mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:28px; }
+  .nav a { color: var(--muted); text-decoration:none; padding-bottom:3px; border-bottom:2px solid transparent; }
+  .nav a.on { color: var(--fg); border-color: var(--accent); }
+  .nav a:hover { color: var(--fg); }
+  .code { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.55; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; margin: 12px 0 16px; white-space: pre; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="nav">
+    <a href="./">1 · เลือกแนวทาง + แผน</a>
+    <a href="comparison.html">2 · เปรียบเทียบตัวเลือก</a>
+    <a class="on" href="native-features.html">3 · Background WS / Audio / Reconnect</a>
+    <a href="native-inventory.html">4 · Native feature inventory จากโค้ดทั้งหมด</a>
+  </nav>
+  <div class="eyebrow">Zyra World · Mobile app · ระดับโค้ด</div>
+  <h1>Native feature จริง, Background WebSocket, Background audio + Reconnect</h1>
+  <p style="margin-top:12px; color: var(--muted);">ตอบ 3 คำถาม: feature ไหนต้องเขียน native จริง · WebSocket ตอนแอปอยู่ background ทำได้ไหม · background audio + reconnect ทำได้ไหม อิงจากโค้ด zyra-app / zyra-ws จริง และพฤติกรรม WKWebView / Android WebView ที่มีหลักฐาน</p>
+  <div class="meta"><span>ตรวจ 2026-09-29</span><span>zyra-app develop</span><span>zyra-ws develop</span><span>รายละเอียดเต็ม: zyra-doc/plan/MobileApp/technical-design.md §11–13</span></div>
+
+  <div class="verdict">
+    <div class="eyebrow">คำตอบสั้น</div>
+    <p><strong>Background WebSocket:</strong> ระหว่างประชุมทำได้ทั้ง iOS (audio background mode) และ Android (foreground service) · นอกประชุม iOS ทำไม่ได้และไม่ควรพยายาม แก้ด้วย grace period ฝั่ง zyra-ws แทน</p>
+    <p><strong>Background audio:</strong> ทำได้บน iOS ≥ 17.5 ด้วย config ล้วน (Info.plist + WKWebView flag + media ต้องเป็น UDP) · Android ต้องมี foreground service ซึ่งเป็นงาน native ชิ้นเดียวใน Tier 1</p>
+    <p><strong>Reconnect:</strong> โค้ดมีครบแล้วราว 90% ต้องเพิ่มแค่ bridge lifecycle ของ Capacitor เข้า handler เดิม และปิดช่องว่างฝั่ง server (grace + restore sitting)</p>
+  </div>
+
+  <h2>1. ต้อง native จริง vs ทำใน WebView ได้</h2>
+  <p>Tier 1 ทั้งหมดเป็น config + plugin official ไม่ต้องเขียน Swift/Kotlin เอง ยกเว้น foreground service บน Android และหน้า offline ของ shell ซึ่งเล็ก งาน native ใหญ่จริงมีแค่ screen share กับ PiP (Tier 3)</p>
+  <h3>1.1 ต้อง native (WebView ทำไม่ได้ หรือ OS บังคับ)</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Feature</th><th>ทำไม WebView ทำไม่ได้</th><th>วิธีทำ</th><th>งาน native จริง</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Push notification</td><td>WKWebView / Android WebView ไม่มี <code>pushManager</code></td><td><code>@capacitor/push-notifications</code> + Firebase SDK</td><td><span class="pill">config</span></td></tr>
+      <tr><td class="k">Sign in with Google</td><td>Google block OAuth ใน embedded WebView</td><td>plugin → id_token → endpoint เดิม</td><td><span class="pill">config</span></td></tr>
+      <tr><td class="k">Sign in with Apple</td><td>Apple บังคับ (4.8) และเป็น native API</td><td>plugin → identityToken → <code>login_apple</code> ใหม่</td><td><span class="pill">config + endpoint</span></td></tr>
+      <tr><td class="k">Background audio (iOS)</td><td>ต้องประกาศ <code>UIBackgroundModes: audio</code> ใน Info.plist</td><td>แก้ Info.plist (ดูข้อ 3)</td><td><span class="pill">config</span></td></tr>
+      <tr><td class="k">Keep WS alive ตอน background (Android)</td><td>Android freeze cached process / Doze ตัด network</td><td>foreground service type <code>microphone</code> ตอนประชุม</td><td><span class="pill go">Kotlin ~1 ไฟล์</span></td></tr>
+      <tr><td class="k">Haptics</td><td><code>navigator.vibrate</code> ไม่มีบน iOS</td><td><code>@capacitor/haptics</code></td><td><span class="pill">config</span></td></tr>
+      <tr><td class="k">Badge count</td><td>ไม่มี web API</td><td><code>@capacitor-community/badge</code></td><td><span class="pill">config</span></td></tr>
+      <tr><td class="k">Deep link / universal link</td><td>ต้องประกาศ scheme + AASA / assetlinks ระดับแอป</td><td><code>appUrlOpen</code> + ไฟล์ <code>.well-known</code> บน zyra-app</td><td><span class="pill">config</span></td></tr>
+      <tr><td class="k">หน้า offline ของแอป</td><td>error page ของ WebView เป็นของ Safari/Chrome</td><td>shell เช็ค reachability + fallback HTML ใน bundle</td><td><span class="pill">Swift/Kotlin เล็ก</span></td></tr>
+      <tr><td class="k">Screen share</td><td><code>getDisplayMedia</code> ไม่มีใน WebView ทั้งสอง</td><td>ReplayKit + MediaProjection → publish เข้า LiveKit</td><td><span class="pill go">งานใหญ่ (Tier 3)</span></td></tr>
+      <tr><td class="k">CallKit / VoIP push</td><td>CallKit กับ WebRTC ใน WKWebView ถือ AVAudioSession คนละ thread แย่ง mic/speaker กัน</td><td>ต้องย้ายเสียงไป native LiveKit SDK = Plan B</td><td><span class="pill">ไม่แนะนำในท่านี้</span></td></tr>
+      <tr><td class="k">Native PiP วิดีโอประชุม</td><td>WebRTC stream ไม่เข้า PiP ของ WKWebView อัตโนมัติ</td><td>plugin native</td><td><span class="pill">งานกลาง (Tier 3)</span></td></tr>
+      <tr><td class="k">Download ไฟล์แชท</td><td>WebView ไม่ handle <code>blob:</code> download</td><td><code>@capacitor/filesystem</code> + <code>share</code></td><td><span class="pill">config + branch</span></td></tr>
+      <tr><td class="k">Local notification</td><td><code>Notification</code> API ไม่มีใน WKWebView</td><td><code>@capacitor/local-notifications</code></td><td><span class="pill">config</span></td></tr>
+      <tr><td class="k">Splash / status bar / orientation</td><td>ระดับ OS</td><td>plugin official</td><td><span class="pill">config</span></td></tr>
+    </tbody>
+  </table></div>
+  <h3>1.2 ทำใน WebView ได้ (โค้ด zyra-app เดิม + config WebView)</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Feature</th><th>ได้ไหม</th><th>เงื่อนไข / ต้องตรวจ</th></tr></thead>
+    <tbody>
+      <tr><td class="k">WebRTC mic + cam</td><td>✅</td><td><code>allowsInlineMediaPlayback = true</code> และ <strong><code>mediaTypesRequiringUserActionForPlayback = []</code></strong> ไม่ตั้งแล้ว iOS 18 เสียง WebRTC ไม่ออก · เชื่อว่า Capacitor ตั้งให้แล้ว ต้องตรวจ</td></tr>
+      <tr><td class="k">สลับกล้องหน้า/หลัง</td><td>✅</td><td><code>facingMode</code> โค้ดเว็บล้วน</td></tr>
+      <tr><td class="k">WebSocket (foreground)</td><td>✅</td><td><code>WorkspaceWSClient</code> เดิม</td></tr>
+      <tr><td class="k">Cookie auth + proxy.ts</td><td>✅</td><td>เฉพาะโหมด remote URL</td></tr>
+      <tr><td class="k">Joystick / tap-to-walk / pinch</td><td>✅</td><td>โค้ด Phase 0 ใน zyra-engine</td></tr>
+      <tr><td class="k">Keyboard ไม่บัง input</td><td>✅</td><td><code>@capacitor/keyboard</code> event + CSS</td></tr>
+      <tr><td class="k">Wake lock</td><td>⚠️</td><td><code>navigator.wakeLock</code> ใน WKWebView ไม่แน่ใจ → ใช้ <code>@capacitor/keep-awake</code></td></tr>
+      <tr><td class="k">Web Share</td><td>⚠️</td><td>ไม่แน่ใจใน WKWebView → ใช้ <code>@capacitor/share</code></td></tr>
+      <tr><td class="k">Clipboard / IndexedDB / localStorage</td><td>✅</td><td><code>sessionStorage</code> (client_session_id) อาจไม่รอดเมื่อ OS kill WebView process ผลแค่ได้ id ใหม่เหมือน reload</td></tr>
+      <tr><td class="k">reCAPTCHA ตอน login</td><td>⚠️</td><td>เว็บโหลดจาก domain จริงน่าจะได้ ต้องทดสอบ</td></tr>
+      <tr><td class="k">i18n / TanStack Query / zustand / Sentry / Mixpanel</td><td>✅</td><td>โค้ดเว็บล้วน ควร tag platform</td></tr>
+      <tr><td class="k">Audio playback unlock</td><td>✅</td><td><code>sfu.startAudio()</code> บน click/keydown มีอยู่แล้ว</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>2. Background WebSocket ทำได้ไหม</h2>
+  <h3>2.1 พฤติกรรม OS ที่มีหลักฐาน</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th></th><th>iOS (WKWebView)</th><th>Android (System WebView)</th></tr></thead>
+    <tbody>
+      <tr><td class="k">JS / WebSocket ตอน background</td><td><strong>ถูก suspend ภายในไม่กี่วินาที</strong> หลัง didEnterBackground timers, rAF, callback หยุดหมด socket ถูก OS ปิดหรือค้างจนอีกฝั่ง timeout</td><td>Capacitor <strong>ไม่เรียก</strong> <code>webView.onPause()</code> / <code>pauseTimers()</code> (ตรวจจาก Bridge.java) JS วิ่งต่อจนกว่า OS จะ freeze cached process หรือ Doze ตัด network</td></tr>
+      <tr><td class="k">ยกเว้น</td><td>มี <code>UIBackgroundModes: audio</code> และกำลังเล่น/จับเสียงอยู่จริง (อยู่ในประชุม) → iOS ไม่ suspend WebView + WS วิ่งต่อ (ยืนยัน iOS 17.5.1+)</td><td>foreground service ที่มี notification ค้าง → ไม่ถูก freeze</td></tr>
+      <tr><td class="k">Capacitor Background Runner</td><td colspan="2">ไม่ช่วย event-driven, context ใหม่ทุกครั้ง, ≤30 วินาที, ไม่มี WebSocket ไม่มี DOM</td></tr>
+      <tr><td class="k">Native WS relay</td><td>iOS ยัง suspend แอปทั้งตัวถ้าไม่มี background mode ที่เข้าเงื่อนไข VoIP mode ใช้ค้าง socket โดยไม่มีสายจริง = Apple reject</td><td>ทำได้แต่เท่ากับ foreground service อยู่ดี</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>2.2 สิ่งที่เกิดกับ zyra-ws เมื่อแอปถูก suspend (จากโค้ดจริง)</h3>
+  <pre class="code">client: heartbeat ทุก 20s (vo-session-store.ts:432) หยุด · Worker ticker 100ms (scene.ts:3100) หยุด
+server: pingPeriod 45s / pongWait 60s (client.go:17-20)
+  ├─ OS ปิด socket ทันที → ReadPump ออก → room.unregister (client.go:370)
+  └─ OS ค้าง socket → pong ไม่ตอบ → ปิดหลัง 60s → unregister
+unregister (room.go:506-626) — ไม่มี grace period:
+  releaseSeat → ออกจาก meeting chat / audio room / screen share → MediaRoomID = ""
+  → SetLastPosition (tile+direction ไม่เก็บ sitting) → DeletePresence → broadcast MsgLeft ทันที
+presence TTL 35s (redis.go:17) หมดอายุก่อนหน้านั้นอยู่แล้ว
+รอดข้ามการหลุด: follow 30s · chat circle 5s · spotlight 2 นาที</pre>
+  <p>ผล: ผู้ใช้กด Home 1 นาที คนอื่นเห็นว่าออกจาก office กลับมาอีกครั้งคือ join ใหม่ ยืนอยู่ tile เดิมแต่ไม่นั่งแล้ว ต้อง <code>mediaRoomEnter</code> ใหม่ (client ทำให้อยู่แล้ว)</p>
+
+  <h3>2.3 คำตอบ</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>สถานการณ์</th><th>iOS</th><th>Android</th><th>วิธีแก้ที่ถูก</th></tr></thead>
+    <tbody>
+      <tr><td class="k">Background WS ระหว่างประชุม</td><td>✅ ด้วย audio background mode (iOS ≥ 17.5)</td><td>✅ ด้วย foreground service</td><td>native config (iOS) + plugin เล็ก (Android)</td></tr>
+      <tr><td class="k">Background WS นอกประชุม</td><td>❌ OS suspend ไม่มี background mode ที่ Apple ยอม</td><td>⚠️ best-effort ได้หลายนาทีแล้วโดน freeze</td><td><strong>ไม่ใช่ native</strong> แก้ที่ zyra-ws: grace period</td></tr>
+    </tbody>
+  </table></div>
+  <div class="risk">
+    <div><div><strong>zyra-ws grace period สำหรับ mobile</strong> เมื่อ client ที่ hidden หลุด ให้ค้าง seat + MediaRoomID + presence ไว้ราว 90 วินาที mark status away แทน broadcast left ทันที reconnect ด้วย client_session_id เดิมภายในเวลานั้นคืนสถานะ (ต่อยอด reclaimSuperseded ที่ตอนนี้คืนแค่ follow)</div></div>
+    <div><div><strong>zyra-app bridge Capacitor lifecycle</strong> <code>appStateChange</code> → <code>wsClient.visibility(!isActive)</code> และตอน active เรียก <code>reconnectNow()</code> เหมือนที่ hero ผูกกับ visibilitychange อย่าพึ่ง visibilitychange อย่างเดียวบน Android</div></div>
+    <div><div><strong>zyra-app ส่ง presence ตอน pause</strong> beforeunload ไม่ยิงตอนไป background เพิ่ม <code>App.pause</code> → POST /presence keepalive</div></div>
+  </div>
+
+  <h2>3. Background audio + reconnect ทำได้ไหม</h2>
+  <h3>3.1 Background audio บน iOS</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>iOS</th><th>WebRTC ใน WKWebView ตอน background</th><th>แหล่ง</th></tr></thead>
+    <tbody>
+      <tr><td class="k">14.7 – 17.4</td><td>ได้ยินคนอื่น แต่ <strong>mic ตัวเองถูก mute</strong> สั่งกลับไม่ได้</td><td>Apple forum 689182</td></tr>
+      <tr><td class="k"><strong>≥ 17.5.1</strong></td><td>ใส่ audio ใน UIBackgroundModes แล้ว <strong>ทำงานเหมือน Safari</strong> ทั้งฟังและพูด</td><td>Apple forum 689182 (Aug 2024)</td></tr>
+      <tr><td class="k">18</td><td>เสียง WebRTC ไม่ออกถ้าไม่ตั้ง <code>mediaTypesRequiringUserActionForPlayback = []</code></td><td>Apple forum 764453</td></tr>
+      <tr><td class="k">26 (Element X = LiveKit web ใน WKWebView)</td><td>ยังมีรายงานเสียงหายสองทางเมื่อ media ตกไป <strong>TCP</strong> iOS ตัด TCP background แรงกว่า</td><td>element-call #4184 (ยังเปิด)</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>ต้องทำ (config ทั้งหมด):</strong> Info.plist <code>UIBackgroundModes = [audio]</code> · WKWebView <code>allowsInlineMediaPlayback</code> + <code>mediaTypesRequiringUserActionForPlayback = []</code> · ฝั่งเว็บตั้ง <code>navigator.audioSession.type = "play-and-record"</code> ตอนเข้าประชุม (iOS ≥ 17, Web API) · zyra-sfu ตรวจว่า UDP ไม่ชน TURN และ client ไม่ตก TCP-only · ตั้ง minimum iOS 17.5</p>
+  <p><strong>Android:</strong> foreground service ตอนอยู่ในประชุม (Android 14+ บังคับ foregroundServiceType microphone) ไม่งั้น OS ตัด mic เมื่อไป background นี่คืองาน native ชิ้นเดียวใน Tier 1</p>
+  <p><strong>CallKit:</strong> ไม่ทำ WKWebView กับ CallKit ถือ AVAudioSession คนละ thread แย่งกัน (Apple forum 685268) ถ้าต้องการสายเข้าจริงต้องย้ายเสียงไป native LiveKit SDK ซึ่งเป็น Plan B</p>
+
+  <h3>3.2 Reconnect ที่มีอยู่แล้วในโค้ด</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>ชั้น</th><th>มีอะไรแล้ว</th><th>ไฟล์:บรรทัด</th></tr></thead>
+    <tbody>
+      <tr><td class="k">WS client</td><td>auto-reconnect backoff [1,2,4,8,16]s สูงสุด 5 ครั้ง → onReconnectExhausted</td><td><code>lib/api/workspace-ws.ts:82-83, 394-413</code></td></tr>
+      <tr><td class="k"></td><td>liveness: ไม่มี frame เข้า 30s → close → reconnect (ตอน hidden แค่ ping)</td><td><code>:87-88, 464-486</code></td></tr>
+      <tr><td class="k"></td><td>wake: online / focus / visibilitychange(visible) → reconnectNow() ถ้า socket OPEN แต่ stale >30s ปิดแล้วต่อใหม่</td><td><code>:430-457, 499-513</code></td></tr>
+      <tr><td class="k"></td><td>ส่ง client_session_id เดิม (sessionStorage) → server ไม่ยิง session_replaced</td><td><code>ws-tab-session.ts:7-19</code>, <code>room.go:278</code></td></tr>
+      <tr><td class="k">SFU</td><td>LiveKit default resume · reconnected → re-assert mic/cam + announceLiveState()</td><td><code>sfu-client.ts:1687</code>, <code>use-meeting-media.ts:1325-1347</code></td></tr>
+      <tr><td class="k"></td><td>disconnected(recoverable) → rejoin delay [1,3,6]s 3 ครั้ง → toast</td><td><code>use-meeting-media.ts:1300-1360</code></td></tr>
+      <tr><td class="k"></td><td>visible หลัง hidden ≥5s → resyncRemoteAudio() + startAudio() ถ้าไม่ connected → scheduleReconnect()</td><td><code>use-meeting-media.ts:1037-1057</code></td></tr>
+      <tr><td class="k"></td><td>WS reconnected → re-send mediaRoomEnter, mute/cam, hand, shareStart</td><td><code>use-meeting-media.ts:1006-1021</code></td></tr>
+      <tr><td class="k">Hero</td><td>onReconnecting freeze input + scrim · onReconnected set status, stop(tile), re-subscribe chat, meetingChatJoin, resync remote · exhausted → modal Retry/Leave</td><td><code>hero-virtual-office.tsx:3265-3353, 12423-12462</code></td></tr>
+      <tr><td class="k">Engine</td><td>hidden → releaseAllKeys + flush pending sit · visible → _handleResumeFromBackground() · Worker ticker 100ms</td><td><code>scene.ts:2911-2968, 3100-3170</code></td></tr>
+      <tr><td class="k">Server</td><td>visibility{hidden:false} → forceSync + neighbor snapshot · Join restore tile/direction + status (ถ้า presence ยังไม่หมด 35s)</td><td><code>room.go:2319-2350</code>, <code>hub.go:230-252</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>3.3 ช่องว่างที่ต้องปิด (เรียงตามผลกระทบ)</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th>ช่องว่าง</th><th>ผล</th><th>แก้ที่</th><th>native?</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>server ไม่มี grace หลุดแล้ว left ทันที seat/meeting หาย</td><td>กด Home 1 นาที = ออกจาก office</td><td>zyra-ws</td><td>❌</td></tr>
+      <tr><td>2</td><td>Join ไม่ restore sitting/seat/MediaRoomID</td><td>กลับมาแล้วยืนข้างเก้าอี้</td><td>zyra-ws hub.go Join + unregister</td><td>❌</td></tr>
+      <tr><td>3</td><td>พึ่ง visibilitychange/focus อย่างเดียว Android อาจไม่ยิง</td><td>ไม่ reconnect จน liveness 30s จับ</td><td>zyra-app bridge appStateChange</td><td>❌</td></tr>
+      <tr><td>4</td><td>beforeunload presence POST ไม่ยิงตอน background</td><td>last position บน REST ไม่อัปเดต</td><td>zyra-app App.pause → POST /presence</td><td>❌</td></tr>
+      <tr><td>5</td><td>backoff timers ถูก freeze พร้อม JS</td><td>ปกติ _onWake ยิง reconnectNow ทับให้ ต้องมี test</td><td>zyra-app test</td><td>❌</td></tr>
+      <tr><td>6</td><td>Android ไม่มี foreground service</td><td>เสียง/socket หายเมื่อสลับแอปตอนประชุม</td><td>zyra-mobile Kotlin เล็ก</td><td>✅ ชิ้นเดียว</td></tr>
+      <tr><td>7</td><td>iOS &lt; 17.5 mic mute ตอน background</td><td>พูดไม่ได้ตอนสลับแอป</td><td>minimum iOS 17.5 + แจ้งผู้ใช้</td><td>config</td></tr>
+      <tr><td>8</td><td>media ตก TCP → iOS ตัดตอน background</td><td>เสียงหายสองทาง</td><td>zyra-sfu port/TURN config</td><td>❌</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>แหล่งอ้างอิง</h2>
+  <ul>
+    <li><a href="https://developer.apple.com/forums/thread/689182">Apple forum 689182 — WKWebView getUserMedia mic muted in background</a></li>
+    <li><a href="https://developer.apple.com/forums/thread/764453">Apple forum 764453 — WKWebView WebRTC audio on iOS 18</a></li>
+    <li><a href="https://developer.apple.com/forums/thread/685268">Apple forum 685268 — CallKit + WebRTC in WKWebView</a></li>
+    <li><a href="https://developer.apple.com/forums/thread/111247">Apple forum 111247 — WKWebView doesn't run JS in background</a></li>
+    <li><a href="https://github.com/element-hq/element-call/issues/4184">element-call #4184 — audio lost when backgrounded (LiveKit web in WKWebView)</a></li>
+    <li><a href="https://capacitorjs.com/docs/apis/background-runner">Capacitor Background Runner</a> · <a href="https://capacitorjs.com/docs/apis/app">Capacitor App API</a> · <a href="https://github.com/ionic-team/capacitor/blob/main/android/capacitor/src/main/java/com/getcapacitor/Bridge.java">Capacitor Android Bridge.java</a></li>
+    <li><a href="https://bugs.webkit.org/show_bug.cgi?id=173932">WebKit 173932 — WKWebView background audio</a></li>
+  </ul>
+  <div class="footer">อิงโค้ด zyra-app / zyra-ws บน develop ณ 2026-09-29 เลขบรรทัดจะเลื่อนเมื่อโค้ดเปลี่ยน ให้ค้นชื่อ function แทน</div>
+</div>
+
+</body>
+</html>
