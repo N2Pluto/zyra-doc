@@ -23,7 +23,12 @@
 index: `(release_date) WHERE NOT is_deleted` · `(is_visible, release_date) WHERE NOT is_deleted` · `(quarter) WHERE NOT is_deleted`
 
 ### `tb_roadmap_scene_object` — 1 แถว = 1 วัตถุบน canvas
-`feature_id` (FK CASCADE) · `kind` (`ground|decoration|character|board|sign|mystery|custom`) · `name` · `asset_id` (FK SET NULL) · `pos_x/pos_y/width` (**% ของ stage 16:9** 0–100) · `aspect` · `z_index` · `is_locked/is_flipped/is_hidden` · `text` · `color`
+`feature_id` (FK CASCADE) · `kind` (`ground|decoration|character|board|sign|mystery|summary|custom`) · `name` · `asset_id` (FK SET NULL) · `pos_x/pos_y/width` (**% ของ stage 16:9** 0–100) · `aspect` · `z_index` · `is_locked/is_flipped/is_hidden` · `is_mystery` · `text` · `color`
+
+**Mystery รายวัตถุ (`is_mystery`, migration 109, 2026-10-05):** ใช้ได้เฉพาะ `kind = 'custom'` (ชนิดอื่นส่งมา = `INVALID_SCENE_OBJECT`) · มีผลเมื่อฟีเจอร์เปิด `is_teaser` เท่านั้น
+- teaser **ไม่ซ่อนทั้งฉากแล้ว** — ฉากแสดงตามปกติ วัตถุที่ `is_mystery` เป็นเงาดำตามรูปทรง (`filter: brightness(0)`) + "?" กลางชิ้น · กล่อง summary แสดง "Upcoming soon" / "เร็ว ๆ นี้" แทน summary จริง
+- ฝั่ง admin เห็นแบบเดียวกันทั้งใน scene editor และพรีวิวหน้า management (toggle อยู่ใน Properties ของวัตถุที่อัปเอง)
+- ข้อจำกัด: public API ยังส่ง `asset.image_url` จริงของวัตถุ Mystery มาด้วย (ต้องใช้วาดรูปทรงเงา) — คนที่เปิด DevTools ดูรูปจริงได้
 
 index: `(feature_id, z_index)`
 
@@ -41,6 +46,7 @@ index: `(feature_id, z_index)`
 - unique partial index `(preset_key) WHERE preset_key IS NOT NULL AND is_deleted = FALSE` + `ON CONFLICT DO NOTHING` กัน replica seed ซ้ำ ตัวที่แพ้จะลบไฟล์ที่เพิ่งอัปทิ้ง
 - ทุกครั้งที่ start จะผูกวัตถุชนิดนั้น (`sign` / `summary`) ที่ `asset_id IS NULL` เข้ากับ asset และตั้ง `aspect` ตามรูป
 - `DELETE /assets/:assetId` ลบ asset ที่มี `preset_key` ไม่ได้ (ตอบ `ROADMAP_ASSET_NOT_FOUND`) · ฝั่ง admin ไม่แสดงปุ่มลบ/แก้
+- **ตั้งแต่ 2026-10-05 ป้ายกับกล่อง summary เป็นส่วนของหน้า ไม่ใช่วัตถุในฉาก:** landing วาดเองที่ขอบ stage ทุกฟีเจอร์ (ป้ายซ้ายล่างกว้าง 16% · ฉาก 16:9 ตรงกลาง · summary ขวากว้าง 30% · จอ ≤600px ฉากอยู่บน ป้าย+summary อยู่ล่าง) โดยรูปมาจาก `data.preset_assets` (`preset_key → image_url`) ของ `GET /api/public/roadmap` · วัตถุ `sign`/`summary` ที่เคยวางในฉาก landing ข้าม และ admin ไม่โหลดเข้า editor (บันทึกฉากครั้งถัดไปจะหายจาก DB) · ถอดออกจากคลังของ scene editor แล้ว
 - ข้อความ (ไตรมาส/ช่วงเดือน, summary ของฟีเจอร์) ไม่ได้อยู่ในรูป client วางทับเองตามพื้นที่ในตาราง · ถ้าไม่มี asset ป้ายจะเป็นกล่องไม้สีพื้น ส่วน summary จะเป็นกล่องดำโปร่งแสงแบบเดิม
 
 **quarter** เป็นช่วง 4 เดือน: `q1` Jan–Apr · `q2` May–Aug · `q3` Sep–Dec (`service.RoadmapQuarterFromDate`) — client ส่งมาแค่ `release_date`
@@ -63,7 +69,7 @@ Envelope เดียวกับ patch note: `{ status, message, data }` · err
 ### Public (`/api/public/roadmap`) — ไม่ต้องล็อกอิน, `middleware.PublicCORS()`
 | Method | Path | ตอบ |
 |---|---|---|
-| GET | `/api/public/roadmap?page&limit&quarter` | เฉพาะ `is_visible` เรียง `release_date` **พร้อม objects ของทุกฟีเจอร์** |
+| GET | `/api/public/roadmap?page&limit&quarter` | เฉพาะ `is_visible` เรียง `release_date` **พร้อม objects ของทุกฟีเจอร์** + `preset_assets` (รูปป้ายไตรมาส/กล่อง summary) |
 | GET | `/api/public/roadmap/:featureId` | ฟีเจอร์เดียว (404 ถ้าไม่ visible) |
 
 ### Admin (`/api/admin/roadmap`) — `AdminGuard`

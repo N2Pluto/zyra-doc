@@ -3,6 +3,52 @@
 > **สถานะรวม:** UI 2 หน้า + API ครบ (feature CRUD, scene, asset library, public read) ต่อกันแล้ว · **ตารางสร้างบน dev แล้ว** (DDL อยู่ใน `internal/database/postgres.go` จึงขึ้นเองตอน service start ทุก env) · ฝั่ง landing ยังไม่ต่อ
 > **อัปเดตล่าสุด:** 2026-10-05 · **คนล่าสุด:** rif (pair กับ Claude Code)
 
+## 2026-10-05 (รอบ 14) · rif — landing มือถือ: ไตรมาสเป็นข้อความ + summary กล่องเทา (ตาม Figma mobile)
+
+- **อาการ:** รอบ 13 จอแคบยังใช้รูปป้าย/รูปกระดาษย่อเล็กใต้ฉาก แต่ Figma mobile ไม่ใช้รูปเลย
+- **แก้ (zyra-landing, เฉพาะ ≤600px):** แถว `#spQuarterHead` เหนือฉาก ("2026, Q1" ตัวหนา 18px ซ้าย / "Jan - Apr" 16px muted ขวา — JS เติมทุกครั้งที่สลับฟีเจอร์) · ซ่อนรูปป้าย · กล่อง summary เป็นพื้น `#F4F4F5` r16 ข้อความ 14px `#3A3F49` ไม่แสดงรูปกระดาษ · stage เรียงเป็นคอลัมน์: แถวไตรมาส → ฉาก → summary · จอใหญ่ไม่เปลี่ยน · bump `spotlight.css?v=10` / `spotlight.min.js?v=12`
+- **verify:** `npm run build` + เปิดหน้าจริงกับ mock ที่ 375px ได้ลำดับตาม Figma · 1440px แถวไตรมาสซ่อน รูปป้าย/กระดาษยังแสดงตามเดิม
+- **ยังไม่ได้ทำ:** ลูกศร ˅ หลัง "2026, Q1" (Figma มีทั้ง desktop/mobile ยังไม่รู้ว่ากดได้หรือตกแต่ง) · ยังไม่ commit
+
+## 2026-10-05 (รอบ 13) · rif — ป้ายไตรมาส/กล่อง summary ย้ายไปขอบ stage (ตาม Figma)
+
+- **โจทย์:** ป้ายกับ summary มีทุกฟีเจอร์อยู่แล้ว แต่ต้องวางเองในกรอบ 16:9 เลยแย่งที่กับฉาก → ให้อยู่ขอบ stage ตาม Figma
+- **decision (ตามข้อเสนอที่ผู้ใช้สั่งให้ทำ):** landing ข้ามวัตถุ sign/summary เดิม ไม่ลบข้อมูลใน DB · จอแคบเอาป้าย+summary ไว้ใต้ฉาก
+- **zyra-api:** `RoadmapFeatureListResult.PresetAssets` (`preset_assets`, เฉพาะ public list) + `RoadmapService.PresetAssetURLs` · ถ้าโหลดไม่ได้แค่ log ไม่ทำให้ endpoint ล้ม
+- **zyra-landing:** markup stage ใหม่ `#spSign` / `.sp-canvas-wrap > #spStage` / `#spSummary` (en/th) · `signNode()` / `summaryNode()` ใช้ `presetUrls` (ป้ายสำรองเป็นรูปใน repo, summary สำรองเป็นกล่องดำ) · `objectNode()` คืน null ให้ kind sign/summary · CSS: stage เป็น flex (ซ้าย 16% / กลาง canvas `min(100%, stage-h×16/9)` / ขวา 30%), ≤600px wrap ฉากขึ้นบน · bump `spotlight.css?v=9` / `spotlight.min.js?v=11`
+- **zyra-app:** ป้าย/summary ออกจากคลังของ scene editor · `featureFromDTO` ไม่โหลดวัตถุ sign/summary (บันทึกฉากครั้งถัดไปจะหายจาก DB) · พรีวิวหน้า management เป็นโครงเดียวกับ stage ของ landing (`aspect 1264/500`) ดึงรูปผ่าน `useRoadmapPresetUrls()` (admin assets API)
+- **verify:** api `go build` + `go vet` + `go test ./internal/service ./internal/router` เขียว · app `eslint`/`prettier`/`tsc` (ไม่มี error ใหม่) + `vitest roadmap-feature` · landing `npm run build` + เปิดหน้าจริงกับ mock (มี `preset_assets` + วัตถุ summary เก่าในฉาก): 1440px ป้ายซ้ายล่าง/ฉากกลาง/summary ขวา และวัตถุ summary เก่าถูกข้าม · 375px ฉากบน ป้าย+summary ล่าง
+- **ยังไม่ได้ทำ:** ยังไม่ได้เปิด editor/หน้า management จริง (ต้องล็อกอิน admin) · scene editor ยังเป็น canvas 16:9 อย่างเดียว ไม่แสดงป้าย/summary ข้าง ๆ (ดูผลรวมได้ที่พรีวิวหน้า management) · ฉากเดิมที่จัดเฟอร์นิเจอร์หลบป้าย/summary ไว้อาจต้องจัดใหม่ให้เต็มกรอบ · ยังไม่ commit
+
+## 2026-10-05 (รอบ 12) · rif — ตัวอักษรกล่อง summary ใน editor ให้ตรงกับ landing
+
+- **อาการ:** ข้อความเดียวกันใน scene editor พอดีกล่อง แต่บน landing ตัวใหญ่กว่าและถูกตัด "…" ที่บรรทัด 5
+- **สาเหตุ:** admin ใช้ฟอนต์หลักของหน้า (Inter) ขนาดตายตัว 11px/15px ส่วน landing ใช้ Poppins ขนาด `clamp(8px, 6cqw, 15px)` ตามความกว้างกล่อง line-height 1.4
+- **แก้ (zyra-app `scene-object-visual.tsx`):** กล่อง summary ทั้งแบบกระดาษและแบบกล่องดำใช้ `SUMMARY_TEXT_CLASS` = Poppins → Noto Sans Thai, `clamp(8px,6cqw,15px)`, leading 1.4, ตัดที่ 5 บรรทัด + `@container` ที่กล่อง (เท่ากับ `.sp-obj` ของ landing) — landing ไม่ต้องแก้
+- verify: `eslint` + `prettier` + `tsc` (ไม่มี error ใหม่) · ยังไม่ได้เปิด editor จริงดูผล
+
+## 2026-10-05 (รอบ 11) · rif — ถอด Mystery silhouette ออกจากคลัง + Mystery รายวัตถุผูกกับ teaser
+
+- **ถอด preset "Mystery silhouette"** ออกจากคลังของ scene editor (วัตถุ kind `mystery` ในฉากเดิมยังแสดงได้)
+- **Mystery รายวัตถุ:** toggle ใน Properties ของวัตถุที่อัปเอง · เปิด teaser ของฟีเจอร์แล้วทุกชิ้นที่ติ๊กไว้จะเป็นเงาดำ + "?" พร้อมกัน
+- **decision ที่ผู้ใช้เลือก:** teaser = แสดงฉาก + ปิดเฉพาะชิ้น (ไม่ซ่อนทั้งฉากแบบเดิม) · กล่อง summary ตอน teaser แสดง "Upcoming soon" ตายตัว · editor เห็นเงาดำตาม teaser · toggle ใช้ได้เฉพาะวัตถุที่อัปเอง
+- **zyra-api:** migration `109_roadmap_object_mystery` (+ down, mirror ใน `postgres.go`) · `is_mystery` ใน model/input/insert/select · validation ปฏิเสธ `is_mystery` บนวัตถุที่ไม่ใช่ custom (+ เทสต์)
+- **zyra-app:** `mystery` ใน `RoadmapSceneObject` + mapper/payload · `SceneObjectVisual` prop `concealed` · canvas/พรีวิวเลิกปิดทั้งฉาก (canvas เหลือป้ายบอกโหมดมุมซ้ายบน) · toggle ใน Properties · ไอคอน ? ใน Layers · i18n en/th (`propMystery`, `propMysteryHint`, `layerMystery`, `teaserSummary`, แก้ `fieldTeaserHint`, `teaserOverlay`)
+- **zyra-landing:** เลิกซ่อนทั้งฉากตอน teaser · วัตถุ `is_mystery` ได้ class `.is-mystery` (`brightness(0)`) + `.sp-mystery-mark` · summary เป็น "Upcoming soon"/"เร็ว ๆ นี้" · ลบ CSS `.sp-teaser`/`.sp-teaser-shadow` ที่ไม่ใช้แล้ว · bump `spotlight.css?v=8` / `spotlight.min.js?v=10`
+- **verify:** api `go build` + `go vet` + `go test ./internal/service -run Roadmap` เขียว · app `eslint` + `prettier` + `tsc` (ไม่มี error ใหม่) + `vitest roadmap-feature` ผ่าน · landing `npm run build` + เปิดหน้าจริงกับ mock (teaser, วัตถุ 2 ชิ้นเปิด Mystery 1 ชิ้น + กล่อง summary) เห็นเงาดำ + ? เฉพาะชิ้นที่เปิด และ summary ขึ้น "Upcoming soon"
+- **ยังไม่ได้ทำ/ข้อควรรู้:** ยังไม่ได้เปิด scene editor จริงในเบราว์เซอร์ (ต้องล็อกอิน admin) · บรรทัดวันที่ตอน teaser ยังเป็น "Upcoming" ตามเดิม (ในภาพตัวอย่างเป็นวันที่) · public API ยังส่งรูปจริงของวัตถุ Mystery มาด้วย · migration 109 จะขึ้นเองตอน API start · ยังไม่ commit (ทำต่อบน branch เดิม `feat/roadmap-quarter-sign-asset` ของ api/app)
+
+## 2026-10-05 (รอบ 10) · rif — landing: ไทม์ไลน์ตามภาพใหม่ + scroll พาเดินถึงฟีเจอร์ปัจจุบัน
+
+- **โจทย์:** ปรับ UI ไทม์ไลน์ของ section 07 ให้เหมือนภาพที่ผู้ใช้ส่ง (ไม่มี Figma กะจากภาพ) · เข้ามาให้เริ่มที่ฟีเจอร์แรก แล้วระหว่าง scroll ลงให้เดินทีละอันจนถึงฟีเจอร์ปัจจุบัน ไม่ข้ามไป upcoming
+- **decision ที่ผู้ใช้เลือก:** ตรึง section (sticky) ระหว่างเดิน · ชื่อฟีเจอร์อยู่ในรูป thumbnail แล้ว ไม่ต้องวาดทับ · ย้ายปุ่มลูกศรจากข้างฉากมาไว้หัว/ท้ายแถบการ์ด (ปุ่มซ้ายซ่อนตอนอยู่อันแรก)
+- **UI (`css/spotlight.css`):** รางเทา 8px `#EBEBEB` + แถบเขียวไล่เฉดจากซ้ายถึงจุดที่เลือก (`.sp-rail-fill`) · จุดปกติ `#C4C6C9` · ชิดซ้ายแทนการเว้นครึ่งจอ · เอาเงาดำและชื่อบนการ์ดออก · การ์ดที่ล้นขวาจางหาย (`mask-image` ยกเว้นตอนเลื่อนสุด) · วันที่ย้ายมาอยู่ใต้การ์ด จัดกึ่งกลาง (แก้ markup ใน `Feature.html` ทั้ง en/th) · ขนาดการ์ด/จุดใช้ค่าเดิม (ภาพที่ส่งมาคือขนาดเดิมซูม ~1.35 เท่า)
+- **การตรึง (`component/spotlight.js`):** ห่อ `.sp-panel` ด้วย `.sp-pin` ที่สูง = panel + (index ฟีเจอร์ปัจจุบัน × STEP) แล้วตั้ง panel เป็น sticky กลางจอ · STEP = 45% ของความสูงจอ (160–360px) · ทุกครั้งที่ข้ามขั้นจะ `select(index)` scroll ขึ้นก็ถอยกลับ · ถ้ายังไม่มีฟีเจอร์ที่ปล่อยเกิน 1 อันจะไม่ตรึง · `.sp-section` เปลี่ยน `overflow: hidden` → `clip` (hidden ทำให้ sticky ไม่ทำงาน)
+- bump `spotlight.css?v=7` / `spotlight.min.js?v=9` (+ `tools/build.js`)
+- **verify:** รันหน้า Feature จริงผ่าน http server + mock API 7 ฟีเจอร์ (released 4 / upcoming 3) ใน browser pane: ที่ 1440×900 หน้าตาตรงกับภาพ, scroll แล้วเดิน 0→1→2→3 แล้วหยุดที่ index 3 (ไม่ไป upcoming) และ panel ติดกลางจอระหว่างเดิน · ที่จอแคบ 534px การ์ดจางขวาตามภาพ (แก้ความสูงแถวการ์ดบนมือถือให้เท่าการ์ด 70px) · `npm run build` ผ่าน
+- **ข้อควรรู้:** หน้า Feature ใช้ Lenis (smooth scroll) ถ้า scroll เร็วมากอาจข้ามบางขั้นไปเลย ฉากก็ข้ามตาม (ไทม์ไลน์ยังถูกต้อง) · ถ้าตอนโหลดหน้าอยู่เลย section ไปแล้ว ไทม์ไลน์จะอยู่ที่ฟีเจอร์ปัจจุบันเลย
+- **ยังไม่ได้ทำ:** ยังไม่ได้ลองกับ thumbnail จริงบน dev (ข้อมูลจริงมีแค่ 2 ฟีเจอร์) · ยังไม่ได้ลองบน iOS Safari จริง · ยังไม่ commit
+
 ## 2026-10-05 (รอบ 9) · rif — ตัวอักษรบนป้ายไตรมาส
 
 - เปลี่ยนตามภาพที่ผู้ใช้ส่ง: ตัวอักษรเป็นสีขาว ฟอนต์ Poppins · บรรทัดไตรมาสตัวหนา `clamp(6px, 7.5cqw, 48px)` · บรรทัดช่วงเดือนตัวปกติ `clamp(5px, 5.6cqw, 36px)` · ระยะห่างระหว่างบรรทัด `3cqw` · ขนาดเป็น cqw จึงย่อ/ขยายตามป้าย (เดิมฝั่ง admin เป็น px ตายตัว)
