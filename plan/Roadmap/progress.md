@@ -3,6 +3,13 @@
 > **สถานะรวม:** UI 2 หน้า + API ครบ (feature CRUD, scene, asset library, public read) ต่อกันแล้ว · **ตารางสร้างบน dev แล้ว** (DDL อยู่ใน `internal/database/postgres.go` จึงขึ้นเองตอน service start ทุก env) · ฝั่ง landing ยังไม่ต่อ
 > **อัปเดตล่าสุด:** 2026-10-05 · **คนล่าสุด:** rif (pair กับ Claude Code)
 
+## 2026-10-05 (รอบ 15) · rif — landing: animation ตอนวัตถุขึ้น
+
+- วัตถุในฉาก + ป้าย/กล่อง summary ค่อย ๆ จางเข้าและลอยขึ้น 10px (scale .96→1) ใน 0.45s ทุกครั้งที่ฉากถูกวาด (โหลด / scroll / กดการ์ด / hover) · ทยอยทีละชิ้นตามลำดับเลเยอร์ ชิ้นละ 40ms (เพดาน 12 ชิ้น = รอไม่เกิน ~0.5s)
+- ใช้ property `translate`/`scale` แยกจาก `transform` ที่จัดตำแหน่งและกลับด้านอยู่ จึงไม่ชนกัน · ปิดเมื่อ `prefers-reduced-motion: reduce`
+- bump `spotlight.css?v=11` / `spotlight.min.js?v=13`
+- verify: `npm run build` + เปิดหน้าจริงกับ mock แล้วเลื่อนเวลา animation เอง (ที่ 200ms opacity ≈0.9, จบที่ 1, translate กลับเป็น 0) — tab ทดสอบเป็น hidden เบราว์เซอร์จึงหยุดเวลา animation ไว้ ต้องเลื่อนเอง · ยังไม่ได้ดูด้วยตาบนเบราว์เซอร์ปกติ · ยังไม่ commit
+
 ## 2026-10-05 (รอบ 14) · rif — landing มือถือ: ไตรมาสเป็นข้อความ + summary กล่องเทา (ตาม Figma mobile)
 
 - **อาการ:** รอบ 13 จอแคบยังใช้รูปป้าย/รูปกระดาษย่อเล็กใต้ฉาก แต่ Figma mobile ไม่ใช้รูปเลย
