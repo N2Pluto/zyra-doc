@@ -1,7 +1,21 @@
 # Load Test — Progress / Handoff
 
 > **สถานะรวม:** spec draft · seeder + WS + office journey + form login + lt01–lt09 + Spotlight lt10–lt12 / media ใช้ได้ · verify แบบย่อ (≤41 VU) บน local→dev ครบทุกตัวยกเว้น lt06 (ต้อง seed หลาย workspace) · ยังไม่ได้รันขนาดเต็ม
-> **อัปเดตล่าสุด:** 2026-09-30 · **คนล่าสุด:** rif (ร่วมกับ Claude Code)
+> **อัปเดตล่าสุด:** 2026-10-06 · **คนล่าสุด:** rif (ร่วมกับ Claude Code)
+
+## 2026-10-06 · rif (ร่วมกับ Claude Code) — `make run-all` รันทุก scenario ในคำสั่งเดียว
+
+- **ผู้ใช้สั่ง:** "อยากได้ script ที่รันทุก scenario แบบค่อย ๆ ทำต่อกันก็ได้ แต่อยากรันทั้งหมดภายใน 1 คำสั่ง"
+- **ทำอะไร** (`zyra-loadtest@feat/run-all` แตกจาก `develop`, ยังไม่ commit):
+  - `scripts/run-all.sh` + `make run-all` — รัน `make run S=…` ทุกไฟล์ใน `k6/scenarios/` ต่อกัน (lt04/lt08 ท้ายสุด) · `DRY=1` แสดงแผน (bot/เวลาจาก `k6 inspect`, ตัวที่จะข้าม, เวลารวม) · ข้ามตัวที่ user ไม่พอ / lt06 ที่ workspace < 2 · ด่านกั้น smoke (lt01 → หยุดหมด, lt10 → ข้าม lt11–12, lt14 → ข้าม lt15–17, `GATE=0` ปิด) · `make refresh` ก่อนทุกตัวถ้ามี `seed.json` · `ONLY`/`SKIP`/`MEDIA=1`/`PAUSE` · สรุปลง `reports/run-all-<ts>.md` (dashboard ไม่อ่านไฟล์นี้)
+  - `Makefile` — `smoke`/`run` เขียน `exit-code` (exit code ของ k6) ลงโฟลเดอร์ของรอบ เพราะ make คืนแค่ 2 · `AI_STEP` → `AFTER_K6` (พฤติกรรม `AI=1` เท่าเดิม)
+  - [how-to-run §8](how-to-run.md#8-รันทุก-scenario-ในคำสั่งเดียว-make-run-all) + README
+- **verify:**
+  - `make check` ผ่าน · `bash -n` · `git diff --check` สะอาด
+  - `DRY=1` กับ tokens ปลอม (200 user / 2 workspace): default รวม ~3h27m, lt04 (1000) / lt11 (501) ถูกข้ามพร้อมเหตุผล · `VUS=10 DURATION=2m MEETINGS=4 PEOPLE=5` → ~59m ไม่ข้ามตัวไหน · `ONLY`/`SKIP`/`MEDIA=1` ถูก
+  - รันจริงกับ api/ws local ด้วย token ปลอม (ตั้งใจให้ 401): lt01 → "FAIL — thresholds" แล้วหยุดทั้งชุด ✓ · `GATE=0` → lt01 FAIL, lt14 "error (k6 exit 107)" แยกกันถูก ✓ · ลบโฟลเดอร์ทดสอบแล้ว
+- **ยังไม่ได้ verify:** รอบที่ผ่านจริง (ตอนนี้ไม่มี `data/tokens.json` — ต้อง seed) · Ctrl+C กลางชุด · `MEDIA=1` จริง (ต้องเปิด LiveKit)
+- **ต่อจากนี้:** `make seed … USERS=… YES=1` → `make run-all DRY=1` ดูแผน → `make run-all VUS=10 DURATION=2m`
 
 ## 2026-09-30 (รอบ 4) · rif (ร่วมกับ Claude Code) — บอกว่าแต่ละ scenario ทดสอบอะไร (ภาษาไทย)
 
