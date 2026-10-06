@@ -31,6 +31,7 @@ cp .env.example .env     # แล้วใส่ TOKEN_KEY และ DATABASE_UR
 ```bash
 make smoke [option...]                 # lt01
 make run S=<ชื่อไฟล์> [option...]        # lt02–lt17
+make run-all [option...]               # ทุก scenario ต่อกันในคำสั่งเดียว (ส่วนที่ 8)
 make spotlight-media [option...]       # ภาพ/เสียง Spotlight (LiveKit)
 make meeting-media [option...]         # ภาพ/เสียง meeting หลายห้อง (LiveKit)
 make summarize [RUN=...]               # ให้ AI สรุปผลของรอบที่รันไปแล้ว
@@ -530,3 +531,41 @@ make dashboard DASH_PORT=5700   # เปลี่ยน port (5665 เป็น�
   - ประวัติแชทอยู่ในหน้าเว็บเท่านั้น — รีโหลดหน้าแล้วหาย ไม่ได้บันทึกที่ไหน
 - **ความปลอดภัย:** เปิดแค่ `127.0.0.1` (เครื่องอื่นเข้าไม่ได้), ไม่เสิร์ฟ `summary.json` / `samples.json.gz`, ปฏิเสธ request ที่ Host ไม่ใช่ localhost และแชทรับเฉพาะ `application/json` (เว็บอื่นที่เปิดใน browser เดียวกันยิงแทนไม่ได้)
 - โค้ด: `zyra-loadtest/analyze/serve.go` (server), `runs.go` (อ่าน reports/), `chat.go` (แชท), `web/` (หน้าเว็บ — `metrics.js` = ชื่อไทย/คำอธิบายของทุก metric, `run.js` = หน้า run ฝังใน binary — ไม่ต้อง build frontend) · หน้าตาอิง zyra-app (dark admin, สีเขียว `#58D68D`, icon lucide) + zyra-landing (หัวข้อ Poppins, ปุ่ม pill)
+
+---
+
+## 8. รันทุก scenario ในคำสั่งเดียว (`make run-all`)
+
+รัน k6 ทุก scenario ต่อกันทีละตัว (ไม่ซ้อนกัน) — แต่ละตัวคือ `make run S=…` ปกติ จึงได้โฟลเดอร์ `reports/<scenario>-<เวลา>/` ของตัวเองและขึ้นใน dashboard เหมือนรันทีละตัว
+
+```bash
+make run-all DRY=1                          # ดูแผนก่อน: แต่ละตัวใช้กี่ bot กี่นาที ตัวไหนจะข้ามเพราะอะไร รวมกี่ชั่วโมง
+make run-all                                # ขนาดเต็มตาม default ของแต่ละไฟล์ (~4 ชม. ต้อง seed 1000 คน)
+make run-all VUS=10 DURATION=2m             # ย่อทั้งชุด (~1 ชม.) — meeting ใช้ MEETINGS= / PEOPLE= แทน VUS
+make run-all VUS=10 DURATION=2m MEETINGS=4 PEOPLE=5
+make run-all ONLY=lt01,lt02,lt07            # เฉพาะตัวที่ระบุ (ขึ้นต้นด้วย) · SKIP=lt04,lt08 = ข้ามตัวที่ระบุ
+make run-all MEDIA=1                        # ต่อด้วย spotlight-media / meeting-media / meeting-churn (ต้อง make livekit-up)
+make run-all VUS=10 DURATION=2m AI=1        # ให้ AI เขียน analysis.md ทุกรอบด้วย
+```
+
+| Option | ทำอะไร |
+|---|---|
+| `DRY=1` | แสดงแผนอย่างเดียว ไม่ยิง |
+| `ONLY=` / `SKIP=` | เลือก/ตัด scenario (คั่นด้วย `,` หรือเว้นวรรค · `lt02` = `lt02-baseline-50`) |
+| `MEDIA=1` | รัน script LiveKit 3 ตัวต่อท้าย (default ไม่รัน เพราะต้องเปิด LiveKit) |
+| `GATE=0` | ปิดการข้ามอัตโนมัติ (ดูด้านล่าง) |
+| `PAUSE=` | วินาทีที่พักระหว่างแต่ละตัว (default 30 — ให้ WS ปิดหมดก่อนตัวถัดไป) |
+| อื่น ๆ | ทุก option ของ `make run` (`VUS`, `DURATION`, `MIX`, `LOGIN`, `MEETINGS`, `PEOPLE`, `PROFILE`, `AI`, `SAMPLES`, `D`, `TTL`, …) ส่งให้ทุก scenario |
+
+**ทำงานยังไง**
+
+- **ลำดับ:** เรียงตามเลข แต่ `lt04-ramp-1000` (หนักสุด) กับ `lt08-soak` (ยาวสุด 1 ชม.) อยู่ท้ายสุด — ไม่ให้ทำ server ล้าหรือกินเวลาก่อนตัวอื่นได้รัน
+- **เช็กก่อนยิง:** ใช้ `k6 inspect` คำนวณจำนวน bot ของแต่ละตัว (ตาม option ที่ใส่) ถ้าต้องใช้ user มากกว่าที่มีใน `data/tokens.json` → ข้ามพร้อมบอกเหตุผล · `lt06` ต้อง seed `WORKSPACES` ≥ 2 ไม่งั้นข้าม
+- **ด่านกั้น** (`GATE=0` ปิด): `lt01-smoke` ไม่ผ่าน → หยุดทั้งหมด (ระบบ/token มีปัญหา ยิงต่อไม่มีความหมาย) · `lt10-spotlight-smoke` ไม่ผ่าน → ข้าม lt11/lt12 · `lt14-meeting-smoke` ไม่ผ่าน → ข้าม lt15–lt17
+- ตัวอื่นไม่ผ่านหรือ error → บันทึกแล้วรันตัวถัดไปต่อ
+- ถ้ามี `data/seed.json` จะ `make refresh` (ต่ออายุ token ไม่แตะ DB) ก่อนทุกตัว — รันยาวหลายชั่วโมง token ไม่หมดอายุกลางทาง
+- **Ctrl+C** = หยุดตัวที่รันอยู่และไม่รันตัวที่เหลือ (ยังได้ไฟล์สรุป)
+- จบแล้วได้ `reports/run-all-<เวลา>.md` — ตาราง scenario · ผล (pass / FAIL — thresholds / error (k6 exit …) / skipped …) · โฟลเดอร์ของรอบ · เวลาที่ใช้ · ดูรายละเอียดต่อใน `make dashboard`
+- ทุกรอบมีไฟล์ `exit-code` (exit code ของ k6: 0 ผ่าน · 99 ไม่ผ่านเกณฑ์ · 107 script error · 108 abort) เพราะ make บอกแค่ "Error" — `run-all` ใช้แยกว่า "ไม่ผ่านเกณฑ์" กับ "พัง"
+
+โค้ด: `zyra-loadtest/scripts/run-all.sh` · ต้องมี `jq` (`brew install jq`)
