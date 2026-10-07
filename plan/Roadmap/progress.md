@@ -1,7 +1,24 @@
 # Roadmap (admin) — Progress / Handoff
 
-> **สถานะรวม:** api + admin ขึ้น **prod แล้วที่ `v1.7.4`** (2026-10-07) · `ROADMAP_ENABLED` เปิดครบ dev/UAT/prod · `NEXT_PUBLIC_ROADMAP=true` ตั้งครบ 3 env แล้ว (prod ใช้กับ build ของ `v1.7.4`) · **UAT มีข้อมูลแล้ว (ย้ายจาก dev 2026-10-07)** · prod ยังไม่มีข้อมูล · landing section 07 **ขึ้นบน zyra-world.com/Feature แล้ว** ([zyra-landing#7](https://github.com/Maximumsoft-Co-LTD/zyra-landing/pull/7) merge แล้ว + secret `ROADMAP_ENABLED=true` ของ landing) — **zyra-world.com เรียก API ของ UAT** (`api.uat.zyra.center`) ฉากที่จะโชว์บน landing ต้องจัดใน admin ของ UAT
+> **สถานะรวม:** api + admin ขึ้น **prod แล้วที่ `v1.7.4`** (2026-10-07) · `ROADMAP_ENABLED` เปิดครบ dev/UAT/prod · `NEXT_PUBLIC_ROADMAP=true` ตั้งครบ 3 env แล้ว (prod ใช้กับ build ของ `v1.7.4`) · **UAT มีข้อมูลแล้ว (ย้ายจาก dev 2026-10-07)** · prod: ฟีเจอร์ 9 ตัวที่ทีมสร้างเอง + ฉากจาก UAT (ยัง `upcoming` / ไม่เปิดแสดง) · landing section 07 **ขึ้นบน zyra-world.com/Feature แล้ว** ([zyra-landing#7](https://github.com/Maximumsoft-Co-LTD/zyra-landing/pull/7) merge แล้ว + secret `ROADMAP_ENABLED=true` ของ landing) — **zyra-world.com เรียก API ของ UAT** (`api.uat.zyra.center`) ฉากที่จะโชว์บน landing ต้องจัดใน admin ของ UAT
 > **อัปเดตล่าสุด:** 2026-10-07 · **คนล่าสุด:** N2Pluto (pair กับ Claude Code)
+
+## 2026-10-07 (รอบ 19) · N2Pluto — เติมฉากจาก UAT ใส่ฟีเจอร์บน prod
+
+- **สภาพก่อนทำ:** prod มีฟีเจอร์ 9 ตัวที่สร้างด้วยบัญชี `admin.zyra@gmail.com` ช่วง 12:04–12:20 (มีชื่อ / summary / thumbnail · `upcoming` · ไม่เปิดแสดง) แต่ยังไม่มีฉาก (วัตถุ 0) · ID ไม่ซ้ำกับ UAT
+- **decision (ผู้ใช้เลือก):** คงฟีเจอร์ของ prod ไว้ แล้ว copy ฉากจาก UAT ใส่ตัวที่ชื่อตรงกัน — `Customer Avatar` ← `Customize Avatar`, `Mobile App` ← `Mobile` · Calendar ไม่แตะ (UAT ก็ไม่มีฉาก) · ไม่เปลี่ยน status / วันที่ / `is_visible` ของ prod
+- **ทำอะไร (DB `postgres` ผ่าน IAP tunnel ทาง `zyra-k3s`, transaction เดียว):** asset 48 (ปกติ 42 + soft-deleted ที่ฉาก Chat ยังอ้าง 6) ใช้ ID และ URL เดิม (UAT กับ prod ใช้ bucket `zyra-prod-gather-dev-458614` เดียวกัน จึงไม่ต้อง copy ไฟล์) · วัตถุในฉาก 55 ชิ้นผูกกับ ID ฟีเจอร์ของ prod · preset (`quarter_sign` / `summary_box`) เปลี่ยนให้ชี้ไปที่ของ prod · guard ใน SQL: ต้อง map ได้ 1:1 ครบ 8 คู่ / ฟีเจอร์ปลายทางต้องยังไม่มีฉาก / ID ไม่ชน
+- **Before/After** (วัด 2026-10-07 +07)
+
+| Metric | Before | After |
+|---|---|---|
+| prod `tb_roadmap_scene_object` | 0 | 55 |
+| prod `tb_roadmap_asset` (ใช้งาน / ลบแล้ว) | 2 / 0 | 44 / 6 |
+| เทียบฉาก prod กับ UAT ทีละวัตถุ (ตำแหน่ง ขนาด เลเยอร์ flag รูป) | — | ตรงกันทั้ง 55 ชิ้น (`diff` ว่าง) |
+| ฟีเจอร์ของ prod ที่ถูกแก้ (`updated_at`) | — | 0 |
+
+- **verify ถึงไหน:** เทียบใน DB แล้ว · `/api/health` ของ prod `ok` v1.7.4 · `/api/public/roadmap` ของ prod ยังว่าง เพราะทุกฟีเจอร์ยัง `is_visible = false` (ตั้งใจไม่แตะ) · ยังไม่ได้เปิด admin ของ prod ดูฉากด้วยตา
+- **ต่อจากนี้:** ทีมเช็คฉากใน admin ของ prod แล้วค่อยตั้ง status / วันที่ / เปิดแสดงเอง · landing ยังอ่านจาก UAT
 
 ## 2026-10-07 (รอบ 18) · N2Pluto — ย้ายข้อมูล roadmap จาก dev → UAT + เปิด flag ของ landing
 
