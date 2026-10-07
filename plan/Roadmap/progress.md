@@ -1,7 +1,23 @@
 # Roadmap (admin) — Progress / Handoff
 
-> **สถานะรวม:** api + admin ขึ้น **prod แล้วที่ `v1.7.4`** (2026-10-07) · `ROADMAP_ENABLED` เปิดครบ dev/UAT/prod · `NEXT_PUBLIC_ROADMAP=true` ตั้งครบ 3 env แล้ว (prod ใช้กับ build ของ `v1.7.4`) · **UAT มีข้อมูลแล้ว (ย้ายจาก dev 2026-10-07)** · prod: ฟีเจอร์ 9 ตัวที่ทีมสร้างเอง + ฉากจาก UAT (ยัง `upcoming` / ไม่เปิดแสดง) · landing section 07 **ขึ้นบน zyra-world.com/Feature แล้ว** ([zyra-landing#7](https://github.com/Maximumsoft-Co-LTD/zyra-landing/pull/7) merge แล้ว + secret `ROADMAP_ENABLED=true` ของ landing) — **zyra-world.com เรียก API ของ UAT** (`api.uat.zyra.center`) ฉากที่จะโชว์บน landing ต้องจัดใน admin ของ UAT
+> **สถานะรวม:** api + admin ขึ้น **prod แล้วที่ `v1.7.4`** · `ROADMAP_ENABLED` / `NEXT_PUBLIC_ROADMAP` เปิดครบ dev/UAT/prod · **zyra-world.com/Feature (section 07) อ่านจาก API ของ prod แล้ว** (2026-10-07, เดิมอ่านจาก UAT) — ฉากและข้อมูลที่โชว์บน landing ต้องจัดใน **admin ของ prod** · prod มีฟีเจอร์ 9 ตัว (ทีมตั้งค่าเอง + ฉากที่ copy จาก UAT) ทั้งหมดเป็น `upcoming` และเปิดแสดง
 > **อัปเดตล่าสุด:** 2026-10-07 · **คนล่าสุด:** N2Pluto (pair กับ Claude Code)
+
+## 2026-10-07 (รอบ 20) · N2Pluto — landing เปลี่ยนไปอ่าน prod · แก้ทับข้อมูลของทีมพลาดแล้วคืนค่าเดิม
+
+- **landing → prod:** secret `API_URL` ของ zyra-landing เปลี่ยนจาก `https://api.uat.zyra.center` เป็น `https://api.zyraworld.co` แล้ว redeploy (`e6f0f0b` เดิม) · ระบบแนบไฟล์ของฟอร์ม Contact ก็ยิงไป prod ด้วย · ข้อมูล roadmap บน UAT ยังคงไว้
+- **incident (แก้แล้ว):** ช่วง 13:43–13:51 ทีม (`admin.zyra@gmail.com`) เปิดแสดงฟีเจอร์บน prod และใส่วันที่จริง แต่ตอน 13:51:44 ผม update 8 ฟีเจอร์เป็น `released` และวันที่ของ UAT (05–06 Oct) ทับไป เพราะใช้สถานะที่อ่านไว้ก่อนหน้า ~40 นาทีโดยไม่เช็คใหม่ → ผู้ใช้เลือกคืนค่าเดิม: status `upcoming` + วันที่ของทีม (Chat 05-11 · Meeting 06-01 · Decorate Room 08-10 · Pet System 09-08 · Environment 09-15 · Tree Animation 09-22 · Mobile App 10-21 · Customer Avatar 10-28) และคำนวณไตรมาสใหม่ · ตอนคืนค่ามี guard ว่าแถวต้องยังเป็นค่าที่ผมเขียนไว้ (ไม่มีใครแก้ต่อ) · Calendar ไม่ถูกแตะ
+  - **อาจกู้ไม่ครบ:** `is_teaser` ถูกตั้งเป็น `false` ระหว่าง update ที่พลาด — ไม่มี audit log ของ roadmap จึงยืนยันไม่ได้ว่าทีมเคยตั้ง teaser ให้ตัวไหน (ตอนอ่านรอบก่อนทุกตัวเป็น false) · ให้ทีมเช็คใน admin
+- **Before/After** (วัด 2026-10-07 +07)
+
+| Metric | Before | After |
+|---|---|---|
+| `API_URL` ใน `config.js` ของ zyra-world.com | `https://api.uat.zyra.center` | `https://api.zyraworld.co` |
+| prod `/api/public/roadmap` `data.items` | 0 (ไม่เปิดแสดง, ก่อนทีมแก้) | 9 (มีฉาก 8 ตัว · Calendar ไม่มีฉาก) |
+| zyra-world.com/Feature section 07 | ข้อมูล UAT (8 การ์ด) | ข้อมูล prod (9 การ์ด · request ไป `api.zyraworld.co` · รูปเสีย 0) |
+
+- **verify ถึงไหน:** หน้าเว็บจริงในเบราว์เซอร์ (การ์ดเรียง Chat → Calendar, ฉากแรก Chat 9 วัตถุ, วันที่ "11 May 2026") · ยังไม่ได้เปิด admin ของ prod
+- **ต่อจากนี้:** ทีมเช็ค `is_teaser` + status ใน admin ของ prod (ตอนนี้ทุกตัว `upcoming` landing จึงไม่ตรึง scroll และไม่มีฝั่ง released) · Calendar เปิดแสดงทั้งที่ยังไม่มีฉาก (ทีมตั้งเอง)
 
 ## 2026-10-07 (รอบ 19) · N2Pluto — เติมฉากจาก UAT ใส่ฟีเจอร์บน prod
 
