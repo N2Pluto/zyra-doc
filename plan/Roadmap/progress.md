@@ -1,7 +1,26 @@
 # Roadmap (admin) — Progress / Handoff
 
-> **สถานะรวม:** api + admin ขึ้น **prod แล้วที่ `v1.7.4`** (2026-10-07) · `ROADMAP_ENABLED` เปิดครบ dev/UAT/prod · `NEXT_PUBLIC_ROADMAP=true` ตั้งครบ 3 env แล้ว (prod ใช้กับ build ของ `v1.7.4`) · ยังไม่มีข้อมูล roadmap บน UAT/prod · landing section 07 ยังรอ [zyra-landing#7](https://github.com/Maximumsoft-Co-LTD/zyra-landing/pull/7) แก้ตามรีวิว — **zyra-world.com เรียก API ของ UAT** (`api.uat.zyra.center`) ฉากที่จะโชว์บน landing ต้องจัดใน admin ของ UAT
+> **สถานะรวม:** api + admin ขึ้น **prod แล้วที่ `v1.7.4`** (2026-10-07) · `ROADMAP_ENABLED` เปิดครบ dev/UAT/prod · `NEXT_PUBLIC_ROADMAP=true` ตั้งครบ 3 env แล้ว (prod ใช้กับ build ของ `v1.7.4`) · **UAT มีข้อมูลแล้ว (ย้ายจาก dev 2026-10-07)** · prod ยังไม่มีข้อมูล · landing section 07 **ขึ้นบน zyra-world.com/Feature แล้ว** ([zyra-landing#7](https://github.com/Maximumsoft-Co-LTD/zyra-landing/pull/7) merge แล้ว + secret `ROADMAP_ENABLED=true` ของ landing) — **zyra-world.com เรียก API ของ UAT** (`api.uat.zyra.center`) ฉากที่จะโชว์บน landing ต้องจัดใน admin ของ UAT
 > **อัปเดตล่าสุด:** 2026-10-07 · **คนล่าสุด:** N2Pluto (pair กับ Claude Code)
+
+## 2026-10-07 (รอบ 18) · N2Pluto — ย้ายข้อมูล roadmap จาก dev → UAT + เปิด flag ของ landing
+
+- **landing:** zyra-landing#7 ถูก merge โดยคนเขียน (12:43) และมี kill switch ของตัวเองคือ `ZYRA_CONFIG.ROADMAP_ENABLED` → ตั้ง secret `ROADMAP_ENABLED=true` ใน zyra-landing แล้ว redeploy (`workflow_dispatch`, commit `e6f0f0b` เดิม)
+- **ย้ายข้อมูล dev → UAT (`zyra_uat`):** อ่านจาก DB ของ dev แล้วเขียนใน transaction เดียว ใช้ UUID เดิม
+  - ฟีเจอร์ 9 (`is_visible` 8) · asset 48 (ปกติ 42 + ที่ถูก soft-delete แต่วัตถุในฉาก "Chat" ยังอ้างอยู่ 6 — API ใช้ `LEFT JOIN` ไม่กรอง `is_deleted` ฉากจึงยังแสดงรูปพวกนี้ เลยย้ายไปด้วยและคง `is_deleted` ไว้) · วัตถุในฉาก 55
+  - รูป 57 ไฟล์ copy จาก R2 `zgather-dev` → GCS `zyra-prod-gather-dev-458614` ใช้ key เดิม (`static/roadmap/{asset,feature}/…`) และเปลี่ยน URL ใน DB ให้ชี้ไปที่ GCS (ใน DB ไม่เหลือ URL `r2.dev`)
+  - วัตถุที่อ้าง preset asset ของ dev (`quarter_sign` / `summary_box`) ถูกเปลี่ยนให้ชี้ไปที่ preset ของ UAT · `created_by` / `updated_by` เป็น NULL (user ของ dev ไม่มีใน UAT)
+  - ต่อ DB ผ่าน IAP tunnel ทาง **`zyra-k3s`** — `zyra-sfu` เป็น TERMINATED แล้ว (`zyra-service/prod-db.sh` กับ `guides/prod-db-access.md` ยังเขียนว่าใช้ `zyra-sfu`)
+- **Before/After** (วัด 2026-10-07 +07)
+
+| Metric | Before | After |
+|---|---|---|
+| UAT `/api/public/roadmap` `data.total` | 0 | 8 (วัตถุ 55) |
+| เทียบ response UAT กับ dev (ไม่นับ host ของ URL / preset asset) | — | ตรงกันทั้งหมด (`diff` ว่าง) |
+| zyra-world.com/Feature `#spotlight` | `hidden` | แสดง · การ์ด 8 ใบ · รูปเสีย 0 |
+
+- **verify ถึงไหน:** API ของ UAT + หน้า landing จริงในเบราว์เซอร์ (section ขึ้น, ฉาก Customize Avatar วัตถุ 11 ชิ้น) · ยังไม่ได้ login admin ของ UAT ดู
+- **ต่อจากนี้:** ฉากที่แก้ใน admin ของ dev จะ**ไม่** sync ไป UAT เอง — จัดใน admin ของ UAT ต่อ (landing อ่านจาก UAT) · prod ยังไม่มีข้อมูล
 
 ## 2026-10-07 (รอบ 17) · N2Pluto — เปิด flag ครบ 3 env + release v1.7.4 (prod)
 
