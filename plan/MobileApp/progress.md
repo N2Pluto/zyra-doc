@@ -11,7 +11,7 @@
   - zyra-ws `feat/mobile-lite-client` → **[#70](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/70)**
   - zyra-notifications `feat/mobile-push` → **[#15](https://github.com/Maximumsoft-Co-LTD/zyra-notifications/pull/15)**
   - zyra-app `feat/mobile-foundation` → **[#499](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/499)** (222 ไฟล์ · merge `origin/develop` ล่าสุดเข้า feat แล้ว ไม่มี conflict)
-  - **zyra-mobile ยังไม่มี repo บน GitHub** (local · ยังไม่มี commit แรก) → ต้องให้ Ten สร้าง / อนุญาตสร้าง repo ใน org ก่อน
+  - zyra-mobile (Ten สั่งสร้าง repo) → repo ใหม่ **private** `Maximumsoft-Co-LTD/zyra-mobile` · `main` / `develop` เริ่มจาก commit ว่าง `chore: initialize repository` · `feat/mobile-shell` (87 ไฟล์) → **[#1](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/1)** · `npm run typecheck` / `cap sync` / plutil / xmllint ผ่าน · ยังไม่ได้ build ใน Xcode / Gradle
 - **verify ก่อน commit:** zyra-api `go vet` + `go test ./...` 11 package ✓ · zyra-ws `go vet` + `go test` ✓ · zyra-notifications `go vet` + `go test` ✓ · zyra-app `vitest` 263 ไฟล์ / 3,284 ✓ (หลัง merge develop) · tsc = 7 error เดิม · `npm run lint` 0 error / 3 warning เดิมทั้งหมด · สแกน diff หา secret ไม่เจอ (เจอแค่ test ที่สร้าง key ตอนรัน) · gofmt ที่ค้างใน `zyra-ws/internal/auth/jwt.go` และ `zyra-notifications/internal/mailer/*` เป็นของเดิมบน develop ไม่ได้แตะ
 - **CI:** ยังไม่เริ่มตอนเปิด PR — แอป Code จะแจ้งสถานะ
 - **ต่อจากนี้:** review / merge 4 PR (merge เข้า develop = deploy dev อัตโนมัติ — รัน migration 110–112 บน dev ก่อน) · สร้าง repo zyra-mobile · ข้อ 2 / 3 ของห้องล็อก
