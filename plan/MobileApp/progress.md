@@ -1,7 +1,31 @@
 # Mobile App — Progress / Handoff
 
-> **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
-> **อัปเดตล่าสุด:** 2026-10-06 · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **สถานะรวม:** Implement ~62% — PR เปิดครบ 6 repo · **CI เขียวทุก PR โค้ด** · review CodeRabbit แก้แล้ว (ค้าง 1 thread รอ design) · app [#499](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/499) · api [#158](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/158) · ws [#70](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/70) · notifications [#15](https://github.com/Maximumsoft-Co-LTD/zyra-notifications/pull/15) · mobile [#1](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/1) · doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48) · ยังไม่ merge · ติด: migration 110–112 บน dev ก่อน merge api · ตัดสินใจ 2 ข้อ (หน้า `/` มือถือ · สวิตช์ push) · frame Pai · บัญชี Apple / Google / Firebase · build Xcode / Gradle + เครื่องจริง · follow-up ห้องล็อก ข้อ 2 + ข้อ 3 ([zyra-ws#71](https://github.com/Maximumsoft-Co-LTD/zyra-ws/issues/71))
+> **อัปเดตล่าสุด:** 2026-10-07 · **คนล่าสุด:** Ten (ten_dev) + Claude
+
+## 2026-10-07 (รอบ 51) · Ten + Claude — แก้ CI + review ของทุก PR · เปิด issue follow-up
+
+- **zyra-app [#499](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/499):**
+  - `vitest-coverage` ล้ม (`17cd400`) — CI ใช้ Node 20 ไม่มี `navigator` global → `getPlatform()` throw ใน `initMixpanel` · `lib/platform.ts` `readDeviceSnapshot` กันกรณีไม่มี `navigator` + test จำลอง Node 20 (`vi.stubGlobal("navigator", undefined)`) · ก่อนแก้ล้ม 2 case ตรงกับ CI · หลังแก้ 35/35
+  - `e2e-mobile-harness` ล้ม (`1a43a8b`) — จากภาพหน้าจอ artifact: dev server ใน CI ไม่ได้ตั้ง `NEXT_PUBLIC_MOBILE_VO` → overlay "Screen size not supported" บัง joystick · ตั้ง `NEXT_PUBLIC_MOBILE_VO: "true"` ใน step start dev server (flag รับเฉพาะ `"true"`) · **job นี้เขียวครั้งแรกบน CI แล้ว**
+  - review CodeRabbit 8 ข้อ (`7f74237`): `clearSession` ครอบ unregister push ด้วย try/catch (logout ไม่ค้าง) · `unregisterPushDevice` เก็บ token ไว้ถ้าลบฝั่ง server ไม่สำเร็จ (zyra-api upsert ตาม `fcm_token` อยู่แล้ว ความเสี่ยงสลับบัญชีจึงต่ำ) · composer ใช้เลขลำดับการส่ง — retry ของข้อความเก่าไม่ปลด `sending` ของข้อความใหม่ (sheet "Message not sent" ยังเด้งตามตั้งใจ) · `isRetryableSendError` ไม่ retry error ที่ไม่ใช่ `SendMessageError` · en.json ICU plural `LiteHome.members` / `meetingRoomParticipants` · `aria-label` reconnecting แปลภาษา · scene: `pointercancel` = `pointerup` + pinch ล้าง `_tapPointerId` · `releaseAllKeys` / `releaseMovementKeys` รีเซ็ต `_virtualKey` (joystick ไม่ค้างหลังสลับแอป)
+- **zyra-ws [#70](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/70):**
+  - `f410e8b` — `circle_join_decide` ของ requester Lite ต้องมีคำขอค้างของวงนี้ · `handleLiteSpotlightStart` เช็ค speaker ซ้ำใต้ `spotlightMu` (`spotlightSpotOfLocked`) · comment `liteZoneAllowed` บอกตรงๆ ว่าห้องล็อกกันที่ media (zyra-api MintToken) ส่วน presence เป็น follow-up
+  - `c5a4d11` — คำขอค้างของ ghost ลบแบบ atomic (`CompareAndDelete`) — สองคนตอบพร้อมกัน คำตอบแรกเท่านั้นที่มีผล · map requester เหมือนเดิม
+  - `952e405` — เก็บ `request_id` ในคำขอค้าง (`circleAskPendingEntry`) · คำตอบต้องตรงทั้งวงและ request id — คำตอบเก่าที่มาช้าไม่ไปตัดสินคำขอใหม่ของวงเดิม · ตรวจแล้ว zyra-app ส่ง `request_id` ตอนตอบอยู่แล้ว
+- **zyra-mobile [#1](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/1) (`cd23b71`):**
+  - **หน้า offline Android ใช้ไม่ได้** (ยืนยันจากซอร์ส Capacitor 8.5.2 `WebViewLocalServer` — serve จาก asset เฉพาะ URL ของ `errorPath` ตรงตัว บน origin ของ server) → script ย้ายเข้า `offline.html` แบบ inline อนุญาตด้วย sha256 ใน CSP (แก้ script ต้องคำนวณ hash ใหม่) · ลบ `offline.js` · ไม่มี `flavor.js` (Android) → ใช้ `location.origin`
+  - Retry: same-origin (Android) อ่าน status — 404 / 5xx ไม่ถือว่ากลับมา · iOS (`capacitor://localhost`) ยังเป็น no-cors เช็คแค่ติดต่อได้ · timer 8 วิ คืนปุ่มเองแม้ไม่มี `AbortController`
+  - `colors.xml` เพิ่ม `colorPrimary` / `colorPrimaryDark` (#1A1B1E) / `colorAccent` (#58D68D) ที่ `AppTheme` อ้างถึง (ไม่มี = AAPT2 link ล้ม) · instrumented test คาด `co.zyraworld.app`
+- **issue follow-up (Ten สั่ง):** [zyra-ws#71](https://github.com/Maximumsoft-Co-LTD/zyra-ws/issues/71) ghost โผล่ในห้องล็อก (`ghost_join_zone` + audio / share snapshot) = ห้องล็อก **ข้อ 3** · [zyra-app#500](https://github.com/Maximumsoft-Co-LTD/zyra-app/issues/500) `/api/health` CORS ให้ `capacitor://localhost` แล้วให้หน้า offline iOS เช็ค `res.ok`
+- **verify:**
+  - **CI (ณ ปิดรอบ) เขียวทุก PR โค้ด:** app #499 — vitest-coverage · lint-and-build · e2e-mobile-harness · e2e-parse · visual-regression · summary ✓ · ws #70 test-and-build ✓ · api #158 test-and-build + coverage ✓ · notifications #15 test-and-build ✓ · mobile #1 ไม่มี CI (มีแค่ CodeRabbit)
+  - zyra-app: test ใหม่ 4 (ล้มเมื่อเอาตัวแก้ออก) · 10 ไฟล์ที่เกี่ยวข้อง 462 ผ่าน / 3 ข้าม · tsc = 7 error เดิม (ตรวจกับ `origin/develop` สะอาด = 7 ตัวเดียวกัน) · eslint + prettier ผ่าน
+  - zyra-ws: `go vet` + `go test -race ./...` ✓ · test ใหม่ 4 (ไม่มีคำขอ / คำขอวงอื่น — ล้มเมื่อเอาตัวแก้ออก · คำตอบแรกเท่านั้น · คำตอบเก่ามาช้า) · ⚠️ test race เป็นแบบเรียงลำดับ — ล็อกพฤติกรรม ไม่ได้จำลองจังหวะชนจริง
+  - zyra-mobile: หน้า offline ในเบราว์เซอร์ (static server 3140): script inline รันผ่าน CSP · 404 → "Still can't connect" · 200 → กลับ origin · ไม่มี `AbortController` + fetch ค้าง → ปุ่มกลับมาใน 8 วิ · **ยังไม่ได้ Gradle build / ลองบน Android จริงตอนตัดเน็ต** (เครื่องนี้ไม่มี JDK / Android SDK)
+- **zyra-doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48):** check "Vercel – zyra-noise-vendor-review" ล้ม — ล้มเหมือนกันทุก PR #34–#48 เป็นปัญหาการตั้งค่า project บน Vercel ไม่เกี่ยวกับเอกสาร · ไม่ได้แก้
+- **ต่อจากนี้:** เอา `continue-on-error` ออกจาก `e2e-mobile-harness` ได้แล้ว (เขียวบน CI) — ยังไม่ได้ทำ รอ Ten · รัน migration 110–112 บน dev → merge 5 PR เข้า develop · ห้องล็อกข้อ 2 (invite token ฝั่ง server) + ข้อ 3 (#71) · #500 · Notion sync ตอนจบทั้งหมด
+- **ติดอะไร:** thread zyra-mobile เรื่อง contrast ปุ่ม Retry (ขาวบน #58D68D ≈ 2:1) — เป็นสีปุ่มหลักตาม Figma ไม่ได้แก้ รอ design ตัดสินทั้งระบบ · Vercel project ของ zyra-doc ต้องให้ Ten แก้ / ถอดเอง · build Xcode / Gradle + เครื่องจริง
 
 ## 2026-10-07 (รอบ 50) · Ten + Claude — ปิดช่องห้องล็อก (ข้อ 1) + commit / เปิด PR ทีละ repo
 
