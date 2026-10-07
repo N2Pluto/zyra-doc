@@ -3,6 +3,15 @@
 > **สถานะรวม:** UI 2 หน้า + API ครบ (feature CRUD, scene, asset library, public read) ต่อกันแล้ว · **ตารางสร้างบน dev แล้ว** (DDL อยู่ใน `internal/database/postgres.go` จึงขึ้นเองตอน service start ทุก env) · ฝั่ง landing ยังไม่ต่อ
 > **อัปเดตล่าสุด:** 2026-10-05 · **คนล่าสุด:** rif (pair กับ Claude Code)
 
+## 2026-10-07 (รอบ 18) · rif — แก้ตาม review PR zyra-landing (feat/roadmap-spotlight)
+
+- **decision:** (1) เพิ่ม flag ฝั่ง landing แล้ว merge ได้ก่อน (2) เพดาน scroll 4 step + ตัวปล่อยล่าสุดอยู่กลางแถบ (3) กดการ์ด/ลูกศรเองระหว่างตรึง → scroll หยุดพาเดินจนออกจากช่วงตรึง (ผู้ใช้เว้นว่าง ใช้ตามที่แนะนำ) (4) หน้าไทยใช้ปี พ.ศ.
+- **flag:** `ZYRA_CONFIG.ROADMAP_ENABLED` ต้องเป็น `"true"` ถึงยิง `/api/public/roadmap` · ปิด = ไม่ยิง request ไม่ warn · `deploy.yml` เขียนค่าจาก secret `ROADMAP_ENABLED` ลง config.js (ต้องไปสร้าง secret เอง ไม่ตั้ง = ปิด) · config.js local ตั้ง `"true"` ไว้
+- **scroll:** `MAX_PIN_STEPS = 4` เริ่มที่ `max(0, ล่าสุด − 4)` · `padding-inline-end: calc(50% - 80px)` (มือถือ 56px) ให้การ์ดท้าย ๆ เลื่อนมากลางได้ ฝั่งซ้ายยังชิดซ้าย · `userSelect()` ตั้ง `manualHold` — อยู่ในช่วงตรึงไม่ทับ ออกนอกช่วงแล้วปลดโดยไม่เปลี่ยนการ์ด กลับเข้ามาค่อยพาเดินต่อ
+- **review อื่น ๆ:** ปุ่มซ้ายใช้ `visibility: hidden` + `disabled` (ไม่ทำให้แถบการ์ดกว้างขึ้น) · bump `V.app` 10→11 (51 หน้า) · หน้าไทย: วันที่ `01 มิ.ย. 2569`, ไตรมาส `2569, Q2 / พ.ค. - ส.ค.`, aria-label ตั้งจาก JS (build แปลได้แค่ data-i18n) · เอา `aria-live` ออกจาก stage แล้วใช้ `.sr-only` live region ประกาศเฉพาะตอนเลือกจริง · `url("...")` ใส่ quote · sitemap กลับเป็นของ main แล้วเปลี่ยนแค่ lastmod หน้า Feature (en/th) · ลบ comment ค้าง (index.html / bundle) และ header CSS ซ้ำ · bump `spotlight.css?v=13` / `spotlight.min.js?v=14`
+- **กับดัก build:** `npm run build` เปลี่ยน `analytics.js?v=3` → `?v=1` ในหน้าที่ generate และ bump lastmod ทุกหน้าใน sitemap (เพราะ V.app เปลี่ยน bytes ทุกหน้า) — คืนทั้งสองอย่างหลัง build ทุกครั้ง
+- **verify (headless Chrome + Playwright + mock API 8 ฟีเจอร์ / released 6):** step = [1,1,2,3,4,5,5] หยุดที่ตัวล่าสุด ไม่ไป upcoming · ตัวล่าสุดห่างกึ่งกลางแถบ 0px · กดการ์ด 8 ระหว่างตรึงแล้ว scroll ยังอยู่ที่ 8 · ออกนอกช่วงไม่เปลี่ยน · กลับเข้ามาพาเดินต่อ · ความกว้างแถบการ์ดอันแรก/อันสอง = 1248/1248 · หน้าไทยวันที่/ไตรมาส/aria-label ถูก · flag ปิด: 0 request, 0 warn · (browser pane ใช้ทดสอบ scroll ไม่ได้เพราะ tab hidden → rAF ไม่ทำงาน)
+
 ## 2026-10-06 (รอบ 17) · rif — canvas ของ scene editor ไม่เป็น 16:9 (วัตถุขอบล่างโดนตัดตอนแสดงจริง)
 
 - **อาการ:** พุ่มไม้ที่วางชิดขอบล่างใน editor เห็นครบ แต่พรีวิว/landing ดอกไม้ด้านล่างโดนตัด
