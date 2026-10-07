@@ -1,7 +1,30 @@
 # Roadmap (admin) — Progress / Handoff
 
-> **สถานะรวม:** UI 2 หน้า + API ครบ (feature CRUD, scene, asset library, public read) ต่อกันแล้ว · **ตารางสร้างบน dev แล้ว** (DDL อยู่ใน `internal/database/postgres.go` จึงขึ้นเองตอน service start ทุก env) · ฝั่ง landing ยังไม่ต่อ
-> **อัปเดตล่าสุด:** 2026-10-05 · **คนล่าสุด:** rif (pair กับ Claude Code)
+> **สถานะรวม:** api + admin ขึ้น **prod แล้วที่ `v1.7.4`** (2026-10-07) · `ROADMAP_ENABLED` เปิดครบ dev/UAT/prod · `NEXT_PUBLIC_ROADMAP=true` ตั้งครบ 3 env แล้ว (prod ใช้กับ build ของ `v1.7.4`) · ยังไม่มีข้อมูล roadmap บน UAT/prod · landing section 07 ยังรอ [zyra-landing#7](https://github.com/Maximumsoft-Co-LTD/zyra-landing/pull/7) แก้ตามรีวิว — **zyra-world.com เรียก API ของ UAT** (`api.uat.zyra.center`) ฉากที่จะโชว์บน landing ต้องจัดใน admin ของ UAT
+> **อัปเดตล่าสุด:** 2026-10-07 · **คนล่าสุด:** N2Pluto (pair กับ Claude Code)
+
+## 2026-10-07 (รอบ 17) · N2Pluto — เปิด flag ครบ 3 env + release v1.7.4 (prod)
+
+- **ทำอะไร:**
+  - zyra-api `ROADMAP_ENABLED=true`: เพิ่มใน `zyra-api-uat-env-json` (v4→v5) และ `zyra-api-prod-env-json` (v3→v4) โดยไม่แตะ key อื่น (เช็คจาก hash) ส่วน dev เปิดอยู่แล้ว (v8) · roll pod ผ่าน `zyra.center/env-secret-version` ([infra#48](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/48)) แต่ prod ต้อง roll ซ้ำ ([infra#49](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/49)) เพราะรอบแรก pod boot ก่อน ESO refresh (5m) จะ sync secret v4 ลง k8s Secret
+  - zyra-app `NEXT_PUBLIC_ROADMAP=true` ใน GitHub Environment `dev` / `uat` / `production` · rebuild dev (`dev-752f98b-r581`) และ UAT (`uat-1496518-r582`) ด้วย `workflow_dispatch`
+  - develop → main: [api#159](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/159) (#156 preset assets + `is_mystery`, #157 GIF size limit) · [app#501](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/501) (#497 #498 admin) — ทั้งสอง repo มีแต่งาน roadmap ใน develop และ main เท่ากับ v1.7.3 อยู่แล้ว จึงไม่ต้อง cherry-pick
+  - tag `v1.7.4` บน main ของ zyra-api (`be35e11`) และ zyra-app (`0ff4a0e`) → deploy prod สำเร็จ · migration 108/109 เป็นแบบ additive และรันเองตอน start
+- **Before/After** (ยิง curl จริงวันที่ 2026-10-07 · before = 11:17 ก่อน roll pod · after = 11:25 สำหรับ flag และ 11:54 สำหรับ v1.7.4 (+07))
+
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| `GET /api/public/roadmap` — UAT | 404 | 200 | route เปิด |
+| `GET /api/public/roadmap` — prod | 404 | 200 | route เปิด |
+| `GET /api/admin/roadmap` ไม่มี token — UAT / prod | 404 / 404 | 401 / 401 | route ลงทะเบียนแล้ว (ต้อง login) |
+| `preset_assets` ใน response — UAT / prod | ไม่มี (UAT วัดตอน 11:25 · prod: ใน v1.7.3 ไม่มี field นี้ในโค้ด) | `quarter_sign`, `summary_box` | ได้หลัง v1.7.4 / main |
+| `/api/health` version — prod | v1.7.3 | v1.7.4 (`status: ok`, database/storage `ok`) | — |
+| จำนวนฟีเจอร์ (`data.total`) — UAT / prod | — | 0 / 0 | ยังไม่มีข้อมูล |
+
+**วัดยังไง:** `curl -s -o /dev/null -w '%{http_code}'` ไปที่ `https://api.uat.zyra.center` และ `https://api.zyraworld.co` บวก `jq` ดู `.data.preset_assets` / `.version`
+- **verify ถึงไหน:** ฝั่ง API ยืนยันด้วย response จริงตามตาราง · ฝั่ง app ยืนยันแค่ว่า build/deploy เขียวและ zyra-infra ใช้ tag ใหม่ (dev `dev-752f98b-r581`, UAT `uat-0ff4a0e`, prod `v1.7.4`) **ยังไม่ได้ login admin ดูว่าเมนู/หน้า Roadmap ขึ้นจริง** · `email: not_configured` บน prod health เป็นอาการเดิมตั้งแต่ v1.7.3
+- **ต่อจากนี้:** สร้างฟีเจอร์ + จัดฉากใน admin ของ **UAT** (ข้อมูลที่ landing จะเห็น) · zyra-landing#7 แก้ตามรีวิว (scroll-jacking, การ์ดกระโดด, description ไม่ตรงกับโค้ด, bump `V.app`) แล้วค่อย merge (merge = ขึ้น zyra-world.com ทันที)
+- **ติดอะไร:** ต้องตัดสินใจว่า landing จะชี้ API ของ UAT ต่อ หรือเปลี่ยน `API_URL` ไปที่ prod — ถ้าเปลี่ยน ต้องจัดฉากใน admin ของ prod แทน
 
 ## 2026-10-05 (รอบ 16) · rif — landing มือถือ: ซ่อนรางจุด/แถบ progress
 
