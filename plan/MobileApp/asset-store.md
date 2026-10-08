@@ -1,6 +1,6 @@
 # Mobile App — Asset store (เก็บรูป/เสียงบนเครื่อง ไม่โหลดซ้ำ)
 
-> **สถานะ:** A0 ทดสอบบน iPhone แล้ว (2026-10-08) · A1–A3 ยังไม่เริ่ม · **repo:** zyra-app (`lib/native/asset-store.ts`, `zyra-engine/pixi-game/utils.ts`, `app/api/img`) · zyra-mobile (`@capacitor/filesystem`) · zyra-api (`/api/app/config`) · **คนล่าสุด:** Ten + Claude
+> **สถานะ:** A0 ทดสอบบน iPhone แล้ว · **A1 merge แล้ว** ([zyra-app#503](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/503)) · **A2 merge แล้ว** ([zyra-app#504](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/504) · [zyra-api#160](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/160) · [zyra-mobile#2](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/2)) · เปิดบน dev ด้วย `NEXT_PUBLIC_MOBILE_ASSET_STORE=true` (2026-10-08) · **Before/After ยังไม่ได้วัด** · A3 ยังไม่ตัดสิน · **repo:** zyra-app (`lib/native/asset-store.ts`, `lib/vo-timing.ts`, `lib/img-proxy.ts`, `app/api/img`) · zyra-mobile (`@capacitor/filesystem`) · zyra-api (`/api/app/config` `asset_store`) · **คนล่าสุด:** Ten + Claude
 
 ## โจทย์
 
@@ -40,6 +40,15 @@ Ten (2026-10-08): "แอปมือถือเก็บ package รูป/ไ
 - GIF ผ่าน `Assets.load` ของ Pixi ใช้ `fetch` ภายใน → ต้องทดสอบเพิ่มใน A2 ถ้าไม่ผ่านให้ GIF คง network (มีไม่กี่ไฟล์)
 - เสียง `use-vo-sounds.ts` (`<audio>`) → local ได้ · pet/env sound (`fetch`+`decodeAudioData`) → **iOS คง network** หรืออ่านผ่าน `Filesystem.readFile` → `blob:` (ช้ากว่า ~100 ms/MB) — ตัดสินตอน A2 จากขนาดจริง
 - Android ยังไม่ได้ทดสอบ (same-origin `_capacitor_file_` คาดว่าผ่านทั้ง `fetch` และ `<img>`) — ทดสอบตอน A2 บนเครื่อง Android กลาง
+
+## สิ่งที่ลงจริง (2026-10-08)
+
+- **A1** `app/api/img`: `Cache-Control: public, max-age=31536000, immutable` เมื่อชื่อไฟล์มี UUID (object piece / avatar sheet / map / pet — zyra-api ไม่เขียนทับ key พวกนี้) · ไฟล์เขียนทับได้ (`thumbnail.png`, `metadata.json`, `animations/*.png`) คง 1 วัน · host allowlist (`*.r2.dev`, `NEXT_PUBLIC_CDN_URL`, `*.googleusercontent.com`, เพิ่มด้วย `IMG_PROXY_ALLOWED_HOSTS`) ตอบ 403 นอกนั้น · `lib/vo-timing.ts`: `performance.mark` ตอนเริ่ม `/loading` + สรุป network ของ warm-up (`files / cached / network / bytes`) + mark ตอน scene พร้อม → event `VO Preload Summary` / `VO Map Interactive` + `console.info` บน dev/uat (`isDebugModeAllowed`)
+- **A2** `lib/native/asset-store.ts`: `Filesystem.downloadFile` ตรงจาก R2 (ไม่ผ่าน `/api/img`) → `.part` แล้ว `rename` · ไฟล์ใน `Directory.Cache/zyra-assets/<sha1>.<ext>` · manifest ใน `Directory.Data` · `resolveAssetSrc` (sync) เสียบที่ `fetchTex`, `loadSpriteImage`, GIF 4 จุด (`alias` = proxied url คง cache key ของ Pixi), sound player 2 ตัว, `use-vo-sounds` · `ensureAssets` ก่อนทุก wave ใน `vo-preload` + download เบื้องหลังสำหรับของที่เพิ่งเห็นตอน runtime (sheet ของ peer, รูปโปรไฟล์) · LRU ใต้ `max_bytes` · revalidate ไฟล์ที่เขียนทับได้ทุก `revalidate_hours` (HEAD etag/size) · `cache_epoch` purge · แถว "แคชรูปภาพ · xx MB · ล้าง" ใน Settings → General (แอปเท่านั้น) · **iOS เสิร์ฟ local เฉพาะ png/jpg/webp** (A0: `fetch()` local โดนบล็อก) GIF/เสียงคง network · Android เสิร์ฟทุกชนิด · ปิดนอกแอป / ไม่มี build flag / `asset_store.enabled=false`
+- **zyra-api** `GET /api/app/config` → `ios.asset_store` / `android.asset_store` `{enabled, max_bytes, revalidate_hours, cache_epoch}` จาก env `APP_IOS_ASSET_STORE` / `APP_ANDROID_ASSET_STORE` (default true) · `APP_ASSET_STORE_MAX_BYTES` (300 MiB) · `APP_ASSET_STORE_REVALIDATE_HOURS` (24) · `APP_ASSET_STORE_EPOCH` ("1")
+- **zyra-mobile** `@capacitor/filesystem@8.1.4` · TestFlight build 3 มี plugin นี้
+- **tests:** `img-proxy.test.ts` · `api-img-route.test.ts` · `vo-timing.test.ts` · `asset-store.test.ts` (10 เคส) · Go table tests `TestBuildAssetStoreConfig` / `TestAppConfigServiceAssetStorePerPlatform`
+- **ยังไม่ได้ลองบนเครื่องจริง** — ต้องใช้ TestFlight build 3 + dev build ที่มี flag แล้วอ่าน `[asset-store]` / `[vo-preload]` จาก Safari Web Inspector หรือ stats overlay (B1)
 
 ## แผน (อนุมัติ 2026-10-08 — รายละเอียดใน plan file ของ session)
 
