@@ -146,6 +146,7 @@ Mobile landing page (6382:35915 · 6382:37357)   ← เว็บการตล
 - กด Confirm → เปิด **bottom sheet "Keep This Setting?"** (6407:1129791) พร้อม overlay `rgba(0,0,0,0.5)` blur 6 + spinner 40 กลางจอ
 - Bottom sheet: bg `#232427` radius บน 24 p 16 gap 16 · หัวข้อ Sub/Bold · ปุ่ม Cancel 16 มุมขวาบน (358,16) · กล่อง radio bg white 5% radius 16 p 16 · 2 ตัวเลือก (แต่ละแถว min-h 42 p 12 gap 8 radio 16 + text 14/18):
   - **Remind me again** (default) — sticky: *"จะจำค่านี้ไปตลอด 1 วัน และจะเป็นไปทุก Workspace เพียงแค่ 1 วัน พรุ่งนี้ก็จะถามอีก"*
+    - **แก้ 2026-10-08 (QA HP-03):** ไม่จำ 1 วันแล้ว — Remind me again ถามใหม่ทุกครั้งที่เข้า workspace (รวม workspace ใหม่) · Always เท่านั้นที่ข้ามหน้านี้
   - **Always** — sticky: *"จำค่านี้ไปตลอด สามารถแก้ไขได้ภายหลัง"*
   - ปุ่ม Confirm เขียว h 42 เต็มกว้าง
 - หลัง Confirm → ถ้า orientation ไม่ตรง → §3.5 · ถ้าตรง → Lobby §3.6

@@ -3,6 +3,19 @@
 > **สถานะรวม:** **ขึ้น dev + TestFlight แล้ว (2026-10-08)** — app "Zyra World Dev" (`co.zyraworld.app.develop`) build 1–3 บน TestFlight กลุ่ม Zyra Team 5 คน · login Apple/Google ในแอปแก้แล้ว (entitlement + `APPLE_CLIENT_IDS` dev v9 + iOS OAuth client) **รอ Ten ลอง build 2+** · asset store A1+A2 merge แล้ว เปิดบน dev (`NEXT_PUBLIC_MOBILE_ASSET_STORE=true`) **ยังไม่ได้วัด Before/After** ([asset-store.md](asset-store.md)) · ถัดไป B0/B1 (วัด + observability) · Android: Google native ยังไม่มี OAuth client (SHA-1) · doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48)
 > **อัปเดตล่าสุด:** 2026-10-08 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-08 (รอบ 54) · Ten + Claude — feedback 8 ข้อจาก iPhone · joystick ใหม่ · QA batch (HP-03 · onboarding · splash · Workspace Lists)
+
+- **ทำอะไร:**
+  - feedback 8 ข้อ (zyra-app #505–#510): invite link เปิดแอป (AASA `/.well-known/apple-app-site-association` + `applinks:` ใน zyra-mobile #3) · ซ่อนเมนูข้าง minimap ตอน meeting · แชร์จอเต็มจอ · ล็อกแนวจอตามโหมด (Spatial ขึ้นแนวนอนเอง ไม่มีหน้า Rotate ในแอป · กลับหัวได้ `landscape-primary/secondary`) · iOS ซ่อนเลือก audio output (`setSinkId` ไม่มี) · object บางชิ้นไม่ขึ้น = allowlist `/api/img` ตก GCS bucket เก่า (#506) + retry โหลด texture · เครื่องร้อน = resolution ≤ 2×, idle 30 fps, GIF ไม่ใช้ ticker ที่สอง (#507) · ออกจาก meeting แล้วเสียง/ภาพกระตุก = audio session สลับช้าลง 2 วิ (#510)
+  - joystick ใหม่ (#511): จางตอนพัก · แตะตรงไหนเป็นกลางปุ่ม · โซนเดิน = ซ้ายล่าง (ซ้าย 43% × ล่าง 65%) · เมนูห้อง/โซน/pet ยกขึ้นพ้นปุ่ม minimap
+  - QA batch (#512): **HP-03** Remind me again ถามโหมดใหม่ทุกครั้ง (Ten เลือก — แก้ spec ข้อ 13 / ux-ui-plan §3.4 / task 0.15 แล้ว) · **onboarding 3 slide** ครั้งแรกในแอปก่อน login (ตาม prototype `onb`) · **Workspace Lists** (Figma 6379:34971) เลื่อนลงจากบนใน Lite แทนการออกไป Space builder — เลือกอันอื่น reload + ถามโหมด · เลือกอันเดิมแค่ปิด
+  - splash โลโก้ Z (zyra-mobile #4) — เดิมเป็นพื้นเปล่า
+- **ถึงไหน:** merge เข้า develop ครบ · dev ขึ้นแล้ว · splash ต้องใช้ TestFlight build ใหม่
+- **PR:** zyra-app #505–#512 · zyra-mobile #3, #4
+- **verify ถึงไหน:** vitest ผ่านทั้งชุดทุก PR + CI เขียว · onboarding ลองใน browser (จำลองแอป) · splash ลองใน simulator (เห็นโลโก้ · ~1.5 วิแรกจอดำ น่าจะแคช launch screen ของ simulator — ยังไม่ได้ดูบนเครื่องจริง) · Workspace Lists / joystick / orientation **ยังไม่ได้ลองบนเครื่องจริงหลัง merge** · Before/After (rule 18) ของ perf/ความร้อน **ยังไม่ได้วัด** — ยังไม่มีตัววัดบนเครื่อง (B1)
+- **ต่อจากนี้:** Ten ลองบน iPhone (joystick zone, Workspace Lists, onboarding, splash build ใหม่, flip จอ, กระตุกหลังออก meeting) · B1 observability แล้ววัด Before/After · Android: orientation flip native + App Links + Google OAuth (SHA-1)
+- **ติดอะไร:** ไม่มี
+
 ## 2026-10-08 (รอบ 53) · Ten + Claude — TestFlight · login Apple/Google ในแอป · asset store A1+A2 merge
 
 - **TestFlight (ทีมบริษัท MAXIMUM SOFT COMPANY LIMITED `Z8TW83PNG3`):**
