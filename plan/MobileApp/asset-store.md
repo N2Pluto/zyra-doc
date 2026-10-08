@@ -1,6 +1,6 @@
 # Mobile App — Asset store (เก็บรูป/เสียงบนเครื่อง ไม่โหลดซ้ำ)
 
-> **สถานะ:** A0 ทดสอบบน iPhone แล้ว · **A1 merge แล้ว** ([zyra-app#503](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/503)) · **A2 merge แล้ว** ([zyra-app#504](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/504) · [zyra-api#160](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/160) · [zyra-mobile#2](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/2)) · เปิดบน dev ด้วย `NEXT_PUBLIC_MOBILE_ASSET_STORE=true` (2026-10-08) · **Before/After ยังไม่ได้วัด** · A3 ยังไม่ตัดสิน · **repo:** zyra-app (`lib/native/asset-store.ts`, `lib/vo-timing.ts`, `lib/img-proxy.ts`, `app/api/img`) · zyra-mobile (`@capacitor/filesystem`) · zyra-api (`/api/app/config` `asset_store`) · **คนล่าสุด:** Ten + Claude
+> **สถานะ:** A0 ทดสอบบน iPhone แล้ว · **A1 merge แล้ว** ([zyra-app#503](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/503)) · **A2 merge แล้ว** ([zyra-app#504](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/504) · [zyra-api#160](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/160) · [zyra-mobile#2](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/2)) · เปิดบน dev ด้วย `NEXT_PUBLIC_MOBILE_ASSET_STORE=true` (2026-10-08) · **Before/After ยังไม่ได้วัด** · **A3 ทำแล้ว (Ten สั่ง 2026-10-08 ไม่รอวัด)** — [zyra-app#513](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/513) · [zyra-mobile#5](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/5) · **repo:** zyra-app (`lib/native/asset-store.ts`, `lib/vo-timing.ts`, `lib/img-proxy.ts`, `app/api/img`) · zyra-mobile (`@capacitor/filesystem`) · zyra-api (`/api/app/config` `asset_store`) · **คนล่าสุด:** Ten + Claude
 
 ## โจทย์
 
@@ -57,6 +57,17 @@ Ten (2026-10-08): "แอปมือถือเก็บ package รูป/ไ
 | A1 | `/api/img`: host allowlist + `immutable, max-age=31536000` เมื่อ key เป็น uuid · `performance.mark` + log `[vo-preload]` กรอก Before | 1 วัน |
 | A2 | `@capacitor/filesystem` · `asset_store` ใน `/api/app/config` · `lib/native/asset-store.ts` (`originalUrl` / `resolveAssetSrc` sync / `ensureAssets` / `revalidateUsed` / LRU 300 MB / manifest ใน `Directory.Data`, ไฟล์ใน `Directory.Cache`) · เสียบที่ `fetchTex`, `sprite-grid`, GIF 4 จุด, sound player 2 จุด, `use-vo-sounds`, loading screen, peer prefetch · แถว "ล้างแคชรูป" ใน Settings · tests | 5 วัน |
 | A3 (เงื่อนไข) | ฝังชุดคงที่ ~12 MB ในไบนารี (`scripts/build-asset-pack.mjs`, Android copy assets→files ครั้งแรก) — ทำเฉพาะถ้า first-run ของ A2 ยังช้า | 2 วัน |
+
+## A3 — ฝังชุดคงที่ในแอป (2026-10-08)
+
+- **อะไรอยู่ในแพ็ก** (`zyra-app/lib/asset-pack.ts` · `GET /api/asset-pack`): เสียงแจ้งเตือน (`public/sound`) · ฟ้า/อากาศทุก layer กลางวัน-กลางคืน + ดวงจันทร์ + backdrop · เสียงบรรยากาศ + one-shot · เสียงสัตว์เลี้ยง · GIF ปุ่มเดิน / spotlight · xp medal — **85 ไฟล์ ~13.6 MB** (mp3 12.1 · png 0.5 · gif 0.4) · ของที่ admin อัปโหลด (แมพ / object / avatar / pet) **ไม่ฝัง** ยังใช้ A2
+- **ตอน build** (zyra-mobile `scripts/build-asset-pack.mjs` ใน `capacitor:copy:before`): ดึงรายการจาก server ของ flavor แล้วโหลดลง `www/asset-pack/<sha1(url)>.<ext>` + `manifest.json` · ไม่เคยทำให้ build พัง (ไม่มีรายการ = แพ็กว่าง) · `ZYRA_ASSET_PACK=0` ปิด
+- **ตอนเปิดแอป**: plugin `ZyraAssetPack` (Swift / Java ในแอป) `manifest()` + `copy()` ไฟล์ไป `Caches/zyra-assets` → `seedFromPack()` ใส่ manifest ของ store · ไฟล์ที่ store ทิ้งภายหลัง (server เปลี่ยน / evict) จำไว้ใน `manifest.pack.dropped` ไม่ copy กลับจนกว่าจะมีแพ็กใหม่
+- **iOS เสียง + GIF อ่านจากเครื่องแล้ว**: `loadAssetBytes()` (Filesystem.readFile → ArrayBuffer) สำหรับ pet / environment sound player · `resolveAssetSrcAsync()` (→ `blob:` url) สำหรับ GIF ของ Pixi และ `<audio>` — แก้ข้อจำกัด A0 (fetch ของ `capacitor://` ถูกบล็อก) · แก้บั๊ก iOS เสียง/GIF ถูก `ensureAssets` โหลดซ้ำทุกครั้ง
+- **บั๊กที่เจอระหว่างทำ**: `/sound/*` ถูก proxy redirect ไป `/login` เมื่อไม่มี cookie → native downloader ได้หน้า login แทน mp3 · แก้ให้ `/sound` เป็น public เหมือน `/image`
+- **iOS**: `SceneDelegate` สร้าง `CAPBridgeViewController()` เอง (ข้าม storyboard) → plugin ในแอปไม่ถูก register · เปลี่ยนเป็น `MainViewController`
+- **verify**: simulator iPhone 18 Pro (แอปชี้ zyra-app local ที่มี #513) — เปิดครั้งแรก 85 ไฟล์ / 14 MB ลง `Library/Caches/zyra-assets` manifest 85 entries · เปิดครั้งที่ 2 `copied: 0` · vitest 3914 ผ่าน · Android ยังไม่ได้รันบนเครื่อง (CI compile)
+- ขนาดแอป: +~14 MB
 
 ## Before / After (rule 18) — ยังไม่ได้วัด
 
