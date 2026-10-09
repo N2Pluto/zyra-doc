@@ -1,6 +1,6 @@
 # Mobile App — ตัวละครของคนที่เข้าจากมือถือ (server เดินให้ — "autopilot")
 
-> **สถานะ:** merge เข้า develop ครบ 3 repo (2026-10-09) — [zyra-ws#72](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/72) · [zyra-api#164](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/164) · [zyra-app#521](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/521) · **ยังไม่ได้ลองบนเครื่องจริง** · **repo:** zyra-ws (`internal/hub/autopilot.go`) · zyra-api (`seats` ใน zone cache) · zyra-app (`lib/map-presence.ts`, `autopilot` park/resume) · **คนล่าสุด:** Ten + Claude
+> **สถานะ:** merge เข้า develop ครบ 3 repo (2026-10-09) — [zyra-ws#72](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/72) + รอบต่อ [zyra-ws#73](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/73) (lead request · circle · spotlight) · [zyra-api#164](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/164) · [zyra-app#521](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/521) · **ยังไม่ได้ลองบนเครื่องจริง** · **repo:** zyra-ws (`internal/hub/autopilot.go`) · zyra-api (`seats` ใน zone cache) · zyra-app (`lib/map-presence.ts`, `autopilot` park/resume) · **คนล่าสุด:** Ten + Claude
 
 ## โจทย์
 
@@ -49,8 +49,17 @@ server เดินตัวละครแทนคนที่ไม่มี 
 - **ยังไม่ได้ลองบนเครื่องจริง** — ขั้นตอน: Lite บนมือถือ + เว็บบนคอม → เห็นตัวโผล่ที่ spawn เดินไป private zone แล้วนั่ง · กด meeting จาก Lite → เดินเข้าห้อง เว็บได้ยินเสียง + เห็นในรายชื่อห้อง · ออก → เดินกลับ · Spatial หมุนแนวตั้ง → เดินไปจอด · หมุนกลับ → คุมได้ต่อ
 - Before/After (rule 18): **ยังไม่ได้วัด** — ตัวชี้วัดคือ "Lite ในห้อง meeting ถูกนับในรายชื่อห้องบนเว็บ" (0 → ทุกครั้ง) ต้องลองบนเครื่อง
 
+### รอบต่อ — zyra-ws [#73](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/73) (Ten อนุมัติ 2026-10-09)
+
+| เรื่อง | เดิม | ตอนนี้ |
+|---|---|---|
+| `request_to_lead` ไปหาคน Lite / มือถือที่จอดอยู่ | ปลายทางไม่มี UI ตอบ คนขอรอไปเรื่อยๆ | server ตอบคนขอทันทีด้วย `lead_request_declined {target_user_id, reason:"unavailable"}` (zyra-app ต้องแสดง toast — follow-up) |
+| proximity circle | Lite ไม่เคยถูกนับตำแหน่ง | ตัวละครที่ server เดินให้ cluster ตามตำแหน่งเหมือนคนอื่น (คนบนคอมเดินไปหา Lite ที่นั่งอยู่ = เกิดวง) · กฎ "อยู่ในโซน = ไม่ cluster" server ตัดสินเอง (`chatZoneAt`: private/meeting/spotlight → ไม่ cluster, room → เฉพาะในห้อง) · ghost ที่ไม่มี tile ยังถูกข้าม · การถูกพาเข้าวงด้วย id (`circle_join`) ยังคงเดิม และหลุดเมื่ออยู่ใน meeting/marker |
+| Spotlight จาก Lite | ใช้ marker แบบ ghost (`ghost_join_zone`) ตัวละครนั่งอยู่ที่บ้านแต่ "พูดจาก marker" | autopilot เดินไปยืนบน marker (เป้าหมายแบบเดียวกับ meeting) · stop → เดินกลับ · ใช้ marker แบบ ghost เฉพาะไม่มี tile หรือ marker อยู่คนละชั้นกับ `FloorID` · `ws:room:leave` หลงมาไม่ดึงออกจาก marker (เคลียร์เป้าหมายต่อ zone) |
+
 ## ข้อจำกัด / ต่อจากนี้
 
-- Spotlight ของ Lite ยังใช้ `ghost_join_zone` ที่ marker (ตัวละครไม่เดินไป marker) — ตามมาทีหลัง
+- zyra-app ยังไม่แสดง `lead_request_declined` (เพิ่ม toast ข้าง handler `lead_requested` ใน hero)
+- Lite ที่เข้า circle ด้วย id ยังไม่เดินไปหาวง (ถูกพาเข้าแบบเดิม) — ถ้าจะให้เดินไปต้องมีเป้าหมายแบบ tile
 - ห้อง meeting ที่ล็อก: autopilot เดินเข้า tile ได้แต่ zyra-api ไม่ให้ token เสียง (เหมือน ghost เดิม) — gate `ws:room:enter` ผ่าน lock ยังเป็น follow-up เดิม
 - zone ที่ถูกถือไว้ไม่โชว์บนเว็บว่า "มีคนจอง" (ไม่ใช่ claim) — คนบนเว็บเห็นแค่ตัวละครนั่งอยู่
