@@ -1,68 +1,258 @@
 # Mobile App — Task Breakdown
 
-> **สถานะ:** Planning — ยังไม่เริ่ม task ไหน (2026-09-29) · **repo:** zyra-app, zyra-mobile, zyra-api, zyra-notifications, zyra-ws
+> **สถานะ:** **เริ่ม implement 2026-10-06** — 0.1a · 0.1b · 0.2 · 0.11 · 0.12 · 0.13 (Spatial) · 0.41 · 0.42 · 0.15 · 0.30 (แท็บ Profile: สถานะ / ภาษา / Workspace mode / Legals / Switch / Log out) · 0.21 (แท็บ Chat: `useChatWiring` + รายการแชท แท็บ All / Channel / Group / DM + หน้าห้องแชทแนวตั้ง header pill / pinned / input + คีย์บอร์ดดันขึ้น (visualViewport) — @You / แนวนอน ยังไม่ทำ) · 0.26 (เมนู FAB 3 ข้อ — หน้าสร้างเต็มจอยังไม่ทำ) ทำแล้วบน zyra-app `feat/mobile-foundation` · 0.16b + 0.16c + 0.14 (shell + Lite Home) + 0.17 / 0.18 / 0.19 ฝั่ง Lite (+ Instant meeting / All rooms busy / จอแชร์) · 0.47 · 0.48c · 0.50 (บางส่วน — นอกห้อง + ในห้อง ✓ ทั้งห้อง / Undo / carousel / PIP / PIP รวม) · 0.29 (หน้า Notification แนวตั้ง + กระดิ่งบน Lite Home) · 0.28 (Workspace Lists แนวตั้ง — filter / join link ยังไม่ทำ) · 0.58 (Maintenance: Try again บนมือถือ) · 0.3 (joystick 4 ทิศ — 8 ทิศ / วิ่ง ยังไม่ทำ) · 0.4 (tap-to-walk touch + double-tap re-centre) · 0.5 (HUD Spatial มือถือ: ปุ่มกลม / Chat / Meeting Menu / minimap — megaphone ทำแล้วใน 0.49) · 0.49 (megaphone เดินไป marker ว่าง + start) · 0.6 (members / notifications drawer + แชทแนวนอน 249 / 515 — คีย์บอร์ดแนวนอนยังไม่ทำ) · 0.7 (ห้องประชุมบนแมพ = หน้า HP-04 แนวนอน + PIP — circle ยังเป็น desktop) · 0.8 (share ตาม API · noise off / ไม่มี effect บนมือถือ · สลับกล้อง) · 0.44 (จอเล็ก: toast / modal / panel ไม่ล้น 320 และ 667×375) · 0.43 (tablet: ขอบ 24 / ปุ่มกลม 44) · 0.36 (toast poor / lost / Reconnecting… + spinner ป้ายชื่อ + retry 5 ครั้ง → Meeting ended — skeleton ระหว่างทางยังไม่ทำ) · 0.37a (auto-resend 1/2/4/8/16 วิ + client_msg_id + sheet Message not sent) · 0.24 (mention มือถือ + chip @You — เกณฑ์ OQ 18 ใช้ค่าสมมติ) · 0.22a (กดค้างข้อความ: emoji bar + เมนู — Forward / Select รอ Figma) · 0.23 (preview รูปมือถือ: pinch / แตะ / ปัด — บันทึกลง Photos รอ 1.1 · ⋮ รอ OQ 19) · 0.51 (Meeting chat เต็มจอ + แท็บ Spotlight / Meeting ใน Lite + presenter ผ่านเมนู ⋮ — แนวนอนยังไม่ทำ) · 1.8 ฝั่งเว็บ (push client + devices API + ลบตอน logout — register ปิดด้วย `NEXT_PUBLIC_PUSH_ENABLED` จนกว่า 2.2) · 1.6 ฝั่งเว็บ (appStateChange → visibility + keep-awake + ปิด tab-keepalive + บันทึกตำแหน่งตอน pause + poll หยุดตอน background) · 1.9 (zyra:// + launch URL + `.well-known` ใน matcher — universal links รอ Team ID / SHA-256) · 0.60 บางส่วน (`/join` เป็น public) · 1.4a (Google native ผ่าน `@capgo/capacitor-social-login` — รอ OAuth client iOS / Android) · 1.5a ฝั่งแอป iOS (ปุ่ม Apple + login_apple — เว็บ / Android ยังไม่ทำ) · 1.10 (haptics / share sheet / IME + enterKeyHint — badge รอ 2.6) · 2.6a (แตะ push → play + เปิดแชท · banner ตอนแอปเปิด — badge ยังไม่ทำ) · 0.57b logic (config + เทียบเวอร์ชัน — หน้า / sheet รอ frame Pai) · 0.10 (Playwright iPhone 13 แนวตั้ง / แนวนอน — harness ผ่าน · CI job แบบ warn-only · live ยังไม่ได้) · 0.34 (หน้า Notification มือถือ · Calendar ซ่อน — state ขอ Allow / ผูก push 2.5b ยังไม่ทำ) · 1.7 (UIBackgroundModes audio + audioSession play-and-record ระหว่างประชุม) · 0.38 (ladder L0–L3 — L4 simple map ยังไม่ทำ · ยังไม่ได้วัด FPS) · 0.35 ข้อ B (alert ระบบ + เปิด Settings — pre-permission / indicator รอ design) · 0.54b (Lite Spotlight) ทำแล้วบน zyra-app branch เดียวกัน · 2.3a (+ subtitle) ทำแล้วบน zyra-notifications `feat/mobile-push` · 0.31b · 0.57a · 2.1 (migration 110) · 2.5a · 0.48b · 2.3b · 2.4a · 2.6b (ส่วนใหญ่) · 0.55a · 1.5b · 0.22b · 0.25b · 0.37b (migration 111 / 112) ทำแล้วบน zyra-api `feat/mobile-api` · 1.1 / 1.2 (native) / 1.11 / 1.14 / 1.16 ทำแล้วใน repo ใหม่ `zyra-mobile` ([#1](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/1) · build จริงยังไม่ได้) · 0.16a + 0.62 + 0.48a + 0.54a + 0.59b + Spotlight ghost + 2.4b ทำแล้วบน zyra-ws `feat/mobile-lite-client` (ทุก branch เปิด PR เข้า develop แล้ว · CI เขียว · ยังไม่ merge — ดู [progress.md](progress.md)) · task อื่นยังไม่เริ่ม · **จัดใหม่ 2026-10-05: แบ่งตาม module ของโค้ดจริง** (เดิมแบ่งตาม Phase — ข้อความเดิมทุกแถวย้ายไปอยู่ใน [code-map.md](code-map.md) ครบ) · **repo:** zyra-app, zyra-mobile (ใหม่), zyra-api, zyra-notifications, zyra-ws, zyra-infra
 > ทุก task ขนาด 1 PR · branch จาก `develop` ตามกฎ git branch workflow · ตัวเลข before/after ลง [progress.md](progress.md)
-> **เอกสารคู่กัน:** [spec.md](spec.md) · [technical-design.md](technical-design.md)
+> **ไฟล์ / บรรทัดตรวจกับโค้ดจริง 2026-10-05** บน zyra-app `fix/evening-office-lights` @ `d3585bc` · zyra-api, zyra-ws `fix/object-catalog-collision-sync` · zyra-notifications `develop` — เปิดบน branch อื่นเลขอาจเลื่อน
+> **เอกสารคู่กัน:** [code-map.md](code-map.md) (หลักฐานต่อ task — คลิก ID) · [technical-design.md](technical-design.md) (§0 แผนที่โค้ด · §23 จุดที่เอกสารเดิมผิด) · [spec.md](spec.md) · [ux-ui-plan.md](ux-ui-plan.md) · [test-plan.md](test-plan.md)
 
-ลำดับ: **Phase 0 ก่อนทุกอย่าง** · Phase 1 กับ Phase 2 ทำคู่ขนานได้ · Phase 3 หลัง store approve
+## วิธีอ่าน
 
-## Phase 0 — Mobile web ใช้ได้จริง (zyra-app)
+- **ID เดิมไม่เปลี่ยน** (ลิงก์ / อ้างอิงจาก test-plan, open-items, ux-ui-plan ยังใช้ได้) · task ที่แตกหลาย repo ใส่ตัวอักษรต่อท้าย เช่น 0.16a (zyra-ws) / 0.16b (zyra-app WS client) / 0.16c (hero) — **task นับว่าเสร็จเมื่อทุกส่วนเสร็จ**
+- คอลัมน์ **Phase** = Phase เดิม: 0 = mobile web ใช้ได้จริง · 1 = Capacitor shell ขึ้น store · 2 = push backend · 3 = หลัง store approve (ตาม demand) · ลำดับเดิมยังใช้: Phase 0 ก่อนทุกอย่าง · Phase 1 กับ 2 คู่ขนาน · Phase 3 หลัง store approve
+- **ไฟล์ที่แก้** = ไฟล์มีอยู่แล้ว ตรวจแล้ว (`file:line`) · **ไฟล์ใหม่** = ชื่อเสนอ · **test · Done** = test-plan ID / ไฟล์ test + เกณฑ์เสร็จแบบย่อ (เกณฑ์เต็มอยู่ code-map)
+- ตัวย่อ path: ไม่มีชื่อ repo นำหน้า = zyra-app · `hero` = `views/user/virtual-office/hero-virtual-office.tsx` · `scene.ts` = `zyra-engine/pixi-game/scene.ts` · `vo-*` / `zone-*` = `views/user/virtual-office/components/` · ไฟล์แชทเปล่า ๆ = `views/chat/components/` · `lite/` = `views/user/virtual-office/lite/` (ยังไม่มี)
+- ป้าย: 🆕 task ใหม่ 2026-10-05 จาก code map · ⚠️ ขัดกับเอกสารอื่น รอตัดสิน · ✅ มีในโค้ดแล้ว เหลือ verify · ✂️ ตัดออก · 🎨 รอ Figma · 🔍 ยังต้องเช็ค
 
-| # | Task | ไฟล์หลัก | ขึ้นกับ | Done เมื่อ |
-|---|---|---|---|---|
-| 0.1 | Feature flag `NEXT_PUBLIC_MOBILE_VO` — overlay "Mobile unsupported" แสดงเฉพาะเมื่อ flag ปิด หรือหน้า admin/editor | `components/mobile-unsupported-overlay.tsx`, `app/layout.tsx` | — | flag เปิด → หน้า VO เข้าได้บนมือถือ · flag ปิด → เหมือนเดิม |
-| 0.2 | Viewport + safe area สำหรับหน้า VO — `viewport-fit=cover`, `user-scalable=no` เฉพาะ route `/workspace/[id]/play`, ใช้ `env(safe-area-inset-*)` ใน HUD container | `app/layout.tsx`, `views/user/virtual-office/hero-virtual-office.tsx` | 0.1 | ไม่มี horizontal scroll · HUD ไม่โดน notch |
-| 0.3 | Virtual joystick component + ส่ง `{dx,dy}` เข้า scene ผ่าน `pixi-canvas.tsx` ref · map เข้า V2 `input` intent / legacy `move_to` | `views/user/virtual-office/components/vo-joystick.tsx` (ใหม่), `components/game-canvas/pixi-canvas.tsx`, `zyra-engine/pixi-game/scene.ts`, `zyra-engine/constants.ts` | 0.1 | เดินได้ 8 ทิศบน Safari iOS + Chrome Android |
-| 0.4 | Tap-to-walk แยกจาก pan/pinch ด้วย threshold — ใช้ click-to-walk path เดิม | `zyra-engine/pixi-game/scene.ts`, `zyra-engine/constants.ts` | 0.3 | แตะพื้น = เดิน · ลาก = pan · สองนิ้ว = zoom ไม่ชนกัน |
-| 0.5 | Responsive HUD ชุดที่ 1 — bottom toolbar, sidebar, status picker, minimap ตาม Figma mobile | `views/user/virtual-office/components/vo-hud.tsx`, `vo-sidebar.tsx`, `vo-status-picker.tsx`, `vo-minimap.tsx` | **Figma mobile design** | ตรง Figma ≥ 95% · ต้องดึง spec ผ่าน Figma MCP ก่อน |
-| 0.6 | Responsive HUD ชุดที่ 2 — member panel, chat panel, notification panel เป็น bottom sheet | `vo-member-panel.tsx`, chat panels, `vo-notification-panel.tsx` | 0.5 | เปิด/ปิดได้ · keyboard ไม่บัง input |
-| 0.7 | Responsive HUD ชุดที่ 3 — meeting bar, zone enter modal, wave/knock toast, follow bar | ไฟล์ที่เกี่ยวใน `views/user/virtual-office/components/` | 0.5 | เข้า zone + ประชุมได้ครบบนมือถือ |
-| 0.8 | Meeting บนมือถือ — ซ่อน screen share/Document PiP เมื่อไม่มี API · ปิด blur/noise-suppressor default บน mobile · สลับกล้องหน้า/หลัง | `views/user/virtual-office/use-meeting-media.ts`, `lib/api/sfu-client.ts`, `vo-background-effects-modal.tsx` | 0.7 | mic/cam ทำงานบน iOS Safari (ต้องกดหลัง user gesture) |
-| 0.9 | Performance profile + tuning บน mobile — resolution, filters, nature/pet fallback, culling · บันทึก FPS/memory before/after | `zyra-engine/pixi-game/scene.ts`, `constants.ts`, `components/game-canvas/pixi-canvas.tsx` | 0.3 | FPS ≥ 30 / memory < 400 MB บน iPhone 12 + Pixel 6a ในแมพ 20 คน — ตัวเลขใน progress.md |
-| 0.10 | Playwright mobile viewport (iPhone 13 preset) — login → enter workspace → joystick เดิน → เข้า zone | `e2e/` ของ zyra-app | 0.3, 0.7 | ผ่านใน CI |
-| 0.11 | Sentry/Mixpanel tag `platform=mobile-web` เพื่อแยก metric | `instrumentation-client.ts` / analytics helper | 0.1 | เห็นใน Sentry/Mixpanel แยก platform |
+## สรุป Phase → module
 
-## Phase 1 — Capacitor shell ขึ้น store
+| Module | Phase 0 | Phase 1 | Phase 2 | Phase 3 | รวมแถว |
+|---|---|---|---|---|---|
+| [A. App shell & platform](#a-app-shell--platform) | 13 | — | — | 1 | 14 |
+| [B. Engine & Spatial HUD](#b-engine--spatial-hud) | 10 (รวม 0.39 ✂️) | — | — | — | 10 |
+| [C. Lite Mode shell](#c-lite-mode-shell) | 5 | — | — | — | 5 |
+| [D. Meeting / LiveKit / Spotlight UI](#d-meeting--livekit--spotlight-ui) | 15 | — | — | — | 15 |
+| [E. Chat](#e-chat) | 9 | — | — | — | 9 |
+| [F. Account / onboarding / profile / settings](#f-account--onboarding--profile--settings) | 9 | — | 1 | — | 10 |
+| [G. zyra-ws](#g-zyra-ws) | 5 | — | 1 | — | 6 |
+| [H. zyra-api](#h-zyra-api) | 7 | 2 | 5 | — | 14 |
+| [I. zyra-notifications](#i-zyra-notifications) | — | — | 1 | — | 1 |
+| [J. Native shell `zyra-mobile` + `lib/native/*`](#j-native-shell-zyra-mobile--libnative) | 1 | 15 | 1 | 4 | 21 |
+| [K. Infra / CI / store](#k-infra--ci--store) | 1 | 3 | 1 | — | 5 |
+| **รวม** | **75** | **20** | **10** | **5** | **110 แถว = 90 task** (88 เดิม + 0.62 🆕 + 1.17 🆕) |
 
-| # | Task | Repo / ไฟล์ | ขึ้นกับ | Done เมื่อ |
-|---|---|---|---|---|
-| 1.1 | สร้าง repo `zyra-mobile` — `npm init @capacitor/app`, `capacitor.config.ts` (server.url ต่อ flavor dev/uat/prod, allowNavigation), README สั้นชี้มา zyra-doc | zyra-mobile | 0.1 | เปิดแอปบน simulator/emulator แล้วเห็นหน้า login ของ dev |
-| 1.2 | Splash, icon, status bar `#1A1B1E`, orientation ทั้ง landscape/portrait, permission string กล้อง/ไมค์/notification | zyra-mobile (`ios/App/App/Info.plist`, `android/app/src/main/AndroidManifest.xml`) | 1.1 | เปิดแอปแล้วไม่มีจอขาว · ขอ permission ตอนใช้ครั้งแรก |
-| 1.3 | ตรวจว่า reCAPTCHA + email login ทำงานใน WebView · ถ้าไม่ได้ทำ fallback ตาม technical-design §4 | zyra-app `views/login/*`, zyra-mobile | 1.1 | login email/password ในแอปผ่าน |
-| 1.4 | Google native sign-in — plugin + zyra-app branch `isNativePlatform` → `loginWithGoogle(idToken)` เดิม · zyra-api รับหลาย `GOOGLE_CLIENT_ID` | zyra-mobile, zyra-app `lib/auth/session.ts` + login view, zyra-api `internal/service/authen_service.go` (verify aud) | 1.1 | login Google ในแอปผ่านทั้ง iOS/Android |
-| 1.5 | Sign in with Apple — plugin + `POST /api/authen/login_apple` (verify JWT กับ Apple keys, ผูก user ด้วย sub/email) + table-driven test | zyra-api handler/service ใหม่, zyra-app login view, zyra-mobile | 1.4 | login Apple ผ่าน · test ≥ 80% |
-| 1.6 | Lifecycle — `appStateChange` → ws `visibility` + reconnect, SFU re-attach, Pixi ticker pause/resume · keep-awake ใน VO | zyra-app `stores/vo-session-store.ts`, `components/game-canvas/pixi-canvas.tsx` | 1.1 | สลับแอป 30 วิ กลับมา ws ต่อภายใน 5 วิ |
-| 1.7 | iOS background audio — `UIBackgroundModes: audio` + AVAudioSession category ผ่าน plugin · ทดสอบเสียงประชุมค้างตอน background | zyra-mobile iOS | 1.6 | ออกจากแอปกลางประชุม ยังได้ยินเสียง |
-| 1.8 | Push client — `@capacitor/push-notifications` + Firebase SDK (iOS) → `POST /api/user/devices` หลัง login · `DELETE` ตอน logout · tap payload → route | zyra-mobile, zyra-app `lib/api/devices.ts` (ใหม่) + `lib/auth/session.ts` | 2.1 | token ถูกบันทึกใน DB · แตะ push เปิดหน้าที่ถูก |
-| 1.9 | Deep link `zyra://` + universal links (AASA + assetlinks.json serve จาก zyra-app `public/.well-known/`) | zyra-mobile, zyra-app `public/.well-known/` | 1.1 | เปิดลิงก์ workspace แล้วเข้าแอปตรง |
-| 1.10 | Native polish Tier 2 — haptics (wave/knock/join zone), badge count, share sheet ส่ง invite, keyboard handling | zyra-mobile, zyra-app จุดที่เรียก wave/knock + invite modal | 1.1 | ครบตามรายการ Tier 2 ใน spec |
-| 1.11 | หน้า offline native + retry — ตรวจ `server.url` reachable ก่อนโหลด, error page ของ WebView ถูกแทนด้วยหน้าของแอป | zyra-mobile | 1.1 | ปิดเน็ตแล้วเปิดแอป → เห็นหน้า offline ของเรา |
-| 1.12 | CI — GitHub Actions: iOS (macos runner + fastlane match/sign + TestFlight), Android (AAB + Play internal) · secrets ใน GitHub Environment · version = tag `v*` | zyra-mobile `.github/workflows/` | 1.2 | push tag → build ขึ้น TestFlight + Play internal อัตโนมัติ |
-| 1.13 | Store listing + review notes (test account, workspace demo, วิดีโอ) · submit | store consoles | ทุกข้อใน Phase 1 | approve ทั้งสอง store |
+## ลำดับทำ / critical path
 
-## Phase 2 — Push backend
+**1. ฐานร่วมที่ต้องได้ก่อน (หลาย module ใช้ — ทำเป็น PR เล็กแรก ๆ):**
 
-| # | Task | Repo / ไฟล์ | ขึ้นกับ | Done เมื่อ |
-|---|---|---|---|---|
-| 2.1 | Migration `tb_user_device` + `POST/DELETE /api/user/devices` (handler → service, UserGuard) + table-driven test | zyra-api `migrations/`, `internal/handler/device_handler.go`, `internal/service/device_service.go` | — | test ≥ 80% · migration รันบน dev |
-| 2.2 | Firebase project + APNs key + service account · ใส่ `FCM_SERVICE_ACCOUNT_JSON` ใน secret ผ่าน ESO (dev/uat/prod) | Firebase console, zyra-infra secret | Apple dev account | secret sync เข้า cluster |
-| 2.3 | zyra-notifications provider FCM HTTP v1 + `POST /push` ภายใน + ลบ token เมื่อ UNREGISTERED + test | zyra-notifications `internal/push/fcm.go`, handler | 2.1, 2.2 | ส่ง push ทดสอบถึงเครื่องจริง |
-| 2.4 | zyra-ws trigger — DM/mention/knock/meeting invite ถึง user ที่ไม่มี connection → publish ไป zyra-notifications · เช็ค notification settings | zyra-ws `internal/hub/*.go` จุดที่ส่ง DM/knock/invite, `store/redis.go` | 2.3 | DM ถึง user offline → push ภายใน 5 วิ |
-| 2.5 | Notification settings บน zyra-app มี toggle push ต่อประเภท · sync ไป backend | zyra-app `stores/notification-settings-store.ts` + settings UI, zyra-api | 2.4 | ปิด toggle แล้วไม่ได้ push |
+| ฐาน | task | ไฟล์ | บล็อกใคร |
+|---|---|---|---|
+| Feature flag | 0.1a + 0.1b | `lib/mobile-vo-feature.ts` · overlay · Dockerfile / workflow | ทุก task Phase 0 |
+| Device class + orientation | 0.41 → 0.42 | `lib/platform.ts` (ฟังก์ชันล้วน) · `hooks/use-mobile-ui.ts` · `hooks/use-window-orientation.ts` — **hook อยู่ `hooks/` ไม่ใช่ `lib/`** | 0.11, 0.13, 0.15, 0.43, 0.46, 0.8, 0.38, ทุก layout มือถือ |
+| Mode memory | 0.12 | `lib/workspace-mode.ts` | 0.13, 0.14, 0.15, 0.28 |
+| Bottom sheet | 0.15 (ตัวแรกที่สร้าง) | `components/bottom-sheet.tsx` — ⚠️ code map เสนอ `components/ui/` แต่ rule 08 ห้ามใช้ `@/components/ui/*` นอกจาก skeleton / icon | 0.6, 0.20, 0.21, 0.43, 0.44 และทุก sheet |
+| Ghost client | 0.16a → 0.16b / 0.16c | `zyra-ws/internal/hub/lite_client.go` · `workspace-ws.ts` · `vo-session-store.ts` | 0.14, 0.19, 0.48, 0.59 |
+| Zone `map_id` | 0.48b | `zyra-api/internal/cache/zones.go` · `map_zone_service.go` | 0.48a, 0.49, 0.54 |
+| Presence grace 🆕 | 0.62 | `zyra-ws/internal/hub/room.go unregister` · `hub.go Join` | 0.36, 1.6 |
+| Device token | 2.1 | `zyra-api/migrations/NNN_user_device.sql` · `device_service.go` | 1.8, 2.3, 2.4, 0.55 |
+| Capacitor ใน zyra-app | 1.1 | `zyra-app/package.json` `@capacitor/core` + `lib/native/` | module J ทั้งหมด · 0.23 (Photos) · 0.35 (dialog) · 0.56 · 0.57b · 0.60 |
 
-## Phase 3 — หลัง store approve (ตาม demand)
+**2. สายงานหลัก (critical path):**
+- **Lite:** 0.1 → 0.41 / 0.42 / 0.12 → 0.15 → 0.16a + 0.16b → **0.14 (แยกที่ route `app/workspace/[id]/play/page.tsx` — hero static import `vo-preload` → pixi ที่ `hero:28`)** → 0.28 / 0.29 / 0.30 / 0.59 / 0.18
+- **Spatial:** 0.1 → 0.2 → 0.3 (⚠️ ตัดสิน 4 / 8 ทิศก่อน) → 0.4 → 0.5 (🎨) → 0.6 / 0.7 → 0.17 → 0.36 (ต้องมี 0.62)
+- **Spotlight:** 0.16a → 0.48b → 0.48a → 0.54a → 0.47 → 0.49 / 0.50 / 0.51
+- **Chat:** 0.21 → 0.22 / 0.24 / 0.26 / 0.37 / 0.53 · 0.27 เหลือ verify
+- **Push:** 2.1 + 2.2 → 2.3a + 2.3b → 2.5a → 2.4a + 2.4b → 1.8 → 2.6 (trigger แชทอยู่ zyra-api `chat_service.go:1059` · zyra-ws ส่งแค่ wave / knock / ขอสื่อ / ยกมือ · zyra-notifications ไม่มี DB → zyra-api ส่ง token มาเอง)
+- **Store:** 1.1 → 1.2 → 1.14 / 1.6 / 1.7 / 1.17 → 1.12 → 1.13 (ต้องมี 0.55 ลบบัญชี)
 
-| # | Task | หมายเหตุ |
-|---|---|---|
-| 3.1 | วัด crash-free / FPS / session length จาก Sentry + Mixpanel แยก platform 2 สัปดาห์แรก | ตัดสินใจ Plan B จากตัวเลขนี้ |
-| 3.2 | Custom plugin screen share — ReplayKit (iOS) / MediaProjection (Android) → publish track เข้า LiveKit | งานใหญ่ ต้อง native ทั้งสอง platform |
-| 3.3 | CallKit + VoIP push สำหรับ meeting invite | iOS ต้องผ่าน PushKit review เพิ่ม |
-| 3.4 | Native PiP ของวิดีโอประชุม · Live Activities | |
-| 3.5 | ประเมิน bundle asset ลงแอป (technical-design §3.2) ถ้าต้องการ offline shell หรือลด dependency กับ server | |
+**3. ต้องตัดสินก่อนเริ่ม (จาก code map) — ✅ Ten ตอบ "ตามแนะนำ" 2026-10-05:** (1) joystick **4 ทิศ** รอบแรก · (2) 3.3 CallKit **ตัด → ย้ายไป Plan B** · (3) bottom sheet อยู่ที่ **`components/bottom-sheet.tsx`** (rule 08) · (4) เกณฑ์ผ่านของ 1.17 / 0.62 **ใช้ตามที่ร่าง** · รายการเดิม:
+- 0.3 joystick — engine ตอนนี้ **4 ทิศ** (`scene.ts:10334`) · 8 ทิศต้องแก้ prediction + reconcile (เสี่ยง desync) หรือยอม 4 ทิศ
+- 3.3 CallKit — ⚠️ ขัดกับ TD §11.1 / §13.1 / §14.1 A5 (ไม่ทำในท่า WebView) → ตัด หรือย้ายไป Plan B
+- ชื่อ / ที่วาง bottom sheet (rule 08) · เลข migration (ถัดไป 108 — 0.25b, 0.37b, 2.1 ใครก่อนได้ก่อน ห้ามจองในเอกสาร)
+- 0.31b ช่องโหว่ copy workspace ฝั่ง API ไม่ตรวจสิทธิ์ — ทำแยกได้เลยไม่ต้องรอ mobile
+
+---
+
+## A. App shell & platform
+
+zyra-app `app/`, `proxy.ts`, `lib/platform.ts` (ใหม่), `hooks/` (ใหม่), `components/` ระดับ root, `instrumentation-client.ts`, `lib/analytics/*` · [code-map A](code-map.md#mod-a)
+
+| ID | Phase | งาน | ไฟล์ที่แก้ (verified) | ไฟล์ใหม่ | ขึ้นกับ | test · Done |
+|---|---|---|---|---|---|---|
+| [0.1a](code-map.md#t-0-1) | 0 | Feature flag `NEXT_PUBLIC_MOBILE_VO` — overlay "Mobile unsupported" เฉพาะเมื่อ flag ปิด หรือ route `/admin` · `/workspace/builder` · `/dev` (ตัดสินด้วย `usePathname` ไม่ใช่ header) · build-arg → 0.1b | `components/mobile-unsupported-overlay.tsx:8-9` (→ `"use client"`) · `app/layout.tsx:171` (ไม่แก้) | `lib/mobile-vo-feature.ts` | — | `__tests__/mobile-vo-feature.test.ts` · flag เปิด → VO เข้าได้บนมือถือ / ปิด → เหมือนเดิม |
+| [0.2](code-map.md#t-0-2) | 0 | Viewport `viewport-fit=cover` + `user-scalable=no` **เฉพาะ route `/play`** + safe area ใน HUD | `app/workspace/[id]/play/page.tsx` (export `viewport`) · `hero:12180` (`h-dvh`) · `hero:13795` (safe-area) · `vo-error-state.tsx:8` · `vo-loading-skeleton.tsx:8` | — | 0.1 | ไม่มี horizontal scroll · HUD ไม่โดน notch |
+| [0.10](code-map.md#t-0-10) | 0 | Playwright mobile (iPhone 13): login → workspace → joystick → zone · Spatial 844×390 + Rotate · Lite 390×844 ไม่โหลด engine | `playwright.config.ts:32-36` (มีแต่ desktop) · `e2e/` | project mobile + spec | 0.3, 0.7, 0.13, 0.14 | ผ่านใน CI ทั้งสองโหมด · 🔍 ไม่มีใน code map รอบนี้ |
+| [0.11](code-map.md#t-0-11) | 0 | tag `platform` (web / mobile-web / app) ใน Sentry + Mixpanel + GA | `instrumentation-client.ts:16-35` · `lib/analytics/mixpanel.ts:87` · `lib/analytics/events.ts:122` / `sinks.ts:46` | — (`getPlatform()` ของ 0.41) | 0.1, 0.41 | แก้ `__tests__/mixpanel-analytics.test.ts:56`, `analytics-events.test.ts:46-61` · เห็นแยก platform |
+| [0.12](code-map.md#t-0-12) | 0 | Mode memory `zyra_workspace_mode` {mode, scope day / always, expiresAt} · orientation ย้ายไป 0.42 | — | `lib/workspace-mode.ts` | 0.1 | `__tests__/workspace-mode.test.ts` · day หมดอายุถูก · always ไม่หมด |
+| [0.13](code-map.md#t-0-13) | 0 | หน้า Rotate your phone (ux-ui-plan §3.5) ทับ Spatial → `setRenderSuspended(true)` · ทับ Lite เมื่อแนวนอน | `hero:6262-6270` (**รวม effect เดียวกับ announcement**) · `hero:6253` · `hero:12180` · `messages/{en,th}.json` | `components/mobile-rotate-screen.tsx` | 0.12, 0.42, 0.2 (Lite: 0.14) | `__tests__/mobile-rotate-screen.test.tsx` · หมุนกลางประชุมแล้ว seat / zone คงเดิม ไม่มี network event · **แก้ 2026-10-05: ไม่แสดงบน desktop pointer (§24)** |
+| [0.15](code-map.md#t-0-15) | 0 | Select workspace mode + sheet Keep This Setting (ux-ui-plan §3.4 · Figma 6392-1128974, 6407-1129791, 6392-1128982) · Lite ข้าม pre-join · เปลี่ยนใน Settings = leave + join ใหม่ | `views/user/workspace-enter/hero-workspace-enter.tsx:279,333` · `vo-setting-modal.tsx:481,719` · `stores/vo-session-store.ts:457` | `views/user/workspace-enter/components/{select-mode,keep-setting-sheet}.tsx` · **`components/bottom-sheet.tsx`** | 0.12, 0.41, 0.42 (Lite: 0.14, 0.16) | Remind me again ถามทุกครั้ง (แก้ 2026-10-08 QA HP-03 — เดิม 24 ชม.) · Always ไม่ถาม · ไม่มี API · **แก้ 2026-10-05: desktop แนวตั้ง / แคบ ข้ามหน้านี้ ได้ Lite เสมอ (§24)** |
+| [0.33](code-map.md#t-0-33) | 0 | Smart app banner "Meet Zyra on mobile" + PWA install (Android `beforeinstallprompt` ใน sheet · iOS Add to Home Screen · ux-ui-plan §21.4 ข้อ 7) | `app/manifest.ts:12-14` (`any`, `#1A1B1E`) · `public/sw.js` · `components/pwa-register.tsx` | `components/mobile-app-banner.tsx` · landing `zyra-landing/` 🔍 | 0.1, **1.9** (แก้จาก "1.3"), 🎨 install prompt | Open Zyra เปิดแอป / store ถูก platform · Later 7 วัน · Lighthouse installable |
+| [0.41](code-map.md#t-0-41) | 0 | Device class `useMobileUi()` (EC-03): app เสมอ · เว็บ coarse / touch + ด้านยาว ≤ 1366 · แทน `max-md` (TD §16.8) | `components/mobile-unsupported-overlay.tsx:9` | `lib/platform.ts` · `hooks/use-mobile-ui.ts` (`useMobileUi`, `useTabletScale`) | 0.1 | `__tests__/platform.test.ts` · iPad ได้ Select mode · laptop touch > 1366 ได้ desktop · **แก้ 2026-10-05 (ux-ui-plan §24 · TD §16.8): เพิ่ม `innerWidth < innerHeight` และ `innerWidth < 768` (คำนวณใหม่ตอน resize, debounce 300 ms) · desktop pointer + UI มือถือ = Lite เสมอ · กลับ UI desktop เมื่อแนวนอน ≥ 768 · ห้องประชุมไม่หลุดตอนสลับ** · test FE-ENV-14–17 |
+| [0.42](code-map.md#t-0-42) | 0 | `useWindowOrientation()` จาก `innerWidth < innerHeight` · ไม่คำนวณตอนคีย์บอร์ดเปิด (TD §16.4) | — | `hooks/use-window-orientation.ts` · `orientationFromWindow`, `isKeyboardLikelyOpen` ใน `lib/platform.ts` | 0.12 | `__tests__/use-window-orientation.test.tsx` · Split View ครึ่งจอ = แนวตั้ง · คีย์บอร์ดไม่เด้ง Rotate |
+| [0.43](code-map.md#t-0-43) | 0 | Tablet scale: ด้านสั้น ≥ 744 → ขอบ 24 · ปุ่มกลม + Chat 44 · sheet ≤ 600 กลางจอ (ux-ui-plan §17.2–17.3, §17.6) | `vo-hud.tsx:289,309` · `components/hud-control.tsx:26` + component ใหม่ของ 0.5 / 0.14 | — (`useTabletScale` ใน 0.41) | 0.14, 0.41, 0.5 | ตรง Figma 744×1133 / 1024×1366 / 1133×744 / 1399×1024 |
+| [0.44](code-map.md#t-0-44) | 0 | Small phone ≤ 375: layout 390 ขอบ 16 · ellipsis · modal `max-h-[90dvh]` · `scrollIntoView` ตอนคีย์บอร์ด | `vo-setting-modal.tsx:911` · `vo-pet-panel.tsx:115` · `vo-weather-panel.tsx:85` · `lib/toast.tsx:112` · `views/verify/hero-verify.tsx:64` · `app/layout.tsx:170` · `create-workspace-modal.tsx:271,385` · `join-workspace-modal.tsx:50` | `hooks/use-keyboard-scroll-into-view.ts` (ไม่บังคับ) | 0.14 | ไม่มี overflow บน 320 / 375×667 / 667×375 |
+| [0.46](code-map.md#t-0-46) | 0 | หน้าก่อนเข้า workspace บน tablet แนวนอน = คอลัมน์ ~480 กลางจอ · หน้ารายการเต็มจอ (มติ iPad ux-ui-plan §17 ข้อ 7) | `views/login/hero-login.tsx:37` · `views/signup/hero-signup.tsx:244` · `hero-user-workspace.tsx:297,301,471` · `hero-welcome-space.tsx:59,79` · `create-workspace-modal.tsx:271` · `hero-workspace-enter.tsx:347` | `components/mobile-portrait-column.tsx` | 0.31, 0.32, 0.41 (+ 0.15, 0.42) | iPad แนวนอน + Split View ใช้ได้ไม่ต้องหมุน |
+| [3.1](code-map.md#t-3-1) | 3 | วัด crash-free / FPS / session length แยก platform 2 สัปดาห์แรก → ตัดสิน Plan B | `instrumentation-client.ts:17-35` · `lib/analytics/mixpanel.ts:87` (ทับ 0.11) | (ไม่บังคับ) `@sentry/capacitor` | 0.11, 1.13 | — |
+
+## B. Engine & Spatial HUD
+
+`zyra-app/zyra-engine/pixi-game/*` (ไม่มี repo แยก) · `components/game-canvas/pixi-canvas.tsx` · `vo-*` · [code-map B](code-map.md#mod-b)
+
+| ID | Phase | งาน | ไฟล์ที่แก้ (verified) | ไฟล์ใหม่ | ขึ้นกับ | test · Done |
+|---|---|---|---|---|---|---|
+| [0.3](code-map.md#t-0-3) | 0 | Virtual joystick 128×140 ซ้ายล่าง (ux-ui-plan §3.9) → `setVirtualInput` → `client.input` (Movement V2 — ไม่มี `move_to` แล้ว) · ⚠️ engine 4 ทิศ | `scene.ts:2384,3398,8350,10334` · `zyra-engine/types.ts:323` · `pixi-canvas.tsx:132,138` · `zyra-engine/constants.ts` · `hero:5686` | `vo-joystick.tsx` | 0.1, 0.41 | `__tests__/pixi-game-scene.test.ts` (`:1682`) · เดินได้บน Safari iOS + Chrome Android (8 ทิศ ⚠️ รอตัดสิน) |
+| [0.4](code-map.md#t-0-4) | 0 | Tap-to-walk แยกจาก pan / pinch (ระยะ 4px มีแล้ว เพิ่มเวลา ≤ 200ms + pointerId) | `scene.ts:2506,2619,2732,2845,2867-2904` · `zyra-engine/constants.ts:30,40,132` | — | 0.3 | `pixi-game-scene.test.ts:442,645,1873` · แตะ = เดิน · ลาก = pan · 2 นิ้ว = zoom |
+| [0.5](code-map.md#t-0-5) | 0 | HUD ชุด 1 — bottom toolbar, sidebar, status, minimap + ปุ่มกลม 5 ปุ่ม / Chat (ux-ui-plan §3.9) · ดึง spec ผ่าน Figma MCP ก่อน | `vo-hud.tsx:120` · `vo-sidebar.tsx:52` · `vo-minimap.tsx:537` · `vo-hud-tooltip.tsx:40` · `vo-profile-panel.tsx:137` (สถานะจริง — `vo-status-picker` ไม่ถูก mount) · `hero:13795-14376` | `vo-mobile-hud.tsx` | 🎨 Figma mobile, 0.2, 0.41 | ตรง Figma ≥ 95% |
+| [0.6](code-map.md#t-0-6) | 0 | HUD ชุด 2 — member / chat / notification เป็น bottom sheet · คีย์บอร์ดไม่บัง input | `vo-member-panel.tsx:423` (`hero:13871`) · `vo-notification-panel.tsx:112` (`hero:13959`) · `views/chat/chat-surface.tsx` (`hero:14045`) | `hooks/use-visual-viewport.ts` | 0.5, 0.15 | เปิด / ปิดได้ · keyboard ไม่บัง |
+| [0.7](code-map.md#t-0-7) | 0 | HUD ชุด 3 — meeting bar, zone enter, wave / knock toast, follow bar | `zone-enter-header.tsx:270` · `zone-enter-panel.tsx:45` · `zone-locked-overlay.tsx:31` · `vo-wave-notification.tsx:31` · `vo-knock-notification.tsx:41` · `vo-follow-bar.tsx:13,44,74` | — | 0.5, 0.6 | เข้า zone + ประชุมได้ครบบนมือถือ |
+| [0.9](code-map.md#t-0-9) | 0 | Performance profile + tuning (resolution, filters, nature / pet, culling) · บันทึก FPS / memory ก่อน-หลัง · ladder → 0.38 | `scene.ts:289,1598-1606` (`resolution` `:1603`) · `pixi-game/constants.ts:144` · `vo-stats-overlay.tsx` · `pixi-canvas.tsx:365-372` (init race) | — | 0.3 | FPS ≥ 30 / mem < 400 MB บน iPhone 12 + Pixel 6a แมพ 20 คน (progress.md) |
+| [0.16c](code-map.md#t-0-16c) | 0 | วาด ghost บนแมพ: replay spawn → ห้องเมื่อได้ `ghost_join_zone` · นับคนในห้องตาม zone id | `hero:890,3958,10223` | — | 0.16a | test ร่วม 0.16 |
+| [0.38](code-map.md#t-0-38) | 0 | Performance ladder L0–L4 (EP-01 · ux-ui-plan §15) เฉพาะ Spatial มือถือ · คืนอัตโนมัติ · toast ปิดเอง 10 วิ · L3 = ลดอัตรา walk-frame (ไม่ใช่ `animationSpeed`) | `lib/nature-performance.ts` · `use-nature-performance.ts` · `scene.ts:4022,5055,5082,5116` · `hero:1436` (ToD) · `vo-minimap.tsx:76` | `vo-simple-map.tsx` | 0.9, 0.36, 0.41 | `__tests__/nature-performance.test.ts`, `use-nature-performance.test.tsx` · วัด FPS ก่อน / หลัง · simple mode เดิน / เข้าห้องได้ · desktop ไม่เปลี่ยน |
+| [0.39](code-map.md#t-0-39) ✂️ | 0 | ~~เมนู Performance ใน Profile → Setting~~ ตัดออก 2026-10-02 (ux-ui-plan §19.8) | — | — | — | — |
+| [0.49](code-map.md#t-0-49) | 0 | Megaphone → `walkToTile` marker แรกของ floor + เปิดหน้า Spotlight (ux-ui-plan §18.9) | `hero:7148,7150,7209,7779-7806,7885` · `scene.ts:9756` · `vo-hud.tsx:466` | ปุ่ม megaphone (ชุด 0.5) | 0.47, 0.48, 0.5 | เริ่มจาก megaphone ได้ไม่ต้องเดินเอง |
+
+## C. Lite Mode shell
+
+`lite/*` (ใหม่ทั้งโฟลเดอร์) · `app/workspace/[id]/play/page.tsx` · `/loading` · `stores/vo-session-store.ts` · [code-map C](code-map.md#mod-c)
+
+| ID | Phase | งาน | ไฟล์ที่แก้ (verified) | ไฟล์ใหม่ | ขึ้นกับ | test · Done |
+|---|---|---|---|---|---|---|
+| [0.14](code-map.md#t-0-14) | 0 | Lite Home + shell (ux-ui-plan §3.8, §10.3 · Figma 5800-425090) · **แยกที่ route — Lite ห้าม import hero** · `/loading` ข้าม warm pixi · bottom nav 3 แท็บ (Calendar ซ่อน) · Spatial ปุ่มขวาบน 4 ปุ่ม | `app/workspace/[id]/play/page.tsx:1-5` · `hero-workspace-loading.tsx:179-180,386-440,533-555` · `stores/vo-session-store.ts:50,104,122,129` | `lite/*` (`lite-shell`, `lite-home`, `lite-bottom-nav`, `lite-meeting-card`, `lite-circle-list`) | 0.12, 0.41, 0.16 | ตรง Figma ≥ 95% · network ไม่โหลด PixiJS chunk / map / spritesheet · memory เทียบ Spatial |
+| [0.16b](code-map.md#t-0-16b) | 0 | zyra-app ส่ง `client_mode=lite` + เก็บ `clientMode` | `workspace-ws.ts:180-201,248-275` · `vo-session-store.ts:50,417-429` · `hero-workspace-loading.tsx:493-512` · `workspace-ws-types.ts:19` | — | 0.16a, 0.12 | test ร่วม 0.16 |
+| [0.28](code-map.md#t-0-28) | 0 | Workspace lists เต็มจอ (ux-ui-plan §10.2 · Figma 6379-34971) · การ์ด 80 · 15/50 เฉพาะ Owner/Admin · filter เวลา · join link · แนวนอน modal | `views/user/workspace/hero-user-workspace.tsx:200-217,252-259,470-488` · `workspace-constants.ts:11-17` · `components/workspace-card.tsx:296-307` · `components/join-workspace-modal.tsx:13` | `lite/workspace-lists.tsx` | 0.14, 0.12 (zyra-api ถ้ากรองเวลาฝั่ง server 🔍) | Member ไม่เห็น 15/50 · join link จากมือถือได้ |
+| [0.29](code-map.md#t-0-29) | 0 | Notification แนวตั้งเต็มจอ / แนวนอน drawer (Figma 6104-81581 · ux-ui-plan §19) | `vo-notification-panel.tsx:112,128,152-158,234` · `lib/api/chat.ts:589-608` | `lite/notification-page.tsx` | 0.14, 🎨 แนวนอน | Mark as read ล้าง badge กระดิ่ง + แท็บ |
+| [0.59a](code-map.md#t-0-59a) | 0 | Lite: sheet แตะสมาชิก (Message / Wave / Join) + Join Circle (ux-ui-plan §22.2) | `workspace-ws.ts:762,820,843` | `lite/member-profile-sheet.tsx` · `lite/join-circle-sheet.tsx` | 0.59b, 0.19, frame Pai | FE-LITE-13, FE-LITE-16 |
+
+## D. Meeting / LiveKit / Spotlight UI
+
+`zone-enter-*`, `use-meeting-media.ts`, `lib/api/sfu-client.ts`, `vo-spotlight-*`, `use-spotlight-broadcast.ts` · [code-map D](code-map.md#mod-d)
+
+| ID | Phase | งาน | ไฟล์ที่แก้ (verified) | ไฟล์ใหม่ | ขึ้นกับ | test · Done |
+|---|---|---|---|---|---|---|
+| [0.8](code-map.md#t-0-8) | 0 | ซ่อน screen share / Document PiP เมื่อไม่มี API · noise off บนมือถือ (blur off อยู่แล้ว) · สลับกล้องหน้า / หลัง | `zone-enter-header.tsx:417-441` · `vo-hud.tsx:70-77` · `lib/media-preference.ts:109` · `lib/api/video-background.ts:112` · `sfu-client.ts:1099,1195` · `use-meeting-media.ts:517` | `lib/media-capabilities.ts` | 0.7, 0.1, 0.41 | mic / cam ทำงานบน iOS Safari หลัง user gesture |
+| [0.17](code-map.md#t-0-17) | 0 | Meeting layout (ux-ui-plan §8.2 · Figma 6254-606885, 6346-547052, 6547-578842): header 5 ปุ่ม · tiles 1–6+ · Menu 7 ปุ่ม · emoji / hand · 1-tap ซ่อน · double-tap ขยาย · low battery | `zone-enter-header.tsx:99,140-151,270` · `zone-enter-panel.tsx:197,208,389` · `zone-enter-tiles.tsx:243,251,435,476,520` · `zone-enter-types.ts:29-33` | `zone-enter-mobile-*.tsx` · low battery (`@capacitor/device`) | 0.7, 0.8 | ตรง Figma ≥ 95% · 7+ คนเลื่อนหน้าได้ |
+| [0.18](code-map.md#t-0-18) | 0 | PIP ในแอป 168×158 (Lite ตายตัว ลากไม่ได้ / แมพขวาล่างเหนือ minimap) · Figma 6350-571263 | `zone-enter-panel.tsx:45` (`onMinimize`) · `zone-enter-tiles.tsx:17` · `hero:7394` (ห้ามล้าง `meetingZoneId`) | `vo-meeting-pip.tsx` (Spatial ใช้ด้วย — เดิมเสนอ `lite/meeting-pip.tsx`) | 0.14, 0.17 | ย่อแล้วเสียงยังต่อ · สลับคนพูด ≤ 1 วิ |
+| [0.19](code-map.md#t-0-19) | 0 | Join meeting sheet (Lite) / modal (Spatial แตะห้อง — hit-test อยู่ hero) + Request = knock เดิม · All rooms busy | `hero:11223,11357,11418-11438,11461` · `hero:5027` (Accept = REST grant + knock) · `workspace-ws.ts:793,798,803` · `zone-locked-overlay.tsx:31` | `lite/join-meeting-sheet.tsx` · Join modal Spatial | 0.16, 0.4, 0.52 | Accept แล้วผู้ขอเข้าได้ · Deny แจ้งผู้ขอ |
+| [0.20](code-map.md#t-0-20) | 0 | Setting ห้อง sheet: Voice output / Camera filter / Invite (ไม่มี Room name) | `vo-media-device-menu.tsx:66,104-138,203` · `zone-enter-header.tsx:321` · `sfu-client.ts:1083-1102` · `hero:12590` | meeting settings sheet | 0.17, 0.52, 🎨 | ตรง Figma เมื่อได้ · Voice output บน iOS 🔍 |
+| [0.35](code-map.md#t-0-35) | 0 | Camera / Mic permission (ux-ui-plan §13.6): ขอตอนกดปุ่ม · pre-permission · denied → alert Settings · guide Safari / Chrome มือถือ | `use-entry-media-permission.ts:56,192,208` · `lib/media-permissions.ts:28,39,67` · `use-meeting-media.ts:356,371` · `vo-permission-guide-modal.tsx:23` · `vo-permission-snackbar.tsx:58` | pre-permission sheet · guide sheet มือถือ | 0.17, 1.1, 🎨 | Don't Allow → กดซ้ำ → alert Settings · ไม่ crash ทุก state |
+| [0.36](code-map.md#t-0-36) | 0 | Connection states (ux-ui-plan §14): Poor (ConnectionQuality) / Lost / Reconnecting · spinner ป้ายชื่อ · retry 5 → ตัด meeting → skeleton ≤ 30 วิ → Workspace list | `sfu-client.ts:148,475-495` · `use-meeting-media.ts:1304` · `zone-enter-tiles.tsx:296,373,556,624` · `vo-connection-toast.tsx` · `hero:1328,3265-3349,12423-12464` · `workspace-ws.ts:82-83,403,408` | หน้าหลัก skeleton | 0.14, 0.17, **0.62** | ปิด wifi → ลำดับ toast ตรง Figma · ≤ 30 วิ กลับมาไม่ต้อง login |
+| [0.40](code-map.md#t-0-40) | 0 | Bandwidth / audio-only (EP-02 · มือถือ + desktop): วัด uplink · cap layer simulcast · ปิดกล้องอัตโนมัติ + toast | `sfu-client.ts:405-462,639` · `use-meeting-media.ts` | `lib/api/uplink-monitor.ts` | 0.36 | `__tests__/sfu-uplink-ladder.test.ts` · throttle → toast ตรงลำดับ · วัด bitrate (rule 18) |
+| [0.45](code-map.md#t-0-45) | 0 | Meeting grid 3×3 บน tablet (6–9 tile) | `zone-enter-panel.tsx:197,389` | — | 0.7, 0.43, 🎨 | 🎨 รอ Figma |
+| [0.47](code-map.md#t-0-47) | 0 | Spotlight presenter (ux-ui-plan §18.9 v2): megaphone → sheet ยืนยัน → นับถอยหลัง → live · ไม่มี Play / Stop · Leave → "Leave Spotlight?" → "Broadcast ended" · Spotlight is full · header Live + ชิป | `use-spotlight-broadcast.ts:63,274-308,340` · `hero:7151-7298,7518,7771` · `vo-spotlight-stage.tsx:286,740` · `lib/spotlight-feature.ts:23` | `lite/spotlight-*.tsx` + overlay Spatial | 0.14, 0.18, 0.48, 0.54 | เริ่ม / หยุดได้ทั้ง 2 แนว |
+| [0.48c](code-map.md#t-0-48c) | 0 | zyra-app: ทาง Lite ให้ `arrived` / `onSpotlightTile` = true | `use-spotlight-broadcast.ts:282-320` · `workspace-ws.ts:971` | — | 0.48a | test ร่วม 0.48 |
+| [0.50](code-map.md#t-0-50) | 0 | Spotlight คนดู (v2): toast ✓ / × 10 วิ · ใน meeting ✓ = ทั้งห้อง + Undo · menu Chat / Speaker / Leave · sheet On stage / Viewers · PIP รวม | `hero:7677,7832,13262-13331` · `vo-spotlight-notification.tsx:68` · `workspace-ws.ts:984,996` · `zone-participants-submenu.tsx:136` | viewer page · PIP รวม | 0.47 | พฤติกรรมตรง web |
+| [0.51](code-map.md#t-0-51) | 0 | แชท Spotlight เต็มจอ + แท็บ Spotlight / Meeting — **แชท meeting ผ่าน WS ไม่ใช่ `views/chat`** | `vo-spotlight-stage.tsx:1074,1157` · `zone-enter-chat.tsx:526` · `hero:8666-8697,11045` · `workspace-ws.ts:1031,1041` | wrapper เต็มจอ | 0.17, 0.21 (หน้าตา) | ส่ง / อ่านได้ทั้ง 2 แท็บ |
+| [0.52](code-map.md#t-0-52) | 0 | Participants sheet + Invite sheet (Chat / Link / Email) + toast คำขอเข้าห้อง (ux-ui-plan §8.8) · ปุ่ม header **`MemberIcon`** → `Users` · Mute all / Kick ซ่อนจาก non-host ที่ UI | `zone-enter-header.tsx:140-151,196` · `zone-participants-submenu.tsx:31,136` · `invite-member-modal.tsx:95-449` · `customize-invite-link-panel.tsx:87` · `vo-knock-notification.tsx:5,42` · `lib/api/workspace-members.ts:87,130,141,161` · `hero:5027,10869,10905` | participants sheet · invite sheet · toast รวม | 0.17, 0.19, frame Pai | FE-MEET-12, 14, 19–25 · BE-WS-05, 14 |
+| [0.54b](code-map.md#t-0-54b) | 0 | zyra-app: error key + sheet "Spotlight is full" | `use-spotlight-broadcast.ts:291-300` · `messages/{en,th}.json` | — | 0.54a | FE-SPOT-18 |
+
+## E. Chat
+
+`views/chat/**`, `lib/api/chat.ts`, `lib/api/chat-ws.ts`, `stores/chat-store.ts` · backend แชทอยู่ zyra-api (zyra-ws relay อย่างเดียว) · [code-map E](code-map.md#mod-e)
+
+| ID | Phase | งาน | ไฟล์ที่แก้ (verified) | ไฟล์ใหม่ | ขึ้นกับ | test · Done |
+|---|---|---|---|---|---|---|
+| [0.21](code-map.md#t-0-21) | 0 | Chat layout (ux-ui-plan §9.2 · Figma 5944-134033, 5944-284186, 6580-167869): แนวตั้ง stack + แท็บ All / Channel / Group / DM + chip @You · แนวนอน 249/515 ทับแมพ · คีย์บอร์ด · spinner · emoji sheet | `views/chat/chat-surface.tsx:294,338-353` · `chat-sidebar.tsx:171,341-343,362` · `message-list.tsx:78,381` · `message-input.tsx:457,575` · `emoji-picker.tsx:17,113` · `hero:14043-14068` (overlay จริง — ไม่ใช่ `vo-chat-space-overlay`) | `use-chat-layout.ts` | 0.5, 0.14 | พิมพ์แล้วเห็นข้อความล่าสุดทั้ง 2 orientation |
+| [0.22a](code-map.md#t-0-22) | 0 | Long-press 500 ms → overlay + emoji 7 + submenu · Forward + Select (mobile + desktop) | `message-item.tsx:139,250,398-412` · `message-context-menu.tsx:65-66` · `chat-store.ts` · `message-list.tsx` | `forward-message-panel.tsx` · `lib/api/chat.ts` `forwardMessage()` | 0.21, 0.22b, 🎨 Forward / Select | ค้าง 500 ms ไม่ trigger scroll · Forward / Select ใช้ได้ |
+| [0.23](code-map.md#t-0-23) | 0 | Preview image: pinch / แตะซ่อน / swipe / download → Photos / ⋮ (Figma 6352-633794 / 633882 / 633890) | `file-preview.tsx:122,153-156,299,406,456` · `lib/download-blob.ts` · `chat-utils.ts:40-62` | `lib/native/save-photo.ts` | 0.21, 1.1 | รูปอยู่ใน Photos ทั้ง iOS / Android |
+| [0.24](code-map.md#t-0-24) | 0 | Mention: จัดอันดับคุยบ่อย (OQ 18) · @Everyone ล่างสุด · แตะเลือก · chip @You (Figma 6361-638009, 6604-180983) | `message-input.tsx:84-118,435-456` · `message-input-utils.ts` · `chat-sidebar.tsx:78-169` · `chat-store.ts` (สร้าง mention flag) | (ไม่บังคับ) `mention-ranking.ts` | 0.21 | ถูก mention แล้วแถวมี chip |
+| [0.25a](code-map.md#t-0-25) | 0 | Voice message: ปุ่มไมค์ `MediaRecorder` → upload R2 → bubble + player ทุก platform | `message-input.tsx:597,606` · `message-attachment-block.tsx` · `lib/api/chat.ts:530` | `voice-recorder.tsx` · `audio-message-player.tsx` | 0.21, 0.25b, 🎨, rule 11 | อีกเครื่องเล่นได้ ≤ 3 วิ · ไม่แตะ disk · ยกเลิกระหว่างอัดได้ |
+| [0.26](code-map.md#t-0-26) | 0 | FAB 3 ข้อ (Figma 5944-134262) · Start new chat แสดง status · New group (ux-ui-plan §19) · thread / info / media full-screen (Figma 5944-274509) | `chat-sidebar.tsx:377-422,559-571` · `start-new-chat-panel.tsx:49-56` · `create-group-modal.tsx:45-47,332,463-472` · `thread-panel.tsx:77` · `conversation-{info,media}-panel.tsx` · `chat-surface.tsx:280-289` | `chat-create-fab.tsx` | 0.21, 0.22, 🎨 | สร้าง channel จากมือถือ · เปิด thread จาก long-press |
+| [0.27](code-map.md#t-0-27) ✅ | 0 | DM read receipt ✓ / ✓✓ — **มีครบแล้วทั้ง 3 repo** เหลือ verify บนมือถือ | `message-item.tsx:202-232` · `chat-store.ts:311-337` · `zyra-api chat_service.go:1469-1533,1781` · `zyra-ws internal/hub/chat.go:239` | — | 0.21 | อีกฝั่งเปิดห้อง → ✓✓ ≤ 2 วิ · group ใช้ reader count เดิม |
+| [0.37a](code-map.md#t-0-37) | 0 | Auto-resend 5 ครั้ง (1/2/4/8/16 วิ) · bubble failed · sheet "Message not sent" · ไม่มี offline queue | `chat-store.ts:22-24,276` · `message-input.tsx:337-430` · `message-item.tsx:517-531` · `dm-panel.tsx:71-96` · `channel-panel.tsx:92` | `message-send-queue.ts` · `message-not-sent-sheet.tsx` | 0.21, 0.36, 0.37b | ปิดเน็ต → retry 5 → failed · เปิดเน็ต → ส่งสำเร็จไม่ซ้ำ |
+| [0.53](code-map.md#t-0-53) | 0 | Chat info แบบแท็บ Telegram (ux-ui-plan §9.8): Members / Media / Files / Links / Threads / Pinned · action sheet สมาชิก · ไม่มีงาน backend | `conversation-info-panel.tsx:41-55` · `conversation-media-panel.tsx:23,75-78` · `conversation-menu.tsx:109-138` · `use-chat-search.ts:12,53` · `lib/api/chat.ts:289-401` | `conversation-info-page.tsx` | 0.21, frame Pai | FE-CHAT-14–17 |
+
+## F. Account / onboarding / profile / settings
+
+`views/login`, `views/user/workspace`, `views/user/space-builder`, `views/profile`, `views/maintenance`, `vo-profile-panel.tsx`, `vo-setting-modal.tsx`, `components/auth-guard.tsx`, `lib/auth/session.ts` · [code-map F](code-map.md#mod-f)
+
+| ID | Phase | งาน | ไฟล์ที่แก้ (verified) | ไฟล์ใหม่ | ขึ้นกับ | test · Done |
+|---|---|---|---|---|---|---|
+| [0.30](code-map.md#t-0-30) | 0 | Profile tab + Setting (Figma 6668-244816): status 4 แบบ + DND · Account and Security / Language / Audio / Camera / Notification · Manage member / Environment เฉพาะ Owner/Admin · ตัด general / integrations | `vo-profile-panel.tsx:9,11-15,120-134,246` · `vo-setting-modal.tsx:554,719-737,832,911` · `views/profile/components/profile-sidebar.tsx:18-20` | `lite/profile-tab.tsx` + หน้า Language / Audio / Camera | 0.14, 0.12, 0.15 | Member ไม่เห็น Manage / Environment · เปลี่ยนภาษา / ไมค์ / กล้องมีผลทันที |
+| [0.31a](code-map.md#t-0-31) | 0 | Space builder มือถือ (ux-ui-plan §11.2 · Figma 6411-1141322, 5833-1005970, 5840-1014307) · ⋮ ไม่มี editor / Delete · Member Copy · หน้า desktop-only → มาหน้านี้ + toast | `hero-user-workspace.tsx:78-89,200-217,301,478-483` · `components/workspace-card.tsx:47,104-200` · `components/ui/skeleton.tsx` · `proxy.ts` | `workspace-filter-sheet.tsx` | 0.28, 0.31b | Member เห็น Enter / Copy / Leave และ copy สำเร็จ |
+| [0.32](code-map.md#t-0-32) | 0 | Create workspace 3 step (Figma 5878-409509 → 5878-414845) · Capacity slider 0–1,000 · Enter → Select mode | `views/user/space-builder/components/create-workspace-modal.tsx:29,48-60,93,165-176,219,232,271` · `hero-welcome-space.tsx` | `lite/create-workspace/*` 🔍 | 0.31, 0.15 | สร้างจากมือถือแล้วเข้าได้ทั้ง 2 โหมด |
+| [0.34](code-map.md#t-0-34) | 0 | Notification settings มือถือ (ux-ui-plan §12.2 / §19 · Figma 6436-67120, 6610-256229) · **แถวครบแล้ว + สวิตช์เดียวแล้ว — งานหลักคือซ่อนกลุ่ม Calendar** + layout + state ขอ Allow | `vo-setting-modal.tsx:266-432` (Calendar `:343`) · `stores/notification-settings-store.ts` · `lib/api/profile.ts:373-430` | `lite/notification-settings.tsx` | 0.30, 2.5, 🎨 state Allow | ปฏิเสธ → Settings เครื่อง → กลับมา banner หาย |
+| [0.55b](code-map.md#t-0-55b) | 0 | หน้า Delete account (พิมพ์อีเมลยืนยัน) ใน Account and Security · หลังลบ → Get started | `lib/api/profile.ts` · `views/profile/*` | `views/profile/hero-delete-account.tsx` (+ `app/setting/delete-account/page.tsx`) | 0.55a, frame Pai | FE-LITE-14, 15 |
+| [0.56](code-map.md#t-0-56) | 0 | Session หลุด (ux-ui-plan §21.1): 3 แบบเดิมแต่ไป Get started · ออก meeting / Spotlight ก่อน · ลบ push token | `lib/api/client.ts:12-33` · `lib/auth/session.ts:217,258,343-360` · `components/auth-guard.tsx:24-36,75-87,116-125,155-158` · `views/login/hero-session-ended.tsx` | layout มือถือ signed-out · route Get started (ยังไม่มี) | 1.1, 1.8, frame Pai | FE-CONN-12 |
+| [0.58](code-map.md#t-0-58) | 0 | Maintenance มือถือ (ux-ui-plan §21.3): Try again แทน Back to Homepage · ไม่ซ้อน offline / reconnecting | `views/maintenance/hero-maintenance.tsx` · `proxy.ts:16,95,233-237` · `lib/api/maintenance.ts` | — | 0.36 | FE-CONN-13 |
+| [0.60](code-map.md#t-0-60) | 0 | Deep link 4 กรณี + error ตอน login (ux-ui-plan §22.2–22.3) · **`/join` ใส่ `PUBLIC_PATHS`** | `proxy.ts:5-15` · `views/login/components/card-login.tsx:112-131,173-201` · `views/user/accept-invite/hero-accept-invite.tsx:68,143,179,192` · `views/verify/hero-verify.tsx:536-537` | `hero-link-unavailable.tsx` | 1.1, 1.9, frame Pai | FE-EDGE-04, FE-ONB-16 |
+| [0.61](code-map.md#t-0-61) | 0 | หน้าแก้โปรไฟล์ (รูป S3 / ชื่อ / custom status) + เลือกตัวละคร (ux-ui-plan §22.3) | `views/profile/hero-profile.tsx:92,236` · `lib/api/profile.ts:96,123,158` · `lib/avatar-selection.ts` · `lib/api/avatars.ts:108,133` · `change-character-modal.tsx` | `lite/edit-profile.tsx` · `lite/character-picker.tsx` | frame Pai | FE-LITE-17 |
+| [2.5b](code-map.md#t-2-5b) | 2 | UI สวิตช์ push ต่อประเภท | `lib/api/profile.ts:373-435` · `stores/notification-settings-store.ts:39-62` · `vo-setting-modal.tsx` (`NOTIFICATION_SECTIONS`) | — | 2.5a, 0.34 | ปิดสวิตช์แล้วไม่ได้ push |
+
+## G. zyra-ws
+
+`zyra-ws/internal/hub/*`, `internal/handler/handler.go`, `internal/store/redis.go` · [code-map G](code-map.md#mod-g)
+
+| ID | Phase | งาน | ไฟล์ที่แก้ (verified) | ไฟล์ใหม่ | ขึ้นกับ | test · Done |
+|---|---|---|---|---|---|---|
+| [0.16a](code-map.md#t-0-16) | 0 | Ghost client `client_mode: "lite"` (TD §16.2 ทาง ก): ไม่มีตำแหน่ง / seat · ปฏิเสธ move · เข้า meeting ด้วย id (ข้าม tile check `audio.go:144`) · `ghost_join_zone` + `ghost_zone_id` ใน Player · ไม่เข้า circle maintenance · ห้องล็อกใช้ knock เดิม | `internal/handler/handler.go:130-194` · `hub.go:186-309` · `client.go:27-327` · `message.go:200-226` · `room.go:268,506,632-759,2319` · `audio.go:123-213,659` · `movement_v2.go:122,304` · `chatspace.go:272-304,509-571` | `internal/hub/lite_client.go` + `_test.go` | — | `lite_client_test.go` ≥ 80% · Lite เข้า meeting → desktop เห็น tile · ไม่มี avatar บนแมพ |
+| [0.48a](code-map.md#t-0-48) | 0 | Lite เริ่ม Spotlight ไม่ตรวจตำแหน่ง · floor แรก + marker แรก · ghost เดินไป marker | `internal/hub/spotlight.go:89-177` (`:99-102`, `:109-123`) · `message.go:1289-1297,1391-1393` · `store/redis.go:714-731` · `room.go:2776` | — | 0.16a, **0.48b** | `spotlight_test.go:250` เพิ่ม case · Spatial ยังถูกตรวจตำแหน่ง |
+| [0.54a](code-map.md#t-0-54) | 0 | Spotlight เต็ม: ผูก speaker กับ marker · Lite เลือกจุดว่างแรก · เต็ม → error "spotlight is full" | `spotlight.go:131-141` · `message.go:1289-1297` · `store/redis.go:781-795` | — (helper `ZoneIDAt`) | 0.48a | BE-WS-15 |
+| [0.59b](code-map.md#t-0-59) | 0 | Ghost เข้า Circle ด้วย id · ยกเว้น ghost จาก maintenance (ไม่งั้นหลุดใน 0.1–1 วิ) | `chatspace.go:163-175,387-489,585-612,739-777` · `room.go:1968-2036,3144-3246` | handler join-circle (`room.go` / `lite_client.go`) | 0.16a | BE-WS-13 |
+| [0.62](code-map.md#t-0-62) 🆕 | 0 | **Presence grace สำหรับ mobile** — ค้าง seat + `MediaRoomID` + presence ≥ ~31 วิ (เสนอ 90) → `away` · reconnect คืน sitting (TD §12.3 ข้อ 1–2) · เพิ่ม 2026-10-05 จาก code map | `room.go:141,181,435,506` · `hub.go:230-244` · `store/redis.go` (TTL) · `client.go:144` | `internal/hub/presence_grace.go` + `_test.go` | — | (ข้อเสนอ) กด Home 60 วิ กลับมายังนั่งที่เดิม / อยู่ในห้องเดิม |
+| [2.4b](code-map.md#t-2-4b) | 2 | push ของ wave / knock / ขอไมค์-กล้อง / ยกมือ → zyra-api `POST /api/internal/push` เมื่อ target `Hidden` / grace · ไม่เพิ่ม secret ของ notifications | `room.go:1968,2504` · `audio.go:285,523` · `hub.go:151-182` · `client.go:144` · `zoneclaims.go:185` | `internal/hub/push.go` + `_test.go` | 2.4a, 0.62 | ต่อยอด `notification_push_test.go` |
+
+## H. zyra-api
+
+`zyra-api/internal/{handler,service,model,router,notify,config,cache}` · `migrations/` ถัดไป = **108** (ห้ามจองเลข) · [code-map H](code-map.md#mod-h)
+
+| ID | Phase | งาน | ไฟล์ที่แก้ (verified) | ไฟล์ใหม่ | ขึ้นกับ | test · Done |
+|---|---|---|---|---|---|---|
+| [0.22b](code-map.md#t-0-22) | 0 | Forward endpoint `POST /api/user/chat/messages/:id/forward` (attachment ผูก conversation เดิม) | `internal/router/router.go:317-364` · `internal/service/attachment_service.go:174-177` | `ChatHandler.ForwardMessage` · `ChatService.ForwardMessage` | — | table-driven test |
+| [0.25b](code-map.md#t-0-25) | 0 | Audio message: MIME `audio/*` + content type `audio` + CHECK constraint (zyra-ws ไม่ต้องแก้) | `attachment_service.go:49-61,276` · `chat_service.go:999-1009` · `model/chat.go:123-132` · `migrations/92_message_pet_card.sql:12-13` | migration `NNN_message_audio.sql` + `.down.sql` | — | test service |
+| [0.31b](code-map.md#t-0-31) | 0 | **ตรวจสิทธิ์ copy workspace** (ตอนนี้ไม่ตรวจ membership / role เลย) | `internal/handler/workspace_handler.go:669-695` · `internal/service/workspace_service.go:2217-2238` | — | — | test service 🔍 |
+| [0.37b](code-map.md#t-0-37) | 0 | `client_msg_id` idempotency + rate limit ไม่ตัด retry | `model/chat.go:123-132` · `chat_service.go:995` | migration `NNN_message_client_id.sql` (unique `(sender_id, client_msg_id)`) | — | ส่งซ้ำไม่เกิดข้อความซ้ำ |
+| [0.48b](code-map.md#t-0-48b) | 0 | Zone cache ส่ง `map_id` + ลำดับ marker ให้ zyra-ws | `internal/cache/zones.go:21-25` · `internal/service/map_zone_service.go:105-140` | — | — | test service |
+| [0.55a](code-map.md#t-0-55) | 0 | ลบบัญชีตัวเอง (Apple 5.1.1(v) · ux-ui-plan §20 / §20.6) · **แยก helper จาก `DeleteAccount` (ติด self-guard)** · `DELETE /api/user/me` + `GET /me/deletion-preview` · เก็บกวาด member rows / chat admin / workspace / device token / Spotlight · DM ปฏิเสธส่งหาบัญชีที่ลบ · ลิงก์เว็บสำหรับ Google Play | `internal/service/user_admin_service.go:1046-1104` · `handler/user_admin_lifecycle_handler.go:166-193` · `router.go:126,535,573` · `security_session_service.go:88` · `chat_service.go` | `internal/handler/user_self_delete_handler.go` + test | 2.1, 1.5, frame Pai | BE-AUTH-07–11 · ลบแล้ว login ไม่ได้ · workspace โอนถูกคน · ออกทุกเครื่อง |
+| [0.57a](code-map.md#t-0-57) | 0 | `GET /api/app/config` (public · env: min / latest version + store url ต่อ platform) | `router.go:78` (แบบ) · `internal/config/config.go:139,214` | `app_config_handler.go` · `app_config_service.go` + test | — | BE-API-06 |
+| [1.4b](code-map.md#t-1-4) | 1 | `GOOGLE_CLIENT_ID` หลายค่า (aud iOS / Android / web) · ⚠️ เช็ค `serverClientId` จาก token จริงก่อน | `internal/service/auth_service.go:246-260` (ไม่ใช่ `authen_service.go`) · `internal/config/config.go:26,164` | — | 1.5c | `auth_service_test.go` เคสหลาย aud |
+| [1.5b](code-map.md#t-1-5) | 1 | `POST /api/authen/login_apple` (verify JWKS · id = `sub` · ไม่เขียนชื่อว่างทับ) | `router.go:83-96` · `handler/auth_handler.go:196-243` · `auth_service.go:811` · `config.go` | `internal/service/apple_auth.go` + `_test.go` | 1.4 | test ≥ 80% |
+| [2.1](code-map.md#t-2-1) | 2 | Migration `tb_user_device` (`user_id VARCHAR`) + `POST/DELETE /api/user/devices` (UserGuard · token ใน body หรือ escape) + method ภายในให้ 2.3 / 2.4 | `router.go:127` · `main.go:381` · `internal/database/postgres.go:13-16` · `model/auth.go:330-338` | migration `NNN_user_device.sql` + `.down.sql` · `model/device.go` · `service/device_service.go` · `handler/device_handler.go` (+ test) | — | test ≥ 80% · migration รันบน dev |
+| [2.3b](code-map.md#t-2-3) | 2 | client `notify.SendPush` → `POST /v1/push` (แบบ `/v1/email`) | `internal/notify/client.go:70-150` | — | 2.3a | test client |
+| [2.4a](code-map.md#t-2-4) | 2 | Trigger push แชท (DM / mention / group) + spotlight **ที่ zyra-api** (ไม่ใช่ zyra-ws) · route `internal.POST("/push")` ให้ zyra-ws · ประเภทรอบแรกตามมติ Ten 2026-10-01 | `chat_service.go:956,1056-1062` · `notification_service.go:87-158,255,625-664,1010` · `presence_service.go:122` · `router.go:383` | `service/push_service.go` + test · `handler/push_internal_handler.go` | 2.1, 2.3, 2.5a | DM ถึง user offline → push ≤ 5 วิ |
+| [2.5a](code-map.md#t-2-5) | 2 | field `push_*` ใน `NotificationSettings` (JSONB ไม่ต้อง migration) · server กรองก่อนส่ง | `internal/model/auth.go:215-241` · `profile_service.go:529-560` | — | — | test default |
+| [2.6b](code-map.md#t-2-6) | 2 | Payload `data.route` / `badge` / `thread-id` + unread รวมข้าม workspace | `notification_service.go:965` · `chat_service.go:1804` | — | 2.4a | — |
+
+## I. zyra-notifications
+
+`zyra-notifications/main.go`, `internal/*` — ไม่มี DB ไม่มี Redis · [code-map I](code-map.md#mod-i)
+
+| ID | Phase | งาน | ไฟล์ที่แก้ (verified) | ไฟล์ใหม่ | ขึ้นกับ | test · Done |
+|---|---|---|---|---|---|---|
+| [2.3a](code-map.md#t-2-3) | 2 | FCM HTTP v1 provider + **`POST /v1/push` fail closed** · รับ `tokens[]` จาก zyra-api ตอบ `invalid_tokens[]` | `main.go:48-64` · `internal/handler/handler.go:53-60` · `internal/config/config.go` | `internal/push/fcm.go` + `fcm_test.go` · `push_handler.go` | 2.1, 2.2 | ส่ง push ทดสอบถึงเครื่องจริง |
+
+## J. Native shell `zyra-mobile` + `lib/native/*`
+
+repo ใหม่ `zyra-mobile` · wrapper plugin `zyra-app/lib/native/*.ts` · `zyra-app/package.json` ต้องมี `@capacitor/core` · [code-map J](code-map.md#mod-j)
+
+| ID | Phase | งาน | ไฟล์ที่แก้ (verified) | ไฟล์ใหม่ | ขึ้นกับ | test · Done |
+|---|---|---|---|---|---|---|
+| [0.57b](code-map.md#t-0-57b) | 0 | Gate บังคับอัปเดต (`App.getInfo()`) · Update required / Update available วันละครั้ง · ดึงไม่ได้ = ข้าม · เฉพาะ native (ux-ui-plan §21.2) | `components/version-check-modal.tsx` (แบบ) | `components/app-update-gate.tsx` · `lib/api/app-config.ts` | 0.57a, 1.1, 1.6, frame Pai | FE-STORE-05 |
+| [1.1](code-map.md#t-1-1) | 1 | repo `zyra-mobile` + `capacitor.config.ts` (flavor dev / uat / prod · allowNavigation) · ลง `@capacitor/core` ใน zyra-app | `zyra-app/package.json` · `next.config.ts:35,111-127` | zyra-mobile ทั้ง repo · `zyra-app/lib/native/` | 0.1 | simulator เปิดหน้า login ของ dev |
+| [1.2](code-map.md#t-1-2) | 1 | Splash 2 วิ / onboarding 3 slide / icon / status bar `#1A1B1E` / orientation ไม่ lock + lock portrait ก่อนเลือกโหมด (HP-07) / permission string | `app/manifest.ts:12-14` · `app/layout.tsx:85-100` | `zyra-mobile/resources/*` · Info.plist / Manifest · `lib/native/screen-orientation.ts` | 1.1, ชื่อแอป / bundle id | ไม่มีจอขาว · ขอ permission ตอนใช้ครั้งแรก |
+| [1.3](code-map.md#t-1-3) | 1 | email login ใน WebView — **reCAPTCHA ไม่ได้ใช้จริงทั้งสองฝั่ง** เหลือทดสอบ | `lib/auth/session.ts:164-173` · `zyra-api handler/auth_handler.go:25-30` | — | 1.1 | login email / password ในแอปผ่าน |
+| [1.4a](code-map.md#t-1-4) | 1 | Google native sign-in → `loginWithGoogle(idToken)` เดิม | `views/login/components/card-login.tsx:250-275,310-330,487` · `lib/auth/session.ts:175-179` | `lib/native/google-auth.ts` · zyra-mobile config | 1.1, 1.4b | login Google ผ่านทั้ง iOS / Android |
+| [1.5a](code-map.md#t-1-5) | 1 | Sign in with Apple — แอป + SIWA JS บนเว็บ (ux-ui-plan §7 ข้อ 11) | `card-login.tsx:487` · `lib/auth/session.ts` · `proxy.ts:6` | `views/login/components/apple-login-button.tsx` · `lib/native/apple-auth.ts` · `app/login/apple/` | 1.4, 1.5b | login Apple ผ่าน |
+| [1.6](code-map.md#t-1-6) | 1 | Lifecycle `appStateChange` → ws / SFU / Pixi + `App.pause` presence keepalive + keep-awake · ปิด tab-keepalive / poll | `workspace-ws.ts:430-457,498-513` (ไม่ใช่ store) · `hero:4041-4097,4612-4647,8451` · `use-meeting-media.ts:1037` · `auth-guard.tsx:41-42` · `app-presence.tsx:21` · `version-check-modal.tsx:73` | `lib/native/lifecycle.ts` · `lib/native/keep-awake.ts` | 1.1, **0.62** | สลับแอป 30 วิ กลับมา ws ต่อ ≤ 5 วิ |
+| [1.7](code-map.md#t-1-7) | 1 | iOS background audio (`UIBackgroundModes: audio` + `navigator.audioSession`) · min iOS 17.5 | `sfu-client.ts:319,1037-1039` | Info.plist · `AppDelegate.swift` | 1.6 | ออกจากแอปกลางประชุมยังได้ยิน |
+| [1.8](code-map.md#t-1-8) | 1 | Push client → `POST /api/user/devices` หลัง login · DELETE **ก่อน** ล้าง token ตอน logout · tap → route | `lib/auth/session.ts:326-334,343-360` | `lib/api/devices.ts` · `lib/native/push.ts` · Firebase config | 2.1, 2.2 | token ใน DB · แตะ push เปิดหน้าถูก |
+| [1.9](code-map.md#t-1-9) | 1 | Deep link `zyra://` + universal links · **แก้ `proxy.ts` matcher ให้ `.well-known` ไม่ถูก redirect** | `proxy.ts:5-15,255` · `next.config.ts:41-53` · `card-login.tsx:108-120,252-262` | `public/.well-known/*` · `lib/native/deep-link.ts` · entitlements / intent-filter | 1.1 | เปิดลิงก์ workspace แล้วเข้าแอปตรง |
+| [1.10](code-map.md#t-1-10) | 1 | Tier 2: haptics / badge / share sheet / keyboard (+ `enterKeyHint`, `isComposing`) | `hero:2749,2848,3008,10988,11486,11752` · `chat-store.ts:123,413` · `message-input.tsx:432-457` · `zone-enter-chat.tsx:709,808-814` · `invite-member-modal.tsx:246` | `lib/native/{haptics,share,badge,keyboard}.ts` | 1.1 (badge: 2.6) | ครบตามรายการ Tier 2 ใน spec |
+| [1.11](code-map.md#t-1-11) | 1 | หน้า offline native + retry | `public/sw.js:25-43` · `components/pwa-register.tsx:13-14` | `zyra-mobile/www/offline.html` + delegate | 1.1 | ปิดเน็ตแล้วเปิดแอป → หน้า offline ของเรา |
+| [1.14](code-map.md#t-1-14) | 1 | Permission strings EN / TH (Figma HP-09) | — | Info.plist · `th.lproj/InfoPlist.strings` · AndroidManifest | 1.1 | dialog ระบบตรง Figma ทั้ง EN / TH |
+| [1.15](code-map.md#t-1-15) | 1 | RAM ต่ำ (EP-01 · OQ 30) → toast · **ข้อความห้ามพูดถึง Performance mode** (0.39 ตัดแล้ว) | `lib/nature-performance.ts:7,46,69` | `MemoryPlugin.swift` / `.kt` · `lib/native/memory.ts` | 1.1, 0.38 | toast ขึ้นครั้งเดียวต่อ session |
+| [1.16](code-map.md#t-1-16) | 1 | Tablet + font: iPad 4 ทิศ + multitasking · `resizeableActivity` · lock portrait เฉพาะมือถือ · text zoom 100% (TD §16.6) | — (จุดเรียก lock = หน้า 0.15) | Info.plist `~ipad` · `MainActivity` · `lib/native/screen-orientation.ts` | 1.2, 0.15, 0.41 | Split View ใช้ได้ · font ใหญ่สุดไม่แตก |
+| [1.17](code-map.md#t-1-17) 🆕 | 1 | **Android foreground service ตอนประชุม** (TD §13.1 / §14.1 A2 — งาน native ชิ้นเดียวของ Tier 1) · เพิ่ม 2026-10-05 จาก code map | `use-meeting-media.ts:995,1011` (จุดเริ่ม / หยุด) | `MeetingForegroundService.kt` · AndroidManifest · `lib/native/foreground-service.ts` | 1.1, 1.6 | (ข้อเสนอ) Android 14 ออกจากแอปกลางประชุม ≥ 5 นาทียังพูด / ฟังได้ |
+| [2.6a](code-map.md#t-2-6) | 2 | แตะ push → route · foreground = banner ในแอป · badge = unread chat + notification | — | `lib/push.ts` | **1.8** (แก้จาก "1.3"), 2.3 | แตะจาก lock screen เปิดห้องถูก · badge ตรง unread |
+| [3.2](code-map.md#t-3-2) | 3 | Screen share native (ReplayKit / MediaProjection → LiveKit) | `sfu-client.ts:816-829,905` | Broadcast Upload Extension · `ScreenCaptureService.kt` · `lib/native/screen-share.ts` | 1.13 | งานใหญ่ ต้อง native ทั้งสอง platform |
+| [3.3](code-map.md#t-3-3) ⚠️ | 3 | ~~CallKit + VoIP push~~ — **ตัด 2026-10-05 (Ten): ย้ายไป Plan B** (ขัดกับ TD §11.1 / §13.1 / §14.1 A5) | — | — | ตัดสิน Plan B | iOS ต้องผ่าน PushKit review |
+| [3.4](code-map.md#t-3-4) | 3 | Native PiP · Live Activities | `use-document-pip.ts` · `use-autopip-eligibility.ts` (ปิดบน native ได้ตั้งแต่ Phase 1) | plugin PiP · ActivityKit | 1.13 | — |
+| [3.5](code-map.md#t-3-5) | 3 | ประเมิน bundle asset ลงแอป (TD §3.2) | `next.config.ts:35,111-127` · `app/api/*` · `zyra-api auth_handler.go:243` · `zyra-ws handler.go:76-93` | — | 3.1 | — |
+
+## K. Infra / CI / store
+
+`zyra-infra/scripts/secret-templates/*`, `zyra-infra/terraform/*`, `.github/workflows/*`, store console · [code-map K](code-map.md#mod-k)
+
+| ID | Phase | งาน | ไฟล์ที่แก้ (verified) | ไฟล์ใหม่ | ขึ้นกับ | test · Done |
+|---|---|---|---|---|---|---|
+| [0.1b](code-map.md#t-0-1b) | 0 | build-arg `NEXT_PUBLIC_MOBILE_VO` + GitHub Environment secret dev / uat / production | `zyra-app/Dockerfile:24,27,64-65` · `zyra-app/.github/workflows/deploy-gitops.yml:142-143,168-169` | — | 0.1a | — |
+| [1.5c](code-map.md#t-1-5c) | 1 | Secret `GOOGLE_CLIENT_ID` (คั่น comma) + `APPLE_CLIENT_IDS` + key ของ 0.57a | `zyra-infra/scripts/secret-templates/{dev,uat,prod}/api.json` | — | 1.4b, 1.5b, 0.57a | — |
+| [1.12](code-map.md#t-1-12) | 1 | CI iOS (fastlane match + TestFlight) + Android (AAB + Play internal) · version = tag `v*` | แบบ `zyra-notifications/.github/workflows/deploy-gitops.yml` | `zyra-mobile/.github/workflows/release.yml` · `fastlane/*` | 1.2, Apple / Play accounts | push tag → TestFlight + Play internal อัตโนมัติ |
+| [1.13](code-map.md#t-1-13) | 1 | Store listing + review notes (test account, workspace demo, วิดีโอ) · submit | — | — | ทุกข้อ Phase 1 (รวม 1.17) · 0.55 | approve ทั้งสอง store |
+| [2.2](code-map.md#t-2-2) | 2 | Firebase project + APNs key + `FCM_SERVICE_ACCOUNT_JSON` (แนะนำ base64) ผ่าน ESO | `zyra-infra/scripts/secret-templates/*/notifications.json` · `terraform/outputs.tf:170,298` · `terraform/secrets-k8s.tf:31` | — | Apple Developer account | secret sync เข้า cluster |
 
 ## สิ่งที่ต้องได้ก่อนเริ่ม (ไม่ใช่ task โค้ด)
 
 - [ ] Figma mobile design ของ VO HUD (บล็อก 0.5–0.7)
 - [ ] Apple Developer account + Google Play Console (บล็อก 1.5, 1.12, 2.2)
-- [ ] ชื่อแอป / bundle id / ไอคอน (บล็อก 1.2)
-- [ ] เครื่องทดสอบจริง: iPhone 12 (หรือใกล้เคียง) + Android กลาง (Pixel 6a / Samsung A54)
+- [ ] ชื่อแอป / bundle id / ไอคอน (บล็อก 1.2) — มติแล้ว: Zyra World · `co.zyraworld.app` · logo ตัว Z (progress 2026-10-01)
+- [ ] เครื่องทดสอบจริง: iPhone 12 (หรือใกล้เคียง) + Android กลาง (Pixel 6a / Samsung A54) · Android 14+ สำหรับ 1.17
+- [ ] ตัดสินก่อนเริ่ม (จาก code map 2026-10-05): joystick 4 / 8 ทิศ (0.3) · 3.3 CallKit · ที่วาง bottom sheet (rule 08)
