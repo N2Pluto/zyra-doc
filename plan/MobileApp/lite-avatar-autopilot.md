@@ -59,7 +59,7 @@ server เดินตัวละครแทนคนที่ไม่มี 
 
 ## ข้อจำกัด / ต่อจากนี้
 
-- zyra-app ยังไม่แสดง `lead_request_declined` (เพิ่ม toast ข้าง handler `lead_requested` ใน hero)
+- ~~zyra-app ยังไม่แสดง `lead_request_declined`~~ ทำแล้ว [zyra-app#524](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/524) — toast "{ชื่อ} นำทางให้ไม่ได้ตอนนี้ — กำลังใช้มือถืออยู่" (dev `dev-aa15835`)
 - Lite ที่เข้า circle ด้วย id ยังไม่เดินไปหาวง (ถูกพาเข้าแบบเดิม) — ถ้าจะให้เดินไปต้องมีเป้าหมายแบบ tile
 - ห้อง meeting ที่ล็อก: autopilot เดินเข้า tile ได้แต่ zyra-api ไม่ให้ token เสียง (เหมือน ghost เดิม) — gate `ws:room:enter` ผ่าน lock ยังเป็น follow-up เดิม
 - zone ที่ถูกถือไว้ไม่โชว์บนเว็บว่า "มีคนจอง" (ไม่ใช่ claim) — คนบนเว็บเห็นแค่ตัวละครนั่งอยู่

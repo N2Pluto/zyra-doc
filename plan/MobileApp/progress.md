@@ -12,7 +12,7 @@
   - รายละเอียด [lite-avatar-autopilot.md](lite-avatar-autopilot.md)
 - **ถึงไหน:** merge develop ครบ 3 repo (zyra-app #521 = `4f864fc`) · ws dev `dev-580eb5a` ขึ้นแล้ว · dev ขึ้นครบ: ws `dev-b9a0994` (#72+#73) · api `dev-8ed5911` · app `dev-4f864fc`
   - รอบต่อ **zyra-ws** [#73](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/73) (Ten อนุมัติ): `request_to_lead` ไปหาคน Lite/จอดอยู่ → ตอบคนขอทันที `lead_request_declined` · ตัวละครที่ server เดินให้ cluster เป็น circle ตามตำแหน่ง (server ตัดสินกฎโซนเอง) · Spotlight จาก Lite เดินไปยืนบน marker (ghost marker เฉพาะไม่มี tile/คนละชั้น)
-- **PR:** zyra-ws #72, #73 · zyra-api #164 · zyra-app #521
+- **PR:** zyra-ws #72, #73 · zyra-api #164 · zyra-app #521, [#524](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/524) (toast `lead_request_declined`, dev `dev-aa15835`)
 - **verify ถึงไหน:** go test (+ `-race` autopilot/lite) / vitest ผ่าน + CI เขียว · **ยังไม่ได้ลองบนเครื่องจริง** — ขั้นตอน: Lite บนมือถือ + เว็บบนคอม → เห็นตัวเดินจาก spawn ไป private zone แล้วนั่ง · กด meeting → เดินเข้าห้อง เว็บได้ยิน + เห็นในรายชื่อ · ออก → เดินกลับ · Spatial หมุนแนวตั้ง → จอด · หมุนกลับ → คุมได้ · Before/After (rule 18): ยังไม่ได้วัด
 - **ต่อจากนี้:** Ten ลองบนเครื่อง · Spotlight ของ Lite ยังใช้ marker แบบ ghost · ห้องล็อก: เดินเข้า tile ได้แต่ไม่ได้ token เสียง (follow-up เดิม)
 - **ติดอะไร:** ไม่มี
