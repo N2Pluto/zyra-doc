@@ -1,7 +1,18 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** **ขึ้น dev + TestFlight แล้ว (2026-10-08)** — app "Zyra World Dev" (`co.zyraworld.app.develop`) build 1–3 บน TestFlight กลุ่ม Zyra Team 5 คน · login Apple/Google ในแอปแก้แล้ว (entitlement + `APPLE_CLIENT_IDS` dev v9 + iOS OAuth client) **รอ Ten ลอง build 2+** · asset store A1+A2 merge แล้ว เปิดบน dev (`NEXT_PUBLIC_MOBILE_ASSET_STORE=true`) **ยังไม่ได้วัด Before/After** ([asset-store.md](asset-store.md)) · ถัดไป B0/B1 (วัด + observability) · Android: Google native ยังไม่มี OAuth client (SHA-1) · doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48)
-> **อัปเดตล่าสุด:** 2026-10-08 · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **อัปเดตล่าสุด:** 2026-10-09 · **คนล่าสุด:** Ten (ten_dev) + Claude
+
+## 2026-10-09 (รอบ 55) · Ten + Claude — แจ้งเตือน DM ข้าม workspace ในแอป · "Now Playing" บนหน้าล็อกจอ
+
+- **ทำอะไร:**
+  - **DM จาก workspace อื่นไม่เด้งตอนเปิดแอปอยู่ (Ten 2026-10-09):** server เห็นแค่ "ออนไลน์" ไม่รู้ว่าอยู่ workspace ไหน เลยไม่ส่ง push · แอปเลยส่ง `{workspace_id, scoped: true}` ไปกับ heartbeat `POST /api/user/presence` ([zyra-api#162](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/162): `AppHeartbeatIn` / `IsOnlineIn` — เว็บไม่ส่ง body ยังนับออนไลน์ทุกที่เหมือนเดิม · push chat/Spotlight เช็คต่อ workspace · data เพิ่ม `workspace_name`, `sender_avatar`) · แอปโชว์เป็นแถบแบบ IG ด้านบน ([zyra-app#520](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/520) `components/push-banner.tsx`: รูปคนส่ง + ตัวอักษรแรกของ workspace ที่มุม · ชื่อ · "DM · <workspace>" หรือ "ห้อง · workspace" · ข้อความ 1 บรรทัด · แตะเปิด · ปัดขึ้นปิด · หายเอง 5 วิ) · แตะข้าม workspace = โหลดหน้าเต็มไป `/workspace/<id>` (ผ่านหน้าเลือกโหมด → /loading → /play เปิด session ใหม่) แล้วเปิดแชทจาก `sessionStorage` (`lib/pending-conversation.ts`) เพราะ gate/loading ไม่ส่ง query ต่อ — แตะจากหน้าล็อกจอก็ใช้ทางนี้ (เดิม `router.push` ข้าม workspace ใช้ WS session เก่าค้างใต้หน้าใหม่)
+  - **"Now Playing — Zyra" บนหน้าล็อกจอหลังเสียงแชท:** เสียงแจ้งเตือนใน office เป็น `<audio>` + audio session `playback` ของ shell → iOS นับเป็นเล่นเพลง · ย้ายไป Web Audio (`VOSound` ใน `use-vo-sounds.ts` คง `volume`/`currentTime`/`play()` ให้ 13 จุดเรียกเดิม) เหมือนเสียง pet/บรรยากาศ
+- **ถึงไหน:** zyra-api #162 merge + dev `dev-42466c9` แล้ว · zyra-app #520 merge เข้า develop (รอ dev build)
+- **PR:** zyra-api #162 · zyra-app #520
+- **verify ถึงไหน:** go test / vitest ทั้งชุดผ่าน + CI เขียว · **ยังไม่ได้ลองบนเครื่องจริง** — ขั้นตอน: อยู่ workspace A ในแอป → ให้คนอื่น DM จาก B → ต้องมีแถบด้านบน · แตะ → ไป B แล้วแชทเปิด · ล็อกจอหลังเสียงแชท → ไม่มีการ์ด Now Playing · Before/After (rule 18): ยังไม่ได้วัด — ตัวชี้วัดคือ push ที่ server ส่ง (log `push: chat message delivered` `online`→`sent`) ก่อน/หลัง ยังไม่มี dashboard
+- **ต่อจากนี้:** Ten ลองบนเครื่อง · ตอนอยู่ในห้องประชุม iOS อาจยังโชว์ว่าแอปใช้เสียง (ปกติของแอปโทร) · banner ยังไม่มี haptic/เสียง (ใช้ตัวเลข unread + เสียงในแอปเฉพาะ workspace เดิม)
+- **ติดอะไร:** ไม่มี
 
 ## 2026-10-08 (รอบ 54) · Ten + Claude — feedback 8 ข้อจาก iPhone · joystick ใหม่ · QA batch (HP-03 · onboarding · splash · Workspace Lists)
 
