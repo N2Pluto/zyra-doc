@@ -1,7 +1,20 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** **ขึ้น dev + TestFlight แล้ว (2026-10-08)** — app "Zyra World Dev" (`co.zyraworld.app.develop`) build 1–3 บน TestFlight กลุ่ม Zyra Team 5 คน · login Apple/Google ในแอปแก้แล้ว (entitlement + `APPLE_CLIENT_IDS` dev v9 + iOS OAuth client) **รอ Ten ลอง build 2+** · asset store A1+A2 merge แล้ว เปิดบน dev (`NEXT_PUBLIC_MOBILE_ASSET_STORE=true`) **ยังไม่ได้วัด Before/After** ([asset-store.md](asset-store.md)) · ถัดไป B0/B1 (วัด + observability) · Android: Google native ยังไม่มี OAuth client (SHA-1) · doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48)
-> **อัปเดตล่าสุด:** 2026-10-09 · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **อัปเดตล่าสุด:** 2026-10-09 (รอบ 56 — Lite avatar autopilot, [lite-avatar-autopilot.md](lite-avatar-autopilot.md)) · **คนล่าสุด:** Ten (ten_dev) + Claude
+
+## 2026-10-09 (รอบ 56) · Ten + Claude — ตัวละครของคน Lite / มือถือหมุนจอ ให้ server เดินให้ (autopilot)
+
+- **ทำอะไร:** Ten: "web เห็นยังไง mobile เห็นอย่างนั้น … แนวตั้งกดเข้า meeting ให้ตัวละครโผล่ใน meeting web ด้วย เดินมาจากจุดเกิด … หมุนเป็นแนวตั้งแล้วตัวละครทิ้งไว้บนแมพ → ให้กลับไป private zone ของตัวเอง / zone ที่ไม่มีเจ้าของ / ไม่มีก็เดินเล่นตรงจุดเกิด" (ตอบ: zone ไม่มีเจ้าของ = private zone ที่ยังไม่ claim · นั่งด้วย · บัก Lite ใน meeting = เว็บไม่ได้ยิน/ไม่เห็นตัวตน)
+  - **zyra-ws** [#72](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/72) `internal/hub/autopilot.go`: Lite ไม่ใช่ ghost แล้ว — มี tile เริ่มที่ spawn, server เดินให้ (goto เดิมของ MOVEMENT_V2) ไป private zone ที่ claim → zone ว่างที่ไม่มีใคร claim (ถือไว้ในหน่วยความจำ ไม่ใช่ claim DB) → เดินเล่นรอบ spawn · ถึงแล้วนั่ง seat ถ้ามี · `ws:room:enter` = เดินเข้าห้อง (เว็บนับจาก geometry เหมือนคนเดินเข้า) · ออก = เดินกลับ · Spatial ส่ง `autopilot {park|resume}` ตอนหมุนจอ · wire ใหม่ `Player.autopilot`, zone cache `seats`
+  - **zyra-api** [#164](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/164): zone snapshot มี `seats` (sit point ของ sofa บนชั้นที่ตกใน zone — คณิตเดียวกับ engine) · แก้ object แล้ว republish zone cache ตามหลัง obstacle grid
+  - **zyra-app** [#521](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/521): Lite ที่ `autopilot` ถูกวาดเหมือนคนปกติ (`isGhostPlayer` = lite && !autopilot) นับในห้องด้วย geometry · Spatial บนมือถือส่ง park/resume ตาม `rotateRequired` · Lite เริ่มที่ spawn zone
+  - รายละเอียด [lite-avatar-autopilot.md](lite-avatar-autopilot.md)
+- **ถึงไหน:** merge develop ครบ 3 repo · ws dev `dev-580eb5a` ขึ้นแล้ว · api/app รอ dev build
+- **PR:** zyra-ws #72 · zyra-api #164 · zyra-app #521
+- **verify ถึงไหน:** go test (+ `-race` autopilot/lite) / vitest ผ่าน + CI เขียว · **ยังไม่ได้ลองบนเครื่องจริง** — ขั้นตอน: Lite บนมือถือ + เว็บบนคอม → เห็นตัวเดินจาก spawn ไป private zone แล้วนั่ง · กด meeting → เดินเข้าห้อง เว็บได้ยิน + เห็นในรายชื่อ · ออก → เดินกลับ · Spatial หมุนแนวตั้ง → จอด · หมุนกลับ → คุมได้ · Before/After (rule 18): ยังไม่ได้วัด
+- **ต่อจากนี้:** Ten ลองบนเครื่อง · Spotlight ของ Lite ยังใช้ marker แบบ ghost · ห้องล็อก: เดินเข้า tile ได้แต่ไม่ได้ token เสียง (follow-up เดิม)
+- **ติดอะไร:** ไม่มี
 
 ## 2026-10-09 (รอบ 55) · Ten + Claude — แจ้งเตือน DM ข้าม workspace ในแอป · "Now Playing" บนหน้าล็อกจอ
 
