@@ -1924,7 +1924,7 @@ Nodes: `6894:106858` / `6927:62228` portrait, `6934:74132` landscape.
 | HP-11 viewer count | chip LIVE · N | ป้าย LIVE + ตัวนับ Mic / Eye แยก |
 | HP-08 สวิตช์ | 2 สวิตช์ต่อแถว (in-app + push) | สวิตช์เดียว = push |
 
-## 20. ลบบัญชีในแอป — spec (ข้อเสนอ 2026-10-05 · ✅ Ten ตอบ "ตามแนะนำ" ครบ 7 ข้อ · 🎨 รอ Pai วาด)
+## 20. ลบบัญชีในแอป — spec (ข้อเสนอ 2026-10-05 · ✅ Ten ตอบ "ตามแนะนำ" ครบ 7 ข้อ · 🎨 Figma มาแล้ว 2026-10-09 → §20.7 แทนที่ข้อ 3 / 5)
 
 **ทำไมต้องมี:** Apple App Store Review Guideline **5.1.1(v)** — แอปที่ให้สมัครสมาชิกได้ต้องมีทางลบบัญชี**ในแอป** ไม่ใช่แค่ส่งเมลหรือลิงก์เว็บ · ไม่มี = โดน reject ตอนส่ง store (open-items §4 · เอกสาร PM ข้อ 1) · **ยังไม่มีใน Figma**
 
@@ -1977,9 +1977,9 @@ Profile → Account and Security → [Delete account] (แถวสีแดง�
 |---|---|---|
 | 1 | ลบจริงทั้งแถว หรือ soft-delete + ลบข้อมูลส่วนตัว | **soft-delete + anonymize ตาม service admin เดิม** มี audit อยู่แล้ว และข้อมูลแชทของคนอื่นไม่พัง · Apple ยอมรับแบบนี้ถ้าข้อมูลส่วนตัวถูกลบจริง |
 | 2 | workspace ที่ไม่มีสมาชิกอื่น | **ลบ workspace นั้นทิ้ง** แทนการปล่อยไม่มีเจ้าของ (โค้ด admin ตอนนี้ตั้ง `owner_id` NULL) · แสดงเตือนในหน้าก่อนกด |
-| 3 | ยืนยันด้วยอะไร | **พิมพ์อีเมล** ใช้ guard เดิม · คน login ด้วย Google / Apple ก็รู้อีเมลตัวเอง |
+| 3 | ยืนยันด้วยอะไร | ~~พิมพ์อีเมล~~ → **เปลี่ยน 2026-10-09 (§20.7):** บัญชีอีเมลใส่ Password + Confirm password ตาม Figma · Google / Apple ใส่รหัส 6 หลักที่ส่งทางอีเมล |
 | 4 | ลบทันที หรือมีช่วงรอ (เช่น 30 วันกู้คืนได้) | **ลบทันที** ตามโค้ดเดิม · ง่ายกว่าและ Apple ไม่บังคับให้มีช่วงรอ |
-| 5 | ข้อความเก่า / ชื่อในรายชื่อ | **API คืนชื่อ "Deleted user" + avatar ว่าง** เมื่อ `account_status='deleted'` ทุกจุดที่แสดงชื่อ (แชท, member list, notification) |
+| 5 | ข้อความเก่า / ชื่อในรายชื่อ | **API คืนชื่อ "Deleted User"** (ตัว U ใหญ่ตาม ClickUp / Figma ตั้งแต่ 2026-10-09) **+ avatar ว่าง** เมื่อ `account_status='deleted'` ทุกจุดที่แสดงชื่อ (แชท, member list, notification) |
 | 6 | ทำบนเว็บด้วยไหม | **ทำ** ใช้หน้าเดียวกัน (codebase เดียว) |
 | 7 | Sign in with Apple revoke token | **ทำตามที่ Apple บังคับ** ผูกกับ task 1.5 |
 
@@ -2010,6 +2010,22 @@ Profile → Account and Security → [Delete account] (แถวสีแดง�
 | Owner / Admin ของ workspace | **ลบบัญชีไม่ได้** · ทำได้แค่ Remove member ออกจาก workspace | มีแล้ว `workspace_member_handler.go` (DELETE members) |
 
 **Google Play:** ต้องกรอก **ลิงก์เว็บสำหรับขอลบบัญชี** ใน Play Console (Data safety / Account deletion) → ใช้หน้า Delete account บนเว็บ (§20.5 ข้อ 6) เป็นลิงก์นั้น · ถ้ายังไม่ login ให้ login ก่อนแล้วพาไปหน้านี้
+
+### 20.7 รอบ Figma + ClickUp SC-ACC-DEL-01 (2026-10-09 · ทำแล้ว)
+
+**ที่มา:** ClickUp [SC-ACC-DEL-01](https://app.clickup.com/t/36898257/14zd0zuaxqb) + Figma web [7036:262216](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7036-262216) / mobile [5889:424882](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=5889-424882) (ทั้งสองบอร์ด = HP-01 อย่างเดียว) · Ten ตอบ 2026-10-09: เจ้าของ workspace = **โอนให้อัตโนมัติเหมือนเดิม** (ไม่บังคับโอนก่อนตาม EC-02) · Google / Apple = **รหัสทางอีเมล**
+
+| เรื่อง | ทำแบบนี้ |
+|---|---|
+| ทางเข้า | เว็บ: Account setting → เมนูข้าง "Delete account" (`/setting/delete-account`) · มือถือ: Account → แถว "Delete account" (Lite / Spatial / `/setting` บนมือถือ) |
+| ฟอร์ม | หัวข้อ "We’re sorry to see you go" · กล่องแดง 4 ข้อ · Password + Confirm password (เว็บเรียงข้าง · มือถือเรียงลง) · checkbox "I understand…" · ปุ่ม Delete account ติดเมื่อกรอกครบ + ติ๊ก |
+| Google / Apple (EC-03) | แทนช่องรหัสผ่าน: ช่องรหัส 6 หลัก + ปุ่ม "Send code" · `POST /api/user/me/deletion-otp` (10 นาที · ผิดได้ 5 ครั้ง · ส่งใหม่ได้หลัง 1 นาที) |
+| ยืนยัน | เว็บ modal 458 · มือถือ bottom sheet · avatar + ชื่อ + อีเมล · Register date · Workspace own N · บรรทัดต่อ workspace ว่าใครเป็นเจ้าของต่อ / ถูกลบ · "Delete anyway" |
+| error (EP-01) | ใต้ช่อง: รหัสผ่านไม่ถูก · รหัสไม่ตรงกัน (เช็คก่อนเปิด confirm ด้วย) · รหัสผิด / หมดอายุ / ผิดเกิน |
+| หลังลบ | หน้า "Goodbye for now" `/account-deleted` (public) + อีเมล "Account deleted" ตาม Figma 7038:272492 |
+| อยู่ในห้องประชุม / เปิดหลายเครื่อง (EC-01) | zyra-api ส่ง `user_deleted` ทาง `vo:notify` → zyra-ws ส่ง `account_deleted` แล้วปิด socket ทุกห้อง (ไม่มี presence grace) · zyra-api เตะออกจาก LiveKit ทุกห้อง · เครื่องอื่นที่เรียก API ได้ 403 `account_deleted` → ออกจากระบบไปหน้า Goodbye |
+| เก็บกวาดเพิ่ม | ลบรหัสผ่าน (`tb_authen`) · ลบตัวละครที่เลือก (`tb_user_avatar`) · `username` → `deleted-<id>` (อีเมลสมัครใหม่ได้) · ชื่อ "Deleted User" · private zone ที่ปล่อย broadcast ให้แมพทุกคนว่างทันที |
+| ยังไม่ทำ | Apple revoke token (§20.4 ข้อ 7 — แยกงาน) · บัญชี Google ที่ลบแล้ว login ด้วย Google เดิมสมัครใหม่ไม่ได้ (id = Google sub) |
 
 ## 21. Session หมดอายุ / บังคับอัปเดตแอป / ปิดปรับปรุง — spec (ข้อเสนอ 2026-10-05 · ✅ Ten ตอบ "ตามแนะนำ" ครบ 7 ข้อ · 🎨 รอ Pai วาด)
 

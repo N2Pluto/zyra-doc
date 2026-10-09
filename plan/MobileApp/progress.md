@@ -1,7 +1,20 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** **ขึ้น dev + TestFlight แล้ว (2026-10-08)** — app "Zyra World Dev" (`co.zyraworld.app.develop`) build 1–3 บน TestFlight กลุ่ม Zyra Team 5 คน · login Apple/Google ในแอปแก้แล้ว (entitlement + `APPLE_CLIENT_IDS` dev v9 + iOS OAuth client) **รอ Ten ลอง build 2+** · asset store A1+A2 merge แล้ว เปิดบน dev (`NEXT_PUBLIC_MOBILE_ASSET_STORE=true`) **ยังไม่ได้วัด Before/After** ([asset-store.md](asset-store.md)) · ถัดไป B0/B1 (วัด + observability) · Android: Google native ยังไม่มี OAuth client (SHA-1) · doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48)
-> **อัปเดตล่าสุด:** 2026-10-09 (รอบ 56 — Lite avatar autopilot, [lite-avatar-autopilot.md](lite-avatar-autopilot.md)) · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **อัปเดตล่าสุด:** 2026-10-09 (รอบ 57 — ลบบัญชีตัวเอง SC-ACC-DEL-01, [ux-ui-plan §20.7](ux-ui-plan.md)) · **คนล่าสุด:** Ten (ten_dev) + Claude
+
+## 2026-10-09 (รอบ 57) · Ten + Claude — ลบบัญชีตัวเอง เว็บ + มือถือ (SC-ACC-DEL-01)
+
+- **ทำอะไร:** ClickUp [SC-ACC-DEL-01](https://app.clickup.com/t/36898257/14zd0zuaxqb) + Figma web 7036:262216 / mobile 5889:424882 (HP-01) · Ten ตอบ: เจ้าของ workspace โอนอัตโนมัติเหมือนเดิม · Google / Apple ยืนยันด้วยรหัสอีเมล · รายละเอียด [ux-ui-plan §20.7](ux-ui-plan.md)
+  - **zyra-notifications** [#18](https://github.com/Maximumsoft-Co-LTD/zyra-notifications/pull/18): อีเมล "Account deleted" ตาม Figma 7038:272492 · template ใหม่ `account_deletion_otp`
+  - **zyra-api** [#165](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/165): `DELETE /api/user/me` ยืนยันด้วย password + confirm (EP-01) หรือ `{otp}` (EC-03) จาก `POST /api/user/me/deletion-otp` · preview เพิ่ม `auth_method`, `registered_at` · `purgeAccountTx` (ใช้ทั้ง self + admin) ลบ `tb_authen`, `tb_user_avatar`, username → `deleted-<id>`, ชื่อ "Deleted User" · หลัง commit: zone ว่าง broadcast · `user_deleted` บน `vo:notify` · LiveKit RemoveParticipant ทุกห้อง (EC-01) · ส่งอีเมล Account deleted ตอนลบเอง
+  - **zyra-ws** [#74](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/74): `user_deleted` → `account_deleted` ไปทุก connection ของคนนั้นทุกห้อง แล้วปิด socket · ไม่เข้า presence grace · ที่อยู่ใน grace ออกทันที
+  - **zyra-app** [#531](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/531): `/setting/delete-account` (เว็บ sidebar + มือถือ sub-page) · confirm modal / bottom sheet · Google/Apple ใช้รหัสอีเมล · error ใต้ช่อง · `/account-deleted` "Goodbye for now" (public) · `clearSession("deleted")` · เครื่องอื่นได้ 403 `account_deleted` หรือ ws `account_deleted` → ออกจากระบบไปหน้า Goodbye
+- **ถึงไหน:** notifications #18, api #165, ws #74 merge แล้ว · dev: api `dev-bb0762e` · ws `dev-86ad46e` · app #531 เปิด รอ CI
+- **PR:** zyra-notifications #18 · zyra-api #165 · zyra-ws #74 · zyra-app #531
+- **verify ถึงไหน:** go test / vet ทั้ง 3 repo ผ่าน + CI เขียว · vitest ใหม่ 33 + ชุดเดิมที่เกี่ยว 143 ผ่าน · ลองในเบราว์เซอร์ local (375 / 1440): ฟอร์ม, ปุ่มติดเมื่อครบ, bottom sheet, หน้า Goodbye · **ยังไม่ได้ลองลบจริงบน dev** — ต้องใช้บัญชีทดสอบ 3 แบบ (อีเมล, Google, เจ้าของ workspace ที่มีสมาชิก) ที่ Ten เตรียม (Claude ไม่สร้างบัญชีเอง) · Before/After (rule 18): ยังไม่ได้วัด — วัดได้ด้วย query บน dev: จำนวนคอลัมน์ PII ที่ไม่ใช่ null ของ user ที่ถูกลบ (`email`, `username`, `image_upload`, แถว `tb_authen` / `tb_user_avatar` / `tb_user_device`) ก่อน/หลังลบ
+- **ต่อจากนี้:** Ten ลองบน dev ตาม test-plan FE-LITE-14, BE-AUTH-07/12/13/14 · Apple revoke token (แยกงาน) · บัญชี Google ที่ลบแล้วสมัครใหม่ด้วย Google เดิมไม่ได้ (id = Google sub) — ต้องตัดสินใจถ้าจะให้สมัครใหม่ได้
+- **ติดอะไร:** รอบัญชีทดสอบ 3 แบบจาก Ten
 
 ## 2026-10-09 (รอบ 56) · Ten + Claude — ตัวละครของคน Lite / มือถือหมุนจอ ให้ server เดินให้ (autopilot)
 
