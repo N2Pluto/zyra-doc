@@ -3,6 +3,29 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-14 (รอบ 60) · Ten + Claude — ปิดช่องโหว่บัญชี OAuth · sheet / หน้าย่อย animate · H-06 · B-31 · B-40 · B-44 · Apple บนเว็บ merged
+
+- **มติ Ten:** แก้ช่องโหว่บัญชี Apple / Gmail · ทำ transition ข้อ 3–5 ทั้งหมด · การ์ดที่รอข้อมูล QA ให้ไล่โค้ดแล้วแก้เท่าที่มั่นใจ · B-45 Ten ถาม "เก็บไฟล์ภาษาลงมือถือได้ไหม" (ตอบใน comment การ์ด — ยังไม่ทำ)
+- **ทำอะไร:**
+  - **ช่องโหว่บัญชี OAuth (pre-account-hijack)** — [zyra-api#166](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/166): `internal/service/oauth_link.go` ใหม่ `resolveOAuthAccount` ใช้ร่วม Google / Apple — หาแถวด้วย subject ก่อน · จับคู่ด้วยอีเมลเฉพาะอีเมลไม่ว่างและ provider ยืนยันแล้ว · ใช้แถวที่เจอ**เฉพาะเมื่อแถวนั้นยืนยันอีเมลแล้ว** ไม่งั้นสร้างบัญชี provider ใหม่ แถวเดิมไม่ถูกแตะ · Google อ่าน `email_verified` · อีเมลว่างไม่ไปหาอีเมล · path อีเมลเลิกเขียนชื่อทับ · Apple เลิกตั้ง `'Y'` ให้แถวที่จับคู่ด้วยอีเมล · `findUserByEmailFull` เลือกแถวที่ยืนยันแล้วก่อน · ไม่มี migration · ทำโดย subagent ใน worktree แยก แล้วรัน test เองก่อน push
+  - **Transition** — [zyra-app#576](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/576): BottomSheet (56 จุด) แนวตั้ง slide up / down 250ms แนวนอน fade + scale · scrim fade · mount ค้างระหว่างปิดจน animation จบ (ไม่รับ tap) · `prefers-reduced-motion` / ไม่มี `matchMedia` → ทันทีเหมือนเดิม · Android ไม่มี blur · หน้าย่อย (`FullScreenSubPage`) เลื่อนเข้าจากขวา 30% + fade, drawer แนวนอนเลื่อนเต็ม · workspace list คงทิศตาม Figma แก้ slide ข้าม (rAF สองเฟรม) · rAF + timer สำรอง 100ms — เจอจริงตอนเทสใน browser ที่ซ่อนอยู่: ไม่มี frame → sheet ค้างที่ opacity 0
+  - **B-40** (iPad เลื่อนไม่ได้) — #576: sheet แบบปกติไม่มี max-h + overflow-hidden → ทุก sheet `max-h-[92dvh]` เลื่อนได้ · **ยังเหลือ:** iPad Pro 13" M4 (1032×1376) แนวนอนได้หน้า desktop (เกินเกณฑ์ 1366) ที่สูงเต็มจอเลื่อนไม่ได้ — รอ Ten ตัดสินขยับเกณฑ์
+  - **H-06** (ปุ่มเดินไปหา) — [#577](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/577): Go to / Follow จาก drawer Members drawer ยังบังแมพ → กลับหน้าแมพ (`setActiveTab("map")`)
+  - **B-44** (z-index) — #577: แถบ Away (z-20) ทับแชทมือถือ (เปิดเป็น `"half"`) → ซ่อนตอนแชทเปิด · **ยังเหลือ:** ทุก overlay ใน HUD มือถือถูกจำกัดที่ z-10 ของ wrapper (zone card / pet panel ทับ drawer ได้) → ต้องทำ z-index scale กลาง
+  - **B-31** (Android build) — [zyra-mobile#11](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/11): build ผ่านอยู่แล้ว · แก้ความเสี่ยง crash — service ที่เริ่มด้วย `startForegroundService` ต้องเรียก `startForeground` · ถ้า type microphone โดนปฏิเสธ ลองใหม่ด้วย mediaPlayback ก่อน stop · CI ไม่รันบน `fix/**` เลย dispatch "Android APK" เอง (run 38539686764 success)
+  - **B-13** (ยอด Spotlight): ไม่แก้ — ตัวเลขคนดูไม่นับคนที่ DND / ปิดเสียง broadcast / อยู่ห้องที่ยังไม่รับ Spotlight · mini window ไม่ส่งรายชื่อคนดู · รอ QA บอกว่าเลขไหน
+  - **B-45**: ไม่ทำ — ตอบว่าเก็บในเครื่องได้แต่ได้ประโยชน์น้อย (แอปเป็น remote URL, server render ข้อความ, ~40KB/หน้า) · ต้องเลือกเป้าหมาย: แก้คำไม่ต้อง deploy (R2) หรือใช้ offline (งานใหญ่)
+  - **Apple login บนเว็บ** — [#573](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/573) merged (ปุ่มยังซ่อนจนกว่าจะตั้ง Services ID)
+  - **ClickUp (Ten สั่ง):** H-06 · B-31 Open → `completed` · B-44 Open → `in progress` · B-40 คง `in progress` · comment ทุกใบ (แก้อะไร / วิธีเทส / checklist / ที่ยังเหลือ / ขอข้อมูล QA) · B-13 · B-45 comment อย่างเดียว
+- **PR:** zyra-api #166 · zyra-mobile #11 · zyra-app #573 #576 #577 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI เขียวทุก PR ก่อน merge)
+- **verify ถึงไหน:**
+  - **build / test:** zyra-app develop (`baf7c0ea`) `vitest run` 354 ไฟล์ / 4,323 ผ่าน · `tsc` ไม่มี error ใหม่ · test ใหม่ `bottom-sheet-animation.test.tsx` · zyra-api `go vet` / `go test ./...` ผ่าน + `oauth_link_test.go` (ลองปิดเงื่อนไขแล้ว test fail 3 ตัวตามคาด)
+  - **เบราว์เซอร์:** `/dev/mobile-preview?screen=spatial-hud` 844×390 — Meeting rooms เปิดแล้ว opacity 1 / scale 1 ปิดแล้ว unmount
+  - **deploy dev:** zyra-api `dev-27693fc` (health ok) · zyra-app CI ของ `baf7c0ea` ยัง pending ตอนเขียน
+  - **บนเครื่องจริง: ยังไม่ได้เทส**
+- **ให้ Ten / QA เทสบน dev:** (1) เปิด / ปิด sheet ต่าง ๆ บนมือถือ → เลื่อนขึ้นลงลื่น · Reduce Motion เปิดอยู่ → ไม่ animate (2) หน้าย่อย (โปรไฟล์ → ตั้งค่า) เลื่อนเข้าจากขวา (3) Go to จาก drawer Members → กลับแมพ (4) Away + เปิดแชท → แถบไม่ทับ (5) iPad แนวนอน sheet ยาวเลื่อนได้ (6) Android APK ใหม่ เข้าประชุมแล้วล็อกจอ ไม่ crash (7) login Google / Apple ด้วยอีเมลที่มีบัญชียืนยันแล้ว → เข้าบัญชีเดิม
+- **ติดอะไร:** B-45 รอเลือกเป้าหมาย · B-40 iPad Pro 13" รอตัดสินเกณฑ์ · B-44 z-index scale (งานแยก) · B-13 รอ QA · Services ID ของ Apple (ทำเอง) · deploy หน้าเช็กลิสต์ Vercel อ่านอย่างเดียว
+
 ## 2026-10-14 (รอบ 59) · Ten + Claude — Apple login บนเว็บ · ตรวจบัญชี Apple / Gmail อีเมลเดียวกัน · กดแล้วตอบสนอง + loading · status ClickUp 3 ใบ
 
 - **ทำอะไร:**
