@@ -6,24 +6,24 @@
 ## 2026-10-14 (รอบ 55) · rif + Claude — สายแนวตั้ง: กลุ่ม A ครบ 13 การ์ด (10 branch)
 
 - **ทำอะไร:** ทำกลุ่ม A ของ [portrait assignment](../../issues/mobile-qa-portrait-assignment-2026-10-14.md) ครบทุกข้อ · เปิดอ่าน description + comment ของการ์ด ClickUp ทุกใบก่อนแก้ · แต่ละข้อแตก branch จาก `develop` ใน worktree แยก · รอบแรกทำ 4 branch ที่ไม่ชน PR แนวนอน → พอ #538–#551 merge แล้วทำอีก 6 branch · rebase ทั้งหมดขึ้น `develop` @ `28586e0`
-- **Branch (zyra-app — commit ในเครื่อง ยังไม่ push / ยังไม่เปิด PR):**
+- **Branch (zyra-app — PR #555–#564 → `develop` รอ review):**
 
   | Branch | การ์ด |
   |---|---|
-  | `fix/lite-copy-link` | B-48 |
-  | `fix/lite-capacity-manage-members` | B-39 (ส่วนที่เหลือ) |
-  | `fix/lite-invite-chat-relay` | B-43 |
-  | `fix/lite-meeting-heartbeat` | Q-02 · B-11 · V-11 (client) |
-  | `fix/lite-switch-room-leave` | B-03 · V-12 |
-  | `fix/ws-keepalive-ping` | B-28 |
-  | `fix/lite-restate-status` | B-23 (C, D) |
-  | `fix/lite-wave-result-toast` | B-24 (client) |
-  | `fix/lite-spotlight-floor` | V-05 |
-  | `fix/lite-role-badge` | V-07 |
+  | `fix/lite-copy-link` ([#555](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/555)) | B-48 |
+  | `fix/lite-capacity-manage-members` ([#556](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/556)) | B-39 (ส่วนที่เหลือ) |
+  | `fix/lite-invite-chat-relay` ([#557](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/557)) | B-43 |
+  | `fix/lite-meeting-heartbeat` ([#558](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/558)) | Q-02 · B-11 · V-11 (client) |
+  | `fix/lite-switch-room-leave` ([#559](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/559)) | B-03 · V-12 |
+  | `fix/ws-keepalive-ping` ([#560](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/560)) | B-28 |
+  | `fix/lite-restate-status` ([#561](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/561)) | B-23 (C, D) |
+  | `fix/lite-wave-result-toast` ([#562](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/562)) | B-24 (client) |
+  | `fix/lite-spotlight-floor` ([#563](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/563)) | V-05 |
+  | `fix/lite-role-badge` ([#564](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/564)) | V-07 |
 
   รายละเอียดแต่ละ branch: [portrait assignment › ความคืบหน้า](../../issues/mobile-qa-portrait-assignment-2026-10-14.md#ความคืบหน้า-2026-10-14)
 - **verify ถึงไหน:** merge ทั้ง 10 branch รวมกันบน `develop` ไม่ชน · `vitest run` ทั้ง repo บน tree รวม 348 ไฟล์ / 4,289 case ผ่าน · eslint ผ่าน · `tsc --noEmit` ไม่มี error ใหม่ (7 เดิม) · **ยังไม่ได้เทสบนเครื่องจริง / ยังไม่ได้ build**
-- **ต่อจากนี้:** push + เปิด PR 10 อัน → review (V-05 แตะ store / spotlight hook ที่ Spatial ใช้ร่วม และ B-28 แตะ `WorkspaceWSClient` → ให้ Ten ดู) → QA เทสบน dev
+- **ต่อจากนี้:** review + merge PR #555–#564 (V-05 แตะ store / spotlight hook ที่ Spatial ใช้ร่วม และ B-28 แตะ `WorkspaceWSClient` → ให้ Ten ดู) → QA เทสบน dev
 - **ติดอะไร:**
   - **B-39:** ทาง capacity ไม่มีใครเรียก (`WorkspaceCard` ไม่เคยเรียก `onCapacityFull`) → fix ยังไม่ปิดอาการ QA
   - **V-07:** รอ design / PM ยืนยันตำแหน่งป้าย

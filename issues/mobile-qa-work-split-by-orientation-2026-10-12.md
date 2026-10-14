@@ -56,11 +56,11 @@
 
 | ข้อ | การ์ด | สิ่งที่ต้องทำ | สถานะ |
 |---|---|---|---|
-| Q-02 | [ออกจาก Meeting 8 แล้วไม่เจอตัวเองในห้อง](https://app.clickup.com/t/14zd0zubp9u) | `LiteMeeting` เรียก `heartbeatZoneSection` ทุก 2 นาทีเหมือน hero + test | 🛠 · 2026-10-14 แก้ใน `fix/lite-meeting-heartbeat` (ยังไม่ push) |
-| B-11 | [จำนวนคนในห้อง Meeting ไม่อัปเดต / ผิดคน](https://app.clickup.com/t/14zd0zuc0df) | ต้นเหตุเดียวกับ Q-02 + B-03 — ทำพร้อมกัน (การ์ดนี้เป็น "ทั้งสองแนว" แต่โค้ดที่ต้องแก้อยู่ฝั่ง Lite) | 🛠 · 2026-10-14 แก้ใน `fix/lite-meeting-heartbeat` (ยังไม่ push) |
-| B-03 | [Join อีกห้องแล้วเห็นตัวเองค้างห้องเดิม](https://app.clickup.com/t/14zd0zubp9e) | `enter()` ใน `lite-shell.tsx` เรียก `liteLeaveMeeting` ห้องเดิมก่อน `liteEnterMeeting` | 🛠 · 2026-10-14 แก้ใน `fix/lite-switch-room-leave` (ยังไม่ push) |
-| V-11 | [ปิดแอปแล้วคนอื่นยังเห็นอยู่ในห้อง](https://app.clickup.com/t/14zd0zuc0de) | กรอง tile ด้วย WS roster · หลัง presence grace หมด ให้ zyra-ws แจ้ง zyra-api `LeaveZone` | 🛠 · 2026-10-14 แก้ใน `fix/lite-meeting-heartbeat (client)` (ยังไม่ push) |
-| V-12 | [กด Leave แล้วหน้า Meeting ยังค้าง](https://app.clickup.com/t/14zd0zuc0dh) | กด Leave → `onLeft()` ทันที แล้วส่ง REST leave แบบไม่รอ + timeout | 🛠 · 2026-10-14 แก้ใน `fix/lite-switch-room-leave` (ยังไม่ push) |
+| Q-02 | [ออกจาก Meeting 8 แล้วไม่เจอตัวเองในห้อง](https://app.clickup.com/t/14zd0zubp9u) | `LiteMeeting` เรียก `heartbeatZoneSection` ทุก 2 นาทีเหมือน hero + test | 🛠 · 2026-10-14 แก้ใน `fix/lite-meeting-heartbeat` ([#558](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/558)) (PR เปิดแล้ว รอ review) |
+| B-11 | [จำนวนคนในห้อง Meeting ไม่อัปเดต / ผิดคน](https://app.clickup.com/t/14zd0zuc0df) | ต้นเหตุเดียวกับ Q-02 + B-03 — ทำพร้อมกัน (การ์ดนี้เป็น "ทั้งสองแนว" แต่โค้ดที่ต้องแก้อยู่ฝั่ง Lite) | 🛠 · 2026-10-14 แก้ใน `fix/lite-meeting-heartbeat` ([#558](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/558)) (PR เปิดแล้ว รอ review) |
+| B-03 | [Join อีกห้องแล้วเห็นตัวเองค้างห้องเดิม](https://app.clickup.com/t/14zd0zubp9e) | `enter()` ใน `lite-shell.tsx` เรียก `liteLeaveMeeting` ห้องเดิมก่อน `liteEnterMeeting` | 🛠 · 2026-10-14 แก้ใน `fix/lite-switch-room-leave` ([#559](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/559)) (PR เปิดแล้ว รอ review) |
+| V-11 | [ปิดแอปแล้วคนอื่นยังเห็นอยู่ในห้อง](https://app.clickup.com/t/14zd0zuc0de) | กรอง tile ด้วย WS roster · หลัง presence grace หมด ให้ zyra-ws แจ้ง zyra-api `LeaveZone` | 🛠 · 2026-10-14 แก้ใน `fix/lite-meeting-heartbeat (client)` (PR เปิดแล้ว รอ review) |
+| V-12 | [กด Leave แล้วหน้า Meeting ยังค้าง](https://app.clickup.com/t/14zd0zuc0dh) | กด Leave → `onLeft()` ทันที แล้วส่ง REST leave แบบไม่รอ + timeout | 🛠 · 2026-10-14 แก้ใน `fix/lite-switch-room-leave` ([#559](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/559)) (PR เปิดแล้ว รอ review) |
 | Q-01 | [อยู่นอกห้องแต่ถูกนับในกลุ่ม Meeting](https://app.clickup.com/t/14zd0zubp91) | retest หลัง zyra-ws #77 + #537 | ✅ |
 
 ### ก้อน V3 — ตัวละคร Lite บนแมพที่คนอื่นเห็น: รอมติก่อน 🔥
@@ -77,26 +77,26 @@ spec (technical-design §16.2) บอกว่าคน Lite ที่ไม่�
 
 | ข้อ | การ์ด | สิ่งที่ต้องทำ | สถานะ |
 |---|---|---|---|
-| B-28 | [ตัดการเชื่อมต่อบ่อยทั้งที่ 5G เต็ม](https://app.clickup.com/t/14zd0zuc0dv) | ย้าย ping keepalive เข้า `WorkspaceWSClient` (Lite ไม่ส่ง ping → client ปิด socket ที่เงียบ 30 วิ) + ปุ่ม Retry หลัง reconnect หมด | 🛠 · 2026-10-14 แก้ใน `fix/ws-keepalive-ping` (ยังไม่ push) |
-| B-23 | [Status ตัวละครไม่อัปเดตจนกว่าจะ Refresh](https://app.clickup.com/t/14zd0zubp8t) (รวม sticky "Server ไม่อัปเดตสถานะ") | กรณี A/B แก้แล้ว (zyra-ws #76, zyra-app #535) · ที่เหลือเป็นของ Lite: ส่ง `setStatus` หลัง welcome/reconnect · เพิ่มคนใน roster ที่ยังไม่อยู่ใน member list | 🛠 · 2026-10-14 แก้ใน `fix/lite-restate-status (C, D)` (ยังไม่ push) |
+| B-28 | [ตัดการเชื่อมต่อบ่อยทั้งที่ 5G เต็ม](https://app.clickup.com/t/14zd0zuc0dv) | ย้าย ping keepalive เข้า `WorkspaceWSClient` (Lite ไม่ส่ง ping → client ปิด socket ที่เงียบ 30 วิ) + ปุ่ม Retry หลัง reconnect หมด | 🛠 · 2026-10-14 แก้ใน `fix/ws-keepalive-ping` ([#560](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/560)) (PR เปิดแล้ว รอ review) |
+| B-23 | [Status ตัวละครไม่อัปเดตจนกว่าจะ Refresh](https://app.clickup.com/t/14zd0zubp8t) (รวม sticky "Server ไม่อัปเดตสถานะ") | กรณี A/B แก้แล้ว (zyra-ws #76, zyra-app #535) · ที่เหลือเป็นของ Lite: ส่ง `setStatus` หลัง welcome/reconnect · เพิ่มคนใน roster ที่ยังไม่อยู่ใน member list | 🛠 · 2026-10-14 แก้ใน `fix/lite-restate-status (C, D)` (PR เปิดแล้ว รอ review) |
 | B-25 | [Wave / แจ้งเตือนซ้ำหลังปิดแอป](https://app.clickup.com/t/14zd0zubp9r) | QA ยืนยันว่าซ้ำแบบไหน (รูปเป็น Raised hand ×5) · Lite ส่ง `visibility` · zyra-ws push เฉพาะยกมือใหม่ · ใส่ collapse key | ❓ |
-| B-24 | [Wave คนที่ Away ได้](https://app.clickup.com/t/14zd0zubzhw) (รวม sticky "Wave คนไม่ว่างต้องแจ้งเตือน") | PM ตัดสินว่า away อัตโนมัติ (แอปไป background) กัน Wave ไหม · Lite ย้าย toast ไปหลังรู้ผล + ฟัง `error` | 🗳 🛠 · 2026-10-14 แก้ใน `fix/lite-wave-result-toast (client)` (ยังไม่ push) |
+| B-24 | [Wave คนที่ Away ได้](https://app.clickup.com/t/14zd0zubzhw) (รวม sticky "Wave คนไม่ว่างต้องแจ้งเตือน") | PM ตัดสินว่า away อัตโนมัติ (แอปไป background) กัน Wave ไหม · Lite ย้าย toast ไปหลังรู้ผล + ฟัง `error` | 🗳 🛠 · 2026-10-14 แก้ใน `fix/lite-wave-result-toast (client)` (PR เปิดแล้ว รอ review) |
 | B-22 | [Web ไม่เห็น User ที่ login ผ่านมือถือ](https://app.clickup.com/t/14zd0zubp8q) | retest (zyra-ws #75/#76) | ✅ |
 
 ### ก้อน V5 — Spotlight ฝั่ง Lite
 
 | ข้อ | การ์ด | สิ่งที่ต้องทำ | สถานะ |
 |---|---|---|---|
-| V-05 | [Start Spotlight นับครบ 5 วิแล้วไม่ขึ้น live](https://app.clickup.com/t/14zd0zuc0dt) | store ของ Lite ไม่ทิ้ง state Spotlight ของชั้นอื่น (`vo-session-store.ts:383`) · ยกเลิกแล้วส่ง `spotlight:stop` เสมอ | 🛠 · 2026-10-14 แก้ใน `fix/lite-spotlight-floor` (ยังไม่ push) |
+| V-05 | [Start Spotlight นับครบ 5 วิแล้วไม่ขึ้น live](https://app.clickup.com/t/14zd0zuc0dt) | store ของ Lite ไม่ทิ้ง state Spotlight ของชั้นอื่น (`vo-session-store.ts:383`) · ยกเลิกแล้วส่ง `spotlight:stop` เสมอ | 🛠 · 2026-10-14 แก้ใน `fix/lite-spotlight-floor` ([#563](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/563)) (PR เปิดแล้ว รอ review) |
 
 ### ก้อน V6 — หน้าจอ Lite
 
 | ข้อ | การ์ด | สิ่งที่ต้องทำ | สถานะ |
 |---|---|---|---|
-| V-07 | [ไม่แสดงป้าย Owner / Admin](https://app.clickup.com/t/14zd0zuc0d4) | ส่ง `role` เข้า `LitePerson` แล้วแสดง pill ใน member row + profile sheet | 🛠 · 2026-10-14 แก้ใน `fix/lite-role-badge` (ยังไม่ push) |
-| B-43 | [แชร์ Meeting ให้คนที่ไม่เคยคุย ห้องแชทไม่ขึ้น](https://app.clickup.com/t/14zd0zuc0dm) | `sendInChat` relay ผ่าน WS หลังส่ง REST (pet-share, forward มีปัญหาเดียวกัน) | 🛠 · 2026-10-14 แก้ใน `fix/lite-invite-chat-relay` (ยังไม่ push) |
-| B-48 | [ปุ่ม Copy กับ Share เป็น Action เดียวกัน](https://app.clickup.com/t/14zd0zuc0dr) | เพิ่ม `copyLink()` แยกจาก `shareOrCopy` | 🛠 · 2026-10-14 แก้ใน `fix/lite-copy-link` (ยังไม่ push) |
-| B-39 | [Manage Member ไม่เต็มจอ](https://app.clickup.com/t/14zd0zubnhm) | ทางเมนูแก้แล้ว (#525) · เหลือทาง "Workspace is full → Manage members" ยังเปิด modal desktop | ✅ 🛠 · 2026-10-14 แก้ใน `fix/lite-capacity-manage-members` (ยังไม่ push) |
+| V-07 | [ไม่แสดงป้าย Owner / Admin](https://app.clickup.com/t/14zd0zuc0d4) | ส่ง `role` เข้า `LitePerson` แล้วแสดง pill ใน member row + profile sheet | 🛠 · 2026-10-14 แก้ใน `fix/lite-role-badge` ([#564](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/564)) (PR เปิดแล้ว รอ review) |
+| B-43 | [แชร์ Meeting ให้คนที่ไม่เคยคุย ห้องแชทไม่ขึ้น](https://app.clickup.com/t/14zd0zuc0dm) | `sendInChat` relay ผ่าน WS หลังส่ง REST (pet-share, forward มีปัญหาเดียวกัน) | 🛠 · 2026-10-14 แก้ใน `fix/lite-invite-chat-relay` ([#557](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/557)) (PR เปิดแล้ว รอ review) |
+| B-48 | [ปุ่ม Copy กับ Share เป็น Action เดียวกัน](https://app.clickup.com/t/14zd0zuc0dr) | เพิ่ม `copyLink()` แยกจาก `shareOrCopy` | 🛠 · 2026-10-14 แก้ใน `fix/lite-copy-link` ([#555](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/555)) (PR เปิดแล้ว รอ review) |
+| B-39 | [Manage Member ไม่เต็มจอ](https://app.clickup.com/t/14zd0zubnhm) | ทางเมนูแก้แล้ว (#525) · เหลือทาง "Workspace is full → Manage members" ยังเปิด modal desktop | ✅ 🛠 · 2026-10-14 แก้ใน `fix/lite-capacity-manage-members` ([#556](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/556)) (PR เปิดแล้ว รอ review) |
 | V-01 | [Profile เลื่อนลงไม่ได้](https://app.clickup.com/t/14zd0zubp90) | retest (#536) | ✅ |
 | B-41 | [กดคีย์บอร์ดใน Chat แล้วมีเส้นขาว](https://app.clickup.com/t/14zd0zubp9k) | retest (#536) ทั้ง Lite และแชทแนวนอน | ✅ |
 | B-35 | [Account & Security → Something went wrong](https://app.clickup.com/t/14zd0zubp8z) | ดึง stack trace จาก Sentry (org `zyra-rm`) 2026-10-09 ~14:25 · เพิ่ม error boundary ให้หน้า setting | ❓ |
