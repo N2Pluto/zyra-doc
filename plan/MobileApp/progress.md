@@ -3,6 +3,23 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-14 (รอบ 61) · Ten + Claude — B-40 iPad Pro 13" · B-13 ยอดคนดู · B-44 overlay · แผน B-45 · checklist QA ทุกการ์ด
+
+- **มติ Ten:** B-45 เป้าหมาย = แก้คำ / เพิ่มภาษาได้โดยไม่ต้อง deploy · B-40 ขยับเกณฑ์เป็น 1376 · B-13 "ยอด" = จำนวนคนดู (ชิป N | M)
+- **ทำอะไร:**
+  - **B-40** — [zyra-app#578](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/578): `TOUCH_MOBILE_MAX_LONG_SIDE` 1366 → 1376 · iPad Pro 13" (M4, 1032×1376) ได้หน้ามือถือเหมือน iPad รุ่นอื่น (เดิมได้หน้า desktop ที่สูงเต็มจอเลื่อนไม่ได้) · touch laptop จอใหญ่ยังได้ desktop
+  - **B-13** — [#579](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/579): คนพูดนับคนดูจาก `meetingAudio.roomParticipantIds` ซึ่งเดิมอัปเดตแค่ตอน `participantJoined` / `participantLeft` — LiveKit ไม่แจ้งคนที่อยู่ก่อนเราต่อ → คนพูดที่ต่อ / ต่อใหม่หลังคนดูเข้ามาแล้วเห็น 0 · แก้: อ่าน `sfu.participantIds()` ทันทีหลัง connect (เหมือน session คนดู) · zyra-ws ไม่ได้เก็บรายชื่อคนดู (นับจาก LiveKit อย่างเดียว) · คน DND / ปิดเสียง broadcast ไม่ได้ต่อเข้าห้อง จึงไม่ถูกนับ (ไม่ได้ดูจริง) · unit test ทำไม่ได้แบบมีความหมาย (connect ดึง media stack ทั้งชุด) — ต้องเทสบนเครื่อง
+  - **B-44** — [#580](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/580): `phoneMapCovered` (มือถือ + drawer / แชท / ประชุมขยาย / โปรไฟล์ตัวเอง) → weather widget / pet panel / zone card (นอก HUD z-20–40) ซ่อนระหว่างนั้น (เดิมทับเพราะของใน HUD ถูกจำกัดที่ z-10) · ไม่ได้รื้อ layer ทั้งหมด
+  - **B-45 แผน** — [plan/LanguagePacks/technical-design.md](../LanguagePacks/technical-design.md) ([zyra-doc#71](https://github.com/N2Pluto/zyra-doc/pull/71)): pack ต่อภาษาบน R2 (immutable version) + `tb_i18n_pack` + `GET /api/i18n/manifest` + admin upload / activate · zyra-app `i18n/request.ts` merge pack ทับไฟล์ใน repo (fallback ถ้า API ล่ม) · หน้า admin Languages · 7 task ~4–6 วัน · **รอตอบคำถาม 5 ข้อ** (ใครแก้ได้ · preview / อนุมัติ · แยกต่อ env · ภาษาแรกที่จะเพิ่ม · Figma หน้า admin)
+  - **ClickUp (Ten สั่ง):** B-40 (in progress) · B-13 (Open) · B-44 (in progress) → `completed` + comment ทุกใบ · **checklist QA ใน description ครบทุกการ์ดของสายแนวนอน / ทั้งสองแนว** — 26 ใบมีแล้วจากรอบ 57 · เพิ่ม section "Checklist สำหรับ QA" อีก 9 ใบ: H-06 · B-31 · B-44 · B-40 · B-13 · Q-03 · H-03 · B-36 · V-04 (connector ยังสร้าง checklist ของ ClickUp จริงไม่ได้ — ใช้ `- [ ]` ใน description)
+- **PR:** zyra-app #578 #579 #580 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI `lint-and-build` เขียวก่อน merge)
+- **verify ถึงไหน:**
+  - **build / test:** develop (`694848cd`) `vitest run` 354 ไฟล์ / 4,324 ผ่าน · `tsc` ไม่มี error ใหม่ · test ใหม่ `platform.test.ts` iPad Pro 13"
+  - **deploy dev:** CI ของ `694848cd` ยัง in_progress ตอนเขียน
+  - **บนเครื่องจริง: ยังไม่ได้เทส**
+- **ให้ QA เทส:** ตาม checklist ในแต่ละการ์ด ClickUp · งานที่ไม่มีการ์ด (กดแล้วตอบสนอง · loading · sheet / หน้าย่อย animate · joystick วิ่ง · joystick ใหญ่บน iPad · PIP แสดงจอที่แชร์) ยังไม่อยู่ใน checklist ใดเลย
+- **ติดอะไร:** B-45 รอคำตอบ 5 ข้อ · Apple Services ID (ทำเอง) · หน้าเช็กลิสต์ Vercel อ่านอย่างเดียวยัง deploy ไม่ได้ (limit) · เช็กลิสต์ claude.ai ยังไม่มีงานรอบ 57–61
+
 ## 2026-10-14 (รอบ 60) · Ten + Claude — ปิดช่องโหว่บัญชี OAuth · sheet / หน้าย่อย animate · H-06 · B-31 · B-40 · B-44 · Apple บนเว็บ merged
 
 - **มติ Ten:** แก้ช่องโหว่บัญชี Apple / Gmail · ทำ transition ข้อ 3–5 ทั้งหมด · การ์ดที่รอข้อมูล QA ให้ไล่โค้ดแล้วแก้เท่าที่มั่นใจ · B-45 Ten ถาม "เก็บไฟล์ภาษาลงมือถือได้ไหม" (ตอบใน comment การ์ด — ยังไม่ทำ)
