@@ -3,6 +3,26 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-14 (รอบ 56) · Ten + Claude — แนวนอน / ทั้งสองแนวที่เหลือ: B-08 · H-07 · H-10 · B-47 · B-29 · joystick วิ่ง · ClickUp completed 6 ใบ
+
+- **มติ Ten (ถามก่อนเริ่ม):** B-08 preview เต็มกล่อง (crop) · H-07 แสดง joystick จาง ๆ ค้างไว้ · H-10 + B-47 ทำด้วยสไตล์ Lite (ไม่มี Figma) · B-29 ทำแบบกันไว้ก่อน (กู้แมพเมื่อ WebGL context หาย) · ระหว่างทาง Ten ขอเพิ่ม: **ลาก joystick ครึ่งทาง = เดิน · ลากเต็ม = วิ่ง**
+- **ทำอะไร:**
+  - **B-08** — [zyra-app#565](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/565): Profile → Camera preview จากแถบสูง 200px → เต็มความกว้าง สัดส่วน 3:4 (`max-h-[calc(100dvh-160px)]` ไม่ล้นแนวนอน) · ภาพยัง `object-cover`
+  - **H-07** — [#566](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/566): joystick floating ตอนพักเดิม `opacity-40` + วงสีเข้ม → แทบมองไม่เห็นบนแมพพื้นเข้ม · ตอนพักเป็น `opacity-60` + พื้นวง `rgba(26,27,30,0.3)` · ตอนจับเหมือน Figma · โซนรับนิ้วไม่เปลี่ยน
+  - **H-10 + B-47** — [#567](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/567) (sheet ใช้ร่วม Lite / Spatial): Meeting rooms ห้องที่มีคน → ไอคอนพื้นเขียวจาง + "N in meeting" สีเขียว · Private zones มีช่องค้นหา (ชื่อห้อง / ชื่อที่ claim / ชื่อเจ้าของโต๊ะ) + ข้อความไม่พบ · i18n EN / TH
+  - **joystick วิ่ง** — [#568](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/568): ระยะนิ้ว ≥ 80% ของระยะ knob (`JOYSTICK_RUN_RATIO`, 35.2 / 44px) → วิ่ง · ถอยกลับ → เดิน · `setVirtualDirection(dir, run)` กด Shift สังเคราะห์แบบ Shift+WASD → `run` ที่ส่ง zyra-ws กับความเร็ว local ตรงกัน (ไม่แตะ zyra-ws) · ไม่มีการ์ด ClickUp
+  - **B-29** — [#569](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/569): `lib/webgl-context-watch.ts` ฟัง `webglcontextlost` / `restored` ของแมพ · หน้าอยู่บนจอแล้ว 3 วิยังไม่กลับ → hero แสดง overlay **Reconnect Now** (แบบ H-01) แทนจอขาว · ระหว่าง meeting / circle / Spotlight รอจนออกจากสาย (reload จะตัดสาย)
+  - **ตอบ Ten "คุยนอกแอปแบบ Discord":** ทำได้แล้วระหว่างอยู่ในสาย (meeting / circle / Spotlight) — iOS ใช้ `UIBackgroundModes: audio` + call mode (1.7), Android ใช้ foreground service (รอบ 55, ต้องลง APK ใหม่) · ตรวจโค้ดแล้ว: ฝั่งเว็บไม่ปิดไมค์ / ไม่ตัด WS ตอน background (auto-mute ยกเว้นตอนอยู่ในสาย) · นอกสาย iOS ไม่อนุญาต (Discord ก็ค้างแค่ voice channel) · กล้องปิดเองตอน background (OS) · **ยังไม่ได้ยืนยันบนเครื่องจริง**
+  - **ClickUp (Ten สั่ง + รับทราบกฎ 80%):** Open → `completed` 6 ใบ: B-08 · H-07 · H-10 · B-47 · B-29 · B-32
+- **PR:** zyra-app #565 #566 #567 #568 #569 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI `lint-and-build` เขียวทุก PR ก่อน merge)
+- **verify ถึงไหน:**
+  - **build / test:** แต่ละ PR — `vitest run` ทั้งหมด 349 ไฟล์ / 4,296 ผ่าน (#568) · `tsc` ไม่มี error ใหม่ (7 เดิม) · eslint สะอาด · develop หลัง merge ครบ (`30a1832d`) ไฟล์ test ที่แตะ 4 ไฟล์ / 450 ผ่าน
+  - **เบราว์เซอร์:** B-08 `/dev/mobile-preview?screen=lite-profile-page&page=camera` 390×844 (กล่อง ~357×466) + 844×390 (ไม่ล้น) · Browser pane ใช้กล้องไม่ได้
+  - **deploy dev:** CI ของ `30a1832d` ยังรันอยู่ตอนเขียน — ต้องเช็ค `app.dev.zyra.center/api/version` อีกครั้ง
+  - **บนเครื่องจริง: ยังไม่ได้เทสทุกข้อ**
+- **ให้ Ten / QA เทสบน dev:** (1) B-08 preview กล้องเต็มความกว้าง (2) H-07 เห็นวง joystick ตอนพักบนแมพพื้นเข้ม (3) ลาก joystick ครึ่งทางเดิน / สุดวิ่ง / ถอยกลับเดิน (4) H-10 ห้องที่มีคนเป็นสีเขียว (5) B-47 ค้นหาใน Private zones ด้วยชื่อห้องและชื่อคน (6) B-29 สลับแอปนาน ๆ แล้วกลับมา → ถ้าแมพหายต้องเห็น Reconnect Now ไม่ใช่จอขาว (7) คุยในสายแล้วสลับแอป / ล็อกจอ 1–2 นาที ทั้ง iOS และ Android (APK ใหม่)
+- **ติดอะไร:** การ์ดสายนี้ที่เหลือรอ PM (B-36, B-45, Q-03) และรอข้อมูล QA (H-03, H-06, B-44, B-13, B-31, B-40)
+
 ## 2026-10-14 (รอบ 55) · Ten + Claude — B-12 desktop · B-01 / B-21 ฝั่ง server · B-32 Android foreground service · CI lint develop · ClickUp assignee 36 ใบ
 
 - **ทำอะไร (Ten เลือกทำทั้ง 4 ข้อ):**
