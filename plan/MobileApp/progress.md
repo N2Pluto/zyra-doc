@@ -3,6 +3,20 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-14 (รอบ 54) · Ten + Claude — การ์ด Bubble แทน minimap · Dynamic Island "Now Playing"
+
+- **ทำอะไร (feedback ของ Ten จากการเทสบน dev):**
+  - **Ask to Join บนมือถือแนวนอน:** ปุ่มลอยเหนือ Bubble (จาก #541 — H-04) บังแมพและคนในวง และตัวหนังสือหักเป็น "Ask / to / Join" · Ten ขอให้เป็นเมนูที่ขึ้นทับ minimap แทน → บนมือถือไม่แสดงปุ่มลอยแล้ว · Bubble ที่ยืนใกล้ (มีสมาชิกห่าง ≤ 3 ช่อง, `PHONE_BUBBLE_NEAR_TILES`) ขึ้นเป็น **การ์ดที่มุม minimap** (`vo-phone-bubble-card.tsx`: "Circle · N people here", รูปคนในวง, ปุ่ม Ask to Join + สถานะรอคำตอบ / cooldown) และ **minimap หายระหว่างนั้น** · ลอจิกขอเข้ารวมเป็น `askToJoinCircle()` ใช้ร่วมกับปุ่มลอยของ desktop · ลบ prop `alwaysVisible` ที่เพิ่มใน #541 · ไม่มี Figma — ใช้สไตล์ Lite
+  - **Dynamic Island ขึ้นว่า Zyra กำลังเล่นเพลง (การ์ด Now Playing, ขึ้นตลอดตั้งแต่เข้า workspace):** ต้นเหตุที่น่าจะเป็นที่สุด = `use-autopip-eligibility.ts` เปิดไมค์ค้างแบบเงียบตลอดที่อยู่ใน office (มีไว้ให้ Auto-PiP ของ Chrome desktop) ซึ่งไปทำงานในแอป iOS ด้วย → เปิดเฉพาะเมื่อมี `window.documentPictureInPicture` (Chrome desktop) · ในแอปมือถือ / Safari / Firefox ไม่เปิดไมค์แล้ว
+- **PR:** [zyra-app#551](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/551) → **merged เข้า `develop`** (`28586e00`) ตามที่ Ten สั่ง
+- **verify ถึงไหน:**
+  - **build / test:** `vitest run` 340 ไฟล์ / 4,213 case ผ่าน · `tsc --noEmit` ไม่มี error ใหม่ · eslint ไม่มี warning ใหม่ (hero เทียบกับ develop) · test ใหม่: การ์ด Bubble (แสดง / ขอเข้า / รอคำตอบ / cooldown) · ไม่มี Document PiP → ไม่เรียก `getUserMedia`
+  - **เบราว์เซอร์:** `/dev/mobile-preview?screen=spatial-hud&bubble=1` — การ์ดอยู่ที่มุม minimap ถูกตำแหน่ง
+  - **deploy dev:** CI success · image `web:dev-28586e0` · `app.dev.zyra.center/api/version` → buildId `05:06:00` = ขึ้น dev แล้ว
+  - **บนเครื่องจริง: ยังไม่ได้เทส** · ต้นเหตุ Now Playing มาจากการอ่านโค้ด ยังไม่ยืนยัน
+- **ให้ Ten / QA เทสบน dev:** (1) แอป iOS เข้า workspace แล้วรอ → ไม่มีการ์ด Now Playing / จุดส้มไมค์บน Dynamic Island (2) เดินใกล้ Bubble → การ์ดขึ้นแทน minimap → กด Ask to Join ส่งคำขอได้ → เดินออก → minimap กลับมา
+- **ติดอะไร:** ถ้า Now Playing ยังขึ้นหลังแก้ ตัวที่ต้องไล่ต่อคือโหมดเสียง `playback` (`lib/native/audio-session.ts`) ที่ตั้งไว้ให้เสียงดังแม้เปิดโหมดเงียบ (Ten 2026-10-07) — เปลี่ยนเป็น `ambient` จะหาย Now Playing แต่เสียงเอฟเฟกต์จะเงียบตามสวิตช์เงียบ ต้องให้ Ten เลือก
+
 ## 2026-10-14 (รอบ 53) · Ten + Claude — มติ megaphone (B-42 / B-15) · merge 13 PR ขึ้น develop + deploy dev · ClickUp completed 20 ใบ
 
 - **ทำอะไร:**
