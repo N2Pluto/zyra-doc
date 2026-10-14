@@ -66,6 +66,7 @@ static HTML บน Vercel
 | `vo-audio-fixes-summary/` | https://vo-audio-fixes-summary.vercel.app | ด้วยมือ — `cd web/vo-audio-fixes-summary && vercel deploy --prod` |
 | `mobile-app-plan/` (แผน mobile app: เลือก Capacitor + native feature จริง, background WS/audio/reconnect ระดับโค้ด) | https://mobile-app-plan.vercel.app · [/comparison.html](https://mobile-app-plan.vercel.app/comparison.html) · [/native-features.html](https://mobile-app-plan.vercel.app/native-features.html) · [/native-inventory.html](https://mobile-app-plan.vercel.app/native-inventory.html) | ด้วยมือ — `cd web/mobile-app-plan && vercel deploy --prod` |
 | `team-charter/` (Vision + กฎการทำงานทีม) | https://zyra-team-charter.vercel.app | ด้วยมือ — `cd web/team-charter && vercel deploy --prod` |
+| `mobile-qa-checklist/` (เช็กลิสต์เทส Mobile แนวนอน + ทั้งสองแนว รอบ 51–56 — ทีมติ๊กผ่าน / ไม่ผ่านร่วมกัน) | https://zyra-mobile-qa-checklist.vercel.app (ยังไม่ deploy) | ด้วยมือ — `cd web/mobile-qa-checklist && vercel deploy --prod` · ผลติ๊กเก็บใน Upstash Redis ผ่าน `api/state.js` — ต้องต่อ Storage → Upstash ให้ project ก่อน (env `KV_REST_API_URL` / `KV_REST_API_TOKEN`) |
 
 **onboarding auto-deploy ทำงานยังไง:** project `zyra-onboarding` ต่อ GitHub repo นี้ไว้ · Root Directory ของ project เป็น `.` เลยชี้ปลายทางผ่าน [`vercel.json`](vercel.json) → `outputDirectory: web/onboarding` และ [`.vercelignore`](.vercelignore) จำกัดให้ upload แค่โฟลเดอร์นั้น — **ถ้าย้าย/เปลี่ยนชื่อโฟลเดอร์ `web/onboarding` ต้องแก้ 2 ไฟล์นั้นด้วย ไม่งั้นเว็บ live พัง**
 

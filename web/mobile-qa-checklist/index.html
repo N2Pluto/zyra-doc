@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zyra Mobile QA Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one reading column — summary bar, prerequisites, then cards grouped by area; each card = steps + tickable checks */
+:root {
+  --bg: #f3f6f4;
+  --surface: #ffffff;
+  --ink: #17201c;
+  --muted: #5d6b64;
+  --line: #d9e2dd;
+  --accent: #1f9d63;
+  --accent-soft: #e2f4ea;
+  --fail: #c8372d;
+  --fail-soft: #fbe6e3;
+  --chip: #eef2f0;
+  --warn: #9a6400;
+  --warn-soft: #fbf0d9;
+  --font-body: "IBM Plex Sans Thai", "Noto Sans Thai", "Leelawadee UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121815; --surface: #1a221e; --ink: #e6eee9; --muted: #95a59c; --line: #2b3731;
+    --accent: #4fcf8d; --accent-soft: #1c3428; --fail: #f07a6f; --fail-soft: #3a1f1c;
+    --chip: #232d28; --warn: #e3b25a; --warn-soft: #382c14; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121815; --surface: #1a221e; --ink: #e6eee9; --muted: #95a59c; --line: #2b3731;
+  --accent: #4fcf8d; --accent-soft: #1c3428; --fail: #f07a6f; --fail-soft: #3a1f1c;
+  --chip: #232d28; --warn: #e3b25a; --warn-soft: #382c14; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: flex; flex-direction: column; gap: 22px; }
+h1 { font-size: 26px; line-height: 1.25; margin: 0; text-wrap: balance; font-weight: 700; }
+h2 { font-size: 18px; margin: 0; font-weight: 700; text-wrap: balance; }
+h3 { font-size: 16px; margin: 0; font-weight: 600; line-height: 1.4; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 65ch; }
+.sticky { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: baseline; font-variant-numeric: tabular-nums; }
+.stat b { font-size: 20px; }
+.stat span { color: var(--muted); font-size: 13px; margin-left: 4px; }
+.stat.pass b { color: var(--accent); }
+.stat.fail b { color: var(--fail); }
+.bar { height: 6px; border-radius: 3px; background: var(--chip); overflow: hidden; display: flex; }
+.bar i { display: block; height: 100%; }
+.bar .p { background: var(--accent); }
+.bar .f { background: var(--fail); }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.filters button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.status { font-size: 13px; color: var(--muted); }
+.status.warn { color: var(--warn); }
+.prereq { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.prereq ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.prereq code, .mono { font-family: var(--font-mono); font-size: 13px; }
+a { color: var(--accent); }
+section.group { display: flex; flex-direction: column; gap: 12px; }
+.group-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-top: 8px; }
+.group-head .count { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.card.all-pass { border-color: var(--accent); }
+.card.has-fail { border-color: var(--fail); }
+.card-head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.code { font-family: var(--font-mono); font-size: 12px; background: var(--chip); border-radius: 4px; padding: 1px 6px; color: var(--ink); text-decoration: none; }
+a.code:hover { text-decoration: underline; }
+.tag { font-size: 12px; border-radius: 4px; padding: 1px 6px; background: var(--warn-soft); color: var(--warn); }
+.card-head h3 { flex: 1 1 260px; min-width: 0; }
+.card-score { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.steps { color: var(--muted); font-size: 14px; }
+.steps b { color: var(--ink); font-weight: 600; }
+.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.check { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; padding: 10px 0; border-top: 1px solid var(--line); align-items: start; }
+.check:first-child { border-top: 0; }
+.check .text { min-width: 0; }
+.check.pass .text { color: var(--muted); }
+.check .who { grid-column: 2; font-size: 12px; color: var(--muted); }
+.check.fail .who { color: var(--fail); }
+.btns { display: flex; gap: 4px; padding-top: 1px; }
+.btns button { font: inherit; font-size: 12px; font-weight: 600; min-width: 58px; height: 30px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; }
+.btns button.on-pass { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.btns button.on-fail { background: var(--fail-soft); border-color: var(--fail); color: var(--fail); }
+.btns button:disabled { cursor: default; opacity: .6; }
+button:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.note { display: flex; flex-direction: column; gap: 4px; }
+.note label { font-size: 12px; color: var(--muted); }
+.note textarea { font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; min-height: 40px; resize: vertical; width: 100%; }
+.note .meta { font-size: 12px; color: var(--muted); }
+.pending { border-top: 1px solid var(--line); padding-top: 16px; color: var(--muted); font-size: 14px; display: flex; flex-direction: column; gap: 6px; }
+.hidden-by-filter { display: none; }
+@media (max-width: 520px) {
+  .check { grid-template-columns: 1fr; }
+  .check .who { grid-column: 1; }
+  .btns { order: 2; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+body { margin: 0; }
+.me { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
+.me input { font: inherit; font-size: 14px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; height: 32px; padding: 0 10px; width: 200px; max-width: 100%; }
+.me input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <h1>Zyra Mobile QA Checklist — แนวนอน + ทั้งสองแนว</h1>
+    <p class="lede">งานที่ merge เข้า <span class="mono">develop</span> แล้ว (progress รอบ 51–56) · แต่ละข้อกด <b>ผ่าน</b> หรือ <b>ไม่ผ่าน</b> ได้ ทุกคนเห็นผลเดียวกัน · ถ้าไม่ผ่านเขียนอาการ + เครื่องในช่องหมายเหตุของการ์ด</p>
+  </header>
+
+  <div class="sticky">
+    <div class="stats" id="stats"></div>
+    <div class="bar" id="bar" aria-hidden="true"></div>
+    <div class="filters" role="group" aria-label="กรอง">
+      <button type="button" data-filter="all" aria-pressed="true">ทั้งหมด</button>
+      <button type="button" data-filter="todo" aria-pressed="false">ยังไม่เทส</button>
+      <button type="button" data-filter="fail" aria-pressed="false">ไม่ผ่าน</button>
+      <button type="button" data-filter="apk" aria-pressed="false">ต้องใช้ APK ใหม่</button>
+    </div>
+    <div class="me">
+      <label for="me-name">ชื่อคุณ (แสดงข้างข้อที่ติ๊ก)</label>
+      <input id="me-name" type="text" maxlength="40" placeholder="เช่น Ten / QA-Nan" autocomplete="nickname">
+    </div>
+    <p class="status" id="status">กำลังโหลดผลการเทส…</p>
+  </div>
+
+  <div class="prereq">
+    <h2>ก่อนเริ่ม</h2>
+    <ul>
+      <li>เทสบน dev: <a href="https://app.dev.zyra.center" target="_blank" rel="noopener">app.dev.zyra.center</a> · ข้อที่ติดป้าย <span class="tag">รอบ 56</span> ให้เช็ค <a href="https://app.dev.zyra.center/api/version" target="_blank" rel="noopener"><span class="mono">/api/version</span></a> ว่า buildId หลัง 06:48 (14 ต.ค.) ก่อน</li>
+      <li>ข้อที่ติดป้าย <span class="tag">ต้องใช้ APK ใหม่</span> ลง APK จาก <a href="https://github.com/Maximumsoft-Co-LTD/zyra-mobile/actions/runs/38518898991" target="_blank" rel="noopener">zyra-mobile CI run 38518898991</a> (ถอนแอปเดิมก่อน)</li>
+      <li>ข้อที่ต้อง 2 คน ใช้มือถือ 2 เครื่อง หรือมือถือ + เว็บ · ระบุรุ่นเครื่อง / iOS / Android ในหมายเหตุเมื่อไม่ผ่าน</li>
+    </ul>
+  </div>
+
+  <main id="groups"></main>
+
+  <div class="pending">
+    <h2 style="font-size:16px">ยังไม่ได้ทำ — รอ PM / QA</h2>
+    <p>รอมติ PM: B-36 (login 2 เครื่อง) · B-45 (แพ็กภาษา) · Q-03 (PIP ลากได้)</p>
+    <p>รอข้อมูล QA: H-03 (Bubble เป็น Meeting) · H-06 (ปุ่มเดินไปหา จอไหน) · B-44 (z-index ขอภาพ) · B-13 (ยอด Spotlight ตัวไหน) · B-31 (Android build ไม่ผ่านแบบไหน) · B-40 (iPad เลื่อนไม่ได้ หน้าไหน)</p>
+  </div>
+</div>
+
+<script>
+const CU = "https://app.clickup.com/t/"
+const GROUPS = [
+  { id: "spot", title: "Spotlight (แนวนอน)", cards: [
+    { id: "b17", codes: [["B-17","14zd0zuc0du"],["B-14","14zd0zubyh0"],["B-18","14zd0zuc0dy"],["B-19","14zd0zuc0dz"]], title: "หน้า Spotlight กดได้ทุกปุ่ม",
+      steps: "มือถือ A แนวนอน เดินเข้าจุด Spotlight → กด Play → live · มือถือ B แนวนอนดู",
+      checks: [
+        "ฝั่ง presenter (A): cam · mic · share · ⋮ (Emoji / Chat / Setting / Invite) · Leave กดได้ทุกปุ่ม",
+        "ฝั่งคนดู (B): Chat · Speaker · Leave กดได้",
+        "กดชิป “N | M” → เปิด sheet On stage / Viewers (ไม่ใช่แผง Members ของแมพ)",
+        "รายชื่อคนดูเลื่อนได้",
+        "chevron → ย่อเป็น PIP · กด PIP แล้วกลับมาเต็มจอได้",
+      ] },
+    { id: "b20", codes: [["B-20","14zd0zuc0e0"]], title: "กลับเข้าห้องประชุมหลัง Spotlight จบ",
+      steps: "B อยู่ใน meeting (ขยายห้อง) แล้วกดดู Spotlight ของ A · A จบ Spotlight",
+      checks: ["ห้องประชุมของ B กลับมาขยายเอง", "ปุ่มใน meeting กดได้ทุกปุ่ม"] },
+    { id: "b15", codes: [["B-15","14zd0zubpa2"],["B-16","14zd0zubpa3"]], title: "เริ่ม Spotlight ด้วยปุ่ม Play",
+      steps: "เดินไปที่จุด Spotlight บนแมพ",
+      checks: ["ระหว่างเดินยังไม่ถึงจุด ปุ่ม Play ในแถบล่างเป็นสีจาง", "ยืนบนจุดแล้วกด Play → นับถอยหลัง → live"] },
+    { id: "b21", codes: [["B-21","14zd0zuc0e2"]], title: "Spotlight จบทันทีเมื่อคนพูดหลุด",
+      steps: "A live อยู่ B ดูอยู่ · ที่เครื่อง A ลองทีละแบบ: กด Leave / ปิด Wi-Fi + เน็ตมือถือ / ปัดแอปทิ้ง",
+      checks: [
+        "กด Leave → stage ของ B ปิดภายในไม่กี่วิ",
+        "ปิดเน็ต → stage ของ B ปิดภายในไม่กี่วิ (ไม่ค้าง 1–2 นาที)",
+        "ปัดแอปทิ้ง → stage ของ B ปิดภายในไม่กี่วิ",
+        "A กลับมาและยังยืนบนจุด → broadcast เริ่มใหม่เอง ไม่เด้งการ์ด “ใครกำลังพูด” (พฤติกรรมที่ตั้งใจ)",
+      ] },
+    { id: "b42", codes: [["B-42","14zd0zubpab"]], title: "ไอคอน megaphone = Announcement",
+      steps: "เข้า workspace แนวนอนด้วยบัญชี Owner / Admin และบัญชี Member",
+      checks: ["Owner / Admin กด megaphone → เปิดหน้า Announcement แบบเว็บ", "Member ไม่เห็นปุ่ม megaphone หรือกดแล้วไม่มีอะไร"] },
+  ] },
+  { id: "meet", title: "Meeting / Bubble", cards: [
+    { id: "h05", codes: [["H-05","14zd0zubp9c"]], title: "ได้ยินเสียงทันทีที่เดินเข้าห้องด้วย joystick",
+      steps: "เข้า workspace แล้วแตะแค่ joystick (ไม่แตะที่อื่น) เดินเข้าห้องที่มีคนคุยอยู่",
+      checks: ["ได้ยินเสียงคนในห้องเลย ไม่ต้องแตะจอก่อน"] },
+    { id: "h08", codes: [["H-08","14zd0zuc0db"]], title: "Join จากเมนู Meeting rooms",
+      steps: "เปิดเมนู Meeting rooms (ปุ่มวงกลมด้านขวา)",
+      checks: [
+        "ห้องเปิดที่มีคน → Join → เดินไปเก้าอี้ / ช่องว่างในห้อง (ไม่ไปกองกลางห้อง)",
+        "ห้องล็อก → Request to join → sheet ค้างจนกว่าจะกด (ไม่หายเอง)",
+        "ห้องที่เดินไปไม่ได้ → มี toast แจ้ง",
+      ] },
+    { id: "h09", codes: [["H-09","14zd0zuc0dd"]], title: "Join จากเมนู Member / โปรไฟล์",
+      steps: "มีอีกคนอยู่ใน meeting",
+      checks: [
+        "ใน drawer Members การ์ดของคนที่อยู่ใน meeting มีปุ่ม Join / Request to join และใช้ได้",
+        "แตะตัวละครคนที่อยู่ใน meeting → เมนูมี “Join {ห้อง}” / “Request to join {ห้อง}”",
+      ] },
+    { id: "h04", codes: [["H-04","14zd0zubp9a"]], title: "การ์ด Ask to Join ของ Bubble แทน minimap",
+      steps: "เดินเข้าใกล้ Bubble ที่มีคน (ประมาณ 3 ช่อง)",
+      checks: [
+        "การ์ด Bubble ขึ้นที่มุม minimap และ minimap หายไป",
+        "กด Ask to Join → ขึ้น “รอคำตอบ” อีกฝั่งได้รับคำขอ",
+        "ถูกปฏิเสธ → ขึ้นนับถอยหลัง cooldown เป็นวินาที",
+        "เดินออกห่าง → minimap กลับมา",
+        "ไม่มีปุ่มลอยบังแมพ / คนในวง",
+      ] },
+    { id: "b07", codes: [["B-07","14zd0zubpa4"]], title: "ปุ่ม Invite ใน Meeting (แนวนอน)",
+      steps: "อยู่ใน meeting แนวนอน",
+      checks: ["มีปุ่ม Invite → เห็นรายชื่อพร้อมสถานะ → เชิญแล้วอีกฝั่งได้รับ"] },
+    { id: "b04", codes: [["B-04","14zd0zubp9n"]], title: "Accept คำขอเข้าห้องล็อก",
+      steps: "A อยู่ในห้องล็อก · B ขอเข้า · A กด Accept จาก Participants sheet",
+      checks: ["B เข้าห้องได้จริง (ไม่เด้งออก / ไม่ค้างหน้าประตู)"] },
+    { id: "b01", codes: [["B-01","14zd0zubp8p"]], title: "Mute all เฉพาะ host / Owner / Admin",
+      steps: "meeting ที่มี 3 คน: host · Owner หรือ Admin · member ธรรมดา · ทดสอบทั้งเว็บและมือถือ",
+      checks: [
+        "member ธรรมดาไม่เห็นปุ่ม Mute all (เว็บและมือถือ)",
+        "host / Owner / Admin กด Mute all → คนอื่น mute หมด คนกดไม่ mute",
+      ] },
+    { id: "b12", codes: [["B-12","14zd0zuc0dj"]], title: "รูปโปรไฟล์ในแชท meeting / Spotlight (มือถือ + เว็บ)",
+      steps: "ส่งแชทใน meeting และใน Spotlight ทั้งจากมือถือและเว็บ",
+      checks: ["ข้อความแชทแสดงรูปโปรไฟล์ ไม่ใช่ครอปตัวละคร", "คนที่ไม่มีรูปโปรไฟล์ → ตัวอักษรย่อ"] },
+    { id: "h10", codes: [["H-10","14zd0zuc0dg"]], r56: true, title: "ห้องที่มีคนใช้อยู่แสดงต่างจากห้องว่าง",
+      steps: "เปิดเมนู Meeting rooms ตอนมีห้องที่มีคน และห้องว่าง",
+      checks: ["ห้องที่มีคน: ไอคอนสีเขียว + “N in meeting” สีเขียว · ห้องว่างเป็นสีเทา"] },
+    { id: "b47", codes: [["B-47","14zd0zuc0dq"]], r56: true, title: "ช่องค้นหาใน Private zones",
+      steps: "เปิดเมนู Private zones",
+      checks: [
+        "มีช่องค้นหา · พิมพ์ชื่อห้องแล้วเจอ",
+        "พิมพ์ชื่อเจ้าของโต๊ะแล้วเจอ",
+        "ไม่เจอ → ขึ้น “No private zones match your search.”",
+        "ปิดแล้วเปิดใหม่ → ช่องค้นหาว่าง",
+      ] },
+  ] },
+  { id: "map", title: "แมพ / การควบคุม (แนวนอน)", cards: [
+    { id: "h07", codes: [["H-07","14zd0zubpa9"]], r56: true, title: "เห็นขอบเขต joystick",
+      steps: "เข้าแมพที่พื้นสีเข้ม",
+      checks: ["ตอนไม่จับ เห็นวง joystick จาง ๆ ที่มุมซ้ายล่าง", "จับแล้วเต็มความสว่างเหมือนเดิม"] },
+    { id: "run", codes: [], r56: true, title: "joystick: ลากครึ่งทางเดิน · ลากสุดวิ่ง",
+      steps: "ใช้ joystick เดินบนแมพ · ให้อีกคนดูจากเว็บ",
+      checks: [
+        "ลากประมาณครึ่งทาง → เดิน",
+        "ลากสุดขอบ → วิ่ง (เร็วขึ้นชัด)",
+        "ถอยนิ้วกลับครึ่งทาง → กลับมาเดิน",
+        "ปล่อยนิ้ว → หยุด ไม่วิ่งค้าง",
+        "คนที่ดูจากเว็บเห็นเดิน / วิ่งลื่น ไม่กระโดด",
+      ] },
+    { id: "h01", codes: [["H-01","14zd0zubp8b"]], title: "เข้าแนวนอนครั้งแรก",
+      steps: "ลบแอป / ล้างข้อมูล แล้วเข้า workspace แนวนอนครั้งแรก",
+      checks: [
+        "อนุญาต permission แล้วแมพขึ้น",
+        "โหลดเกิน 30 วิ หรือพัง → มีปุ่ม Reconnect Now (ไม่ค้าง loading ตลอด)",
+        "ถือแนวตั้งในโหมด Spatial → ขึ้นหน้าให้หมุนจอ",
+      ] },
+    { id: "h02", codes: [["H-02","14zd0zubp96"]], title: "สลับ Spatial → Lite → Spatial",
+      steps: "สลับโหมดไปกลับ 3 รอบ",
+      checks: ["แมพขึ้นทุกรอบ"] },
+    { id: "b29", codes: [["B-29","14zd0zubp9g"]], r56: true, title: "สลับแอปแล้วกลับมาไม่จอขาว",
+      steps: "อยู่บนแมพ สลับไปแอปอื่น (กล้อง / เกม) 5 นาทีขึ้นไปแล้วกลับมา · ทำซ้ำตอนอยู่ใน meeting",
+      checks: [
+        "กลับมาแล้วแมพปกติ หรือขึ้น Reconnect Now — ไม่เป็นจอขาว",
+        "ถ้าเกิดตอนอยู่ใน meeting → Reconnect Now รอจนออกจากสายก่อน",
+      ] },
+  ] },
+  { id: "app", title: "ตัวแอป (มือถือ)", cards: [
+    { id: "b08", codes: [["B-08","14zd0zubzmd"]], r56: true, title: "Preview กล้องเต็มความกว้าง",
+      steps: "Profile → ตั้งค่า → Camera → Turn on preview",
+      checks: ["ภาพเต็มความกว้างจอ ทรงสูง ไม่ใช่แถบบาง ๆ", "แนวนอน กล่องไม่ล้นจอ"] },
+    { id: "b30", codes: [["B-30","14zd0zubp9h"]], apk: true, title: "ไม่มีจอดำตอนเปิดแอปใหม่",
+      steps: "ปัดแอปทิ้งแล้วเปิดใหม่",
+      checks: ["splash → แอป ไม่มีจอดำคั่น"] },
+    { id: "np", codes: [], title: "Dynamic Island ไม่ขึ้น “กำลังเล่นเพลง” (iOS)",
+      steps: "iPhone เข้า workspace แล้วอยู่นอก meeting สักพัก",
+      checks: ["ไม่มีการ์ด Now Playing / จุดส้มไมค์บน Dynamic Island"] },
+    { id: "b32", codes: [["B-32","14zd0zuc0d2"]], apk: true, title: "คุยนอกแอปได้แบบ Discord (ล็อกจอ / สลับแอป)",
+      steps: "2 คนอยู่ใน meeting · ทดสอบทั้ง Android (APK ใหม่) และ iOS",
+      checks: [
+        "Android: อยู่ใน meeting มี notification “Zyra — in a meeting”",
+        "Android: สลับแอป / ล็อกจอ 1–2 นาที ยังได้ยินและพูดได้ทั้งสองฝั่ง",
+        "iOS: สลับแอป / ล็อกจอ 1–2 นาที ยังได้ยินและพูดได้ทั้งสองฝั่ง",
+        "Android: ออกจาก meeting → notification หายภายใน ~2 วิ",
+        "นอก meeting ไม่มี notification (ตั้งใจ)",
+      ] },
+  ] },
+]
+
+// ---- state (from /api/state) ------------------------------------------------------
+const results = new Map()   // checkKey -> {state, by, at}
+const notes = new Map()     // cardId -> {text, by, at}
+let online = false, canWrite = true, filter = "all"
+const API = "/api/state"
+const POLL_MS = 10000
+const NAME_KEY = "mobile-qa-checklist:name"
+const nameInput = document.getElementById("me-name")
+try { nameInput.value = localStorage.getItem(NAME_KEY) || "" } catch {}
+nameInput.addEventListener("change", () => {
+  try { localStorage.setItem(NAME_KEY, nameInput.value.trim()) } catch {}
+})
+const myName = () => nameInput.value.trim()
+
+const keyOf = (card, i) => `${card.id}-${i + 1}`
+const allChecks = () => GROUPS.flatMap(g => g.cards.flatMap(c => c.checks.map((_, i) => ({ card: c, key: keyOf(c, i) }))))
+
+const fmtTime = iso => {
+  try { return new Date(iso).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) } catch { return "" }
+}
+const nameOf = by => by || "ไม่ระบุชื่อ"
+
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag)
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === "class") n.className = v
+    else if (k === "text") n.textContent = v
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v)
+    else if (v !== false && v != null) n.setAttribute(k, v === true ? "" : v)
+  }
+  for (const k of kids) if (k != null) n.append(k)
+  return n
+}
+
+// ---- render ---------------------------------------------------------------
+function render() {
+  const root = document.getElementById("groups")
+  root.replaceChildren()
+  for (const g of GROUPS) {
+    const sec = el("section", { class: "group", id: g.id })
+    const visible = []
+    for (const c of g.cards) {
+      const keys = c.checks.map((_, i) => keyOf(c, i))
+      const st = keys.map(k => results.get(k)?.state)
+      const nPass = st.filter(s => s === "pass").length
+      const nFail = st.filter(s => s === "fail").length
+      const show = filter === "all" || (filter === "todo" && st.some(s => !s)) || (filter === "fail" && nFail > 0) || (filter === "apk" && c.apk)
+      const head = el("div", { class: "card-head" })
+      for (const [code, tid] of c.codes) head.append(el("a", { class: "code", href: CU + tid, target: "_blank", rel: "noopener", text: code }))
+      if (!c.codes.length) head.append(el("span", { class: "code", text: "ใหม่" }))
+      head.append(el("h3", { text: c.title }))
+      if (c.r56) head.append(el("span", { class: "tag", text: "รอบ 56" }))
+      if (c.apk) head.append(el("span", { class: "tag", text: "ต้องใช้ APK ใหม่" }))
+      head.append(el("span", { class: "card-score", text: `${nPass}/${keys.length} ผ่าน` + (nFail ? ` · ${nFail} ไม่ผ่าน` : "") }))
+
+      const list = el("ul", { class: "checks" })
+      c.checks.forEach((text, i) => {
+        const key = keyOf(c, i)
+        const r = results.get(key)
+        const li = el("li", { class: "check" + (r?.state ? " " + r.state : "") })
+        const mk = (state, label) => el("button", {
+          type: "button", class: r?.state === state ? "on-" + state : "",
+          "aria-pressed": r?.state === state ? "true" : "false",
+          disabled: !online || !canWrite,
+          onclick: () => mark(key, r?.state === state ? null : state),
+        }, label)
+        li.append(el("div", { class: "btns" }, mk("pass", "ผ่าน"), mk("fail", "ไม่ผ่าน")))
+        li.append(el("div", { class: "text", text }))
+        if (r?.state) li.append(el("div", { class: "who", text: `${r.state === "pass" ? "ผ่าน" : "ไม่ผ่าน"} · ${nameOf(r.by)} · ${fmtTime(r.at)}` }))
+        list.append(li)
+      })
+
+      const n = notes.get(c.id)
+      const ta = el("textarea", { id: "note-" + c.id, placeholder: "อาการที่เจอ · รุ่นเครื่อง / OS · เวลา", disabled: !online || !canWrite })
+      ta.value = n?.text || ""
+      ta.addEventListener("change", () => saveNote(c.id, ta.value))
+      const note = el("div", { class: "note" },
+        el("label", { for: "note-" + c.id, text: "หมายเหตุ" }), ta,
+        n?.text ? el("div", { class: "meta", text: `แก้ล่าสุด ${nameOf(n.by)} · ${fmtTime(n.at)}` }) : null)
+
+      const card = el("article", { class: "card" + (nFail ? " has-fail" : nPass === keys.length ? " all-pass" : "") + (show ? "" : " hidden-by-filter") },
+        head, el("p", { class: "steps" }, el("b", { text: "วิธีเทส: " }), c.steps), list, note)
+      if (show) visible.push(card)
+      sec.append(card)
+    }
+    const total = g.cards.reduce((a, c) => a + c.checks.length, 0)
+    const done = g.cards.reduce((a, c) => a + c.checks.filter((_, i) => results.get(keyOf(c, i))?.state === "pass").length, 0)
+    sec.prepend(el("div", { class: "group-head" }, el("h2", { text: g.title }), el("span", { class: "count", text: `${done}/${total} ผ่าน` })))
+    if (!visible.length) sec.classList.add("hidden-by-filter")
+    root.append(sec)
+  }
+  renderStats()
+}
+
+function renderStats() {
+  const all = allChecks()
+  const pass = all.filter(c => results.get(c.key)?.state === "pass").length
+  const fail = all.filter(c => results.get(c.key)?.state === "fail").length
+  const todo = all.length - pass - fail
+  const stats = document.getElementById("stats")
+  stats.replaceChildren(
+    el("span", { class: "stat pass" }, el("b", { text: String(pass) }), el("span", { text: "ผ่าน" })),
+    el("span", { class: "stat fail" }, el("b", { text: String(fail) }), el("span", { text: "ไม่ผ่าน" })),
+    el("span", { class: "stat" }, el("b", { text: String(todo) }), el("span", { text: `ยังไม่เทส จาก ${all.length} ข้อ` })),
+  )
+  const bar = document.getElementById("bar")
+  bar.replaceChildren(
+    el("i", { class: "p", style: `width:${(pass / all.length) * 100}%` }),
+    el("i", { class: "f", style: `width:${(fail / all.length) * 100}%` }),
+  )
+}
+
+// ---- writes ---------------------------------------------------------------
+const setStatus = (text, warn) => {
+  const s = document.getElementById("status")
+  s.textContent = text
+  s.classList.toggle("warn", !!warn)
+}
+const busy = new Set()
+async function post(body) {
+  const res = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...body, by: myName() }),
+  })
+  if (!res.ok) throw new Error(String(res.status))
+}
+async function mark(key, state) {
+  if (!online || busy.has(key)) return
+  if (!myName()) { setStatus("ใส่ชื่อคุณก่อนติ๊ก — ทีมจะได้รู้ว่าใครเทส", true); nameInput.focus(); return }
+  busy.add(key)
+  const prev = results.get(key)
+  // Show it right away; the next poll confirms (or puts back) the shared state.
+  if (state) results.set(key, { state, by: myName(), at: new Date().toISOString() })
+  else results.delete(key)
+  render()
+  try {
+    await post({ type: "check", key, state })
+  } catch {
+    if (prev) results.set(key, prev); else results.delete(key)
+    render()
+    setStatus("บันทึกไม่สำเร็จ ลองกดใหม่อีกครั้ง", true)
+  } finally { busy.delete(key) }
+}
+async function saveNote(cardId, text) {
+  if (!online) return
+  const prev = notes.get(cardId)?.text || ""
+  if (text.trim() === prev.trim()) return
+  if (!myName()) { setStatus("ใส่ชื่อคุณก่อนเขียนหมายเหตุ", true); nameInput.focus(); return }
+  try {
+    await post({ type: "note", key: cardId, text })
+    await load()
+  } catch {
+    setStatus("บันทึกหมายเหตุไม่สำเร็จ ลองใหม่อีกครั้ง", true)
+  }
+}
+
+// ---- filters --------------------------------------------------------------
+document.querySelectorAll(".filters button").forEach(b => b.addEventListener("click", () => {
+  filter = b.dataset.filter
+  document.querySelectorAll(".filters button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"))
+  render()
+}))
+
+// ---- boot -----------------------------------------------------------------
+async function load() {
+  const res = await fetch(API, { cache: "no-store" })
+  if (res.status === 503) throw Object.assign(new Error("not connected"), { code: "storage" })
+  if (!res.ok) throw new Error(String(res.status))
+  const data = await res.json()
+  const typing = document.activeElement && document.activeElement.id?.startsWith("note-")
+    ? { id: document.activeElement.id, value: document.activeElement.value, pos: document.activeElement.selectionStart }
+    : null
+  results.clear()
+  for (const [k, v] of Object.entries(data.checks || {})) if (v && (v.state === "pass" || v.state === "fail")) results.set(k, v)
+  notes.clear()
+  for (const [k, v] of Object.entries(data.notes || {})) if (v && typeof v.text === "string") notes.set(k, v)
+  render()
+  // Keep a note someone is typing right now.
+  if (typing) { const t = document.getElementById(typing.id); if (t) { t.value = typing.value; t.focus(); try { t.setSelectionRange(typing.pos, typing.pos) } catch {} } }
+}
+async function poll() {
+  try {
+    await load()
+    if (!online) { online = true; render() }
+    setStatus("ผลการเทสบันทึกอัตโนมัติ ทุกคนเห็นตรงกัน (อัปเดตทุก 10 วิ)")
+  } catch (e) {
+    if (online) { online = false; render() }
+    setStatus(e.code === "storage" ? "ยังไม่ได้ต่อฐานข้อมูล — ดูได้อย่างเดียว" : "โหลดผลการเทสไม่ได้ จะลองใหม่อัตโนมัติ", true)
+  }
+}
+render()
+poll()
+setInterval(() => { if (document.visibilityState === "visible") poll() }, POLL_MS)
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") poll() })
+</script>
+</body>
+</html>
