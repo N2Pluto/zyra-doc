@@ -3,6 +3,24 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-14 (รอบ 55) · Ten + Claude — B-12 desktop · B-01 / B-21 ฝั่ง server · B-32 Android foreground service · CI lint develop · ClickUp assignee 36 ใบ
+
+- **ทำอะไร (Ten เลือกทำทั้ง 4 ข้อ):**
+  - **B-12 desktop** — [zyra-app#552](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/552): แชท meeting (`ZoneEnterPanel` prop ใหม่ `chatPhotoFor`) และแชท Spotlight บนเว็บใช้รูปโปรไฟล์จาก member list แทนครอป sprite ตัวละคร (กลไกเดียวกับมือถือ #547) · ไม่มีรูป → ตัวอักษรย่อ
+  - **B-01 server** — [zyra-ws#78](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/78): `ws:audio:muteAll` ใช้ gate เดียวกับ `ws:meeting:kick` (workspace owner / admin / meeting owner = คนแรกที่เข้าห้อง) · คนอื่นได้ `error` ไม่มีใครถูก mute
+  - **B-21 server** — zyra-ws#78 เดียวกัน (มติ Ten: จบทันที): คนพูดหลุด / connection ถูกแทนที่ / แอปเข้า presence grace → `removeFromSpotlight` ทันที (`stopped`) · **ลบกลไก EC-04** (ค้าง `paused` 2 นาที + resume) ทั้งหมด: suspend / resume / sweep, `spotlightGrace`, `SpotlightSpeaker.Disconnected`, event `paused` / `resumed` · คนพูดที่กลับมาแล้วยังยืนบน marker → client re-assert เปิด **session ใหม่** (ไม่เด้งการ์ด who-is-speaking)
+  - **B-32 Android ล็อกจอระหว่างประชุม (task 1.17)** — [zyra-mobile#10](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/10): `MeetingForegroundService` (Java, type `microphone|mediaPlayback` · ไม่มีสิทธิ์ไมค์ → `mediaPlayback` อย่างเดียว) + notification เงียบ "Zyra — in a meeting" (EN / TH) แตะแล้วเปิดแอป + plugin `MeetingService` + permission `FOREGROUND_SERVICE*` · [zyra-app#553](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/553): `lib/native/foreground-service.ts` เปิดตอน media room แรกต่อติด ปิดพร้อม call-audio hold (หลังห้องสุดท้าย 2 วิ) · iOS / เว็บไม่เปลี่ยน
+  - **CI lint ของ develop แดงตั้งแต่ #551** (`react-hooks/refs` — hero อ่าน `wsClientRef.current` ตอน render ส่ง cooldown ให้การ์ด Bubble) → [zyra-app#554](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/554) ส่ง `getCooldownMs` แบบ `AskToJoinButton` · **eslint ในเครื่องไม่จับ error นี้ — ต้องรอ CI `lint-and-build` เขียวก่อน merge** (#552 / #553 ถูก merge ตอน check นี้แดงอยู่ แต่ไม่ใช่ต้นเหตุ)
+  - **ClickUp:** ใส่ assignee Ponlawat Lueakaew ให้การ์ดสายแนวนอน 21 + ทั้งสองแนว 15 = **36 ใบ** ตามที่ Ten สั่ง (ก่อนหน้าไม่มี assignee เลย · ไม่แตะ status) · สายแนวตั้ง 32 ใบเป็นของ dev อีกคน
+- **PR:** zyra-app #552 #553 #554 · zyra-ws #78 · zyra-mobile #10 → **merged เข้า `develop` ทั้งหมด** ตามที่ Ten สั่ง
+- **verify ถึงไหน:**
+  - **build / test:** zyra-app `vitest run` 341 ไฟล์ / 4,217 case ผ่าน · `tsc` ไม่มี error ใหม่ (7 เดิม) · CI `lint-and-build` เขียวหลัง #554 · zyra-ws `go vet` + `go test -race ./...` ผ่าน (test ใหม่: mute-all gate, speaker หลุด 4 แบบ, Lite) · zyra-mobile CI "Android APK" success (run 38518898991) — **เครื่องนี้ไม่มี Android SDK ตรวจได้แค่ว่า compile ผ่าน**
+  - **deploy dev:** zyra-app CI ของ `b65f3634` success · `app.dev.zyra.center/api/version` buildId `06:01:00` · zyra-ws `ws.dev.zyra.center/healthz` → `dev-6793a95`
+  - **บนเครื่องจริง: ยังไม่ได้เทส ทั้ง 4 ข้อ**
+- **ให้ Ten / QA เทสบน dev:** (1) B-12 เว็บ: แชท meeting / Spotlight เห็นรูปโปรไฟล์ (2) B-01: คนที่ไม่ใช่ host กด Mute all (ถ้าเห็นปุ่ม) → ไม่มีใครถูก mute (3) B-21: คนพูด Spotlight ปิดเน็ต / ปิดแอป → stage ของคนดูปิดทันที (4) B-32: **ลง APK ใหม่** → เข้าประชุม → ล็อกจอ 1–2 นาที → ยังได้ยินกันทั้งสองฝั่ง · notification ขึ้นระหว่างประชุม หายหลังออก
+- **ต่อจากนี้:** ส่ง store ต้องกรอก foreground service declaration (microphone / mediaPlayback) ใน Play Console · description การ์ด completed หลายใบ (B-14, B-17–B-20, H-05, H-08) ยังเขียน "ยังไม่มีใครแก้" จาก 10-12 — แก้ตามที่ Ten สั่ง
+- **ติดอะไร:** การ์ดสายนี้ที่เหลือรอ PM / design (B-08, B-36, B-45, Q-03, B-47, H-07, H-10) และรอข้อมูล QA (H-03, H-06, B-44, B-13, B-29, B-31, B-40)
+
 ## 2026-10-14 (รอบ 54) · Ten + Claude — การ์ด Bubble แทน minimap · Dynamic Island "Now Playing"
 
 - **ทำอะไร (feedback ของ Ten จากการเทสบน dev):**
