@@ -1,7 +1,36 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
-> **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** rif + Claude
+
+## 2026-10-14 (รอบ 63) · rif + Claude — สายแนวตั้ง: กลุ่ม A ครบ 13 การ์ด (10 PR merged) · รีวิวหลัง merge · B-10
+
+- **ทำอะไร:**
+  - ทำกลุ่ม A ของ [portrait assignment](../../issues/mobile-qa-portrait-assignment-2026-10-14.md) ครบ 13 การ์ด · เปิดอ่าน description + comment ของการ์ด ClickUp ทุกใบก่อนแก้ · แต่ละข้อแตก branch จาก `develop`
+  - PR [#555](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/555)–[#564](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/564) → squash merge เข้า `develop` (`6849423`) · deploy dev สำเร็จ (deploy ของ commit กลาง ๆ ถูก cancel เพราะ merge ติดกัน — รอบสุดท้ายรวมครบ)
+
+    | PR | การ์ด |
+    |---|---|
+    | #555 | B-48 Copy / Share |
+    | #556 | B-39 Manage members (ทาง Workspace is full) |
+    | #557 | B-43 แชร์ Meeting เข้าแชท |
+    | #558 | Q-02 · B-11 · V-11 (client) heartbeat / tile คนที่ออกแล้ว |
+    | #559 | B-03 · V-12 สลับห้อง / Leave |
+    | #560 | B-28 keepalive ping + Retry |
+    | #561 | B-23 (C, D) สถานะ / สมาชิกใหม่ |
+    | #562 | B-24 (client) ผลของ Wave |
+    | #563 | V-05 Spotlight ชั้นที่ server เลือก |
+    | #564 | V-07 ป้าย Owner / Admin |
+
+  - CI: lint-and-build ของ #556 / #564 fail เพราะโหลด Google Fonts (Inter) ไม่ได้ตอน build — re-run แล้วผ่าน ไม่ได้แก้โค้ด
+  - **รีวิวหลัง merge** (อ่านโค้ดอย่างเดียว เทียบ zyra-ws / zyra-api) → เจอบัคระดับกลาง 5 ข้อ (V-12 ×2, B-24, B-23, V-05) + B-39 แก้ผิดเป้า — รายละเอียด: [portrait assignment › ความคืบหน้า](../../issues/mobile-qa-portrait-assignment-2026-10-14.md#ความคืบหน้า-2026-10-14) · **ยังไม่แก้ รอสั่ง**
+  - **B-10** (หลุดจาก meeting หลัง reload แต่ยังค้างในห้อง): branch `fix/lite-leave-stale-section` (`159c562`) — Lite เริ่ม session ใหม่แล้ว leave ห้องที่ server ยังมีเรา Online ให้ครั้งเดียว · มติ rif: ออกอัตโนมัติ ไม่ถาม Rejoin · **ยังไม่ push / ยังไม่เปิด PR**
+- **verify ถึงไหน:** ก่อน merge — merge รวม 10 branch บน `develop` ไม่ชน · `vitest run` ทั้ง repo 348 ไฟล์ / 4,289 case ผ่าน · CI ทุก PR เขียว · `tsc --noEmit` ไม่มี error ใหม่ (7 เดิม) · B-10: test Lite 34 ไฟล์ / 310 case ผ่าน · **ยังไม่ได้เทสบนเครื่องจริงทั้งหมด**
+- **ต่อจากนี้:** แก้บัค 1–4 จากรีวิว (ขอบเขตเล็ก) · ตัดสินพฤติกรรมข้อ 5 (V-05 ห้องประชุมคนละชั้นกับ Spotlight) · ถาม QA ว่าเจอ B-39 จากทางไหน · เปิด PR B-10 · QA เทสกลุ่ม A บน dev
+- **ติดอะไร:**
+  - B-02 (จอขาว) / B-35 (Something went wrong) — รอ QA เทสซ้ำ / stack trace จาก Sentry
+  - ส่วน server: B-24 (away กัน wave ไหม — รอ PM), V-11 (zyra-ws แจ้ง zyra-api `LeaveZone` หลัง grace) — ยังไม่มีคนรับ
+  - zyra-doc PR [#61](https://github.com/N2Pluto/zyra-doc/pull/61) (บันทึกเดิมเป็น "รอบ 55") ซ้ำกับรอบนี้ — ปิดได้
 
 ## 2026-10-14 (รอบ 62) · Ten + Claude — กันหน้าเว็บโผล่ก่อนหน้ามือถือ · กดแล้วยุบ + แท็บ fade · แผน B-45 v2 · เช็กลิสต์รอบ 57–61
 
