@@ -3,6 +3,25 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-14 (รอบ 58) · Ten + Claude — มติ Q-03 / H-03 / B-36 · PIP ลากได้ · joystick iPad · PIP แสดงจอที่แชร์ · หน้า Vercel อ่านอย่างเดียว
+
+- **มติ Ten (ถามก่อนเริ่ม):** B-36 คงเดิม login ได้หลายเครื่อง · Q-03 PIP ลากได้แล้วดูดติดมุม (แทนมติเดิม HP-04 ข้อ 9) · H-03 กด PIP ของ Bubble เปิดหน้า Meeting เต็มจอได้ (ไม่มีแชท) · หน้า Vercel ไม่ต่อ Upstash → อ่านอย่างเดียว · ระหว่างทาง Ten ขอเพิ่ม: joystick ใหญ่ขึ้นบน iPad / จอใหญ่ และ PIP แนวตั้งแสดงจอที่แชร์
+- **ทำอะไร:**
+  - **Q-03 PIP ลากได้** — [zyra-app#570](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/570): hook ใหม่ `lite/use-pip-drag.ts` ใช้ร่วม `LiteMeetingPip` (meeting / Spotlight PIP ทั้ง Lite และ Spatial) + `LiteSplitPip` · แตะ (ขยับ < 8px) = เปิด meeting เหมือนเดิม · ลาก = ตามนิ้ว ปล่อยแล้วดูดมุมที่ใกล้สุด จำมุมใน localStorage แยกแนว (`zyra_pip_corner:lite|spatial`) · แนวตั้ง 4 มุม (ล่างเหนือ bottom nav · บนใต้ช่องค้นหา) · แนวนอน ขวาล่าง (ตำแหน่ง Figma) + ซ้ายบน เท่านั้น (ขวาบน = ปุ่ม HUD · ซ้ายล่าง = joystick) · คลิกที่จบการลากถูกกลืน
+  - **joystick บน iPad / จอใหญ่** — [#571](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/571): `VOJoystick` prop `scale` · hero ใช้ 1.5× เมื่อ `tabletScale` (ด้านสั้นของจอ ≥ 744px — เงื่อนไขเดียวกับปุ่ม HUD 44px) วง 128 → 192px · dead zone / ระยะ knob / จุดเริ่มวิ่งขยายตาม · มือถือเหมือนเดิม
+  - **PIP แนวตั้งแสดงจอที่แชร์** — [#572](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/572): `LiteMeetingPip` prop `screen` · อยู่ใน meeting Lite แล้วคนอื่นแชร์จอ → ย่อเป็น PIP เห็นจอที่แชร์ + ป้ายชื่อไอคอนจอ · เราแชร์เอง → แสดงคนพูดเหมือนเดิม · เฉพาะแนวตั้งตามที่สั่ง · rebase ทับ #570 (ไฟล์เดียวกัน)
+  - **H-03:** ไม่ต้องแก้โค้ด — develop ทำได้อยู่แล้ว: Bubble บนมือถือขึ้นเป็น PIP แตะแล้วเปิดหน้า meeting เต็ม (ไม่มีแชท) มี test อยู่แล้ว (`spatial-phone-meeting.test.tsx` "starts as the PIP, tap opens the page") · ระหว่างอยู่ใน Bubble minimap และการ์ด Bubble ซ่อน (`phoneMeetingUp`)
+  - **B-36:** ใส่ comment มติในการ์ด (คงเดิม by design) — ไม่แตะ status
+  - **หน้าเช็กลิสต์ Vercel:** เป็นอ่านอย่างเดียว — เอาปุ่มติ๊ก / ช่องชื่อ / หมายเหตุออก ลบ `api/state.js` · ชี้ไปติ๊กที่ claude.ai หรือ checklist ในการ์ด ClickUp ([zyra-doc#67](https://github.com/N2Pluto/zyra-doc/pull/67)) · **deploy ไม่ได้** — Vercel hobby ติด limit 100 deploy/วันอีก หน้า live ยังเป็นเวอร์ชันเก่า
+- **PR:** zyra-app #570 #571 #572 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI `lint-and-build` เขียวทุก PR ก่อน merge · #572 เขียวอีกรอบหลัง rebase)
+- **verify ถึงไหน:**
+  - **build / test:** develop หลัง merge (`c2b1e301`) `vitest run` 352 ไฟล์ / 4,315 case ผ่าน · `tsc` ไม่มี error ใหม่ (7 เดิม) · test ใหม่: `lite-meeting-pip-drag.test.tsx` (10) · `lite-meeting-pip-screen.test.tsx` (3) · `vo-joystick.test.tsx` เคส scale
+  - **เบราว์เซอร์:** `/dev/mobile-preview?screen=split-pip` ลาก PIP ไปซ้ายบน → ติดมุม `tl` และบันทึก · joystick ขนาด iPad ดูใน fixture ไม่ได้ (fixture ล็อก 844×390 และวาง joystick เอง)
+  - **deploy dev:** CI ของ `c2b1e301` ยัง pending ตอนเขียน — เช็ค `app.dev.zyra.center/api/version` อีกครั้ง
+  - **บนเครื่องจริง: ยังไม่ได้เทส**
+- **ให้ Ten / QA เทสบน dev:** (1) ลาก PIP meeting / Spotlight / split PIP ไปมุมต่าง ๆ ทั้งแนวตั้งและแนวนอน → ดูดติดมุม ปิดเปิดใหม่ยังอยู่มุมเดิม · แตะเบา ๆ ยังเปิด meeting (2) iPad แนวนอน → joystick ใหญ่ขึ้น ลากครึ่งทางเดิน สุดวิ่ง (3) แนวตั้งใน meeting ให้อีกคนแชร์จอ แล้วย่อ → PIP แสดงจอที่แชร์
+- **ติดอะไร:** deploy หน้าเช็กลิสต์ Vercel (รอ limit) — `cd zyra-doc/web/mobile-qa-checklist && npx vercel@latest deploy --prod` · การ์ดรอข้อมูล QA (H-06, B-44, B-13, B-31, B-40) · B-45 รอ PM · status ของ Q-03 / H-03 / B-36 ยังไม่ได้เปลี่ยน
+
 ## 2026-10-14 (รอบ 57) · Ten + Claude — เช็กลิสต์เทสให้ทีม · description การ์ด ClickUp 26 ใบ · กฎแปลไทย (rule 19)
 
 - **ทำอะไร:**
