@@ -1,7 +1,42 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** **ขึ้น dev + TestFlight แล้ว (2026-10-08)** — app "Zyra World Dev" (`co.zyraworld.app.develop`) build 1–3 บน TestFlight กลุ่ม Zyra Team 5 คน · login Apple/Google ในแอปแก้แล้ว (entitlement + `APPLE_CLIENT_IDS` dev v9 + iOS OAuth client) **รอ Ten ลอง build 2+** · asset store A1+A2 merge แล้ว เปิดบน dev (`NEXT_PUBLIC_MOBILE_ASSET_STORE=true`) **ยังไม่ได้วัด Before/After** ([asset-store.md](asset-store.md)) · ถัดไป B0/B1 (วัด + observability) · Android: Google native ยังไม่มี OAuth client (SHA-1) · doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48)
-> **อัปเดตล่าสุด:** 2026-10-09 (รอบ 57 — ลบบัญชีตัวเอง SC-ACC-DEL-01, [ux-ui-plan §20.7](ux-ui-plan.md)) · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **อัปเดตล่าสุด:** 2026-10-14 (รอบ 58 — issue QA มือถือ แบ่งแนวตั้ง / แนวนอน · รอบ 57 ลบบัญชีตัวเอง SC-ACC-DEL-01) · **คนล่าสุด:** Ten (ten_dev) + Claude
+
+## 2026-10-12 → 10-14 (รอบ 58) · Ten + Claude — issue QA มือถือ: แบ่งแนวตั้ง / แนวนอน · เขียนรายละเอียดลง ClickUp · แก้สายแนวนอน 7 PR
+
+- **ทำอะไร:**
+  - รวม issue / feedback ของ QA ใต้ ClickUp [86d4bfpym](https://app.clickup.com/t/86d4bfpym) (41 ใบ) + sticky จาก FigJam Zyra-refine › Page 1 (33 ใบ) → จัดแนวตั้ง (Lite) / แนวนอน (Spatial) / ทั้งสองแนว → [issues/mobile-qa-issues-by-orientation-2026-10-12.md](../../issues/mobile-qa-issues-by-orientation-2026-10-12.md)
+  - ไล่โค้ด `origin/develop` ทุกข้อ (step / actual / expected อ้าง spec / root cause `path:line` / วิธีแก้ / ความมั่นใจ) → **เขียน description ลงการ์ด ClickUp เดิม 41 ใบ + เปิดการ์ดใหม่ 27 ใบ** จาก sticky (Ten อนุญาตให้ยกเว้นกฎ ClickUp read-only รอบนี้ · ไม่แตะ status · description เดิมของ QA เก็บไว้ใต้หัว "จาก QA (เดิม)" · ตรวจกลับ 68/68 ใบ)
+  - แบ่งงานเป็น 3 สาย → [issues/mobile-qa-work-split-by-orientation-2026-10-12.md](../../issues/mobile-qa-work-split-by-orientation-2026-10-12.md) · สายแนวตั้งส่งต่อให้ dev อีกคน → [issues/mobile-qa-portrait-assignment-2026-10-14.md](../../issues/mobile-qa-portrait-assignment-2026-10-14.md)
+  - **Ten + Claude ทำสายแนวนอน** (แผน: `.claude/plans/issue-compressed-lovelace.md`) — ทำใน worktree แยก `.wt/zyra-app-spatial` (ไม่แตะ checkout หลักของ zyra-app)
+- **PR (zyra-app → `develop`, ยังไม่ merge — รอ review):**
+
+  | PR | แก้อะไร | การ์ด |
+  |---|---|---|
+  | [#538](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/538) | หน้า Spotlight บนแมพอยู่ใต้ HUD `pointer-events-none` → ห่อ `VOMobileSpotlight` ด้วย `pointer-events-auto` · meeting กลับมาขยายหลัง Spotlight จบ | B-14 B-17 B-18 B-19 B-20 |
+  | [#539](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/539) | ปลดล็อกเสียงด้วย `pointerdown` / `touchend` ด้วย (joystick / canvas `preventDefault` ไม่เกิด click) — `lib/audio-unlock.ts` | H-05 |
+  | [#540](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/540) | มือถือ: hover ของ canvas ไม่ปิด sheet ขอเข้าห้องล็อก · Join เดินไปเก้าอี้ / จุดว่าง (`pickMeetingEntryTile`) + toast ถ้าไปไม่ได้ | H-08 |
+  | [#541](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/541) | การ์ด meeting ใน Members drawer + โปรไฟล์คนอื่น → Join / Request to join (แบบ Lite) · Ask to join ของ Bubble แสดงตลอดบนมือถือ | H-09 H-04 |
+  | [#542](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/542) | Invite ใน meeting แนวนอน (แยก `buildLitePeople` ใช้ร่วมกับ Lite Home) | B-07 |
+  | [#543](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/543) | lock แนวนอนไม่สำเร็จ → กลับมาแสดง Rotate screen + lock ใหม่ตอนหมุน · Lite `changeMode` ตั้ง `leavingRef` · `destroySession` รอ presence leave (สูงสุด 3 วิ) | H-01 (บางส่วน) H-02 |
+  | [#544](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/544) | engine เริ่มไม่ได้ / ค้าง 30 วิ → ปุ่ม Reconnect Now บน overlay · scene ที่ถูก destroy ระหว่าง init หยุด + คืน WebGL · มือถือขอ mic / cam / location หลังแมพขึ้น | H-01 (ที่เหลือ) |
+
+  - UI ใหม่ใน #541 / #542 ใช้ดีไซน์ Lite ที่มีอยู่ (Ten เลือก — ไม่ได้ดึง Figma ใหม่)
+- **verify ถึงไหน:**
+  - **build / test:** ทุก PR — `vitest run` ผ่านทั้งหมด · `tsc --noEmit` ไม่มี error ใหม่ (7 error เดิมใน `__tests__/pixi-game-scene` / `environment-weather-fx` / `pet-creation-wizard`) · eslint ไม่มี warning ใหม่ (hero / scene เทียบกับ develop) · test ใหม่ของ #538 / #543 / #544 fail บน develop และผ่านหลังแก้ · **รวม 7 PR merge กันได้ไม่ชน** — tree ที่รวมแล้ว: 338 ไฟล์ / 4,196 case ผ่าน
+  - **เบราว์เซอร์:** เฉพาะ #538 — `/dev/mobile-preview` 844×390 บังคับ parent เป็น `pointer-events: none` แบบ HUD → `elementFromPoint` ทุกปุ่ม viewer (5) + presenter (6) = HIT ทั้งหมด · ถอด fix = MISS ทั้งหมด
+  - **บนเครื่องจริง: ยังไม่ได้เทสเลย** ทุก PR · root cause ของ H-01 / H-02 / H-05 มาจากการอ่านโค้ด ยังไม่ได้ยืนยันบนเครื่อง
+  - **Before/After (rule 18): ยังไม่ได้วัด** — ยังไม่ merge / deploy · H-01 / H-02 ไม่มี metric ใน Grafana ที่ตรงกับอาการ
+- **ต่อจากนี้:**
+  - review + merge #538–#544 เข้า `develop` (CodeRabbit รีวิวได้แค่ #538 ที่เหลือโดน rate limit — ต้องคนรีวิว) → QA เทสบนแอป dev แนวนอนตามขั้นตอนใน PR
+  - merge **#542** (`lib/lite-home.ts`) และ **#543** (`lite-shell.tsx`, `vo-session-store.ts`) ก่อนให้ dev สายแนวตั้งเริ่ม ก้อน A1 / V-07 — กัน conflict
+  - QA เทสซ้ำการ์ดที่แก้แล้วบน develop (#512 #519 #525 #532 #535 #536 #537 · zyra-ws #75–#77) — ยังไม่ขึ้น uat
+- **ติดอะไร:**
+  - **รอ PM / Ten ตัดสิน:** B-15/B-16 (ปุ่ม Play Spotlight — spec §18.7 #4 ขัด §18.9) · B-42 (megaphone ขัด spec) · H-07 (ขอบเขต joystick) · H-10 (ต้องมี design) · V-13 / V-02 / V-03 (Lite บนแมพ เดินหรือวาร์ป — TD §16.2 ขัดกับโค้ด) · B-24 (away อัตโนมัติกัน Wave ไหม) · B-36 · Q-03 (PIP ลากได้ ขัดมติ HP-04 ข้อ 9)
+  - **รอข้อมูล QA:** H-03 · B-44 · H-06 (มีปุ่ม Go to แล้ว) · B-13 · B-25 · B-29 · B-31 · B-35 (ต้อง stack trace จาก Sentry) · B-40
+  - **DevOps:** B-38 — ลิงก์ invite ชี้ host Cloud Run เก่า → `APP_URL` ใน runtime secret
+  - สาย "ทั้งสองแนว / ตัวแอป" 15 การ์ดยังไม่มีคนรับ
 
 ## 2026-10-09 (รอบ 57) · Ten + Claude — ลบบัญชีตัวเอง เว็บ + มือถือ (SC-ACC-DEL-01)
 
