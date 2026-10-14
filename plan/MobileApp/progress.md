@@ -3,6 +3,28 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-14 (รอบ 59) · Ten + Claude — Apple login บนเว็บ · ตรวจบัญชี Apple / Gmail อีเมลเดียวกัน · กดแล้วตอบสนอง + loading · status ClickUp 3 ใบ
+
+- **ทำอะไร:**
+  - **ClickUp (Ten สั่ง + รับทราบกฎ 80%):** Q-03 · H-03 · B-36 → `completed` (Open → completed · Q-03 ยังไม่ได้เทสบนเครื่อง)
+  - **ตรวจ Apple กับ Gmail ที่ใช้อีเมลเดียวกัน (อ่านโค้ด zyra-api ไม่ได้แก้):** ผู้ใช้หนึ่งคน = หนึ่งแถวใน `tb_user` · ไม่มี column เก็บ Google / Apple id แยก · ทุก login จับคู่ด้วย `lower(email)` (email ไม่ unique)
+    - Google ก่อน → Apple อีเมลเดียวกัน = บัญชีเดียว (จับคู่ด้วยอีเมลใหม่ทุกครั้ง) · Apple ก่อน → Google = บัญชีเดียว แต่ Google เขียนชื่อทับทุกครั้ง · Apple "Hide My Email" = บัญชีที่สองแยก รวมไม่ได้ · มีบัญชี email/password อยู่ → Google / Apple เข้าบัญชีนั้น รหัสผ่านเดิมยังใช้ได้
+    - **ช่องโหว่ร้ายแรง (pre-hijack):** คนอื่นสมัครด้วยอีเมลเหยื่อแบบไม่ยืนยัน → เจ้าของตัวจริง login Google / Apple → ระบบยึดแถวนั้นและตั้งยืนยันแล้ว รหัสผ่านของผู้สมัครยังใช้ได้ (`auth_service.go:296`, `apple_login.go:81`) · Google ไม่ตรวจ `email_verified` · Google อีเมลว่างอาจจับคู่บัญชีอีเมลว่าง · บัญชีซ้ำได้ — **ยังไม่ได้แก้ รอ Ten ตัดสิน**
+  - **Apple login บนเว็บ** — [zyra-app#573](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/573) (**ยังไม่ merge**): Sign in with Apple JS แบบ popup ด้วย `NEXT_PUBLIC_APPLE_SERVICES_ID` → token ไป `login_apple` เดิม (zyra-api รองรับ Services ID ใน `APPLE_CLIENT_IDS` แล้ว) · ปุ่มซ่อนจนกว่าจะตั้ง Services ID · Dockerfile + `deploy-gitops.yml` ส่ง env ตอน build · ต้องตั้งค่าเอง: สร้าง Services ID ใน Apple Developer + domains / Return URL `https://<โดเมน>/login` · เพิ่มใน `APPLE_CLIENT_IDS` ของ api ทุก env · secret `NEXT_PUBLIC_APPLE_SERVICES_ID` ใน GitHub Environment
+  - **ตรวจการกดและ transition บนมือถือ** → รายงานเต็ม [issues/apple-google-login-and-mobile-press-feedback-2026-10-14.md](../../issues/apple-google-login-and-mobile-press-feedback-2026-10-14.md) · Ten ให้ทำข้อ 1 + 2 ก่อน:
+    - **ข้อ 1 กดแล้วตอบสนอง** — [#574](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/574): `globals.css` บนจอ touch ทุก button / link / role=button|tab|menuitem จาง opacity 0.6 ตอนกด (`:active`, นอก layer ชนะ utility · `transition` อยู่ใน `@layer base` ไม่ทับ transition ของปุ่ม) · `data-press="none"` ปิดได้ (ใส่ให้ PIP ที่ลากได้) · `providers.tsx` ใส่ touchstart listener เปล่า (iOS ต้องมีถึงจะใช้ `:active`) · ปุ่ม back / close ของ BottomSheet 16px → touch target 40px (`::after`) — ครอบ 150+ จุดในครั้งเดียว
+    - **ข้อ 2 loading** — [#575](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/575): Instant meeting spinner + กันกดซ้ำ (เดิมเข้าสองรอบ) · Switch workspace / Log out / เปลี่ยนภาษา (Lite) spinner เต็มจอ · หน้า workspace list: เปิด workspace (`useTransition`), Copy, Sign out → spinner เต็มจอกันกดซ้ำ · Copy ใน Lite workspace list ทีละครั้ง · ปุ่ม login คงสีเขียวตอน loading
+    - ข้อ 3–5 (bottom sheet เลื่อนขึ้นลง · หน้าย่อยเลื่อนจากขวา · reduced motion / blur) **ยังไม่ทำ**
+  - **กฎ rule 19 ปรับ (Ten สั่ง):** อย่าแปลเกิน — คำที่ปกติเป็นอังกฤษ (merge, deploy, PR, popup, Services ID, token, server, bottom sheet, spinner) คงอังกฤษ แปลเฉพาะประโยค / ข้อความ UI / error · คำตอบในแชทเป็นไทยปนอังกฤษแบบที่ทีมพูดกัน
+- **PR:** zyra-app #574 #575 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI `lint-and-build` เขียวก่อน merge) · #573 ยังเปิดอยู่
+- **verify ถึงไหน:**
+  - **build / test:** develop หลัง merge (`13437862`) `vitest run` 353 ไฟล์ / 4,318 ผ่าน · `tsc` ไม่มี error ใหม่ (7 เดิม) · test ใหม่: web Apple 3 เคส (`native-apple-signin.test.tsx`) · Instant meeting busy (`lite-home-sheets.test.tsx`) · `mobile-auth-button-loading.test.tsx`
+  - **เบราว์เซอร์:** mobile emulation — media query `(hover: none) and (pointer: coarse)` ตรง และ rule `:active` อยู่ใน CSS ที่ build แล้ว · จำลองการกดจริงในเบราว์เซอร์ไม่ได้
+  - **deploy dev:** CI ของ `13437862` ยัง in_progress ตอนเขียน
+  - **บนเครื่องจริง: ยังไม่ได้เทส** · Apple บนเว็บลองจริงไม่ได้จนกว่าจะมี Services ID
+- **ให้ Ten / QA เทสบน dev:** (1) กดปุ่มใด ๆ บนมือถือ → จางลงตอนกด (iOS และ Android) · ปุ่มปิดของ bottom sheet กดง่ายขึ้น (2) Instant meeting กดสองครั้งเร็ว ๆ → spinner + เข้าห้องครั้งเดียว (3) Switch workspace / Log out / เปลี่ยนภาษา → spinner เต็มจอ (4) หน้า workspace list เปิด / Copy → spinner
+- **ติดอะไร:** ช่องโหว่บัญชี Apple / Gmail ที่ zyra-api รอ Ten ตัดสิน · Services ID ของ Apple (ทำเอง) · ข้อ 3–5 ของ transition ยังไม่ทำ · deploy หน้าเช็กลิสต์ Vercel อ่านอย่างเดียว (รอ limit)
+
 ## 2026-10-14 (รอบ 58) · Ten + Claude — มติ Q-03 / H-03 / B-36 · PIP ลากได้ · joystick iPad · PIP แสดงจอที่แชร์ · หน้า Vercel อ่านอย่างเดียว
 
 - **มติ Ten (ถามก่อนเริ่ม):** B-36 คงเดิม login ได้หลายเครื่อง · Q-03 PIP ลากได้แล้วดูดติดมุม (แทนมติเดิม HP-04 ข้อ 9) · H-03 กด PIP ของ Bubble เปิดหน้า Meeting เต็มจอได้ (ไม่มีแชท) · หน้า Vercel ไม่ต่อ Upstash → อ่านอย่างเดียว · ระหว่างทาง Ten ขอเพิ่ม: joystick ใหญ่ขึ้นบน iPad / จอใหญ่ และ PIP แนวตั้งแสดงจอที่แชร์
