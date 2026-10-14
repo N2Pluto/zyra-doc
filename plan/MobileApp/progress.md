@@ -3,6 +3,23 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-14 (รอบ 57) · Ten + Claude — เช็กลิสต์เทสให้ทีม · description การ์ด ClickUp 26 ใบ · กฎแปลไทย (rule 19)
+
+- **ทำอะไร:**
+  - **deploy รอบ 56 ขึ้น dev แล้ว:** CI ของ `30a1832d` success · `app.dev.zyra.center/api/version` buildId `06:49:26` (หลัง merge #568) — ของรอบ 56 เทสบน dev ได้
+  - **เช็กลิสต์เทสรอบ 51–56 (23 รายการ / 59 ข้อ):** แบ่งตาม Spotlight · Meeting / Bubble · แมพ / การควบคุม · ตัวแอป — แต่ละข้อกด ผ่าน / ไม่ผ่าน + ช่องหมายเหตุต่อการ์ด + ลิงก์การ์ด ClickUp + ป้าย "รอบ 56" / "ต้องใช้ APK ใหม่" · มี 2 ที่:
+    - **claude.ai** — https://claude.ai/artifact/1N2889Hyb8ADjVjTsaDT22 · ติ๊กได้และทุกคนเห็นตรงกัน (เก็บใน db ของ artifact) · แชร์ทั้งองค์กรแล้ว
+    - **Vercel** — https://zyra-mobile-qa-checklist.vercel.app (`web/mobile-qa-checklist/`, [zyra-doc#64](https://github.com/N2Pluto/zyra-doc/pull/64), [#65](https://github.com/N2Pluto/zyra-doc/pull/65)) · ผลติ๊กผ่าน `api/state.js` + Upstash Redis · **ยังติ๊กไม่ได้** — `/api/state` ตอบ `storage_not_connected` (ยังไม่ได้ต่อฐานข้อมูล): project ไม่มี env `KV_*` / `UPSTASH_*` และหา store ใน Vercel บัญชี h2ofriday (22 project) ไม่เจอ — น่าจะต่อ Upstash จากเบราว์เซอร์ที่ล็อกอินคนละบัญชี · deploy ครั้งแรกติด limit hobby 100 deploy/วัน (Ten deploy เองภายหลัง) · ลิงก์หลักเปิดได้โดยไม่ต้องล็อกอิน (ลิงก์ยาวของแต่ละ deployment ต้องล็อกอิน Vercel)
+  - **Ten สั่งเปลี่ยนไปใช้ checklist ของ ClickUp แทน:** connector ClickUp ไม่มี operator ของ checklist (`clickup_get_operators` → none) สร้างให้ไม่ได้ · ใช้รายการ `- [ ]` ในส่วน "ต้องเป็นแบบนี้ (checklist)" ของ description แทน — ต้องให้ Ten ดูว่า ClickUp แสดงเป็นช่องติ๊กได้ไหม
+  - **ClickUp:** ใส่ assignee ครบแล้วจากรอบ 55 · แก้ **description 26 ใบ** (ตามที่ Ten สั่ง ไม่แตะ status): บรรทัด "สถานะการแก้" → แก้แล้ว + ลิงก์ PR + deploy dev + ยังไม่ได้เทสบนเครื่อง · เพิ่มส่วน "การแก้ไข (อัปเดต 2026-10-14)" ท้ายการ์ด: PR · แก้อะไร · วิธีเทสบน dev · checklist · ลิงก์เช็กลิสต์รวม — B-14 B-17 B-18 B-19 B-20 B-15 B-16 B-42 H-01 H-02 H-04 H-05 H-07 H-08 H-09 H-10 · B-01 B-04 B-07 B-08 B-12 B-21 B-29 B-30 B-32 B-47
+  - **กฎใหม่ (Ten สั่ง):** `.claude/rules/19-thai-translation.md` — ข้อความอังกฤษที่ AI เขียนให้ทีมอ่านต้องมีคำแปลไทยกำกับ (เก็บต้นฉบับไว้เทียบหน้าจอ) · ไม่แปลโค้ด / ชื่อไฟล์ / คำสั่ง / ชื่อฟีเจอร์ / คำทับศัพท์ของทีม · บันทึกใน memory ของ AI ด้วย · หน้าเช็กลิสต์ใส่คำแปลไทย 14 จุดแล้ว
+- **verify ถึงไหน:**
+  - เช็กลิสต์ claude.ai: publish แล้ว · db ว่างพร้อมใช้ (ยังไม่มีใครติ๊ก) · ยังไม่ได้ลองติ๊กจากบัญชีอื่น
+  - Vercel: หน้าเปิดได้ (มีคำแปลไทย) · API ยังไม่ต่อฐานข้อมูล
+  - ClickUp: เปิดดู B-14 หลังแก้ เนื้อหาครบ · ใบอื่นเครื่องมือตอบ success
+- **ต่อจากนี้:** QA เทสตามเช็กลิสต์ (claude.ai หรือ checklist ในการ์ด) · ถ้าจะใช้หน้า Vercel ให้ล็อกอิน Vercel บัญชี h2ofriday แล้วต่อ Upstash ให้ project `zyra-mobile-qa-checklist` แล้ว redeploy
+- **ติดอะไร:** Upstash บน Vercel (บัญชีไม่ตรง) · checklist ของ ClickUp สร้างผ่าน connector ไม่ได้ · การ์ดที่เหลือรอ PM (B-36, B-45, Q-03) / ข้อมูล QA (H-03, H-06, B-44, B-13, B-31, B-40)
+
 ## 2026-10-14 (รอบ 56) · Ten + Claude — แนวนอน / ทั้งสองแนวที่เหลือ: B-08 · H-07 · H-10 · B-47 · B-29 · joystick วิ่ง · ClickUp completed 6 ใบ
 
 - **มติ Ten (ถามก่อนเริ่ม):** B-08 preview เต็มกล่อง (crop) · H-07 แสดง joystick จาง ๆ ค้างไว้ · H-10 + B-47 ทำด้วยสไตล์ Lite (ไม่มี Figma) · B-29 ทำแบบกันไว้ก่อน (กู้แมพเมื่อ WebGL context หาย) · ระหว่างทาง Ten ขอเพิ่ม: **ลาก joystick ครึ่งทาง = เดิน · ลากเต็ม = วิ่ง**
