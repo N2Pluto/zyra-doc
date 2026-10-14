@@ -15,6 +15,7 @@
   - **deploy dev:** CI success · image `web:dev-28586e0` · `app.dev.zyra.center/api/version` → buildId `05:06:00` = ขึ้น dev แล้ว
   - **บนเครื่องจริง: ยังไม่ได้เทส** · ต้นเหตุ Now Playing มาจากการอ่านโค้ด ยังไม่ยืนยัน
 - **ให้ Ten / QA เทสบน dev:** (1) แอป iOS เข้า workspace แล้วรอ → ไม่มีการ์ด Now Playing / จุดส้มไมค์บน Dynamic Island (2) เดินใกล้ Bubble → การ์ดขึ้นแทน minimap → กด Ask to Join ส่งคำขอได้ → เดินออก → minimap กลับมา
+- **ClickUp:** อัปเดต description การ์ด [H-04](https://app.clickup.com/t/14zd0zubp9a) — เพิ่มหัวข้อ "อัปเดต 2026-10-14" บนสุด (2 รอบที่เปลี่ยน: ปุ่มลอย #541 → การ์ดแทน minimap #551 · สถานะ merged + ขึ้น dev `web:dev-28586e0` · ขั้นตอนให้ QA เทส 5 ข้อ) · เก็บบทวิเคราะห์เดิมไว้ข้างล่าง · status คง `completed` (ไม่ได้แตะ)
 - **ติดอะไร:** ถ้า Now Playing ยังขึ้นหลังแก้ ตัวที่ต้องไล่ต่อคือโหมดเสียง `playback` (`lib/native/audio-session.ts`) ที่ตั้งไว้ให้เสียงดังแม้เปิดโหมดเงียบ (Ten 2026-10-07) — เปลี่ยนเป็น `ambient` จะหาย Now Playing แต่เสียงเอฟเฟกต์จะเงียบตามสวิตช์เงียบ ต้องให้ Ten เลือก
 
 ## 2026-10-14 (รอบ 53) · Ten + Claude — มติ megaphone (B-42 / B-15) · merge 13 PR ขึ้น develop + deploy dev · ClickUp completed 20 ใบ
