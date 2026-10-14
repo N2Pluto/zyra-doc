@@ -82,6 +82,7 @@ a.code:hover { text-decoration: underline; }
 .check { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; padding: 10px 0; border-top: 1px solid var(--line); align-items: start; }
 .check:first-child { border-top: 0; }
 .check .text { min-width: 0; }
+.box { width: 16px; height: 16px; margin-top: 4px; border: 1.5px solid var(--muted); border-radius: 4px; }
 .check.pass .text { color: var(--muted); }
 .check .who { grid-column: 2; font-size: 12px; color: var(--muted); }
 .check.fail .who { color: var(--fail); }
@@ -114,23 +115,15 @@ body { margin: 0; }
 <div class="wrap">
   <header style="display:flex;flex-direction:column;gap:8px">
     <h1>Zyra Mobile QA Checklist — แนวนอน + ทั้งสองแนว</h1>
-    <p class="lede">งานที่ merge เข้า <span class="mono">develop</span> แล้ว (progress รอบ 51–56) · แต่ละข้อกด <b>ผ่าน</b> หรือ <b>ไม่ผ่าน</b> ได้ ทุกคนเห็นผลเดียวกัน · ถ้าไม่ผ่านเขียนอาการ + เครื่องในช่องหมายเหตุของการ์ด</p>
+    <p class="lede">งานที่ merge เข้า <span class="mono">develop</span> แล้ว (progress รอบ 51–56) · หน้านี้<b>อ่านอย่างเดียว</b> — ติ๊กผลการเทสได้ที่ <a href="https://claude.ai/artifact/1N2889Hyb8ADjVjTsaDT22" target="_blank" rel="noopener">เช็กลิสต์บน claude.ai</a> หรือในรายการ checklist ท้าย description ของการ์ด ClickUp แต่ละใบ (กดรหัสการ์ดเพื่อเปิด)</p>
   </header>
 
   <div class="sticky">
-    <div class="stats" id="stats"></div>
-    <div class="bar" id="bar" aria-hidden="true"></div>
     <div class="filters" role="group" aria-label="กรอง">
       <button type="button" data-filter="all" aria-pressed="true">ทั้งหมด</button>
-      <button type="button" data-filter="todo" aria-pressed="false">ยังไม่เทส</button>
-      <button type="button" data-filter="fail" aria-pressed="false">ไม่ผ่าน</button>
+      <button type="button" data-filter="r56" aria-pressed="false">รอบ 56</button>
       <button type="button" data-filter="apk" aria-pressed="false">ต้องใช้ APK ใหม่</button>
     </div>
-    <div class="me">
-      <label for="me-name">ชื่อคุณ (แสดงข้างข้อที่ติ๊ก)</label>
-      <input id="me-name" type="text" maxlength="40" placeholder="เช่น Ten / QA-Nan" autocomplete="nickname">
-    </div>
-    <p class="status" id="status">กำลังโหลดผลการเทส…</p>
   </div>
 
   <div class="prereq">
@@ -287,201 +280,47 @@ const GROUPS = [
   ] },
 ]
 
-// ---- state (from /api/state) ------------------------------------------------------
-const results = new Map()   // checkKey -> {state, by, at}
-const notes = new Map()     // cardId -> {text, by, at}
-let online = false, canWrite = true, filter = "all"
-const API = "/api/state"
-const POLL_MS = 10000
-const NAME_KEY = "mobile-qa-checklist:name"
-const nameInput = document.getElementById("me-name")
-try { nameInput.value = localStorage.getItem(NAME_KEY) || "" } catch {}
-nameInput.addEventListener("change", () => {
-  try { localStorage.setItem(NAME_KEY, nameInput.value.trim()) } catch {}
-})
-const myName = () => nameInput.value.trim()
-
-const keyOf = (card, i) => `${card.id}-${i + 1}`
-const allChecks = () => GROUPS.flatMap(g => g.cards.flatMap(c => c.checks.map((_, i) => ({ card: c, key: keyOf(c, i) }))))
-
-const fmtTime = iso => {
-  try { return new Date(iso).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) } catch { return "" }
-}
-const nameOf = by => by || "ไม่ระบุชื่อ"
-
+// ---- render (read-only) ----------------------------------------------------
+let filter = "all"
 function el(tag, attrs, ...kids) {
   const n = document.createElement(tag)
   for (const [k, v] of Object.entries(attrs || {})) {
     if (k === "class") n.className = v
     else if (k === "text") n.textContent = v
-    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v)
     else if (v !== false && v != null) n.setAttribute(k, v === true ? "" : v)
   }
   for (const k of kids) if (k != null) n.append(k)
   return n
 }
-
-// ---- render ---------------------------------------------------------------
 function render() {
   const root = document.getElementById("groups")
   root.replaceChildren()
   for (const g of GROUPS) {
+    const cards = g.cards.filter(c => filter === "all" || (filter === "r56" && c.r56) || (filter === "apk" && c.apk))
+    if (!cards.length) continue
     const sec = el("section", { class: "group", id: g.id })
-    const visible = []
-    for (const c of g.cards) {
-      const keys = c.checks.map((_, i) => keyOf(c, i))
-      const st = keys.map(k => results.get(k)?.state)
-      const nPass = st.filter(s => s === "pass").length
-      const nFail = st.filter(s => s === "fail").length
-      const show = filter === "all" || (filter === "todo" && st.some(s => !s)) || (filter === "fail" && nFail > 0) || (filter === "apk" && c.apk)
+    const total = cards.reduce((a, c) => a + c.checks.length, 0)
+    sec.append(el("div", { class: "group-head" }, el("h2", { text: g.title }), el("span", { class: "count", text: `${cards.length} รายการ · ${total} ข้อ` })))
+    for (const c of cards) {
       const head = el("div", { class: "card-head" })
       for (const [code, tid] of c.codes) head.append(el("a", { class: "code", href: CU + tid, target: "_blank", rel: "noopener", text: code }))
       if (!c.codes.length) head.append(el("span", { class: "code", text: "ใหม่" }))
       head.append(el("h3", { text: c.title }))
       if (c.r56) head.append(el("span", { class: "tag", text: "รอบ 56" }))
       if (c.apk) head.append(el("span", { class: "tag", text: "ต้องใช้ APK ใหม่" }))
-      head.append(el("span", { class: "card-score", text: `${nPass}/${keys.length} ผ่าน` + (nFail ? ` · ${nFail} ไม่ผ่าน` : "") }))
-
       const list = el("ul", { class: "checks" })
-      c.checks.forEach((text, i) => {
-        const key = keyOf(c, i)
-        const r = results.get(key)
-        const li = el("li", { class: "check" + (r?.state ? " " + r.state : "") })
-        const mk = (state, label) => el("button", {
-          type: "button", class: r?.state === state ? "on-" + state : "",
-          "aria-pressed": r?.state === state ? "true" : "false",
-          disabled: !online || !canWrite,
-          onclick: () => mark(key, r?.state === state ? null : state),
-        }, label)
-        li.append(el("div", { class: "btns" }, mk("pass", "ผ่าน"), mk("fail", "ไม่ผ่าน")))
-        li.append(el("div", { class: "text", text }))
-        if (r?.state) li.append(el("div", { class: "who", text: `${r.state === "pass" ? "ผ่าน" : "ไม่ผ่าน"} · ${nameOf(r.by)} · ${fmtTime(r.at)}` }))
-        list.append(li)
-      })
-
-      const n = notes.get(c.id)
-      const ta = el("textarea", { id: "note-" + c.id, placeholder: "อาการที่เจอ · รุ่นเครื่อง / OS · เวลา", disabled: !online || !canWrite })
-      ta.value = n?.text || ""
-      ta.addEventListener("change", () => saveNote(c.id, ta.value))
-      const note = el("div", { class: "note" },
-        el("label", { for: "note-" + c.id, text: "หมายเหตุ" }), ta,
-        n?.text ? el("div", { class: "meta", text: `แก้ล่าสุด ${nameOf(n.by)} · ${fmtTime(n.at)}` }) : null)
-
-      const card = el("article", { class: "card" + (nFail ? " has-fail" : nPass === keys.length ? " all-pass" : "") + (show ? "" : " hidden-by-filter") },
-        head, el("p", { class: "steps" }, el("b", { text: "วิธีเทส: " }), c.steps), list, note)
-      if (show) visible.push(card)
-      sec.append(card)
+      for (const text of c.checks) list.append(el("li", { class: "check" }, el("span", { class: "box", "aria-hidden": "true" }), el("div", { class: "text", text })))
+      sec.append(el("article", { class: "card" }, head, el("p", { class: "steps" }, el("b", { text: "วิธีเทส: " }), c.steps), list))
     }
-    const total = g.cards.reduce((a, c) => a + c.checks.length, 0)
-    const done = g.cards.reduce((a, c) => a + c.checks.filter((_, i) => results.get(keyOf(c, i))?.state === "pass").length, 0)
-    sec.prepend(el("div", { class: "group-head" }, el("h2", { text: g.title }), el("span", { class: "count", text: `${done}/${total} ผ่าน` })))
-    if (!visible.length) sec.classList.add("hidden-by-filter")
     root.append(sec)
   }
-  renderStats()
 }
-
-function renderStats() {
-  const all = allChecks()
-  const pass = all.filter(c => results.get(c.key)?.state === "pass").length
-  const fail = all.filter(c => results.get(c.key)?.state === "fail").length
-  const todo = all.length - pass - fail
-  const stats = document.getElementById("stats")
-  stats.replaceChildren(
-    el("span", { class: "stat pass" }, el("b", { text: String(pass) }), el("span", { text: "ผ่าน" })),
-    el("span", { class: "stat fail" }, el("b", { text: String(fail) }), el("span", { text: "ไม่ผ่าน" })),
-    el("span", { class: "stat" }, el("b", { text: String(todo) }), el("span", { text: `ยังไม่เทส จาก ${all.length} ข้อ` })),
-  )
-  const bar = document.getElementById("bar")
-  bar.replaceChildren(
-    el("i", { class: "p", style: `width:${(pass / all.length) * 100}%` }),
-    el("i", { class: "f", style: `width:${(fail / all.length) * 100}%` }),
-  )
-}
-
-// ---- writes ---------------------------------------------------------------
-const setStatus = (text, warn) => {
-  const s = document.getElementById("status")
-  s.textContent = text
-  s.classList.toggle("warn", !!warn)
-}
-const busy = new Set()
-async function post(body) {
-  const res = await fetch(API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...body, by: myName() }),
-  })
-  if (!res.ok) throw new Error(String(res.status))
-}
-async function mark(key, state) {
-  if (!online || busy.has(key)) return
-  if (!myName()) { setStatus("ใส่ชื่อคุณก่อนติ๊ก — ทีมจะได้รู้ว่าใครเทส", true); nameInput.focus(); return }
-  busy.add(key)
-  const prev = results.get(key)
-  // Show it right away; the next poll confirms (or puts back) the shared state.
-  if (state) results.set(key, { state, by: myName(), at: new Date().toISOString() })
-  else results.delete(key)
-  render()
-  try {
-    await post({ type: "check", key, state })
-  } catch {
-    if (prev) results.set(key, prev); else results.delete(key)
-    render()
-    setStatus("บันทึกไม่สำเร็จ ลองกดใหม่อีกครั้ง", true)
-  } finally { busy.delete(key) }
-}
-async function saveNote(cardId, text) {
-  if (!online) return
-  const prev = notes.get(cardId)?.text || ""
-  if (text.trim() === prev.trim()) return
-  if (!myName()) { setStatus("ใส่ชื่อคุณก่อนเขียนหมายเหตุ", true); nameInput.focus(); return }
-  try {
-    await post({ type: "note", key: cardId, text })
-    await load()
-  } catch {
-    setStatus("บันทึกหมายเหตุไม่สำเร็จ ลองใหม่อีกครั้ง", true)
-  }
-}
-
-// ---- filters --------------------------------------------------------------
 document.querySelectorAll(".filters button").forEach(b => b.addEventListener("click", () => {
   filter = b.dataset.filter
   document.querySelectorAll(".filters button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"))
   render()
 }))
-
-// ---- boot -----------------------------------------------------------------
-async function load() {
-  const res = await fetch(API, { cache: "no-store" })
-  if (res.status === 503) throw Object.assign(new Error("not connected"), { code: "storage" })
-  if (!res.ok) throw new Error(String(res.status))
-  const data = await res.json()
-  const typing = document.activeElement && document.activeElement.id?.startsWith("note-")
-    ? { id: document.activeElement.id, value: document.activeElement.value, pos: document.activeElement.selectionStart }
-    : null
-  results.clear()
-  for (const [k, v] of Object.entries(data.checks || {})) if (v && (v.state === "pass" || v.state === "fail")) results.set(k, v)
-  notes.clear()
-  for (const [k, v] of Object.entries(data.notes || {})) if (v && typeof v.text === "string") notes.set(k, v)
-  render()
-  // Keep a note someone is typing right now.
-  if (typing) { const t = document.getElementById(typing.id); if (t) { t.value = typing.value; t.focus(); try { t.setSelectionRange(typing.pos, typing.pos) } catch {} } }
-}
-async function poll() {
-  try {
-    await load()
-    if (!online) { online = true; render() }
-    setStatus("ผลการเทสบันทึกอัตโนมัติ ทุกคนเห็นตรงกัน (อัปเดตทุก 10 วิ)")
-  } catch (e) {
-    if (online) { online = false; render() }
-    setStatus(e.code === "storage" ? "ยังไม่ได้ต่อฐานข้อมูล — ดูได้อย่างเดียว" : "โหลดผลการเทสไม่ได้ จะลองใหม่อัตโนมัติ", true)
-  }
-}
 render()
-poll()
-setInterval(() => { if (document.visibilityState === "visible") poll() }, POLL_MS)
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") poll() })
 </script>
 </body>
 </html>
