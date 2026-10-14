@@ -3,6 +3,28 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-14 (รอบ 62) · Ten + Claude — กันหน้าเว็บโผล่ก่อนหน้ามือถือ · กดแล้วยุบ + แท็บ fade · แผน B-45 v2 · เช็กลิสต์รอบ 57–61
+
+- **คำขอ Ten:** (1) บางครั้งเปิดขึ้นมาเห็น UI เว็บก่อนแล้วค่อยเป็น UI มือถือ — กันทั้งแอป (2) อยากให้กดนู้นกดนี้มี animation ให้ดูเป็นแอป (3) B-45 ตอบคำถาม 4 ข้อ
+- **ทำอะไร:**
+  - **กันหน้าเว็บโผล่ก่อน** — [zyra-app#581](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/581) + [zyra-mobile#12](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/12)
+    - ต้นเหตุ: server เดาจาก User-Agent → **iPad** (Safari iPadOS / WebView บน iPad) ส่ง UA เป็น Mac → render desktop แล้วสลับหลัง hydrate · หน้าแอปอย่างเดียว (login, app update, invite) ใช้ `isNativeApp()` ที่ server snapshot = `false` → ในแอปเห็นหน้า login เว็บก่อน · splash ปิดทันทีที่ mount
+    - แก้: cookie `zyra_device` (m / t / d) = ค่าที่เครื่องวัดตัวเองครั้งก่อน ชนะ UA · cookie `zyra_app` / UA token `ZyraApp` (แอปเติมใน `appendUserAgent`) = อยู่ในแอป · `DeviceHintProvider` ส่ง hint tablet + native · `components/device-hint-cookie.tsx` เขียน cookie · หน้าแอปใช้ `useNativeHint()` เป็น server snapshot · splash ปิดหลัง mount 2 เฟรม
+    - ข้อจำกัด: ครั้งแรกที่ iPad เปิดเว็บ (ยังไม่มี cookie) อาจสลับหนึ่งครั้ง · UA token มีผลหลัง build แอปใหม่
+  - **กดแล้วยุบ + แท็บ fade** — [#582](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/582): ปุ่ม / ลิงก์บนจอ touch ตอนกด `scale: 0.97` + จาง (property `scale` แยก ไม่ทับ translate) · ปิดเมื่อ reduced motion · แท็บ Lite (Home / Chat / Profile) fade in 180ms (opacity อย่างเดียว)
+  - **B-45 แผน v2** ([zyra-doc#74](https://github.com/N2Pluto/zyra-doc/pull/74)) ตามคำตอบ Ten — dev แก้คำ / เพิ่มภาษาเอง · กดแล้วขึ้นเลย ย้อนกลับได้ · แก้ทีเดียวขึ้นทุก env · ไม่ทำหน้า admin: dev แก้ `messages/*.json` → GitHub Action (เฉพาะ merge เข้า `main`) validate แล้วอัปโหลด pack + `manifest.json` ขึ้น R2 → ทุก env อ่าน manifest เดียว (cache 60 วิ) merge ทับไฟล์ใน image · ไม่ต้องแก้ zyra-api / ไม่มี DB · ~2–3 วัน · **รอ** R2 secrets 5 ตัวใน zyra-app + `I18N_MANIFEST_URL` ทุก env + Ten สั่งเริ่ม
+  - **เช็กลิสต์:** claude.ai เพิ่มกลุ่ม "รอบ 57–61" 15 รายการ (รวม 38 รายการ / 106 ข้อ) · หน้า Vercel deploy ได้แล้ว + sync รายการเดียวกัน ([zyra-doc#73](https://github.com/N2Pluto/zyra-doc/pull/73))
+  - **เช็คงานที่เหลือ:** การ์ด 36 ใบของสายแนวนอน / ทั้งสองแนว เหลือ Open แค่ B-45 · QA กด accepted แล้ว 6 ใบ (H-07, B-01, H-01, B-39, B-34, B-33)
+  - **กฎ rule 19 (ภาษา):** Ten ขอคำแปลไทยในคำตอบหลายครั้ง — ตอบเป็นไทยปนศัพท์อังกฤษ และส่งรายงานยาวเป็นไฟล์ไทยเมื่อจำเป็น
+- **PR:** zyra-app #581 #582 · zyra-mobile #12 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI เขียวก่อน merge)
+- **verify ถึงไหน:**
+  - **build / test:** develop (`8a0b6003`) `vitest run` 354 ไฟล์ / 4,327 ผ่าน · `tsc` ไม่มี error ใหม่ · test ใหม่ `device-hint.test.tsx` (cookie ชนะ UA, iPad + cookie = tablet, UA token / cookie app) · `native-lifecycle-bridge.test.tsx` (splash หลัง 2 เฟรม)
+  - **dev server:** curl `/login` ด้วย UA iPad — ไม่มี cookie ได้ HTML desktop · cookie `zyra_device=t` ได้ HTML มือถือ · CSS ที่ build มี rule `scale: .97` + `@keyframes mobile-fade-in` (ต้องล้าง `.next` ก่อน — Turbopack cache CSS ค้างหลังสลับ branch)
+  - **deploy:** zyra-app CI `8a0b6003` success · zyra-mobile "Android APK" run 38551220135 success
+  - **บนเครื่องจริง: ยังไม่ได้เทส**
+- **ให้ Ten / QA เทส:** (1) เปิดแอป / เว็บบนมือถือและ iPad ตั้งแต่ครั้งที่สอง ไม่เห็นหน้าเว็บก่อน (2) หน้า login ในแอปเป็นแบบแอปทันที (3) กดปุ่มยุบเล็กน้อย · สลับแท็บมี fade · เปิด Reduce Motion แล้วไม่มี animation
+- **ติดอะไร:** B-45 รอ secrets + สั่งเริ่ม · Apple Services ID · build แอปใหม่ (APK / iOS) ให้ UA token และ foreground service มีผล
+
 ## 2026-10-14 (รอบ 61) · Ten + Claude — B-40 iPad Pro 13" · B-13 ยอดคนดู · B-44 overlay · แผน B-45 · checklist QA ทุกการ์ด
 
 - **มติ Ten:** B-45 เป้าหมาย = แก้คำ / เพิ่มภาษาได้โดยไม่ต้อง deploy · B-40 ขยับเกณฑ์เป็น 1376 · B-13 "ยอด" = จำนวนคนดู (ชิป N | M)
