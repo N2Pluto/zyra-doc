@@ -124,7 +124,7 @@ spec (technical-design §16.2) บอกว่าคน Lite ที่ไม่�
 | B-18 | [กดดู Viewer แล้วแผง Member เปิดทับ](https://app.clickup.com/t/14zd0zuc0dy) | ตาม B-17 (ชิป N \| M ทับปุ่ม Members ของแมพ) | 🛠 |
 | B-19 | [เลื่อนรายชื่อในหน้า Spotlight ไม่ได้](https://app.clickup.com/t/14zd0zuc0dz) | ตาม B-17 แล้วเทสบนเครื่องจริง · ถ้ายังไม่ได้ดู touch handler ของ joystick | 🛠 ❓ |
 | B-20 | [หลัง Spotlight จบ คนในห้องประชุมกดอะไรไม่ได้](https://app.clickup.com/t/14zd0zuc0e0) | คืน `meetingExpanded` เมื่อ Spotlight จบ · ส่วน "กดไม่ได้" เทสหลัง B-17 | 🛠 ❓ |
-| B-15 | [ให้กดปุ่ม Play เริ่ม Spotlight ได้](https://app.clickup.com/t/14zd0zubpa2) | spec §18.7 #4 กับ §18.9 ขัดกัน + ไม่รู้ว่าปุ่มไหน → PM/QA ยืนยัน แล้วเพิ่ม Play ใน `VOHud` mobile | 🗳 |
+| B-15 | [ให้กดปุ่ม Play เริ่ม Spotlight ได้](https://app.clickup.com/t/14zd0zubpa2) | **มติ Ten 2026-10-14:** เดินเข้าจุดเองแล้วกด Play ในแถบล่าง → เพิ่ม Play ในแถบล่างมือถือใน [zyra-app#550](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/550) | 🛠 PR |
 | B-16 | [การ์ดซ้ำ B-15](https://app.clickup.com/t/14zd0zubpa3) | ปิดเป็นซ้ำ (ติดตามที่ B-15) | 🗳 |
 
 ### ก้อน H2 — Bubble / เข้าร่วม Meeting บนแมพ
@@ -153,7 +153,7 @@ spec (technical-design §16.2) บอกว่าคน Lite ที่ไม่�
 | V-04 | [ปุ่มย้อนกลับ Meeting บัง Island](https://app.clickup.com/t/14zd0zubp8j) | retest (#532) ทั้งหมุนซ้ายและขวา | ✅ |
 | H-06 | [ปุ่มเดินไปหาในโปรไฟล์คนอื่น](https://app.clickup.com/t/14zd0zubpa8) | ปุ่ม Go to มีแล้ว (#499) → QA บอกว่าเปิดโปรไฟล์จากจอไหน (ถ้า Lite ต้องคุย) | ❓ |
 | H-07 | [ขอบเขตของ joystick](https://app.clickup.com/t/14zd0zubpa9) | โซนตอนนี้ = ซ้าย 43% จากความสูง 35% ลงไป (มติ Ten 2026-10-08) ไม่มีขอบให้เห็น → ตัดสินว่าจะลดโซนหรือแค่แสดงขอบ | 🗳 |
-| B-42 | [ไอคอนประกาศให้ทำงานเหมือนเว็บ](https://app.clickup.com/t/14zd0zubpab) | ขัดกับ spec §18.9 (megaphone = Spotlight) → PO ยืนยัน | 🗳 |
+| B-42 | [ไอคอนประกาศให้ทำงานเหมือนเว็บ](https://app.clickup.com/t/14zd0zubpab) | **มติ Ten 2026-10-14:** megaphone = Announcement (Owner / Admin) แบบเว็บ → แก้ใน [zyra-app#550](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/550) (ux-ui-plan §18.10) | 🛠 PR |
 | B-44 | [เรียง Z-Index ของ UI ตามห้อง](https://app.clickup.com/t/14zd0zuc0dn) | ขอภาพ/วิดีโอว่าอะไรทับอะไร → ทำ z-index token กลาง | ❓ |
 
 ---
