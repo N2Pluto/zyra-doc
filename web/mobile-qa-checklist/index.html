@@ -115,13 +115,14 @@ body { margin: 0; }
 <div class="wrap">
   <header style="display:flex;flex-direction:column;gap:8px">
     <h1>Zyra Mobile QA Checklist — แนวนอน + ทั้งสองแนว</h1>
-    <p class="lede">งานที่ merge เข้า <span class="mono">develop</span> แล้ว (progress รอบ 51–56) · หน้านี้<b>อ่านอย่างเดียว</b> — ติ๊กผลการเทสได้ที่ <a href="https://claude.ai/artifact/1N2889Hyb8ADjVjTsaDT22" target="_blank" rel="noopener">เช็กลิสต์บน claude.ai</a> หรือในรายการ checklist ท้าย description ของการ์ด ClickUp แต่ละใบ (กดรหัสการ์ดเพื่อเปิด)</p>
+    <p class="lede">งานที่ merge เข้า <span class="mono">develop</span> แล้ว (progress รอบ 51–61) · หน้านี้<b>อ่านอย่างเดียว</b> — ติ๊กผลการเทสได้ที่ <a href="https://claude.ai/artifact/1N2889Hyb8ADjVjTsaDT22" target="_blank" rel="noopener">เช็กลิสต์บน claude.ai</a> หรือในรายการ checklist ท้าย description ของการ์ด ClickUp แต่ละใบ (กดรหัสการ์ดเพื่อเปิด)</p>
   </header>
 
   <div class="sticky">
     <div class="filters" role="group" aria-label="กรอง">
       <button type="button" data-filter="all" aria-pressed="true">ทั้งหมด</button>
       <button type="button" data-filter="r56" aria-pressed="false">รอบ 56</button>
+      <button type="button" data-filter="r61" aria-pressed="false">รอบ 57–61</button>
       <button type="button" data-filter="apk" aria-pressed="false">ต้องใช้ APK ใหม่</button>
     </div>
   </div>
@@ -278,6 +279,111 @@ const GROUPS = [
         "นอก meeting ไม่มี notification (ตั้งใจ)",
       ] },
   ] },
+  { id: "r61", title: "รอบ 57–61 — งานเพิ่มเติม (14 ต.ค.)", cards: [
+    { id: "press", codes: [], r61: true, title: "กดปุ่มแล้วรู้สึกว่ากด",
+      steps: "มือถือ (iOS และ Android) กดปุ่มต่าง ๆ ในแอป — ปุ่มหลัก · แถวเมนู · Close / Cancel · แท็บล่าง · ปุ่มย้อนกลับ · แถบควบคุมในห้องประชุม",
+      checks: [
+        "ปุ่มจางลงตอนนิ้วกดอยู่ แล้วกลับมาตอนปล่อย",
+        "ปุ่ม disabled ไม่จาง",
+        "ปุ่มปิด / ย้อนกลับของ bottom sheet กดง่ายขึ้น (ไม่ต้องจิ้มตรงไอคอนเป๊ะ)",
+        "PIP ที่ลากได้ไม่กระพริบตอนลาก",
+      ] },
+    { id: "load", codes: [], r61: true, title: "กดแล้วมี loading",
+      steps: "มือถือแนวตั้ง (Lite) และหน้ารายการ workspace",
+      checks: [
+        "Instant meeting กดสองครั้งเร็ว ๆ → ขึ้น spinner และเข้าห้องครั้งเดียว",
+        "Switch workspace / Log out / เปลี่ยนภาษา → spinner เต็มจอระหว่างรอ",
+        "หน้ารายการ workspace: เปิด workspace / Copy / Sign out → spinner เต็มจอ กดซ้ำไม่ได้",
+        "ปุ่ม login ตอนกำลังโหลด ยังเป็นสีเขียว เห็นวงหมุน",
+      ] },
+    { id: "anim", codes: [], r61: true, title: "Bottom sheet และหน้าย่อยเลื่อนลื่น",
+      steps: "มือถือ เปิด / ปิด sheet ต่าง ๆ (Meeting rooms · Filter · Members) และเข้าหน้าย่อย (Profile → ตั้งค่า)",
+      checks: [
+        "แนวตั้ง: sheet เลื่อนขึ้นจากล่าง และเลื่อนลงตอนปิด พื้นหลังค่อย ๆ มืด / สว่าง",
+        "แนวนอน: sheet กลางจอค่อย ๆ ขยายขึ้นและจางหายตอนปิด",
+        "หน้าย่อยเลื่อนเข้ามาจากด้านขวา",
+        "แผงด้านข้างแนวนอน (drawer) เลื่อนเข้าจากขวา",
+        "เปิด Reduce Motion ในเครื่อง → ไม่มีภาพเคลื่อนไหว เปิด / ปิดทันที",
+        "Android: เลื่อนลื่น ไม่กระตุก",
+      ] },
+    { id: "pipdrag", codes: [["Q-03","14zd0zubpa0"]], r61: true, title: "PIP ลากได้และดูดติดมุม",
+      steps: "ย่อ meeting / Spotlight เป็น PIP ทั้งแนวตั้งและแนวนอน",
+      checks: [
+        "แนวตั้ง: ลาก PIP ได้ ปล่อยแล้วติดมุมที่ใกล้ที่สุด (4 มุม)",
+        "แนวนอน: ติดได้แค่ขวาล่างหรือซ้ายบน",
+        "แตะเบา ๆ (ไม่ลาก) ยังเปิดหน้า meeting",
+        "ปิดแล้วเปิดใหม่ PIP อยู่มุมเดิม",
+        "PIP คู่ (Spotlight + Meeting) ลากได้เหมือนกัน",
+      ] },
+    { id: "pipshare", codes: [], r61: true, title: "PIP แสดงจอที่แชร์ (แนวตั้ง)",
+      steps: "อยู่ใน meeting แนวตั้ง ให้อีกคนแชร์จอ แล้วย่อเป็น PIP",
+      checks: [
+        "PIP แสดงหน้าจอที่แชร์ + ชื่อคนแชร์พร้อมไอคอนจอ",
+        "เราแชร์เอง → PIP แสดงคนพูดเหมือนเดิม",
+        "เลิกแชร์ → PIP กลับไปแสดงคนพูด",
+      ] },
+    { id: "joyipad", codes: [], r61: true, title: "Joystick ใหญ่ขึ้นบน iPad",
+      steps: "iPad แนวนอน โหมด Spatial",
+      checks: [
+        "joystick ใหญ่กว่าบนมือถือ (ประมาณ 1.5 เท่า)",
+        "ลากครึ่งทางเดิน · ลากสุดวิ่ง",
+        "มือถือยังขนาดเดิม",
+      ] },
+    { id: "h06", codes: [["H-06","14zd0zubpa8"]], r61: true, title: "Go to จาก Members กลับไปหน้าแมพ",
+      steps: "มือถือแนวนอน เปิด Members → แตะคนที่อยู่ชั้นเดียวกัน",
+      checks: [
+        "Go to → drawer ปิด เห็นตัวละครเดินไปหา",
+        "Follow → drawer ปิด เริ่มเดินตาม",
+        "คนอยู่คนละชั้น → ขึ้นข้อความว่าอยู่คนละชั้น",
+      ] },
+    { id: "h03", codes: [["H-03","14zd0zubp95"]], r61: true, title: "Bubble เปิดเป็นหน้า Meeting ได้",
+      steps: "มือถือแนวนอน เดินเข้าใกล้อีกคนจนเกิด Bubble",
+      checks: [
+        "ขึ้นเป็น PIP · แตะแล้วเปิดหน้า Meeting เต็มจอ (ไม่มีแชท)",
+        "ระหว่างอยู่ใน Bubble minimap และการ์ด Bubble ไม่ทับ",
+        "Leave → ออกจาก Bubble",
+      ] },
+    { id: "b13", codes: [["B-13","14zd0zubp8x"]], r61: true, title: "จำนวนคนดู Spotlight ถูกต้อง",
+      steps: "A เริ่ม Spotlight · B และ C เปิดดู",
+      checks: [
+        "ชิป N | M ของ A แสดงคนดู 2",
+        "A ปิดเน็ต 5 วิแล้วเปิด → ยังเป็น 2 ไม่ใช่ 0",
+        "B ออก → ลดเป็น 1",
+      ] },
+    { id: "b44", codes: [["B-44","14zd0zuc0dn"]], r61: true, title: "สิ่งที่ซ้อนกันบนจอไม่ทับกันผิด",
+      steps: "มือถือแนวนอน",
+      checks: [
+        "สถานะ Away + เปิดแชท → แถบ Away ไม่ทับแชท",
+        "เปิดการ์ดโซน / แผงสัตว์เลี้ยง แล้วเปิด Members → การ์ด / แผงหายระหว่าง drawer เปิด",
+        "widget อากาศไม่ทับแชท / หน้าโปรไฟล์ / หน้าประชุมที่ขยาย",
+      ] },
+    { id: "b40", codes: [["B-40","14zd0zubp8k"]], r61: true, title: "iPad เลื่อนจอได้",
+      steps: "iPad แนวตั้งและแนวนอน (ในแอปและ Safari) รวม iPad Pro 13\"",
+      checks: [
+        "ได้หน้าแบบมือถือ (iPad Pro 13\" แนวนอนก็เช่นกัน)",
+        "หน้าต่าง ๆ เลื่อนลงถึงล่างสุดได้",
+        "sheet ยาว (Participants / Members) เลื่อนได้ ขอบบนไม่หลุดจอ",
+      ] },
+    { id: "b31", codes: [["B-31","14zd0zuc0d1"]], r61: true, apk: true, title: "Android: ประชุมแล้วล็อกจอไม่ crash",
+      steps: "ถอนแอปเดิม → ลง APK ล่าสุดจาก CI \"Android APK\" ของ develop",
+      checks: [
+        "ลง APK ได้ เปิดแอปไม่ crash",
+        "เข้าประชุมแล้วล็อกจอ 1–2 นาที แอปไม่ถูกปิด ยังได้ยินเสียง",
+      ] },
+    { id: "b36", codes: [["B-36","14zd0zubya4"]], r61: true, title: "Login ได้หลายเครื่องพร้อมกัน",
+      steps: "บัญชีเดียวกันบนเว็บและมือถือ",
+      checks: [
+        "login ทั้งสองเครื่องได้ ไม่ถูก logout",
+        "เข้า workspace เดียวกัน → ตัวละครไม่ซ้ำ (เครื่องใหม่แทนที่)",
+      ] },
+    { id: "oauth", codes: [], r61: true, title: "Login Google / Apple กับอีเมลเดียวกัน",
+      steps: "บัญชีทดสอบที่สมัครด้วยอีเมล + รหัสผ่าน และยืนยัน OTP แล้ว",
+      checks: [
+        "login ด้วย Google ที่อีเมลเดียวกัน → เข้าบัญชีเดิม (workspace เดิมอยู่ครบ)",
+        "ชื่อที่แก้เองไม่ถูก Google เขียนทับหลัง login ซ้ำ",
+        "บัญชีที่สมัครแต่ยังไม่ยืนยัน OTP + login Google อีเมลเดียวกัน → ได้บัญชีใหม่ ไม่เข้าบัญชีที่ยังไม่ยืนยัน",
+      ] },
+  ] },
 ]
 
 // ---- render (read-only) ----------------------------------------------------
@@ -296,7 +402,7 @@ function render() {
   const root = document.getElementById("groups")
   root.replaceChildren()
   for (const g of GROUPS) {
-    const cards = g.cards.filter(c => filter === "all" || (filter === "r56" && c.r56) || (filter === "apk" && c.apk))
+    const cards = g.cards.filter(c => filter === "all" || (filter === "r56" && c.r56) || (filter === "r61" && c.r61) || (filter === "apk" && c.apk))
     if (!cards.length) continue
     const sec = el("section", { class: "group", id: g.id })
     const total = cards.reduce((a, c) => a + c.checks.length, 0)
@@ -307,6 +413,7 @@ function render() {
       if (!c.codes.length) head.append(el("span", { class: "code", text: "ใหม่" }))
       head.append(el("h3", { text: c.title }))
       if (c.r56) head.append(el("span", { class: "tag", text: "รอบ 56" }))
+      if (c.r61) head.append(el("span", { class: "tag", text: "รอบ 57–61" }))
       if (c.apk) head.append(el("span", { class: "tag", text: "ต้องใช้ APK ใหม่" }))
       const list = el("ul", { class: "checks" })
       for (const text of c.checks) list.append(el("li", { class: "check" }, el("span", { class: "box", "aria-hidden": "true" }), el("div", { class: "text", text })))
