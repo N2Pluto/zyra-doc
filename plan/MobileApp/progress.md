@@ -3,6 +3,37 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-14 (รอบ 52) · Ten + Claude — กลุ่ม "ทั้งสองแนว": แก้ 5 การ์ด (6 PR) · รัน stack local · ทำไมคนอื่นไม่เห็นหน้า mobile
+
+- **ทำอะไร:**
+  - สายแนวนอนเหลือแต่การ์ดที่รอ PM / QA → ทำกลุ่ม "ทั้งสองแนว / ตัวแอป" ([work-split สาย 3](../../issues/mobile-qa-work-split-by-orientation-2026-10-12.md)) ข้อที่ root cause ชัดและไม่ต้องรอใคร · ทำใน worktree `.wt/zyra-app-spatial` แตกจาก `origin/develop` ทุก PR
+  - **หาสาเหตุ "อีกคนรัน develop บนเครื่องแล้วไม่เห็นหน้า mobile":** หน้า mobile ทั้งหมดอยู่หลัง flag `NEXT_PUBLIC_MOBILE_VO` (default ปิด, `lib/mobile-vo-feature.ts`) ซึ่งตั้งไว้แค่ใน GitHub secret ตอน CI build · repo ไม่มี `.env.example` → clone มารันเองจะไม่มีค่านี้ · แก้: ใส่ `NEXT_PUBLIC_MOBILE_VO=true` ใน `zyra-app/.env` แล้ว restart `npm run dev` (ค่า `NEXT_PUBLIC_*` ถูกฝังตอน build) แล้วเปิดแบบมือถือ (DevTools device toolbar)
+  - **รัน stack local** (app / api / ws / notifications) จาก worktree `develop` ใน `.wt/*-develop` (checkout หลักอยู่ branch เก่า — ไม่สลับ) + Redis / SFU ใน Docker · DB = Postgres ของ dev ตาม `.env` · config `dev-app` / `dev-api` / `dev-ws` / `dev-notifications` / `dev-app-combined` (develop + PR แนวนอน รวมในเครื่อง ไม่ได้ push) ใน `.claude/launch.json` ของ root · ปิดแล้วตามสั่ง (Docker ยังเปิด)
+- **PR (→ `develop`, ยังไม่ merge — รอ review):**
+
+  | PR | แก้อะไร | การ์ด |
+  |---|---|---|
+  | [zyra-app#545](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/545) | Accept จาก Participants sheet ส่งแค่ WS decision ไม่บันทึก access grant → ใช้ `allowKnock` (grant → sectionSync → decision) ร่วมกับ Lite Home | B-04 |
+  | [zyra-app#546](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/546) | `destroySession` ปิด socket ก่อน hook ส่ง stop → store รู้ `selfSpotlightLive` แล้วส่ง `ws:spotlight:stop` ก่อนปิด | B-21 (+ "ค้างบน stage" ของ B-14) |
+  | [zyra-app#547](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/547) | ws ใส่ `avatar_url` ของ chat entry เป็น spritesheet ตัวละคร → `MeetingChatPhotoProvider` ให้หน้ามือถือ (Lite + Spatial meeting / Spotlight) ใช้รูปโปรไฟล์จาก member list · desktop เหมือนเดิม | B-12 |
+  | [zyra-app#548](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/548) + [zyra-mobile#9](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/9) | splash ซ่อนตามเวลา 2 วิ → เว็บสั่ง `SplashScreen.hide()` เองเมื่อหน้าแรก render · shell ยืดเป็น cap 10 วิ (ยัง `launchAutoHide: true`) | B-30 |
+  | [zyra-app#549](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/549) | เว็บ desktop ส่ง `onMuteAll` ให้ทุกคน → เฉพาะ meeting owner / Owner / Admin (`canMuteAll`) | B-01 (ส่วนเว็บ) |
+
+  - ⚠️ **ลำดับ deploy B-30:** zyra-app#548 ต้องขึ้น env นั้นก่อน แล้วค่อยออก build แอปจาก zyra-mobile#9 — สลับกัน = splash ค้าง 10 วิทุกครั้งที่เปิด
+  - conflict ที่เจอระหว่างทำ (#547 / #549 เพิ่มบรรทัดตรงเดียวกับ #542) ย้ายตำแหน่งแก้แล้ว
+- **verify ถึงไหน:**
+  - **build / test:** ทุก PR `vitest run` ผ่าน · `tsc --noEmit` ไม่มี error ใหม่ (7 เดิม) · eslint ไม่มี warning ใหม่ (hero เทียบกับ develop) · test ใหม่ของ B-04 fail บน develop / ผ่านหลังแก้ · **รวม zyra-app 12 PR (#538–#549) merge กันได้ไม่ชน** — tree ที่รวมแล้ว 340 ไฟล์ / 4,209 case ผ่าน · zyra-mobile `npm run typecheck` ผ่าน
+  - **บนเครื่องจริง / เบราว์เซอร์: ยังไม่ได้เทส** ทุก PR ในรอบนี้ · zyra-mobile ยังไม่ได้ `cap sync` / build
+  - **Before/After (rule 18): ยังไม่ได้วัด** — ยังไม่ merge / deploy
+- **ต่อจากนี้:**
+  - review + merge zyra-app #538–#549 และ zyra-mobile #9 (ตามลำดับ B-30 ข้างบน) → QA เทสบนแอป dev
+  - merge #542 / #543 ก่อนให้ dev สายแนวตั้งเริ่ม A1 / V-07 ([portrait assignment](../../issues/mobile-qa-portrait-assignment-2026-10-14.md))
+- **ติดอะไร:**
+  - **B-08 (preview กล้องไม่เต็มจอ) ย้ายจาก "พร้อมแก้" เป็น "รอมติ":** prototype ที่อนุมัติเป็น spec กำหนด `.camprev{height:200px}` ตรงกับโค้ด แต่ QA อยากได้เต็มจอ → PM / design ตัดสิน
+  - **B-01 ฝั่ง server:** zyra-ws `handleMuteAll` ยังรับจากทุกคน (ตั้งใจ — code-map 0.52 ยังไม่มีมติ)
+  - **B-32** (ทำงานต่อตอนล็อกจอ) ต้องเขียน Android foreground service + build / เทสบนเครื่องจริง — ยังไม่เริ่ม รอ Ten สั่ง · **B-47** รอ design
+  - รอ QA / PM: B-13 · B-29 · B-31 · B-36 · B-40 · B-45 · Q-03 · และการ์ดแนวนอน / แนวตั้งที่ค้างตามรอบ 51
+
 ## 2026-10-12 → 10-14 (รอบ 51) · Ten + Claude — issue QA มือถือ: แบ่งแนวตั้ง / แนวนอน · เขียนรายละเอียดลง ClickUp · แก้สายแนวนอน 7 PR
 
 - **ทำอะไร:**
