@@ -3,6 +3,25 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-14 (รอบ 53) · Ten + Claude — มติ megaphone (B-42 / B-15) · merge 13 PR ขึ้น develop + deploy dev · ClickUp completed 20 ใบ
+
+- **ทำอะไร:**
+  - **มติ Ten (B-42 / B-15):** megaphone บนมือถือ = **Announcement แบบเว็บ** ไม่ใช่ Spotlight · เริ่ม Spotlight แนวนอน = **เดินเข้าจุดเองแล้วกด Play ในแถบล่าง** แบบ desktop · Lite ไม่เปลี่ยน → [zyra-app#550](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/550): megaphone เปิด `AnnouncementSurface` เต็มจอใน `MobileSubPage` (Owner / Admin เท่านั้น) · `VOHud` มือถือมีปุ่ม Play (สีจางระหว่างเดินไม่ถึงจุด) · ลบ `handleMegaphone` (เดินไป marker เอง)
+  - **เอกสาร:** ux-ui-plan เพิ่ม **§18.10** (แทนที่ §3.9 / §18.7 ข้อ 4 / §18.9 ข้อ 4) · ขีดฆ่า + ชี้ §18.10 ใน technical-design · task-breakdown (0.49 ยกเลิก) · code-map · test-plan (FE-VO-04, FE-SPOT-04) · screens · work-split แถว B-15 / B-42 ([zyra-doc#57](https://github.com/N2Pluto/zyra-doc/pull/57))
+  - **Ten สั่งเอาขึ้น develop:** squash-merge zyra-app **#538–#550 (13 PR)** เข้า `develop` ตามลำดับ (#542, #543 ก่อน) + [zyra-mobile#9](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/9)
+  - **ClickUp:** แก้ description B-42 / B-15 / B-16 (มติ + สถานะ merge / deploy + ขั้นตอนเทส) · **Ten แก้กฎ** `.claude/rules/13-clickup-status.md` + `CLAUDE.md`: AI เปลี่ยน status ได้เมื่อผู้ใช้อนุญาตในแชท (เฉพาะคำสั่งนั้น) → เปลี่ยน **20 การ์ดที่อยู่บน develop เป็น `completed`** ตามที่ Ten สั่ง: B-14 B-17 B-18 B-19 B-20 H-05 H-08 H-09 H-04 B-07 H-02 B-04 B-21 B-12 B-30 B-42 B-15 B-16 (จาก Open) · H-01 B-01 (จาก in progress)
+- **verify ถึงไหน:**
+  - **develop หลัง merge:** `vitest run` 340 ไฟล์ / 4,210 case ผ่าน · `tsc --noEmit` ไม่มี error ใหม่ (7 เดิม) · `eslint .` 0 error
+  - **deploy dev:** CI `Deploy zyra-app (GitOps → k3s)` ของ `26fa1588` success (run ก่อนหน้าถูก cancel ตาม concurrency) · image `web:dev-26fa158` · `https://app.dev.zyra.center/api/version` ตอบ buildId `04:22:03` ตรงกับเวลา build ของ image นี้ = **ขึ้น dev จริงแล้ว** · zyra-mobile CI "Android APK" success (run 38510899567)
+  - **บนเครื่องจริง: ยังไม่ได้เทส** — 20 การ์ดเป็น `completed` ทั้งที่ยังไม่ได้เทสตามกฎ 80% (04-test.md) · Ten รับทราบแล้วสั่งให้เปลี่ยน · ถ้า QA เจอปัญหาให้เปิดการ์ดกลับ
+  - **Before/After (rule 18): ยังไม่ได้วัด**
+- **ให้ QA เทสบน dev (16 ข้อ):** หน้า Spotlight แนวนอนกดได้ · ชิป "N | M" · เลื่อนรายชื่อ (B-17 B-14 B-18 B-19) · meeting กลับมาขยายหลัง Spotlight จบ (B-20) · Play บนจุด Spotlight (B-15) · megaphone = Announcement ของ Owner / Admin (B-42) · เสียงตอนเดินด้วย joystick (H-05) · Meeting rooms ห้องล็อก + Join ไปเก้าอี้ (H-08) · Join จากเมนู Member / โปรไฟล์ (H-09) · Ask to join Bubble (H-04) · Invite ใน meeting (B-07) · เข้า Spatial ครั้งแรก / Rotate / Reconnect (H-01) · สลับโหมดแล้วแมพขึ้น (H-02) · Accept ห้องล็อก (B-04) · Spotlight หายทันทีเมื่อ host ออก (B-21) · รูปโปรไฟล์ในแชท meeting (B-12) · splash ไม่มีจอดำ — **ต้องลง APK ใหม่** (B-30) · Mute all บนเว็บเฉพาะ host (B-01)
+- **ต่อจากนี้:** รอผลเทสจาก Ten / QA ว่าตรงไหม · dev สายแนวตั้งเริ่มได้แล้ว (#542 / #543 merged — ไม่ชนกัน)
+- **ติดอะไร:**
+  - เอกสารใน `plan/MobileApp/` ส่วนใหญ่ **ยังไม่เคย commit** (ux-ui-plan, code-map, test-plan, screens, open-items, clickup-spec = untracked · spec / technical-design / task-breakdown มีงานค้างของคนอื่น) — แก้ §18.10 ไว้ในเครื่องแล้ว รอ Ten ตัดสินว่าจะ commit ทั้งโฟลเดอร์ไหม
+  - หน้า Announcement ยังไม่มีดีไซน์มือถือ (ใช้หน้า desktop เต็มจอ)
+  - B-01 ฝั่ง server ยังเปิด · B-08 / B-32 / B-47 และการ์ดรอ PM / QA ตามรอบ 52
+
 ## 2026-10-14 (รอบ 52) · Ten + Claude — กลุ่ม "ทั้งสองแนว": แก้ 5 การ์ด (6 PR) · รัน stack local · ทำไมคนอื่นไม่เห็นหน้า mobile
 
 - **ทำอะไร:**
