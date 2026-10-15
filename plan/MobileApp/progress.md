@@ -1,7 +1,38 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
-> **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **อัปเดตล่าสุด:** 2026-10-15 · **คนล่าสุด:** Ten (ten_dev) + Claude
+
+## 2026-10-15 (รอบ 63) · Ten + Claude — B-45 language pack · เปลี่ยนภาษาทันที · V-13 Circle วาร์ป · ไล่ B-05 / B-25
+
+- **คำขอ Ten:** (1) ทำ B-45 ต่อ (2) เช็คการ์ดที่ยังไม่ได้ทำใน parent 86d4bfpym (3) อธิบาย B-05 / B-25 เพิ่ม (4) V-13 ให้ตัวละคร Lite วาร์ปพร้อมประกายแทนการเดิน ทุกเมนูที่เกี่ยวกับ meeting / Circle / private zone (5) เปลี่ยนภาษาแล้วค้าง 2–10 วิ แม้บน iPhone Pro Max
+- **มติ Ten:** V-13 = Lite อย่างเดียว (แนวนอน / เว็บยังเดินเหมือนเดิม) · "pop chat space" = เข้าร่วม Circle · Follow ยังเดินตาม · เปลี่ยนภาษา = ทำข้อ 2 (สลับฝั่ง client) + ข้อ 4 (loading)
+- **ทำอะไร:**
+  - **B-45 language pack** — [zyra-app#583](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/583): `scripts/language-packs.mjs` (validate key / `{arg}` / `<tag>` เทียบ en, ข้าม text ใน plural branch) · workflow `publish-language-packs.yml` (push `main` ที่แตะ `messages/**` หรือ dispatch พร้อม ref = rollback) อัปโหลด pack immutable + `manifest.json` (max-age 60) ขึ้น R2 · `i18n/remote-pack.ts` merge pack ทับไฟล์ใน image, timeout 1.5 วิ, R2 ล่ม / ไม่ตั้งค่า = ใช้ไฟล์เดิม · คู่มือ [guides/language-packs.md](../../guides/language-packs.md) ([zyra-doc#76](https://github.com/N2Pluto/zyra-doc/pull/76)) · **ยังไม่เปิดใช้:** ต้องมี R2 secrets 5 ตัว + ขึ้น `main` (develop นำ main อยู่ 85 commit → รอ Ten เลือกว่าปล่อย uat ตอนนี้หรือรอบ release ปกติ) + `I18N_MANIFEST_URL` ทุก env · Claude ใส่ secret เองไม่ได้ (กฎความปลอดภัย: ห้ามจับ credential) → ให้คำสั่ง `gcloud … | gh secret set` ที่ Ten รันเอง · รอบแรกพังเพราะ zsh ไม่แยกคำ (`set -- $p`) → แก้เป็น `${=p}` · **ยังไม่ได้ยืนยันว่า secret ตั้งครบ**
+  - **เปลี่ยนภาษาทันที** — [zyra-app#587](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/587): ต้นเหตุ = ทุกครั้งยิง server 2 รอบก่อนจอเปลี่ยน (`setUserLocale` server action → Next render ทั้งหน้าเพราะเขียน cookie, แล้ว `router.refresh()` อีกรอบ) แต่ละรอบพาไฟล์ภาษาทั้งชุด (th ≈ 436 KB) · แก้: `components/locale-provider.tsx` ครอบ `NextIntlClientProvider` ใน root layout — โหลดไฟล์ภาษาเป็น chunk แยก (prefetch ตอนเปิดตัวเลือกภาษา) → สลับข้อความ + `<html lang>` + ฟอนต์ไทย + cookie ทันที แล้ว refresh เบื้องหลัง · spinner เฉพาะเกิน 150 ms · `useLocaleSwitch()` ใช้ทั้ง 4 จุด (navbar, Settings เว็บ, Language ของ Spatial มือถือ, Language ของ Lite) · โหลด chunk ไม่ได้ → กลับไปทางเดิม · toast "Language set to …" ของ Lite เป็นภาษาใหม่ · ฝังไฟล์ภาษาใน APK / IPA ไม่คุ้ม (แอปเป็น remote URL, แก้คำต้องออกแอปใหม่)
+  - **V-13 Circle** — [zyra-ws#81](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/81): พบว่า meeting / private zone / Spotlight วาร์ปแล้วจาก [zyra-ws#79](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/79) + [zyra-app#585](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/585) (merged 14 ต.ค.) · เหลือ Circle: คน Lite เข้า Circle แล้วตัวละครยังนั่ง private zone · เพิ่ม `autopilotCircle` — วาร์ปไปช่องว่างข้างกลุ่ม (ห้องเดียวกัน, ไม่เข้า private / meeting / spotlight zone, รวมระยะถึงทุกคนน้อยสุด) · รอระหว่างคนในวงกำลังเดิน · ออกวงแล้ววาร์ปกลับที่นั่ง · ประกายใช้ของ #585 ไม่ต้องแก้ zyra-app
+  - **B-05** (Action in meeting กดไม่ได้ — Ten: แนวตั้ง ไมค์ / กล้อง / ออก กดไม่ได้เลย): ไม่แก้เพิ่ม — เทียบโค้ดวันที่ QA แจ้ง (9 ต.ค. 14:29) กับ develop: ไมค์ / กล้อง / ยกมือ = SFU ต่อใหม่ทุก render รีเซ็ตสถานะ (แก้แล้ว #537) · Leave = `leave()` รอ REST ก่อนปิดหน้า (แก้แล้ว #559) · หน้า meeting ไม่มี overlay ทับ
+  - **B-25** (Wave แล้วแจ้งเตือนซ้ำหลังปิดแอป): zyra-ws push ครั้งเดียวตอน Wave และเฉพาะ target ที่ backgrounded · ต้นเหตุที่น่าจะเป็น: (1) แอปไม่ลบแจ้งเตือนในถาดตอนเปิดกลับมา (ไม่มี `removeAllDeliveredNotifications`) (2) Lite ไม่ส่ง `visibility` ตอนสลับ background / foreground (มีแค่ hero) → `Hidden` ค้างได้ (3) push ไม่มี collapse key / tag → กองซ้อน · **เสนอ ก / ข / ค แล้ว ยังไม่ทำ** (รอ Ten)
+  - **เช็คการ์ด:** parent 84 ใบ — Open 13 + in review 1 (HP-11) · สายแนวนอน / ทั้งสองแนวเหลือ B-45 · ที่เหลือเป็นสาย Lite: แก้แล้วรอ QA (B-05, V-08, V-13, V-02) · น่าจะแก้แล้วยังไม่ยืนยัน (B-06, B-09, V-09, V-10, B-41) · ยังไม่แก้ (B-25, B-35 Sentry, B-38 config `APP_URL`)
+  - **ClickUp:** B-45 เขียน description ใหม่ (ต้นเหตุ, PR, before / after, checklist QA 7 ข้อ) · **ไม่ได้เปลี่ยน status ใบไหน** — เสนอรายการ 8 ใบให้ Ten เลือก ยังไม่ได้คำตอบ
+- **PR:** zyra-app #583 #587 · zyra-ws #81 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI เขียวก่อน merge) · zyra-doc #76
+- **Before / After — เปลี่ยนภาษา** (หน้า login, EN → TH, `MutationObserver` บน `<html lang>` นับจาก `pointerup` + `performance` resource timing)
+
+  | Metric | Before | After | Δ |
+  |---|---|---|---|
+  | กดแล้วข้อความเปลี่ยน (local dev เครื่องเดียวกัน) | 179 ms | 42 ms | −77% |
+  | กดแล้วข้อความเปลี่ยน (app.dev, desktop wifi) | 338 ms | ยังไม่ได้วัด (รอ deploy) | — |
+  | request ที่ต้องรอ server ก่อนข้อความเปลี่ยน | 2 (POST action + GET RSC) | 0 | −2 |
+  | bytes ก่อนข้อความเปลี่ยน (dev) | 2 × 67.7 KB transfer (2 × 349 KB raw) | 0 (prefetch แล้ว) | −135 KB |
+
+  **ยังไม่ได้วัด:** มือถือจริงบนเน็ตมือถือ (browser ที่ใช้ throttle ไม่ได้) — เคสที่ Ten เจอ 2–10 วิ
+- **verify ถึงไหน:**
+  - **build / test:** zyra-app `vitest run` 359 ไฟล์ / 4,355 ผ่าน (+ `locale-provider.test.tsx` 4 เคส) · `tsc` 7 error เดิม · zyra-ws `go test -race ./...` ผ่าน (+ 3 test: วาร์ปเข้า / ออกวง, รอตอนกลุ่มเดิน, `TestCircleStandTile`)
+  - **browser:** localhost:3010 หน้า login สลับ EN → TH ข้อความ / ฟอนต์ / cookie เปลี่ยน ไม่มี POST `setUserLocale` ใน server log
+  - **deploy:** zyra-ws `85dfe67a` · zyra-app `eb79d1eb` CI in_progress ตอนเขียน
+  - **บนเครื่องจริง: ยังไม่ได้เทส**
+- **ให้ Ten / QA เทส:** checklist ในการ์ด B-45 (เปลี่ยนภาษาทุกจุด) · V-13: 2 คนบนเว็บยืนติดกันจนวงขึ้น → คนแนวตั้งกด Join Circle → เว็บเห็นวาร์ปมาข้างวงพร้อมประกาย · กด Leave → วาร์ปกลับ private zone
+- **ติดอะไร:** B-45 รอ R2 secrets + ตัดสินปล่อย uat · B-25 รอเลือก ก / ข / ค · status ClickUp 8 ใบรอ Ten เลือก · B-35 (Sentry) / B-38 (`APP_URL`) ยังไม่มีใครทำ
 
 ## 2026-10-14 (รอบ 62) · Ten + Claude — กันหน้าเว็บโผล่ก่อนหน้ามือถือ · กดแล้วยุบ + แท็บ fade · แผน B-45 v2 · เช็กลิสต์รอบ 57–61
 
