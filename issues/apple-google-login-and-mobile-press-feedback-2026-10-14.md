@@ -263,7 +263,7 @@ Ten สั่ง: "เช็ค apple กับ gmail ว่าเมลเด�
 | zyra-api `zyra-api-dev-env-json` v11: `APPLE_CLIENT_IDS=co.zyraworld.app.develop,co.zyraworld.web` → roll pod ([zyra-infra#56](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/56), `env-secret-version` 11) | ✅ `printenv` ใน pod dev ได้ค่าใหม่ |
 | zyra-app GitHub Environment `dev`: `NEXT_PUBLIC_APPLE_SERVICES_ID=co.zyraworld.web` → build dev ใหม่ | ✅ ปุ่ม "ดำเนินการต่อด้วย Apple" ขึ้นบน app.dev.zyra.center/login |
 | `appleid.apple.com/auth/authorize` ด้วย client_id ของเรา | ✅ ได้หน้า sign-in จริง (ID ปลอมได้ `invalid_client`) |
-| login จริงด้วย Apple ID จนเข้าแอป | ⏳ ยังไม่ได้ลอง — ต้องใช้ Apple ID ของคน |
+| login จริงด้วย Apple ID จนเข้าแอป | ✅ Ten ลองบน dev แล้วใช้ได้ (2026-10-15) |
 
 - ปุ่ม Apple อยู่หน้า "Welcome to Zyra World" (default) เท่านั้น — หน้า "Welcome back" (มีบัญชี Google ที่จำไว้) มีแค่ Google กับ Mail ตามโค้ดเดิม
 - ไม่ต้องสร้าง Key — api ตรวจ identity token กับ public key ของ Apple ไม่ได้แลก code
@@ -288,5 +288,5 @@ Ten สั่ง: "เช็ค apple กับ gmail ว่าเมลเด�
 ### ต่อจากนี้
 
 1. merge #593 #594 เข้า develop → ลองกดบน dev
-2. ลอง login ด้วย Apple ID จริงบน dev (ข้อ B ข้อสุดท้ายในตาราง)
+2. ~~ลอง login ด้วย Apple ID จริงบน dev~~ ✅ ใช้ได้
 3. ขึ้น uat / prod: ต้อง merge develop → main → tag (รวม zyra-api#166 ที่ปิดช่องโหว่ยึดบัญชีด้วย)
