@@ -3,6 +3,17 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-15 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-15 (รอบ 66) · Ten + Claude — แก้ store compliance ครบ · TestFlight UAT + PROD build 3 · privacy policy ใหม่
+
+- **ทำอะไร:**
+  - แก้ครบ 8 ข้อใน [store-compliance-audit.md](store-compliance-audit.md): ซ่อน upgrade / ราคาในแอป (zyra-app#597) · report / block (zyra-api#168, zyra-app#599, migration 113) · ตัด Facebook SDK + PrivacyInfo + push channel (zyra-mobile#16) · Google iOS client prod (zyra-mobile#18) · revoke Apple token (zyra-api#169, zyra-app#598, migration 114) · iPhone อย่างเดียว (zyra-mobile#17)
+  - App Store Connect: สร้าง app **Zyra World** (`6823101211`) + subtitle / category / privacy URL · upload **UAT + PROD 1.0.0 (3)** ขึ้น TestFlight (ยังไม่ submit review)
+  - Privacy policy ใหม่จาก PM (`demo file/policy`) + แก้ให้ตรงแอป (Ten อนุมัติ): zyra-app#601 · zyra-landing#11 #12 (live บน zyra-world.com)
+  - คู่มือให้เจ้าของบัญชี (Play verify + Apple agreement) — doc "ขั้นตอนยืนยันบัญชี Play / Apple" + ค่า TXT ของ maximumsoft.co.th
+- **verify ถึงไหน:** CI เขียวทุก PR · migration 113 / 114 รันบน **dev** แล้ว · dev api `dev-6cfcd86` endpoint ใหม่ตอบ 401 (มี route) · landing live ตรวจด้วย curl แล้ว · **ยังไม่ได้เทสบนเครื่องจริง** และยังไม่ได้เทส report / block ด้วย 2 บัญชี
+- **ต่อจากนี้:** เทส report / block บน dev · TestFlight internal group (รอรายชื่อ) · develop → main → tag (ต้อง confirm) + migration 113 / 114 บน uat / prod ก่อน
+- **ติดอะไร:** Play owner verify (MD) · Apple License Agreement (Chatchai) · TXT ของ maximumsoft.co.th (คนดูแล Cloudflare) · Ten: key .p8, upload keystore, บัญชี reviewer
+
 ## 2026-10-15 (รอบ 65) · Ten + Claude — Report & Block (store compliance audit #2)
 
 - **คำขอ:** App Store Guideline 1.2 + Google Play UGC policy บังคับให้แอปที่มี chat มี report เนื้อหา + block ผู้ใช้ — zyra-app / zyra-api ยังไม่มี
