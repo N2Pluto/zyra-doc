@@ -1,6 +1,6 @@
 # Store Release Checklist — App Store + Play Store (UAT → PROD)
 
-> **สถานะ:** เตรียมความพร้อม — โค้ด / config ทำแล้ว · Apple Bundle ID + app Zyra UAT, Firebase, OAuth iOS uat เสร็จ · **ติด:** Play Console ต้องยืนยันบัญชี · Apple License Agreement รอ Account Holder
+> **สถานะ:** UAT iOS upload แล้ว · ช่องโหว่ตามกฎ store ดู [store-compliance-audit.md](store-compliance-audit.md) · เตรียมความพร้อม — โค้ด / config ทำแล้ว · Apple Bundle ID + app Zyra UAT, Firebase, OAuth iOS uat เสร็จ · **ติด:** Play Console ต้องยืนยันบัญชี · Apple License Agreement รอ Account Holder
 > **อัปเดตล่าสุด:** 2026-10-15 · Ten + Claude
 > **Repo ที่กระทบ:** zyra-mobile, zyra-app, zyra-infra
 > **ต่อจาก:** task-breakdown §K (1.12 release CI, 1.13 store listing) · spec Phase 1 acceptance criteria
@@ -53,6 +53,8 @@ for e in uat production; do base64 -i ~/zyra-keys/zyra-upload.jks | gh secret se
 
 **ข. `APPLE_CLIENT_IDS` ใน zyra-api uat** (Sign in with Apple ในแอป UAT)
 
+> ✅ 2026-10-15 ทำแล้ว — secret v6 + zyra-infra#57 (env-secret-version 5 → 6) merged · ข้ามคำสั่งข้างล่างได้ (เก็บไว้ใช้กับ prod: เปลี่ยน `uat` → `prod`, ค่า `co.zyraworld.app`)
+
 ```bash
 gcloud secrets versions access latest --secret=zyra-api-uat-env-json --project=gather-dev-458614 | jq -c '.APPLE_CLIENT_IDS="co.zyraworld.app.uat"' | gcloud secrets versions add zyra-api-uat-env-json --project=gather-dev-458614 --data-file=-
 ```
@@ -71,7 +73,8 @@ base64 -i ~/Downloads/AuthKey_XXXXXXXXXX.p8 | gh secret set ASC_KEY_P8_BASE64 -R
 
 ### 0.3 หลังเจ้าของบัญชีกดแล้ว — AI ทำต่อได้
 
-- Apple ยอมรับสัญญาแล้ว → archive UAT + upload TestFlight (manual ผ่าน Xcode หรือ Store Release workflow ถ้ามี ASC key)
+- ✅ Zyra UAT 1.0.0 (1) **upload ขึ้น App Store Connect แล้ว** 2026-10-15 (upload ได้แม้สัญญายังค้าง) → ไปเพิ่ม internal testers ใน TestFlight · ถ้าแจกไม่ได้เพราะสัญญา ต้องรอ Account Holder
+- (เดิม) Apple ยอมรับสัญญาแล้ว → archive UAT + upload TestFlight (manual ผ่าน Xcode หรือ Store Release workflow ถ้ามี ASC key)
 - Play ยืนยันแล้ว → สร้าง app Zyra UAT / Zyra World · เปิด Play App Signing · สร้าง OAuth Android client (SHA-1 จาก 0.2 ก + app signing key) · service account `PLAY_SERVICE_ACCOUNT_JSON` · กรอกฟอร์มตาม store-listing-draft.md
 
 ## 1. โค้ด / config ที่ทำแล้ว
