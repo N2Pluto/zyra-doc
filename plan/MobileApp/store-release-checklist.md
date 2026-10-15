@@ -1,6 +1,6 @@
 # Store Release Checklist — App Store + Play Store (UAT → PROD)
 
-> **สถานะ:** เตรียมความพร้อม — โค้ด / config ฝั่ง dev ทำแล้ว (PR ด้านล่าง) · งานใน console ยังไม่เริ่ม
+> **สถานะ:** เตรียมความพร้อม — โค้ด / config ทำแล้ว · Apple Bundle ID + app Zyra UAT, Firebase, OAuth iOS uat เสร็จ · **ติด:** Play Console ต้องยืนยันบัญชี · Apple License Agreement รอ Account Holder
 > **อัปเดตล่าสุด:** 2026-10-15 · Ten + Claude
 > **Repo ที่กระทบ:** zyra-mobile, zyra-app, zyra-infra
 > **ต่อจาก:** task-breakdown §K (1.12 release CI, 1.13 store listing) · spec Phase 1 acceptance criteria
@@ -30,11 +30,11 @@
 
 | # | งาน | ใคร | สถานะ |
 |---|---|---|---|
-| U1 | App Store Connect: ลงทะเบียน Bundle ID `co.zyraworld.app.uat` (capabilities: Sign in with Apple, Push Notifications, Associated Domains) + สร้าง app "Zyra UAT" | Ten / PM | ☐ |
-| U2 | Play Console: สร้าง app "Zyra UAT" package `co.zyraworld.app.uat` · เปิด Play App Signing | Ten / PM | ☐ |
+| U1 | App Store Connect: ลงทะเบียน Bundle ID `co.zyraworld.app.uat` (capabilities: Sign in with Apple, Push Notifications, Associated Domains) + สร้าง app "Zyra UAT" | Ten / PM | ✅ 2026-10-15 — Bundle ID uat + prod register แล้ว · app Zyra UAT (App Store ID `6823056419`) · ⚠️ App Store Connect ขึ้นว่า License Agreement อัปเดต — **Account Holder ต้องกดยอมรับ** ไม่งั้น upload / submit ไม่ได้ |
+| U2 | Play Console: สร้าง app "Zyra UAT" package `co.zyraworld.app.uat` · เปิด Play App Signing | Ten / PM | ⛔ สร้าง app ไม่ได้ — "Complete account verifications to create new apps" (ต้องยืนยันบัญชีก่อนสร้าง app) · account owner ต้องยืนยันตัวตน + เว็บไซต์องค์กร + เบอร์โทร ก่อน |
 | U3 | สร้าง upload keystore (ครั้งเดียว ใช้ทั้ง uat + prod) — คำสั่งใน §4 · เก็บไฟล์ + รหัสใน password manager ของทีม **ห้าม commit** | Ten | ☐ |
-| U4 | Firebase: register iOS + Android app `.uat` ใน project `gather-dev-458614` → วาง `android/app/src/uat/google-services.json` + `ios/App/App/firebase/uat/GoogleService-Info.plist` · **ห้ามลบ project** (มี prod อยู่ด้วย) · ต้องได้ OK จาก Ten ก่อน (เคยถูกบล็อกว่าแตะ prod) | Ten | ☐ |
-| U5 | Google OAuth (GCP Credentials): iOS client `co.zyraworld.app.uat` → ใส่ `iosGoogleClientId` ใน `flavors.json` · Android client ใส่ SHA-1 ทั้ง **upload key** และ **app signing key** (จาก Play Console → App integrity) | Ten / Dev | ☐ |
+| U4 | Firebase: register iOS + Android app `.uat` ใน project `gather-dev-458614` → วาง `android/app/src/uat/google-services.json` + `ios/App/App/firebase/uat/GoogleService-Info.plist` · **ห้ามลบ project** (มี prod อยู่ด้วย) · ต้องได้ OK จาก Ten ก่อน (เคยถูกบล็อกว่าแตะ prod) | Ten | ✅ 2026-10-15 — register uat + prod (iOS + Android) แล้ว · ไฟล์อยู่ใน zyra-mobile#15 |
+| U5 | Google OAuth (GCP Credentials): iOS client `co.zyraworld.app.uat` → ใส่ `iosGoogleClientId` ใน `flavors.json` · Android client ใส่ SHA-1 ทั้ง **upload key** และ **app signing key** (จาก Play Console → App integrity) | Ten / Dev | iOS uat ✅ "Zyra UAT iOS" (zyra-mobile#15 + secret `NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID` ใน env uat ของ zyra-app ตั้งแล้ว) · Android ☐ รอ upload key + Play |
 | U6 | Apple: ใส่ `co.zyraworld.app.uat` ใน `APPLE_CLIENT_IDS` ของ zyra-api **uat** secret → รอ ≥5 นาทีให้ ESO sync ก่อน bump env-secret-version | Ten | ☐ |
 | U7 | APNs: key `ZY4T34858Q` อัปโหลดใน Firebase แล้ว — เช็คว่าครอบ app ใหม่ | Ten | ☐ |
 | U8 | เปิด push บน uat web (`NEXT_PUBLIC_PUSH_ENABLED` ใน GitHub Environment `uat` ของ zyra-app) หลัง U4 เสร็จ | Dev | ☐ |
