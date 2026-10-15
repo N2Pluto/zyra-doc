@@ -1,7 +1,7 @@
 # Mobile App — Progress / Handoff
 
-> **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
-> **อัปเดตล่าสุด:** 2026-10-15 · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **สถานะรวม:** **ขึ้น dev + TestFlight แล้ว (2026-10-08)** — app "Zyra World Dev" (`co.zyraworld.app.develop`) build 1–3 บน TestFlight กลุ่ม Zyra Team 5 คน · login Apple/Google ในแอปแก้แล้ว (entitlement + `APPLE_CLIENT_IDS` dev v9 + iOS OAuth client) **รอ Ten ลอง build 2+** · asset store A1+A2 merge แล้ว เปิดบน dev (`NEXT_PUBLIC_MOBILE_ASSET_STORE=true`) **ยังไม่ได้วัด Before/After** ([asset-store.md](asset-store.md)) · ถัดไป B0/B1 (วัด + observability) · Android: Google native ยังไม่มี OAuth client (SHA-1) · doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48)
+> **อัปเดตล่าสุด:** 2026-10-15 (รอบ 63 — B-45 language pack · เปลี่ยนภาษาทันที · V-13 Circle วาร์ป) · **คนล่าสุด:** Ten (ten_dev) + Claude
 
 ## 2026-10-15 (รอบ 63) · Ten + Claude — B-45 language pack · เปลี่ยนภาษาทันที · V-13 Circle วาร์ป · ไล่ B-05 / B-25
 
@@ -291,6 +291,110 @@
   - **รอข้อมูล QA:** H-03 · B-44 · H-06 (มีปุ่ม Go to แล้ว) · B-13 · B-25 · B-29 · B-31 · B-35 (ต้อง stack trace จาก Sentry) · B-40
   - **DevOps:** B-38 — ลิงก์ invite ชี้ host Cloud Run เก่า → `APP_URL` ใน runtime secret
   - สาย "ทั้งสองแนว / ตัวแอป" 15 การ์ดยังไม่มีคนรับ
+
+## 2026-10-09 (รอบ 57) · Ten + Claude — ลบบัญชีตัวเอง เว็บ + มือถือ (SC-ACC-DEL-01)
+
+- **ทำอะไร:** ClickUp [SC-ACC-DEL-01](https://app.clickup.com/t/36898257/14zd0zuaxqb) + Figma web 7036:262216 / mobile 5889:424882 (HP-01) · Ten ตอบ: เจ้าของ workspace โอนอัตโนมัติเหมือนเดิม · Google / Apple ยืนยันด้วยรหัสอีเมล · รายละเอียด [ux-ui-plan §20.7](ux-ui-plan.md)
+  - **zyra-notifications** [#18](https://github.com/Maximumsoft-Co-LTD/zyra-notifications/pull/18): อีเมล "Account deleted" ตาม Figma 7038:272492 · template ใหม่ `account_deletion_otp`
+  - **zyra-api** [#165](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/165): `DELETE /api/user/me` ยืนยันด้วย password + confirm (EP-01) หรือ `{otp}` (EC-03) จาก `POST /api/user/me/deletion-otp` · preview เพิ่ม `auth_method`, `registered_at` · `purgeAccountTx` (ใช้ทั้ง self + admin) ลบ `tb_authen`, `tb_user_avatar`, username → `deleted-<id>`, ชื่อ "Deleted User" · หลัง commit: zone ว่าง broadcast · `user_deleted` บน `vo:notify` · LiveKit RemoveParticipant ทุกห้อง (EC-01) · ส่งอีเมล Account deleted ตอนลบเอง
+  - **zyra-ws** [#74](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/74): `user_deleted` → `account_deleted` ไปทุก connection ของคนนั้นทุกห้อง แล้วปิด socket · ไม่เข้า presence grace · ที่อยู่ใน grace ออกทันที
+  - **zyra-app** [#531](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/531): `/setting/delete-account` (เว็บ sidebar + มือถือ sub-page) · confirm modal / bottom sheet · Google/Apple ใช้รหัสอีเมล · error ใต้ช่อง · `/account-deleted` "Goodbye for now" (public) · `clearSession("deleted")` · เครื่องอื่นได้ 403 `account_deleted` หรือ ws `account_deleted` → ออกจากระบบไปหน้า Goodbye
+- **ถึงไหน:** notifications #18, api #165, ws #74 merge แล้ว · dev: api `dev-bb0762e` · ws `dev-86ad46e` · app #531 เปิด รอ CI
+- **PR:** zyra-notifications #18 · zyra-api #165 · zyra-ws #74 · zyra-app #531
+- **verify ถึงไหน:** go test / vet ทั้ง 3 repo ผ่าน + CI เขียว · vitest ใหม่ 33 + ชุดเดิมที่เกี่ยว 143 ผ่าน · ลองในเบราว์เซอร์ local (375 / 1440): ฟอร์ม, ปุ่มติดเมื่อครบ, bottom sheet, หน้า Goodbye · **ยังไม่ได้ลองลบจริงบน dev** — ต้องใช้บัญชีทดสอบ 3 แบบ (อีเมล, Google, เจ้าของ workspace ที่มีสมาชิก) ที่ Ten เตรียม (Claude ไม่สร้างบัญชีเอง) · Before/After (rule 18): ยังไม่ได้วัด — วัดได้ด้วย query บน dev: จำนวนคอลัมน์ PII ที่ไม่ใช่ null ของ user ที่ถูกลบ (`email`, `username`, `image_upload`, แถว `tb_authen` / `tb_user_avatar` / `tb_user_device`) ก่อน/หลังลบ
+- **ต่อจากนี้:** Ten ลองบน dev ตาม test-plan FE-LITE-14, BE-AUTH-07/12/13/14 · Apple revoke token (แยกงาน) · บัญชี Google ที่ลบแล้วสมัครใหม่ด้วย Google เดิมไม่ได้ (id = Google sub) — ต้องตัดสินใจถ้าจะให้สมัครใหม่ได้
+- **ติดอะไร:** รอบัญชีทดสอบ 3 แบบจาก Ten
+
+## 2026-10-09 (รอบ 56) · Ten + Claude — ตัวละครของคน Lite / มือถือหมุนจอ ให้ server เดินให้ (autopilot)
+
+- **ทำอะไร:** Ten: "web เห็นยังไง mobile เห็นอย่างนั้น … แนวตั้งกดเข้า meeting ให้ตัวละครโผล่ใน meeting web ด้วย เดินมาจากจุดเกิด … หมุนเป็นแนวตั้งแล้วตัวละครทิ้งไว้บนแมพ → ให้กลับไป private zone ของตัวเอง / zone ที่ไม่มีเจ้าของ / ไม่มีก็เดินเล่นตรงจุดเกิด" (ตอบ: zone ไม่มีเจ้าของ = private zone ที่ยังไม่ claim · นั่งด้วย · บัก Lite ใน meeting = เว็บไม่ได้ยิน/ไม่เห็นตัวตน)
+  - **zyra-ws** [#72](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/72) `internal/hub/autopilot.go`: Lite ไม่ใช่ ghost แล้ว — มี tile เริ่มที่ spawn, server เดินให้ (goto เดิมของ MOVEMENT_V2) ไป private zone ที่ claim → zone ว่างที่ไม่มีใคร claim (ถือไว้ในหน่วยความจำ ไม่ใช่ claim DB) → เดินเล่นรอบ spawn · ถึงแล้วนั่ง seat ถ้ามี · `ws:room:enter` = เดินเข้าห้อง (เว็บนับจาก geometry เหมือนคนเดินเข้า) · ออก = เดินกลับ · Spatial ส่ง `autopilot {park|resume}` ตอนหมุนจอ · wire ใหม่ `Player.autopilot`, zone cache `seats`
+  - **zyra-api** [#164](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/164): zone snapshot มี `seats` (sit point ของ sofa บนชั้นที่ตกใน zone — คณิตเดียวกับ engine) · แก้ object แล้ว republish zone cache ตามหลัง obstacle grid
+  - **zyra-app** [#521](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/521): Lite ที่ `autopilot` ถูกวาดเหมือนคนปกติ (`isGhostPlayer` = lite && !autopilot) นับในห้องด้วย geometry · Spatial บนมือถือส่ง park/resume ตาม `rotateRequired` · Lite เริ่มที่ spawn zone
+  - รายละเอียด [lite-avatar-autopilot.md](lite-avatar-autopilot.md)
+- **ถึงไหน:** merge develop ครบ 3 repo (zyra-app #521 = `4f864fc`) · ws dev `dev-580eb5a` ขึ้นแล้ว · dev ขึ้นครบ: ws `dev-b9a0994` (#72+#73) · api `dev-8ed5911` · app `dev-4f864fc`
+  - รอบต่อ **zyra-ws** [#73](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/73) (Ten อนุมัติ): `request_to_lead` ไปหาคน Lite/จอดอยู่ → ตอบคนขอทันที `lead_request_declined` · ตัวละครที่ server เดินให้ cluster เป็น circle ตามตำแหน่ง (server ตัดสินกฎโซนเอง) · Spotlight จาก Lite เดินไปยืนบน marker (ghost marker เฉพาะไม่มี tile/คนละชั้น)
+- **PR:** zyra-ws #72, #73 · zyra-api #164 · zyra-app #521, [#524](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/524) (toast `lead_request_declined`, dev `dev-aa15835`)
+- **verify ถึงไหน:** go test (+ `-race` autopilot/lite) / vitest ผ่าน + CI เขียว · **ยังไม่ได้ลองบนเครื่องจริง** — ขั้นตอน: Lite บนมือถือ + เว็บบนคอม → เห็นตัวเดินจาก spawn ไป private zone แล้วนั่ง · กด meeting → เดินเข้าห้อง เว็บได้ยิน + เห็นในรายชื่อ · ออก → เดินกลับ · Spatial หมุนแนวตั้ง → จอด · หมุนกลับ → คุมได้ · Before/After (rule 18): ยังไม่ได้วัด
+- **ต่อจากนี้:** Ten ลองบนเครื่อง · Spotlight ของ Lite ยังใช้ marker แบบ ghost · ห้องล็อก: เดินเข้า tile ได้แต่ไม่ได้ token เสียง (follow-up เดิม)
+- **ติดอะไร:** ไม่มี
+
+## 2026-10-09 (รอบ 55) · Ten + Claude — แจ้งเตือน DM ข้าม workspace ในแอป · "Now Playing" บนหน้าล็อกจอ
+
+- **ทำอะไร:**
+  - **DM จาก workspace อื่นไม่เด้งตอนเปิดแอปอยู่ (Ten 2026-10-09):** server เห็นแค่ "ออนไลน์" ไม่รู้ว่าอยู่ workspace ไหน เลยไม่ส่ง push · แอปเลยส่ง `{workspace_id, scoped: true}` ไปกับ heartbeat `POST /api/user/presence` ([zyra-api#162](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/162): `AppHeartbeatIn` / `IsOnlineIn` — เว็บไม่ส่ง body ยังนับออนไลน์ทุกที่เหมือนเดิม · push chat/Spotlight เช็คต่อ workspace · data เพิ่ม `workspace_name`, `sender_avatar`) · แอปโชว์เป็นแถบแบบ IG ด้านบน ([zyra-app#520](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/520) `components/push-banner.tsx`: รูปคนส่ง + ตัวอักษรแรกของ workspace ที่มุม · ชื่อ · "DM · <workspace>" หรือ "ห้อง · workspace" · ข้อความ 1 บรรทัด · แตะเปิด · ปัดขึ้นปิด · หายเอง 5 วิ) · แตะข้าม workspace = โหลดหน้าเต็มไป `/workspace/<id>` (ผ่านหน้าเลือกโหมด → /loading → /play เปิด session ใหม่) แล้วเปิดแชทจาก `sessionStorage` (`lib/pending-conversation.ts`) เพราะ gate/loading ไม่ส่ง query ต่อ — แตะจากหน้าล็อกจอก็ใช้ทางนี้ (เดิม `router.push` ข้าม workspace ใช้ WS session เก่าค้างใต้หน้าใหม่)
+  - **"Now Playing — Zyra" บนหน้าล็อกจอหลังเสียงแชท:** เสียงแจ้งเตือนใน office เป็น `<audio>` + audio session `playback` ของ shell → iOS นับเป็นเล่นเพลง · ย้ายไป Web Audio (`VOSound` ใน `use-vo-sounds.ts` คง `volume`/`currentTime`/`play()` ให้ 13 จุดเรียกเดิม) เหมือนเสียง pet/บรรยากาศ
+- **ถึงไหน:** zyra-api #162 merge + dev `dev-42466c9` แล้ว · zyra-app #520 merge เข้า develop (รอ dev build)
+- **PR:** zyra-api #162 · zyra-app #520
+- **verify ถึงไหน:** go test / vitest ทั้งชุดผ่าน + CI เขียว · **ยังไม่ได้ลองบนเครื่องจริง** — ขั้นตอน: อยู่ workspace A ในแอป → ให้คนอื่น DM จาก B → ต้องมีแถบด้านบน · แตะ → ไป B แล้วแชทเปิด · ล็อกจอหลังเสียงแชท → ไม่มีการ์ด Now Playing · Before/After (rule 18): ยังไม่ได้วัด — ตัวชี้วัดคือ push ที่ server ส่ง (log `push: chat message delivered` `online`→`sent`) ก่อน/หลัง ยังไม่มี dashboard
+- **ต่อจากนี้:** Ten ลองบนเครื่อง · ตอนอยู่ในห้องประชุม iOS อาจยังโชว์ว่าแอปใช้เสียง (ปกติของแอปโทร) · banner ยังไม่มี haptic/เสียง (ใช้ตัวเลข unread + เสียงในแอปเฉพาะ workspace เดิม)
+- **ติดอะไร:** ไม่มี
+
+## 2026-10-08 (รอบ 54) · Ten + Claude — feedback 8 ข้อจาก iPhone · joystick ใหม่ · QA batch (HP-03 · onboarding · splash · Workspace Lists)
+
+- **ทำอะไร:**
+  - feedback 8 ข้อ (zyra-app #505–#510): invite link เปิดแอป (AASA `/.well-known/apple-app-site-association` + `applinks:` ใน zyra-mobile #3) · ซ่อนเมนูข้าง minimap ตอน meeting · แชร์จอเต็มจอ · ล็อกแนวจอตามโหมด (Spatial ขึ้นแนวนอนเอง ไม่มีหน้า Rotate ในแอป · กลับหัวได้ `landscape-primary/secondary`) · iOS ซ่อนเลือก audio output (`setSinkId` ไม่มี) · object บางชิ้นไม่ขึ้น = allowlist `/api/img` ตก GCS bucket เก่า (#506) + retry โหลด texture · เครื่องร้อน = resolution ≤ 2×, idle 30 fps, GIF ไม่ใช้ ticker ที่สอง (#507) · ออกจาก meeting แล้วเสียง/ภาพกระตุก = audio session สลับช้าลง 2 วิ (#510)
+  - joystick ใหม่ (#511): จางตอนพัก · แตะตรงไหนเป็นกลางปุ่ม · โซนเดิน = ซ้ายล่าง (ซ้าย 43% × ล่าง 65%) · เมนูห้อง/โซน/pet ยกขึ้นพ้นปุ่ม minimap
+  - QA batch (#512): **HP-03** Remind me again ถามโหมดใหม่ทุกครั้ง (Ten เลือก — แก้ spec ข้อ 13 / ux-ui-plan §3.4 / task 0.15 แล้ว) · **onboarding 3 slide** ครั้งแรกในแอปก่อน login (ตาม prototype `onb`) · **Workspace Lists** (Figma 6379:34971) เลื่อนลงจากบนใน Lite แทนการออกไป Space builder — เลือกอันอื่น reload + ถามโหมด · เลือกอันเดิมแค่ปิด
+  - splash โลโก้ Z (zyra-mobile #4) — เดิมเป็นพื้นเปล่า
+- **ถึงไหน:** merge เข้า develop ครบ · dev ขึ้นแล้ว · splash ต้องใช้ TestFlight build ใหม่
+- **PR:** zyra-app #505–#512 · zyra-mobile #3, #4
+- **verify ถึงไหน:** vitest ผ่านทั้งชุดทุก PR + CI เขียว · onboarding ลองใน browser (จำลองแอป) · splash ลองใน simulator (เห็นโลโก้ · ~1.5 วิแรกจอดำ น่าจะแคช launch screen ของ simulator — ยังไม่ได้ดูบนเครื่องจริง) · Workspace Lists / joystick / orientation **ยังไม่ได้ลองบนเครื่องจริงหลัง merge** · Before/After (rule 18) ของ perf/ความร้อน **ยังไม่ได้วัด** — ยังไม่มีตัววัดบนเครื่อง (B1)
+- **ต่อจากนี้:** Ten ลองบน iPhone (joystick zone, Workspace Lists, onboarding, splash build ใหม่, flip จอ, กระตุกหลังออก meeting) · B1 observability แล้ววัด Before/After · Android: orientation flip native + App Links + Google OAuth (SHA-1)
+- **ติดอะไร:** ไม่มี
+
+## 2026-10-08 (รอบ 53) · Ten + Claude — TestFlight · login Apple/Google ในแอป · asset store A1+A2 merge
+
+- **TestFlight (ทีมบริษัท MAXIMUM SOFT COMPANY LIMITED `Z8TW83PNG3`):**
+  - bundle id dev เปลี่ยนเป็น **`co.zyraworld.app.develop`** — `co.zyraworld.app.dev` ถูก build ทดสอบวันก่อนล็อกกับทีมส่วนตัว (Apple ไม่ให้ทีมอื่นใช้ซ้ำ) · uat/prod เหมือนเดิม · App ID ลงทะเบียน + เปิด Push Notifications / Sign In with Apple · แอปใน App Store Connect ชื่อ **"Zyra World Dev"** (6820381904 — "Zyra Dev" มีคนใช้แล้ว) SKU `zyra-dev`
+  - build 1 (1.0 (1)) base · build 2 (+ entitlement Apple + URL scheme Google) · build 3 (+ `@capacitor/filesystem`) — archive ด้วย `DEVELOPMENT_TEAM=Z8TW83PNG3 CURRENT_PROJECT_VERSION=n` แล้ว `xcodebuild -exportArchive` method `app-store-connect` destination `upload` · `ITSAppUsesNonExemptEncryption=false`
+  - กลุ่ม Internal "Zyra Team": chatchai.ms, flamezaxaou1 (พี่เฟรม), moss.pm, ten_dev, pronnapazii (เพิ่ม role Developer ให้ — Customer Support เป็น internal tester ไม่ได้) · Ten ติดตั้ง 1.0 (2) แล้ว
+- **login ในแอปใช้ไม่ได้ (Ten รายงาน: Apple error / Google เปิดหน้าเว็บ):**
+  - Apple: โปรเจกต์ Xcode ไม่มี `com.apple.developer.applesignin` → เพิ่ม `App.entitlements` + `CODE_SIGN_ENTITLEMENTS` (zyra-mobile) · zyra-api dev ไม่มี `APPLE_CLIENT_IDS` → เพิ่ม key ใน template ([zyra-infra#50](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/50)) + secret `zyra-api-dev-env-json` **v9** (`co.zyraworld.app.develop`) + bump `env-secret-version` 7-c → 9 ([zyra-infra#51](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/51) merge 06:14Z หลัง ESO sync) · ตรวจ: `POST /api/authen/login_apple` dev ตอบ "invalid apple identity token" (เดิม "apple client id is missing")
+  - Google: ไม่มี `NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID` → `canSignInWithGoogleNatively()` false บน iOS → เปิด popup เว็บ (ใช้ใน WKWebView ไม่ได้) · web client ที่ dev ใช้อยู่ใน GCP project **zyra-world (`gather-dev-458614`)** (ไม่ใช่ 668389649658 ใน `.env` local) → สร้าง iOS OAuth client "Zyra Dev iOS" (bundle `.develop`, team `Z8TW83PNG3`) ในโปรเจกต์เดียวกัน · ตั้ง `NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID` ใน env dev + rebuild (workflow_dispatch) · `flavors.json` `iosGoogleClientId` → `ZYRA_GOOGLE_URL_SCHEME` (client id กลับด้าน) ใน `Info.plist` ผ่าน `write-flavor.mjs`
+- **asset store:** A1 [zyra-app#503](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/503) · A2 [zyra-app#504](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/504) + [zyra-api#160](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/160) + [zyra-mobile#2](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/2) merge แล้ว · `NEXT_PUBLIC_MOBILE_ASSET_STORE=true` ใน env dev · รายละเอียด [asset-store.md](asset-store.md)
+- **ถึงไหน:** ทีมติดตั้งจาก TestFlight ได้ · dev มี A1+A2 · zyra-api dev รับ Apple token แล้ว
+- **verify ถึงไหน:** build/test/CI เขียวทุก PR · API/เว็บ dev ตรวจด้วย curl · **login Apple/Google บนเครื่องจริง ยังไม่ได้ลอง** (รอ Ten) · **asset store บนเครื่องจริง ยังไม่ได้ลอง / ยังไม่มีตัวเลข**
+- **ต่อจากนี้:** Ten ลอง login build 2+ · B0 วัด + B1 observability (ใส่ asset-store stats ใน overlay เพื่อให้วัดจากมือถือได้) → B2–B4 → C
+- **ติดอะไร:** Google OAuth consent screen อาจเป็น Testing mode (ต้องเพิ่ม test user) · Android ยังไม่มี OAuth client (SHA-1) · CI check แดงจาก Vercel project ของ session อื่น ยังค้าง
+
+## 2026-10-08 (รอบ 52) · Ten + Claude — ขึ้น dev ให้ทีมใช้ · แก้จากเครื่องจริง · TestFlight ติดบัญชี · asset store A0
+
+- **ทำอะไร (2026-10-07 ช่วงบ่าย–2026-10-08):**
+  - **แก้จาก iPhone 15 Pro Max ของ Ten (zyra-app, branch `feat/mobile-ui-prototype` → #502 → #499):** `77449e8` แบ่งจอซ้ายเดิน/ขวาเลื่อนกล้อง (joystick ลอยตามนิ้วบนครึ่งซ้าย, ครึ่งขวา pan, สองนิ้วพร้อมกันไม่เป็น pinch, เดินไม่ดึงกล้องกลับขณะลาก) + ปิด iOS loupe บน joystick (`touchstart` preventDefault) + minimap ซ่อนเมื่อมี sheet/drawer/แชทเปิด (`hooks/use-any-dialog-open.ts`) · `ca88f75` เสียงเท้าหายบน iPhone: ปลุก AudioContext ด้วย gesture (iOS resume ได้เฉพาะใน gesture, joystick ไม่ใช่), จัดการสถานะ `interrupted`, แยก rate budget ของตัวเองกับ peer, walk timer เก็บเศษเวลา · `f085869` audio session ตอนไม่อยู่ในสาย = `playback` (เล่นได้แม้สวิตช์เงียบ; `auto` → ambient โดนปิด) + เสียงเท้า ×3 ตอนอยู่โหมดโทร (iOS duck เสียงอื่น) · `dfafe8b` ฟีเจอร์ครบเหมือน web ทั้ง Spatial/Lite (agent: ห้อง/zone/pet buttons, participants/speaker sheets, room settings, settings drawer ใช้หน้า Lite + General/Workspace mode/Audio/Nickname/Manage members/Help 12 บทความ, Lite: weather, pet stroke/share, announcements, bell, toasts ต่าง ๆ, meeting link → Join sheet, spotlight emoji) — test 3786 ผ่าน, **ยังไม่ได้ลองบนเครื่องจริงทุกหน้า**
+  - **ขึ้น dev (Ten ยืนยัน 1–4 + backend 3 PR):** migration 110–112 รันบน `zyra-db` (ตรวจ `tb_user_device`, `client_msg_id`, constraint `audio` หลังรัน) · `NEXT_PUBLIC_MOBILE_VO=true` ใน env dev (flag อื่นมีอยู่แล้ว) · merge api #158 / notifications #15 / ws #70 (squash) → deploy dev สำเร็จ · #502 merge เข้า `feat/mobile-foundation` แล้ว #499 squash เข้า develop (`8764d77`) → `app.dev.zyra.center` เป็น build ใหม่ (health `dev-8764d77`, viewport `maximum-scale=1`) · CI ของ #502 ค้างที่ lint 25+ นาที 1 รอบ (runner) rerun แล้วเขียวทุก job
+  - **zyra-mobile:** push `feat/mobile-flavors` + เปิด [#2](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/2) (3 flavors + `NSLocationWhenInUseUsageDescription` en/th draft + Android location) · CI APK ผ่านทั้ง 3 flavor (artifact `zyra-world-dev-apk` ถึง 2026-11-06) · ติดตั้ง "Zyra Dev" (`co.zyraworld.app.dev`) ลง iPhone ของ Ten
+  - **กล้อง/ไมค์/ตำแหน่งใช้ไม่ได้บนเครื่อง:** สาเหตุ = แอปเทสโหลด `http://192.168.1.51` (iOS ให้สิทธิ์เฉพาะ https) + ไม่มี usage description ตำแหน่ง · ลอง mkcert + proxy https บน LAN แล้ว iPhone ไม่ยอมรับใบรับรอง (`certificate unknown` ตลอด แม้ติดตั้ง/trust แล้ว — ไม่ได้หาสาเหตุต่อ) → ใช้ Cloudflare quick tunnel ชั่วคราวแทน แล้วเลิกใช้เมื่อขึ้น dev
+  - **TestFlight:** Ten จ่าย Apple Developer แล้ว + พี่เฟรมให้สิทธิ์ Admin ใน App Store Connect · archive Release ของ dev flavor สำเร็จ แต่ export App Store ล้ม: Xcode บน Mac ยังเห็นแค่ "Ponlawat Lueakaeo (Personal Team)" `P7ACKRGSPR` (free team) · **รอ Team ID ของบริษัท** จาก developer.apple.com → Membership details
+  - **แผนใหม่ (อนุมัติ 2026-10-08):** asset store ก่อน → ประสิทธิภาพ render → app-feel (ไม่ล็อกแนวจอ คง Rotate ตาม Figma) · A0 ทดสอบบน iPhone แล้ว: `<img>`/WebGL จาก `capacitor://localhost` ผ่าน, `fetch()` โดนบล็อก, `<audio>` ผ่าน — รายละเอียด [asset-store.md](asset-store.md)
+- **ถึงไหน:** ทีมใช้บน dev ได้ (เว็บมือถือ + APK + iPhone ของ Ten) · TestFlight ยังไม่ขึ้น
+- **verify ถึงไหน:** build/test/CI เขียว · เดินด้วย joystick/แบ่งจอ + เสียงเท้าบน iPhone — Ten ลองเองบนเครื่อง (ยังไม่มีตัวเลขวัด) · กล้อง/ไมค์/ตำแหน่งบน dev (https) **ยังไม่ได้ลอง** · ฟีเจอร์ parity บนเครื่องจริง **ยังไม่ได้ลอง**
+- **ต่อจากนี้:** TestFlight (รอ Team ID) → A1 → A2 → B0/B1 … ตามแผน
+- **ติดอะไร:** Team ID บริษัท · Android เครื่องกลางสำหรับวัด · ยังไม่มี Before ตาม rule 18 (ทำใน A1)
+
+## 2026-10-07 (รอบ 51) · Ten + Claude — แก้ CI + review ของทุก PR · เปิด issue follow-up
+
+- **zyra-app [#499](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/499):**
+  - `vitest-coverage` ล้ม (`17cd400`) — CI ใช้ Node 20 ไม่มี `navigator` global → `getPlatform()` throw ใน `initMixpanel` · `lib/platform.ts` `readDeviceSnapshot` กันกรณีไม่มี `navigator` + test จำลอง Node 20 (`vi.stubGlobal("navigator", undefined)`) · ก่อนแก้ล้ม 2 case ตรงกับ CI · หลังแก้ 35/35
+  - `e2e-mobile-harness` ล้ม (`1a43a8b`) — จากภาพหน้าจอ artifact: dev server ใน CI ไม่ได้ตั้ง `NEXT_PUBLIC_MOBILE_VO` → overlay "Screen size not supported" บัง joystick · ตั้ง `NEXT_PUBLIC_MOBILE_VO: "true"` ใน step start dev server (flag รับเฉพาะ `"true"`) · **job นี้เขียวครั้งแรกบน CI แล้ว**
+  - review CodeRabbit 8 ข้อ (`7f74237`): `clearSession` ครอบ unregister push ด้วย try/catch (logout ไม่ค้าง) · `unregisterPushDevice` เก็บ token ไว้ถ้าลบฝั่ง server ไม่สำเร็จ (zyra-api upsert ตาม `fcm_token` อยู่แล้ว ความเสี่ยงสลับบัญชีจึงต่ำ) · composer ใช้เลขลำดับการส่ง — retry ของข้อความเก่าไม่ปลด `sending` ของข้อความใหม่ (sheet "Message not sent" ยังเด้งตามตั้งใจ) · `isRetryableSendError` ไม่ retry error ที่ไม่ใช่ `SendMessageError` · en.json ICU plural `LiteHome.members` / `meetingRoomParticipants` · `aria-label` reconnecting แปลภาษา · scene: `pointercancel` = `pointerup` + pinch ล้าง `_tapPointerId` · `releaseAllKeys` / `releaseMovementKeys` รีเซ็ต `_virtualKey` (joystick ไม่ค้างหลังสลับแอป)
+- **zyra-ws [#70](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/70):**
+  - `f410e8b` — `circle_join_decide` ของ requester Lite ต้องมีคำขอค้างของวงนี้ · `handleLiteSpotlightStart` เช็ค speaker ซ้ำใต้ `spotlightMu` (`spotlightSpotOfLocked`) · comment `liteZoneAllowed` บอกตรงๆ ว่าห้องล็อกกันที่ media (zyra-api MintToken) ส่วน presence เป็น follow-up
+  - `c5a4d11` — คำขอค้างของ ghost ลบแบบ atomic (`CompareAndDelete`) — สองคนตอบพร้อมกัน คำตอบแรกเท่านั้นที่มีผล · map requester เหมือนเดิม
+  - `952e405` — เก็บ `request_id` ในคำขอค้าง (`circleAskPendingEntry`) · คำตอบต้องตรงทั้งวงและ request id — คำตอบเก่าที่มาช้าไม่ไปตัดสินคำขอใหม่ของวงเดิม · ตรวจแล้ว zyra-app ส่ง `request_id` ตอนตอบอยู่แล้ว
+- **zyra-mobile [#1](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/1) (`cd23b71`):**
+  - **หน้า offline Android ใช้ไม่ได้** (ยืนยันจากซอร์ส Capacitor 8.5.2 `WebViewLocalServer` — serve จาก asset เฉพาะ URL ของ `errorPath` ตรงตัว บน origin ของ server) → script ย้ายเข้า `offline.html` แบบ inline อนุญาตด้วย sha256 ใน CSP (แก้ script ต้องคำนวณ hash ใหม่) · ลบ `offline.js` · ไม่มี `flavor.js` (Android) → ใช้ `location.origin`
+  - Retry: same-origin (Android) อ่าน status — 404 / 5xx ไม่ถือว่ากลับมา · iOS (`capacitor://localhost`) ยังเป็น no-cors เช็คแค่ติดต่อได้ · timer 8 วิ คืนปุ่มเองแม้ไม่มี `AbortController`
+  - `colors.xml` เพิ่ม `colorPrimary` / `colorPrimaryDark` (#1A1B1E) / `colorAccent` (#58D68D) ที่ `AppTheme` อ้างถึง (ไม่มี = AAPT2 link ล้ม) · instrumented test คาด `co.zyraworld.app`
+- **issue follow-up (Ten สั่ง):** [zyra-ws#71](https://github.com/Maximumsoft-Co-LTD/zyra-ws/issues/71) ghost โผล่ในห้องล็อก (`ghost_join_zone` + audio / share snapshot) = ห้องล็อก **ข้อ 3** · [zyra-app#500](https://github.com/Maximumsoft-Co-LTD/zyra-app/issues/500) `/api/health` CORS ให้ `capacitor://localhost` แล้วให้หน้า offline iOS เช็ค `res.ok`
+- **verify:**
+  - **CI (ณ ปิดรอบ) เขียวทุก PR โค้ด:** app #499 — vitest-coverage · lint-and-build · e2e-mobile-harness · e2e-parse · visual-regression · summary ✓ · ws #70 test-and-build ✓ · api #158 test-and-build + coverage ✓ · notifications #15 test-and-build ✓ · mobile #1 ไม่มี CI (มีแค่ CodeRabbit)
+  - zyra-app: test ใหม่ 4 (ล้มเมื่อเอาตัวแก้ออก) · 10 ไฟล์ที่เกี่ยวข้อง 462 ผ่าน / 3 ข้าม · tsc = 7 error เดิม (ตรวจกับ `origin/develop` สะอาด = 7 ตัวเดียวกัน) · eslint + prettier ผ่าน
+  - zyra-ws: `go vet` + `go test -race ./...` ✓ · test ใหม่ 4 (ไม่มีคำขอ / คำขอวงอื่น — ล้มเมื่อเอาตัวแก้ออก · คำตอบแรกเท่านั้น · คำตอบเก่ามาช้า) · ⚠️ test race เป็นแบบเรียงลำดับ — ล็อกพฤติกรรม ไม่ได้จำลองจังหวะชนจริง
+  - zyra-mobile: หน้า offline ในเบราว์เซอร์ (static server 3140): script inline รันผ่าน CSP · 404 → "Still can't connect" · 200 → กลับ origin · ไม่มี `AbortController` + fetch ค้าง → ปุ่มกลับมาใน 8 วิ · **ยังไม่ได้ Gradle build / ลองบน Android จริงตอนตัดเน็ต** (เครื่องนี้ไม่มี JDK / Android SDK)
+- **zyra-doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48):** check "Vercel – zyra-noise-vendor-review" ล้ม — ล้มเหมือนกันทุก PR #34–#48 เป็นปัญหาการตั้งค่า project บน Vercel ไม่เกี่ยวกับเอกสาร · ไม่ได้แก้
+- **ต่อจากนี้:** เอา `continue-on-error` ออกจาก `e2e-mobile-harness` ได้แล้ว (เขียวบน CI) — ยังไม่ได้ทำ รอ Ten · รัน migration 110–112 บน dev → merge 5 PR เข้า develop · ห้องล็อกข้อ 2 (invite token ฝั่ง server) + ข้อ 3 (#71) · #500 · Notion sync ตอนจบทั้งหมด
+- **ติดอะไร:** thread zyra-mobile เรื่อง contrast ปุ่ม Retry (ขาวบน #58D68D ≈ 2:1) — เป็นสีปุ่มหลักตาม Figma ไม่ได้แก้ รอ design ตัดสินทั้งระบบ · Vercel project ของ zyra-doc ต้องให้ Ten แก้ / ถอดเอง · build Xcode / Gradle + เครื่องจริง
 
 ## 2026-10-07 (รอบ 50) · Ten + Claude — ปิดช่องห้องล็อก (ข้อ 1) + commit / เปิด PR ทีละ repo
 
