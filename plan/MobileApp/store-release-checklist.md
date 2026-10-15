@@ -12,6 +12,7 @@
 | บัญชี | มี Apple Developer (Team `Z8TW83PNG3`) + Google Play Console แล้ว |
 | UAT | **app แยก** `co.zyraworld.app.uat` ("Zyra UAT") — แจกผ่าน TestFlight internal + Play internal testing เท่านั้น ไม่ขึ้น public |
 | PROD | `co.zyraworld.app` ("Zyra World") — ส่ง review จริง |
+| ขึ้น store | **prod เท่านั้น** — dev / uat เป็นแอปทดสอบ ไม่ submit review · Zyra UAT ใช้แค่ TestFlight internal + Play **internal testing** track (ห้ามเลื่อนไป production track) · dev แจกเป็น APK จาก `android-apk.yml` (Ten 2026-10-15) |
 | วิธี build | รอบแรก **manual** (Xcode archive / Gradle AAB) — release CI (task 1.12) ทำทีหลัง |
 
 > ⚠️ แอปเป็น **remote URL mode** — แอป prod เปิด `https://app.zyraworld.co` ดังนั้นฟีเจอร์ mobile ใน zyra-app
