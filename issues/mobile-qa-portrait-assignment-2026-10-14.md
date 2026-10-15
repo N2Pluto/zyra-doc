@@ -1,6 +1,6 @@
 # Mobile App — งานแนวตั้ง (Lite) สำหรับส่งต่อให้ dev อีกคน
 
-> **สถานะ:** กลุ่ม A ทำครบ 13 การ์ด — PR #555–#564 merge เข้า `develop` + deploy dev แล้ว (2026-10-14) · รีวิวหลัง merge เจอบัค 5 ข้อ (ยังไม่แก้) · B-10 แก้แล้วรอ PR ดู [ความคืบหน้า](#ความคืบหน้า-2026-10-14) · **วันที่:** 2026-10-14 · **Repo ที่กระทบ:** zyra-app (หลัก), zyra-ws / zyra-api (บางข้อ)
+> **สถานะ:** กลุ่ม A ทำครบ 13 การ์ด — PR #555–#564 merge เข้า `develop` + deploy dev แล้ว (2026-10-14) · รีวิวหลัง merge เจอบัค 5 ข้อ (ยังไม่แก้) · B-10 merged ([#584](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/584)) ดู [ความคืบหน้า](#ความคืบหน้า-2026-10-14) · **วันที่:** 2026-10-14 · **Repo ที่กระทบ:** zyra-app (หลัก), zyra-ws / zyra-api (บางข้อ)
 > **ผู้รับผิดชอบ:** ____________ · สายแนวนอน (Spatial) Ten ทำอยู่ — PR [#538](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/538)–[#543](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/543)
 > **ที่มา:** สาย 1 ของ [mobile-qa-work-split-by-orientation-2026-10-12.md](mobile-qa-work-split-by-orientation-2026-10-12.md) (32 การ์ด) — step / root cause / วิธีแก้แบบละเอียดอยู่ใน **description ของแต่ละการ์ด ClickUp** แล้ว (อ่านจากโค้ด `develop` @ `26712577` ยังไม่ได้ทดสอบบนเครื่อง — เลขบรรทัดอาจเลื่อน ค้นด้วยชื่อ function)
 
@@ -122,7 +122,7 @@ PR ของสายแนวนอนยังไม่ merge — ถ้าแ
 - **ระดับต่ำ:** V-12 timeout 10 วิไม่ครอบช่วงอ่าน body (body พัง → spinner เข้าห้องค้างได้) · Q-02 แอปอยู่ background > 3 นาทีโดนตั้ง Offline แล้ว heartbeat ดึงกลับไม่ได้ · B-28 ระหว่าง Retry ยังขึ้น "Unable to reconnect" · test ของ B-24 ยืนยันพฤติกรรมที่ผิด
 - **ไม่เจอบัค:** #555 B-48 (ต้องเช็ค clipboard บนเครื่อง) · #557 B-43 · #564 V-07 · #558 heartbeat / roster filter · #560 B-28 (server ตอบ `pong` จริง)
 
-**B-10 (รวมใน B-02) — ส่วน "หลุดแล้วยังค้างในห้อง":** branch `fix/lite-leave-stale-section` (commit `159c562`, ยังไม่ push / ยังไม่เปิด PR) · Lite เริ่ม session ใหม่ (หลัง reload) ถ้า section list ชุดแรกยังมีเรา Online ในห้องที่ไม่ได้อยู่ → leave ให้ครั้งเดียว แล้วโหลด list ใหม่ (`staleSectionZoneIds()` + hook `use-lite-leave-stale-sections.ts`) · มติ rif 2026-10-14: ออกให้อัตโนมัติ (แบบ ก) ไม่ถาม Rejoin · ข้อเสีย: ถ้า user เดียวกันอยู่ในห้องจากอีกเครื่องจะถูกเอาออก · test Lite 34 ไฟล์ / 310 case ผ่าน · ยังไม่ได้เทสบนเครื่อง · **ส่วนจอขาว (B-02) ยังไม่แก้ — รอ QA เทสซ้ำบน dev (#537)**
+**B-10 (รวมใน B-02) — ส่วน "หลุดแล้วยังค้างในห้อง":** branch `fix/lite-leave-stale-section` → PR [#584](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/584) merged เข้า `develop` (`5e341fe`) · Lite เริ่ม session ใหม่ (หลัง reload) ถ้า section list ชุดแรกยังมีเรา Online ในห้องที่ไม่ได้อยู่ → leave ให้ครั้งเดียว แล้วโหลด list ใหม่ (`staleSectionZoneIds()` + hook `use-lite-leave-stale-sections.ts`) · มติ rif 2026-10-14: ออกให้อัตโนมัติ (แบบ ก) ไม่ถาม Rejoin · ข้อเสีย: ถ้า user เดียวกันอยู่ในห้องจากอีกเครื่องจะถูกเอาออก · test Lite 34 ไฟล์ / 310 case ผ่าน · ยังไม่ได้เทสบนเครื่อง · **ส่วนจอขาว (B-02) ยังไม่แก้ — รอ QA เทสซ้ำบน dev (#537)**
 
 **ที่เหลือของสายแนวตั้ง:** กลุ่ม B (QA retest) · กลุ่ม C (รอ PM / QA) · กลุ่ม D (DevOps) · ส่วน server ของ V-11 และ B-24
 
@@ -153,7 +153,7 @@ fix อยู่บน `develop` แล้ว (dev env) — **ยังไม่
 
 | ข้อ | การ์ด | รออะไร | ได้คำตอบแล้วทำอะไร |
 |---|---|---|---|
-| V-13 🔥 | [Web เห็นคน Lite วาร์ปพร้อมประกายแสง](https://app.clickup.com/t/14zd0zuc0dk) | **PM / Ten:** คน Lite บนแมพให้ server ขับเดินเอง (โค้ดตอนนี้) หรือวาร์ป — spec technical-design §16.2 ขัดกับโค้ด | วาร์ป → zyra-ws (place + teleport flag) แล้ว zyra-app (snap + sparkle) · ปิด V-02 / V-03 ไปด้วย |
+| V-13 🔥 | [Web เห็นคน Lite วาร์ปพร้อมประกายแสง](https://app.clickup.com/t/14zd0zuc0dk) | **PM / Ten:** คน Lite บนแมพให้ server ขับเดินเอง (โค้ดตอนนี้) หรือวาร์ป — spec technical-design §16.2 ขัดกับโค้ด | วาร์ป → zyra-ws (place + teleport flag) แล้ว zyra-app (snap + sparkle) · ปิด V-02 / V-03 ไปด้วย · **มติ rif 2026-10-14: วาร์ปทุกการย้าย + ตัด stroll + ใช้กับ Spatial park → merged develop: [zyra-ws#79](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/79) + [zyra-app#585](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/585)** |
 | V-02 | [Web เห็นตัวละครคนแนวตั้งเดินไปมาเอง](https://app.clickup.com/t/14zd0zubp93) | มติเดียวกับ V-13 | ตามมติ |
 | V-03 | [ตัวละคร Lite เดินเฉียง](https://app.clickup.com/t/14zd0zubp9d) | มติเดียวกับ V-13 | ยังเดิน → path ของ autopilot เป็น 4 ทิศ (zyra-ws `pathfind.go`) · วาร์ป → ปิดการ์ด |
 | B-24 | [Wave คนที่ Away ได้](https://app.clickup.com/t/14zd0zubzhw) (ส่วน server) | **PM:** away อัตโนมัติ (แอปไป background) ควรกัน Wave ไหม — ตอนนี้ตั้งใจให้ส่ง push ไปหาได้ | ถ้ากันเฉพาะ away ที่ตั้งเอง → zyra-ws `handleWave` เพิ่มเงื่อนไข |
