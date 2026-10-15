@@ -1,7 +1,230 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** **ขึ้น dev + TestFlight แล้ว (2026-10-08)** — app "Zyra World Dev" (`co.zyraworld.app.develop`) build 1–3 บน TestFlight กลุ่ม Zyra Team 5 คน · login Apple/Google ในแอปแก้แล้ว (entitlement + `APPLE_CLIENT_IDS` dev v9 + iOS OAuth client) **รอ Ten ลอง build 2+** · asset store A1+A2 merge แล้ว เปิดบน dev (`NEXT_PUBLIC_MOBILE_ASSET_STORE=true`) **ยังไม่ได้วัด Before/After** ([asset-store.md](asset-store.md)) · ถัดไป B0/B1 (วัด + observability) · Android: Google native ยังไม่มี OAuth client (SHA-1) · doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48)
-> **อัปเดตล่าสุด:** 2026-10-14 (2026-10-14 รอบ 52 กลุ่ม "ทั้งสองแนว" · 2026-10-12→14 รอบ 51 issue QA มือถือ · 2026-10-09 รอบ 57 ลบบัญชีตัวเอง SC-ACC-DEL-01) · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **อัปเดตล่าสุด:** 2026-10-15 (รอบ 63 — B-45 language pack · เปลี่ยนภาษาทันที · V-13 Circle วาร์ป) · **คนล่าสุด:** Ten (ten_dev) + Claude
+
+## 2026-10-15 (รอบ 63) · Ten + Claude — B-45 language pack · เปลี่ยนภาษาทันที · V-13 Circle วาร์ป · ไล่ B-05 / B-25
+
+- **คำขอ Ten:** (1) ทำ B-45 ต่อ (2) เช็คการ์ดที่ยังไม่ได้ทำใน parent 86d4bfpym (3) อธิบาย B-05 / B-25 เพิ่ม (4) V-13 ให้ตัวละคร Lite วาร์ปพร้อมประกายแทนการเดิน ทุกเมนูที่เกี่ยวกับ meeting / Circle / private zone (5) เปลี่ยนภาษาแล้วค้าง 2–10 วิ แม้บน iPhone Pro Max
+- **มติ Ten:** V-13 = Lite อย่างเดียว (แนวนอน / เว็บยังเดินเหมือนเดิม) · "pop chat space" = เข้าร่วม Circle · Follow ยังเดินตาม · เปลี่ยนภาษา = ทำข้อ 2 (สลับฝั่ง client) + ข้อ 4 (loading)
+- **ทำอะไร:**
+  - **B-45 language pack** — [zyra-app#583](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/583): `scripts/language-packs.mjs` (validate key / `{arg}` / `<tag>` เทียบ en, ข้าม text ใน plural branch) · workflow `publish-language-packs.yml` (push `main` ที่แตะ `messages/**` หรือ dispatch พร้อม ref = rollback) อัปโหลด pack immutable + `manifest.json` (max-age 60) ขึ้น R2 · `i18n/remote-pack.ts` merge pack ทับไฟล์ใน image, timeout 1.5 วิ, R2 ล่ม / ไม่ตั้งค่า = ใช้ไฟล์เดิม · คู่มือ [guides/language-packs.md](../../guides/language-packs.md) ([zyra-doc#76](https://github.com/N2Pluto/zyra-doc/pull/76)) · **ยังไม่เปิดใช้:** ต้องมี R2 secrets 5 ตัว + ขึ้น `main` (develop นำ main อยู่ 85 commit → รอ Ten เลือกว่าปล่อย uat ตอนนี้หรือรอบ release ปกติ) + `I18N_MANIFEST_URL` ทุก env · Claude ใส่ secret เองไม่ได้ (กฎความปลอดภัย: ห้ามจับ credential) → ให้คำสั่ง `gcloud … | gh secret set` ที่ Ten รันเอง · รอบแรกพังเพราะ zsh ไม่แยกคำ (`set -- $p`) → แก้เป็น `${=p}` · **ยังไม่ได้ยืนยันว่า secret ตั้งครบ**
+  - **เปลี่ยนภาษาทันที** — [zyra-app#587](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/587): ต้นเหตุ = ทุกครั้งยิง server 2 รอบก่อนจอเปลี่ยน (`setUserLocale` server action → Next render ทั้งหน้าเพราะเขียน cookie, แล้ว `router.refresh()` อีกรอบ) แต่ละรอบพาไฟล์ภาษาทั้งชุด (th ≈ 436 KB) · แก้: `components/locale-provider.tsx` ครอบ `NextIntlClientProvider` ใน root layout — โหลดไฟล์ภาษาเป็น chunk แยก (prefetch ตอนเปิดตัวเลือกภาษา) → สลับข้อความ + `<html lang>` + ฟอนต์ไทย + cookie ทันที แล้ว refresh เบื้องหลัง · spinner เฉพาะเกิน 150 ms · `useLocaleSwitch()` ใช้ทั้ง 4 จุด (navbar, Settings เว็บ, Language ของ Spatial มือถือ, Language ของ Lite) · โหลด chunk ไม่ได้ → กลับไปทางเดิม · toast "Language set to …" ของ Lite เป็นภาษาใหม่ · ฝังไฟล์ภาษาใน APK / IPA ไม่คุ้ม (แอปเป็น remote URL, แก้คำต้องออกแอปใหม่)
+  - **V-13 Circle** — [zyra-ws#81](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/81): พบว่า meeting / private zone / Spotlight วาร์ปแล้วจาก [zyra-ws#79](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/79) + [zyra-app#585](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/585) (merged 14 ต.ค.) · เหลือ Circle: คน Lite เข้า Circle แล้วตัวละครยังนั่ง private zone · เพิ่ม `autopilotCircle` — วาร์ปไปช่องว่างข้างกลุ่ม (ห้องเดียวกัน, ไม่เข้า private / meeting / spotlight zone, รวมระยะถึงทุกคนน้อยสุด) · รอระหว่างคนในวงกำลังเดิน · ออกวงแล้ววาร์ปกลับที่นั่ง · ประกายใช้ของ #585 ไม่ต้องแก้ zyra-app
+  - **B-05** (Action in meeting กดไม่ได้ — Ten: แนวตั้ง ไมค์ / กล้อง / ออก กดไม่ได้เลย): ไม่แก้เพิ่ม — เทียบโค้ดวันที่ QA แจ้ง (9 ต.ค. 14:29) กับ develop: ไมค์ / กล้อง / ยกมือ = SFU ต่อใหม่ทุก render รีเซ็ตสถานะ (แก้แล้ว #537) · Leave = `leave()` รอ REST ก่อนปิดหน้า (แก้แล้ว #559) · หน้า meeting ไม่มี overlay ทับ
+  - **B-25** (Wave แล้วแจ้งเตือนซ้ำหลังปิดแอป): zyra-ws push ครั้งเดียวตอน Wave และเฉพาะ target ที่ backgrounded · ต้นเหตุที่น่าจะเป็น: (1) แอปไม่ลบแจ้งเตือนในถาดตอนเปิดกลับมา (ไม่มี `removeAllDeliveredNotifications`) (2) Lite ไม่ส่ง `visibility` ตอนสลับ background / foreground (มีแค่ hero) → `Hidden` ค้างได้ (3) push ไม่มี collapse key / tag → กองซ้อน · **เสนอ ก / ข / ค แล้ว ยังไม่ทำ** (รอ Ten)
+  - **เช็คการ์ด:** parent 84 ใบ — Open 13 + in review 1 (HP-11) · สายแนวนอน / ทั้งสองแนวเหลือ B-45 · ที่เหลือเป็นสาย Lite: แก้แล้วรอ QA (B-05, V-08, V-13, V-02) · น่าจะแก้แล้วยังไม่ยืนยัน (B-06, B-09, V-09, V-10, B-41) · ยังไม่แก้ (B-25, B-35 Sentry, B-38 config `APP_URL`)
+  - **ClickUp:** B-45 เขียน description ใหม่ (ต้นเหตุ, PR, before / after, checklist QA 7 ข้อ) · **ไม่ได้เปลี่ยน status ใบไหน** — เสนอรายการ 8 ใบให้ Ten เลือก ยังไม่ได้คำตอบ
+- **PR:** zyra-app #583 #587 · zyra-ws #81 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI เขียวก่อน merge) · zyra-doc #76
+- **Before / After — เปลี่ยนภาษา** (หน้า login, EN → TH, `MutationObserver` บน `<html lang>` นับจาก `pointerup` + `performance` resource timing)
+
+  | Metric | Before | After | Δ |
+  |---|---|---|---|
+  | กดแล้วข้อความเปลี่ยน (local dev เครื่องเดียวกัน) | 179 ms | 42 ms | −77% |
+  | กดแล้วข้อความเปลี่ยน (app.dev, desktop wifi) | 338 ms | ยังไม่ได้วัด (รอ deploy) | — |
+  | request ที่ต้องรอ server ก่อนข้อความเปลี่ยน | 2 (POST action + GET RSC) | 0 | −2 |
+  | bytes ก่อนข้อความเปลี่ยน (dev) | 2 × 67.7 KB transfer (2 × 349 KB raw) | 0 (prefetch แล้ว) | −135 KB |
+
+  **ยังไม่ได้วัด:** มือถือจริงบนเน็ตมือถือ (browser ที่ใช้ throttle ไม่ได้) — เคสที่ Ten เจอ 2–10 วิ
+- **verify ถึงไหน:**
+  - **build / test:** zyra-app `vitest run` 359 ไฟล์ / 4,355 ผ่าน (+ `locale-provider.test.tsx` 4 เคส) · `tsc` 7 error เดิม · zyra-ws `go test -race ./...` ผ่าน (+ 3 test: วาร์ปเข้า / ออกวง, รอตอนกลุ่มเดิน, `TestCircleStandTile`)
+  - **browser:** localhost:3010 หน้า login สลับ EN → TH ข้อความ / ฟอนต์ / cookie เปลี่ยน ไม่มี POST `setUserLocale` ใน server log
+  - **deploy:** zyra-ws `85dfe67a` · zyra-app `eb79d1eb` CI in_progress ตอนเขียน
+  - **บนเครื่องจริง: ยังไม่ได้เทส**
+- **ให้ Ten / QA เทส:** checklist ในการ์ด B-45 (เปลี่ยนภาษาทุกจุด) · V-13: 2 คนบนเว็บยืนติดกันจนวงขึ้น → คนแนวตั้งกด Join Circle → เว็บเห็นวาร์ปมาข้างวงพร้อมประกาย · กด Leave → วาร์ปกลับ private zone
+- **ติดอะไร:** B-45 รอ R2 secrets + ตัดสินปล่อย uat · B-25 รอเลือก ก / ข / ค · status ClickUp 8 ใบรอ Ten เลือก · B-35 (Sentry) / B-38 (`APP_URL`) ยังไม่มีใครทำ
+
+## 2026-10-14 (รอบ 62) · Ten + Claude — กันหน้าเว็บโผล่ก่อนหน้ามือถือ · กดแล้วยุบ + แท็บ fade · แผน B-45 v2 · เช็กลิสต์รอบ 57–61
+
+- **คำขอ Ten:** (1) บางครั้งเปิดขึ้นมาเห็น UI เว็บก่อนแล้วค่อยเป็น UI มือถือ — กันทั้งแอป (2) อยากให้กดนู้นกดนี้มี animation ให้ดูเป็นแอป (3) B-45 ตอบคำถาม 4 ข้อ
+- **ทำอะไร:**
+  - **กันหน้าเว็บโผล่ก่อน** — [zyra-app#581](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/581) + [zyra-mobile#12](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/12)
+    - ต้นเหตุ: server เดาจาก User-Agent → **iPad** (Safari iPadOS / WebView บน iPad) ส่ง UA เป็น Mac → render desktop แล้วสลับหลัง hydrate · หน้าแอปอย่างเดียว (login, app update, invite) ใช้ `isNativeApp()` ที่ server snapshot = `false` → ในแอปเห็นหน้า login เว็บก่อน · splash ปิดทันทีที่ mount
+    - แก้: cookie `zyra_device` (m / t / d) = ค่าที่เครื่องวัดตัวเองครั้งก่อน ชนะ UA · cookie `zyra_app` / UA token `ZyraApp` (แอปเติมใน `appendUserAgent`) = อยู่ในแอป · `DeviceHintProvider` ส่ง hint tablet + native · `components/device-hint-cookie.tsx` เขียน cookie · หน้าแอปใช้ `useNativeHint()` เป็น server snapshot · splash ปิดหลัง mount 2 เฟรม
+    - ข้อจำกัด: ครั้งแรกที่ iPad เปิดเว็บ (ยังไม่มี cookie) อาจสลับหนึ่งครั้ง · UA token มีผลหลัง build แอปใหม่
+  - **กดแล้วยุบ + แท็บ fade** — [#582](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/582): ปุ่ม / ลิงก์บนจอ touch ตอนกด `scale: 0.97` + จาง (property `scale` แยก ไม่ทับ translate) · ปิดเมื่อ reduced motion · แท็บ Lite (Home / Chat / Profile) fade in 180ms (opacity อย่างเดียว)
+  - **B-45 แผน v2** ([zyra-doc#74](https://github.com/N2Pluto/zyra-doc/pull/74)) ตามคำตอบ Ten — dev แก้คำ / เพิ่มภาษาเอง · กดแล้วขึ้นเลย ย้อนกลับได้ · แก้ทีเดียวขึ้นทุก env · ไม่ทำหน้า admin: dev แก้ `messages/*.json` → GitHub Action (เฉพาะ merge เข้า `main`) validate แล้วอัปโหลด pack + `manifest.json` ขึ้น R2 → ทุก env อ่าน manifest เดียว (cache 60 วิ) merge ทับไฟล์ใน image · ไม่ต้องแก้ zyra-api / ไม่มี DB · ~2–3 วัน · **รอ** R2 secrets 5 ตัวใน zyra-app + `I18N_MANIFEST_URL` ทุก env + Ten สั่งเริ่ม
+  - **เช็กลิสต์:** claude.ai เพิ่มกลุ่ม "รอบ 57–61" 15 รายการ (รวม 38 รายการ / 106 ข้อ) · หน้า Vercel deploy ได้แล้ว + sync รายการเดียวกัน ([zyra-doc#73](https://github.com/N2Pluto/zyra-doc/pull/73))
+  - **เช็คงานที่เหลือ:** การ์ด 36 ใบของสายแนวนอน / ทั้งสองแนว เหลือ Open แค่ B-45 · QA กด accepted แล้ว 6 ใบ (H-07, B-01, H-01, B-39, B-34, B-33)
+  - **กฎ rule 19 (ภาษา):** Ten ขอคำแปลไทยในคำตอบหลายครั้ง — ตอบเป็นไทยปนศัพท์อังกฤษ และส่งรายงานยาวเป็นไฟล์ไทยเมื่อจำเป็น
+- **PR:** zyra-app #581 #582 · zyra-mobile #12 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI เขียวก่อน merge)
+- **verify ถึงไหน:**
+  - **build / test:** develop (`8a0b6003`) `vitest run` 354 ไฟล์ / 4,327 ผ่าน · `tsc` ไม่มี error ใหม่ · test ใหม่ `device-hint.test.tsx` (cookie ชนะ UA, iPad + cookie = tablet, UA token / cookie app) · `native-lifecycle-bridge.test.tsx` (splash หลัง 2 เฟรม)
+  - **dev server:** curl `/login` ด้วย UA iPad — ไม่มี cookie ได้ HTML desktop · cookie `zyra_device=t` ได้ HTML มือถือ · CSS ที่ build มี rule `scale: .97` + `@keyframes mobile-fade-in` (ต้องล้าง `.next` ก่อน — Turbopack cache CSS ค้างหลังสลับ branch)
+  - **deploy:** zyra-app CI `8a0b6003` success · zyra-mobile "Android APK" run 38551220135 success
+  - **บนเครื่องจริง: ยังไม่ได้เทส**
+- **ให้ Ten / QA เทส:** (1) เปิดแอป / เว็บบนมือถือและ iPad ตั้งแต่ครั้งที่สอง ไม่เห็นหน้าเว็บก่อน (2) หน้า login ในแอปเป็นแบบแอปทันที (3) กดปุ่มยุบเล็กน้อย · สลับแท็บมี fade · เปิด Reduce Motion แล้วไม่มี animation
+- **ติดอะไร:** B-45 รอ secrets + สั่งเริ่ม · Apple Services ID · build แอปใหม่ (APK / iOS) ให้ UA token และ foreground service มีผล
+
+## 2026-10-14 (รอบ 61) · Ten + Claude — B-40 iPad Pro 13" · B-13 ยอดคนดู · B-44 overlay · แผน B-45 · checklist QA ทุกการ์ด
+
+- **มติ Ten:** B-45 เป้าหมาย = แก้คำ / เพิ่มภาษาได้โดยไม่ต้อง deploy · B-40 ขยับเกณฑ์เป็น 1376 · B-13 "ยอด" = จำนวนคนดู (ชิป N | M)
+- **ทำอะไร:**
+  - **B-40** — [zyra-app#578](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/578): `TOUCH_MOBILE_MAX_LONG_SIDE` 1366 → 1376 · iPad Pro 13" (M4, 1032×1376) ได้หน้ามือถือเหมือน iPad รุ่นอื่น (เดิมได้หน้า desktop ที่สูงเต็มจอเลื่อนไม่ได้) · touch laptop จอใหญ่ยังได้ desktop
+  - **B-13** — [#579](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/579): คนพูดนับคนดูจาก `meetingAudio.roomParticipantIds` ซึ่งเดิมอัปเดตแค่ตอน `participantJoined` / `participantLeft` — LiveKit ไม่แจ้งคนที่อยู่ก่อนเราต่อ → คนพูดที่ต่อ / ต่อใหม่หลังคนดูเข้ามาแล้วเห็น 0 · แก้: อ่าน `sfu.participantIds()` ทันทีหลัง connect (เหมือน session คนดู) · zyra-ws ไม่ได้เก็บรายชื่อคนดู (นับจาก LiveKit อย่างเดียว) · คน DND / ปิดเสียง broadcast ไม่ได้ต่อเข้าห้อง จึงไม่ถูกนับ (ไม่ได้ดูจริง) · unit test ทำไม่ได้แบบมีความหมาย (connect ดึง media stack ทั้งชุด) — ต้องเทสบนเครื่อง
+  - **B-44** — [#580](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/580): `phoneMapCovered` (มือถือ + drawer / แชท / ประชุมขยาย / โปรไฟล์ตัวเอง) → weather widget / pet panel / zone card (นอก HUD z-20–40) ซ่อนระหว่างนั้น (เดิมทับเพราะของใน HUD ถูกจำกัดที่ z-10) · ไม่ได้รื้อ layer ทั้งหมด
+  - **B-45 แผน** — [plan/LanguagePacks/technical-design.md](../LanguagePacks/technical-design.md) ([zyra-doc#71](https://github.com/N2Pluto/zyra-doc/pull/71)): pack ต่อภาษาบน R2 (immutable version) + `tb_i18n_pack` + `GET /api/i18n/manifest` + admin upload / activate · zyra-app `i18n/request.ts` merge pack ทับไฟล์ใน repo (fallback ถ้า API ล่ม) · หน้า admin Languages · 7 task ~4–6 วัน · **รอตอบคำถาม 5 ข้อ** (ใครแก้ได้ · preview / อนุมัติ · แยกต่อ env · ภาษาแรกที่จะเพิ่ม · Figma หน้า admin)
+  - **ClickUp (Ten สั่ง):** B-40 (in progress) · B-13 (Open) · B-44 (in progress) → `completed` + comment ทุกใบ · **checklist QA ใน description ครบทุกการ์ดของสายแนวนอน / ทั้งสองแนว** — 26 ใบมีแล้วจากรอบ 57 · เพิ่ม section "Checklist สำหรับ QA" อีก 9 ใบ: H-06 · B-31 · B-44 · B-40 · B-13 · Q-03 · H-03 · B-36 · V-04 (connector ยังสร้าง checklist ของ ClickUp จริงไม่ได้ — ใช้ `- [ ]` ใน description)
+- **PR:** zyra-app #578 #579 #580 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI `lint-and-build` เขียวก่อน merge)
+- **verify ถึงไหน:**
+  - **build / test:** develop (`694848cd`) `vitest run` 354 ไฟล์ / 4,324 ผ่าน · `tsc` ไม่มี error ใหม่ · test ใหม่ `platform.test.ts` iPad Pro 13"
+  - **deploy dev:** CI ของ `694848cd` ยัง in_progress ตอนเขียน
+  - **บนเครื่องจริง: ยังไม่ได้เทส**
+- **ให้ QA เทส:** ตาม checklist ในแต่ละการ์ด ClickUp · งานที่ไม่มีการ์ด (กดแล้วตอบสนอง · loading · sheet / หน้าย่อย animate · joystick วิ่ง · joystick ใหญ่บน iPad · PIP แสดงจอที่แชร์) ยังไม่อยู่ใน checklist ใดเลย
+- **ติดอะไร:** B-45 รอคำตอบ 5 ข้อ · Apple Services ID (ทำเอง) · หน้าเช็กลิสต์ Vercel อ่านอย่างเดียวยัง deploy ไม่ได้ (limit) · เช็กลิสต์ claude.ai ยังไม่มีงานรอบ 57–61
+
+## 2026-10-14 (รอบ 60) · Ten + Claude — ปิดช่องโหว่บัญชี OAuth · sheet / หน้าย่อย animate · H-06 · B-31 · B-40 · B-44 · Apple บนเว็บ merged
+
+- **มติ Ten:** แก้ช่องโหว่บัญชี Apple / Gmail · ทำ transition ข้อ 3–5 ทั้งหมด · การ์ดที่รอข้อมูล QA ให้ไล่โค้ดแล้วแก้เท่าที่มั่นใจ · B-45 Ten ถาม "เก็บไฟล์ภาษาลงมือถือได้ไหม" (ตอบใน comment การ์ด — ยังไม่ทำ)
+- **ทำอะไร:**
+  - **ช่องโหว่บัญชี OAuth (pre-account-hijack)** — [zyra-api#166](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/166): `internal/service/oauth_link.go` ใหม่ `resolveOAuthAccount` ใช้ร่วม Google / Apple — หาแถวด้วย subject ก่อน · จับคู่ด้วยอีเมลเฉพาะอีเมลไม่ว่างและ provider ยืนยันแล้ว · ใช้แถวที่เจอ**เฉพาะเมื่อแถวนั้นยืนยันอีเมลแล้ว** ไม่งั้นสร้างบัญชี provider ใหม่ แถวเดิมไม่ถูกแตะ · Google อ่าน `email_verified` · อีเมลว่างไม่ไปหาอีเมล · path อีเมลเลิกเขียนชื่อทับ · Apple เลิกตั้ง `'Y'` ให้แถวที่จับคู่ด้วยอีเมล · `findUserByEmailFull` เลือกแถวที่ยืนยันแล้วก่อน · ไม่มี migration · ทำโดย subagent ใน worktree แยก แล้วรัน test เองก่อน push
+  - **Transition** — [zyra-app#576](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/576): BottomSheet (56 จุด) แนวตั้ง slide up / down 250ms แนวนอน fade + scale · scrim fade · mount ค้างระหว่างปิดจน animation จบ (ไม่รับ tap) · `prefers-reduced-motion` / ไม่มี `matchMedia` → ทันทีเหมือนเดิม · Android ไม่มี blur · หน้าย่อย (`FullScreenSubPage`) เลื่อนเข้าจากขวา 30% + fade, drawer แนวนอนเลื่อนเต็ม · workspace list คงทิศตาม Figma แก้ slide ข้าม (rAF สองเฟรม) · rAF + timer สำรอง 100ms — เจอจริงตอนเทสใน browser ที่ซ่อนอยู่: ไม่มี frame → sheet ค้างที่ opacity 0
+  - **B-40** (iPad เลื่อนไม่ได้) — #576: sheet แบบปกติไม่มี max-h + overflow-hidden → ทุก sheet `max-h-[92dvh]` เลื่อนได้ · **ยังเหลือ:** iPad Pro 13" M4 (1032×1376) แนวนอนได้หน้า desktop (เกินเกณฑ์ 1366) ที่สูงเต็มจอเลื่อนไม่ได้ — รอ Ten ตัดสินขยับเกณฑ์
+  - **H-06** (ปุ่มเดินไปหา) — [#577](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/577): Go to / Follow จาก drawer Members drawer ยังบังแมพ → กลับหน้าแมพ (`setActiveTab("map")`)
+  - **B-44** (z-index) — #577: แถบ Away (z-20) ทับแชทมือถือ (เปิดเป็น `"half"`) → ซ่อนตอนแชทเปิด · **ยังเหลือ:** ทุก overlay ใน HUD มือถือถูกจำกัดที่ z-10 ของ wrapper (zone card / pet panel ทับ drawer ได้) → ต้องทำ z-index scale กลาง
+  - **B-31** (Android build) — [zyra-mobile#11](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/11): build ผ่านอยู่แล้ว · แก้ความเสี่ยง crash — service ที่เริ่มด้วย `startForegroundService` ต้องเรียก `startForeground` · ถ้า type microphone โดนปฏิเสธ ลองใหม่ด้วย mediaPlayback ก่อน stop · CI ไม่รันบน `fix/**` เลย dispatch "Android APK" เอง (run 38539686764 success)
+  - **B-13** (ยอด Spotlight): ไม่แก้ — ตัวเลขคนดูไม่นับคนที่ DND / ปิดเสียง broadcast / อยู่ห้องที่ยังไม่รับ Spotlight · mini window ไม่ส่งรายชื่อคนดู · รอ QA บอกว่าเลขไหน
+  - **B-45**: ไม่ทำ — ตอบว่าเก็บในเครื่องได้แต่ได้ประโยชน์น้อย (แอปเป็น remote URL, server render ข้อความ, ~40KB/หน้า) · ต้องเลือกเป้าหมาย: แก้คำไม่ต้อง deploy (R2) หรือใช้ offline (งานใหญ่)
+  - **Apple login บนเว็บ** — [#573](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/573) merged (ปุ่มยังซ่อนจนกว่าจะตั้ง Services ID)
+  - **ClickUp (Ten สั่ง):** H-06 · B-31 Open → `completed` · B-44 Open → `in progress` · B-40 คง `in progress` · comment ทุกใบ (แก้อะไร / วิธีเทส / checklist / ที่ยังเหลือ / ขอข้อมูล QA) · B-13 · B-45 comment อย่างเดียว
+- **PR:** zyra-api #166 · zyra-mobile #11 · zyra-app #573 #576 #577 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI เขียวทุก PR ก่อน merge)
+- **verify ถึงไหน:**
+  - **build / test:** zyra-app develop (`baf7c0ea`) `vitest run` 354 ไฟล์ / 4,323 ผ่าน · `tsc` ไม่มี error ใหม่ · test ใหม่ `bottom-sheet-animation.test.tsx` · zyra-api `go vet` / `go test ./...` ผ่าน + `oauth_link_test.go` (ลองปิดเงื่อนไขแล้ว test fail 3 ตัวตามคาด)
+  - **เบราว์เซอร์:** `/dev/mobile-preview?screen=spatial-hud` 844×390 — Meeting rooms เปิดแล้ว opacity 1 / scale 1 ปิดแล้ว unmount
+  - **deploy dev:** zyra-api `dev-27693fc` (health ok) · zyra-app CI ของ `baf7c0ea` ยัง pending ตอนเขียน
+  - **บนเครื่องจริง: ยังไม่ได้เทส**
+- **ให้ Ten / QA เทสบน dev:** (1) เปิด / ปิด sheet ต่าง ๆ บนมือถือ → เลื่อนขึ้นลงลื่น · Reduce Motion เปิดอยู่ → ไม่ animate (2) หน้าย่อย (โปรไฟล์ → ตั้งค่า) เลื่อนเข้าจากขวา (3) Go to จาก drawer Members → กลับแมพ (4) Away + เปิดแชท → แถบไม่ทับ (5) iPad แนวนอน sheet ยาวเลื่อนได้ (6) Android APK ใหม่ เข้าประชุมแล้วล็อกจอ ไม่ crash (7) login Google / Apple ด้วยอีเมลที่มีบัญชียืนยันแล้ว → เข้าบัญชีเดิม
+- **ติดอะไร:** B-45 รอเลือกเป้าหมาย · B-40 iPad Pro 13" รอตัดสินเกณฑ์ · B-44 z-index scale (งานแยก) · B-13 รอ QA · Services ID ของ Apple (ทำเอง) · deploy หน้าเช็กลิสต์ Vercel อ่านอย่างเดียว
+
+## 2026-10-14 (รอบ 59) · Ten + Claude — Apple login บนเว็บ · ตรวจบัญชี Apple / Gmail อีเมลเดียวกัน · กดแล้วตอบสนอง + loading · status ClickUp 3 ใบ
+
+- **ทำอะไร:**
+  - **ClickUp (Ten สั่ง + รับทราบกฎ 80%):** Q-03 · H-03 · B-36 → `completed` (Open → completed · Q-03 ยังไม่ได้เทสบนเครื่อง)
+  - **ตรวจ Apple กับ Gmail ที่ใช้อีเมลเดียวกัน (อ่านโค้ด zyra-api ไม่ได้แก้):** ผู้ใช้หนึ่งคน = หนึ่งแถวใน `tb_user` · ไม่มี column เก็บ Google / Apple id แยก · ทุก login จับคู่ด้วย `lower(email)` (email ไม่ unique)
+    - Google ก่อน → Apple อีเมลเดียวกัน = บัญชีเดียว (จับคู่ด้วยอีเมลใหม่ทุกครั้ง) · Apple ก่อน → Google = บัญชีเดียว แต่ Google เขียนชื่อทับทุกครั้ง · Apple "Hide My Email" = บัญชีที่สองแยก รวมไม่ได้ · มีบัญชี email/password อยู่ → Google / Apple เข้าบัญชีนั้น รหัสผ่านเดิมยังใช้ได้
+    - **ช่องโหว่ร้ายแรง (pre-hijack):** คนอื่นสมัครด้วยอีเมลเหยื่อแบบไม่ยืนยัน → เจ้าของตัวจริง login Google / Apple → ระบบยึดแถวนั้นและตั้งยืนยันแล้ว รหัสผ่านของผู้สมัครยังใช้ได้ (`auth_service.go:296`, `apple_login.go:81`) · Google ไม่ตรวจ `email_verified` · Google อีเมลว่างอาจจับคู่บัญชีอีเมลว่าง · บัญชีซ้ำได้ — **ยังไม่ได้แก้ รอ Ten ตัดสิน**
+  - **Apple login บนเว็บ** — [zyra-app#573](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/573) (**ยังไม่ merge**): Sign in with Apple JS แบบ popup ด้วย `NEXT_PUBLIC_APPLE_SERVICES_ID` → token ไป `login_apple` เดิม (zyra-api รองรับ Services ID ใน `APPLE_CLIENT_IDS` แล้ว) · ปุ่มซ่อนจนกว่าจะตั้ง Services ID · Dockerfile + `deploy-gitops.yml` ส่ง env ตอน build · ต้องตั้งค่าเอง: สร้าง Services ID ใน Apple Developer + domains / Return URL `https://<โดเมน>/login` · เพิ่มใน `APPLE_CLIENT_IDS` ของ api ทุก env · secret `NEXT_PUBLIC_APPLE_SERVICES_ID` ใน GitHub Environment
+  - **ตรวจการกดและ transition บนมือถือ** → รายงานเต็ม [issues/apple-google-login-and-mobile-press-feedback-2026-10-14.md](../../issues/apple-google-login-and-mobile-press-feedback-2026-10-14.md) · Ten ให้ทำข้อ 1 + 2 ก่อน:
+    - **ข้อ 1 กดแล้วตอบสนอง** — [#574](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/574): `globals.css` บนจอ touch ทุก button / link / role=button|tab|menuitem จาง opacity 0.6 ตอนกด (`:active`, นอก layer ชนะ utility · `transition` อยู่ใน `@layer base` ไม่ทับ transition ของปุ่ม) · `data-press="none"` ปิดได้ (ใส่ให้ PIP ที่ลากได้) · `providers.tsx` ใส่ touchstart listener เปล่า (iOS ต้องมีถึงจะใช้ `:active`) · ปุ่ม back / close ของ BottomSheet 16px → touch target 40px (`::after`) — ครอบ 150+ จุดในครั้งเดียว
+    - **ข้อ 2 loading** — [#575](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/575): Instant meeting spinner + กันกดซ้ำ (เดิมเข้าสองรอบ) · Switch workspace / Log out / เปลี่ยนภาษา (Lite) spinner เต็มจอ · หน้า workspace list: เปิด workspace (`useTransition`), Copy, Sign out → spinner เต็มจอกันกดซ้ำ · Copy ใน Lite workspace list ทีละครั้ง · ปุ่ม login คงสีเขียวตอน loading
+    - ข้อ 3–5 (bottom sheet เลื่อนขึ้นลง · หน้าย่อยเลื่อนจากขวา · reduced motion / blur) **ยังไม่ทำ**
+  - **กฎ rule 19 ปรับ (Ten สั่ง):** อย่าแปลเกิน — คำที่ปกติเป็นอังกฤษ (merge, deploy, PR, popup, Services ID, token, server, bottom sheet, spinner) คงอังกฤษ แปลเฉพาะประโยค / ข้อความ UI / error · คำตอบในแชทเป็นไทยปนอังกฤษแบบที่ทีมพูดกัน
+- **PR:** zyra-app #574 #575 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI `lint-and-build` เขียวก่อน merge) · #573 ยังเปิดอยู่
+- **verify ถึงไหน:**
+  - **build / test:** develop หลัง merge (`13437862`) `vitest run` 353 ไฟล์ / 4,318 ผ่าน · `tsc` ไม่มี error ใหม่ (7 เดิม) · test ใหม่: web Apple 3 เคส (`native-apple-signin.test.tsx`) · Instant meeting busy (`lite-home-sheets.test.tsx`) · `mobile-auth-button-loading.test.tsx`
+  - **เบราว์เซอร์:** mobile emulation — media query `(hover: none) and (pointer: coarse)` ตรง และ rule `:active` อยู่ใน CSS ที่ build แล้ว · จำลองการกดจริงในเบราว์เซอร์ไม่ได้
+  - **deploy dev:** CI ของ `13437862` ยัง in_progress ตอนเขียน
+  - **บนเครื่องจริง: ยังไม่ได้เทส** · Apple บนเว็บลองจริงไม่ได้จนกว่าจะมี Services ID
+- **ให้ Ten / QA เทสบน dev:** (1) กดปุ่มใด ๆ บนมือถือ → จางลงตอนกด (iOS และ Android) · ปุ่มปิดของ bottom sheet กดง่ายขึ้น (2) Instant meeting กดสองครั้งเร็ว ๆ → spinner + เข้าห้องครั้งเดียว (3) Switch workspace / Log out / เปลี่ยนภาษา → spinner เต็มจอ (4) หน้า workspace list เปิด / Copy → spinner
+- **ติดอะไร:** ช่องโหว่บัญชี Apple / Gmail ที่ zyra-api รอ Ten ตัดสิน · Services ID ของ Apple (ทำเอง) · ข้อ 3–5 ของ transition ยังไม่ทำ · deploy หน้าเช็กลิสต์ Vercel อ่านอย่างเดียว (รอ limit)
+
+## 2026-10-14 (รอบ 58) · Ten + Claude — มติ Q-03 / H-03 / B-36 · PIP ลากได้ · joystick iPad · PIP แสดงจอที่แชร์ · หน้า Vercel อ่านอย่างเดียว
+
+- **มติ Ten (ถามก่อนเริ่ม):** B-36 คงเดิม login ได้หลายเครื่อง · Q-03 PIP ลากได้แล้วดูดติดมุม (แทนมติเดิม HP-04 ข้อ 9) · H-03 กด PIP ของ Bubble เปิดหน้า Meeting เต็มจอได้ (ไม่มีแชท) · หน้า Vercel ไม่ต่อ Upstash → อ่านอย่างเดียว · ระหว่างทาง Ten ขอเพิ่ม: joystick ใหญ่ขึ้นบน iPad / จอใหญ่ และ PIP แนวตั้งแสดงจอที่แชร์
+- **ทำอะไร:**
+  - **Q-03 PIP ลากได้** — [zyra-app#570](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/570): hook ใหม่ `lite/use-pip-drag.ts` ใช้ร่วม `LiteMeetingPip` (meeting / Spotlight PIP ทั้ง Lite และ Spatial) + `LiteSplitPip` · แตะ (ขยับ < 8px) = เปิด meeting เหมือนเดิม · ลาก = ตามนิ้ว ปล่อยแล้วดูดมุมที่ใกล้สุด จำมุมใน localStorage แยกแนว (`zyra_pip_corner:lite|spatial`) · แนวตั้ง 4 มุม (ล่างเหนือ bottom nav · บนใต้ช่องค้นหา) · แนวนอน ขวาล่าง (ตำแหน่ง Figma) + ซ้ายบน เท่านั้น (ขวาบน = ปุ่ม HUD · ซ้ายล่าง = joystick) · คลิกที่จบการลากถูกกลืน
+  - **joystick บน iPad / จอใหญ่** — [#571](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/571): `VOJoystick` prop `scale` · hero ใช้ 1.5× เมื่อ `tabletScale` (ด้านสั้นของจอ ≥ 744px — เงื่อนไขเดียวกับปุ่ม HUD 44px) วง 128 → 192px · dead zone / ระยะ knob / จุดเริ่มวิ่งขยายตาม · มือถือเหมือนเดิม
+  - **PIP แนวตั้งแสดงจอที่แชร์** — [#572](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/572): `LiteMeetingPip` prop `screen` · อยู่ใน meeting Lite แล้วคนอื่นแชร์จอ → ย่อเป็น PIP เห็นจอที่แชร์ + ป้ายชื่อไอคอนจอ · เราแชร์เอง → แสดงคนพูดเหมือนเดิม · เฉพาะแนวตั้งตามที่สั่ง · rebase ทับ #570 (ไฟล์เดียวกัน)
+  - **H-03:** ไม่ต้องแก้โค้ด — develop ทำได้อยู่แล้ว: Bubble บนมือถือขึ้นเป็น PIP แตะแล้วเปิดหน้า meeting เต็ม (ไม่มีแชท) มี test อยู่แล้ว (`spatial-phone-meeting.test.tsx` "starts as the PIP, tap opens the page") · ระหว่างอยู่ใน Bubble minimap และการ์ด Bubble ซ่อน (`phoneMeetingUp`)
+  - **B-36:** ใส่ comment มติในการ์ด (คงเดิม by design) — ไม่แตะ status
+  - **หน้าเช็กลิสต์ Vercel:** เป็นอ่านอย่างเดียว — เอาปุ่มติ๊ก / ช่องชื่อ / หมายเหตุออก ลบ `api/state.js` · ชี้ไปติ๊กที่ claude.ai หรือ checklist ในการ์ด ClickUp ([zyra-doc#67](https://github.com/N2Pluto/zyra-doc/pull/67)) · **deploy ไม่ได้** — Vercel hobby ติด limit 100 deploy/วันอีก หน้า live ยังเป็นเวอร์ชันเก่า
+- **PR:** zyra-app #570 #571 #572 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI `lint-and-build` เขียวทุก PR ก่อน merge · #572 เขียวอีกรอบหลัง rebase)
+- **verify ถึงไหน:**
+  - **build / test:** develop หลัง merge (`c2b1e301`) `vitest run` 352 ไฟล์ / 4,315 case ผ่าน · `tsc` ไม่มี error ใหม่ (7 เดิม) · test ใหม่: `lite-meeting-pip-drag.test.tsx` (10) · `lite-meeting-pip-screen.test.tsx` (3) · `vo-joystick.test.tsx` เคส scale
+  - **เบราว์เซอร์:** `/dev/mobile-preview?screen=split-pip` ลาก PIP ไปซ้ายบน → ติดมุม `tl` และบันทึก · joystick ขนาด iPad ดูใน fixture ไม่ได้ (fixture ล็อก 844×390 และวาง joystick เอง)
+  - **deploy dev:** CI ของ `c2b1e301` ยัง pending ตอนเขียน — เช็ค `app.dev.zyra.center/api/version` อีกครั้ง
+  - **บนเครื่องจริง: ยังไม่ได้เทส**
+- **ให้ Ten / QA เทสบน dev:** (1) ลาก PIP meeting / Spotlight / split PIP ไปมุมต่าง ๆ ทั้งแนวตั้งและแนวนอน → ดูดติดมุม ปิดเปิดใหม่ยังอยู่มุมเดิม · แตะเบา ๆ ยังเปิด meeting (2) iPad แนวนอน → joystick ใหญ่ขึ้น ลากครึ่งทางเดิน สุดวิ่ง (3) แนวตั้งใน meeting ให้อีกคนแชร์จอ แล้วย่อ → PIP แสดงจอที่แชร์
+- **ติดอะไร:** deploy หน้าเช็กลิสต์ Vercel (รอ limit) — `cd zyra-doc/web/mobile-qa-checklist && npx vercel@latest deploy --prod` · การ์ดรอข้อมูล QA (H-06, B-44, B-13, B-31, B-40) · B-45 รอ PM · status ของ Q-03 / H-03 / B-36 ยังไม่ได้เปลี่ยน
+
+## 2026-10-14 (รอบ 57) · Ten + Claude — เช็กลิสต์เทสให้ทีม · description การ์ด ClickUp 26 ใบ · กฎแปลไทย (rule 19)
+
+- **ทำอะไร:**
+  - **deploy รอบ 56 ขึ้น dev แล้ว:** CI ของ `30a1832d` success · `app.dev.zyra.center/api/version` buildId `06:49:26` (หลัง merge #568) — ของรอบ 56 เทสบน dev ได้
+  - **เช็กลิสต์เทสรอบ 51–56 (23 รายการ / 59 ข้อ):** แบ่งตาม Spotlight · Meeting / Bubble · แมพ / การควบคุม · ตัวแอป — แต่ละข้อกด ผ่าน / ไม่ผ่าน + ช่องหมายเหตุต่อการ์ด + ลิงก์การ์ด ClickUp + ป้าย "รอบ 56" / "ต้องใช้ APK ใหม่" · มี 2 ที่:
+    - **claude.ai** — https://claude.ai/artifact/1N2889Hyb8ADjVjTsaDT22 · ติ๊กได้และทุกคนเห็นตรงกัน (เก็บใน db ของ artifact) · แชร์ทั้งองค์กรแล้ว
+    - **Vercel** — https://zyra-mobile-qa-checklist.vercel.app (`web/mobile-qa-checklist/`, [zyra-doc#64](https://github.com/N2Pluto/zyra-doc/pull/64), [#65](https://github.com/N2Pluto/zyra-doc/pull/65)) · ผลติ๊กผ่าน `api/state.js` + Upstash Redis · **ยังติ๊กไม่ได้** — `/api/state` ตอบ `storage_not_connected` (ยังไม่ได้ต่อฐานข้อมูล): project ไม่มี env `KV_*` / `UPSTASH_*` และหา store ใน Vercel บัญชี h2ofriday (22 project) ไม่เจอ — น่าจะต่อ Upstash จากเบราว์เซอร์ที่ล็อกอินคนละบัญชี · deploy ครั้งแรกติด limit hobby 100 deploy/วัน (Ten deploy เองภายหลัง) · ลิงก์หลักเปิดได้โดยไม่ต้องล็อกอิน (ลิงก์ยาวของแต่ละ deployment ต้องล็อกอิน Vercel)
+  - **Ten สั่งเปลี่ยนไปใช้ checklist ของ ClickUp แทน:** connector ClickUp ไม่มี operator ของ checklist (`clickup_get_operators` → none) สร้างให้ไม่ได้ · ใช้รายการ `- [ ]` ในส่วน "ต้องเป็นแบบนี้ (checklist)" ของ description แทน — ต้องให้ Ten ดูว่า ClickUp แสดงเป็นช่องติ๊กได้ไหม
+  - **ClickUp:** ใส่ assignee ครบแล้วจากรอบ 55 · แก้ **description 26 ใบ** (ตามที่ Ten สั่ง ไม่แตะ status): บรรทัด "สถานะการแก้" → แก้แล้ว + ลิงก์ PR + deploy dev + ยังไม่ได้เทสบนเครื่อง · เพิ่มส่วน "การแก้ไข (อัปเดต 2026-10-14)" ท้ายการ์ด: PR · แก้อะไร · วิธีเทสบน dev · checklist · ลิงก์เช็กลิสต์รวม — B-14 B-17 B-18 B-19 B-20 B-15 B-16 B-42 H-01 H-02 H-04 H-05 H-07 H-08 H-09 H-10 · B-01 B-04 B-07 B-08 B-12 B-21 B-29 B-30 B-32 B-47
+  - **กฎใหม่ (Ten สั่ง):** `.claude/rules/19-thai-translation.md` — ข้อความอังกฤษที่ AI เขียนให้ทีมอ่านต้องมีคำแปลไทยกำกับ (เก็บต้นฉบับไว้เทียบหน้าจอ) · ไม่แปลโค้ด / ชื่อไฟล์ / คำสั่ง / ชื่อฟีเจอร์ / คำทับศัพท์ของทีม · บันทึกใน memory ของ AI ด้วย · หน้าเช็กลิสต์ใส่คำแปลไทย 14 จุดแล้ว
+- **verify ถึงไหน:**
+  - เช็กลิสต์ claude.ai: publish แล้ว · db ว่างพร้อมใช้ (ยังไม่มีใครติ๊ก) · ยังไม่ได้ลองติ๊กจากบัญชีอื่น
+  - Vercel: หน้าเปิดได้ (มีคำแปลไทย) · API ยังไม่ต่อฐานข้อมูล
+  - ClickUp: เปิดดู B-14 หลังแก้ เนื้อหาครบ · ใบอื่นเครื่องมือตอบ success
+- **ต่อจากนี้:** QA เทสตามเช็กลิสต์ (claude.ai หรือ checklist ในการ์ด) · ถ้าจะใช้หน้า Vercel ให้ล็อกอิน Vercel บัญชี h2ofriday แล้วต่อ Upstash ให้ project `zyra-mobile-qa-checklist` แล้ว redeploy
+- **ติดอะไร:** Upstash บน Vercel (บัญชีไม่ตรง) · checklist ของ ClickUp สร้างผ่าน connector ไม่ได้ · การ์ดที่เหลือรอ PM (B-36, B-45, Q-03) / ข้อมูล QA (H-03, H-06, B-44, B-13, B-31, B-40)
+
+## 2026-10-14 (รอบ 56) · Ten + Claude — แนวนอน / ทั้งสองแนวที่เหลือ: B-08 · H-07 · H-10 · B-47 · B-29 · joystick วิ่ง · ClickUp completed 6 ใบ
+
+- **มติ Ten (ถามก่อนเริ่ม):** B-08 preview เต็มกล่อง (crop) · H-07 แสดง joystick จาง ๆ ค้างไว้ · H-10 + B-47 ทำด้วยสไตล์ Lite (ไม่มี Figma) · B-29 ทำแบบกันไว้ก่อน (กู้แมพเมื่อ WebGL context หาย) · ระหว่างทาง Ten ขอเพิ่ม: **ลาก joystick ครึ่งทาง = เดิน · ลากเต็ม = วิ่ง**
+- **ทำอะไร:**
+  - **B-08** — [zyra-app#565](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/565): Profile → Camera preview จากแถบสูง 200px → เต็มความกว้าง สัดส่วน 3:4 (`max-h-[calc(100dvh-160px)]` ไม่ล้นแนวนอน) · ภาพยัง `object-cover`
+  - **H-07** — [#566](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/566): joystick floating ตอนพักเดิม `opacity-40` + วงสีเข้ม → แทบมองไม่เห็นบนแมพพื้นเข้ม · ตอนพักเป็น `opacity-60` + พื้นวง `rgba(26,27,30,0.3)` · ตอนจับเหมือน Figma · โซนรับนิ้วไม่เปลี่ยน
+  - **H-10 + B-47** — [#567](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/567) (sheet ใช้ร่วม Lite / Spatial): Meeting rooms ห้องที่มีคน → ไอคอนพื้นเขียวจาง + "N in meeting" สีเขียว · Private zones มีช่องค้นหา (ชื่อห้อง / ชื่อที่ claim / ชื่อเจ้าของโต๊ะ) + ข้อความไม่พบ · i18n EN / TH
+  - **joystick วิ่ง** — [#568](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/568): ระยะนิ้ว ≥ 80% ของระยะ knob (`JOYSTICK_RUN_RATIO`, 35.2 / 44px) → วิ่ง · ถอยกลับ → เดิน · `setVirtualDirection(dir, run)` กด Shift สังเคราะห์แบบ Shift+WASD → `run` ที่ส่ง zyra-ws กับความเร็ว local ตรงกัน (ไม่แตะ zyra-ws) · ไม่มีการ์ด ClickUp
+  - **B-29** — [#569](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/569): `lib/webgl-context-watch.ts` ฟัง `webglcontextlost` / `restored` ของแมพ · หน้าอยู่บนจอแล้ว 3 วิยังไม่กลับ → hero แสดง overlay **Reconnect Now** (แบบ H-01) แทนจอขาว · ระหว่าง meeting / circle / Spotlight รอจนออกจากสาย (reload จะตัดสาย)
+  - **ตอบ Ten "คุยนอกแอปแบบ Discord":** ทำได้แล้วระหว่างอยู่ในสาย (meeting / circle / Spotlight) — iOS ใช้ `UIBackgroundModes: audio` + call mode (1.7), Android ใช้ foreground service (รอบ 55, ต้องลง APK ใหม่) · ตรวจโค้ดแล้ว: ฝั่งเว็บไม่ปิดไมค์ / ไม่ตัด WS ตอน background (auto-mute ยกเว้นตอนอยู่ในสาย) · นอกสาย iOS ไม่อนุญาต (Discord ก็ค้างแค่ voice channel) · กล้องปิดเองตอน background (OS) · **ยังไม่ได้ยืนยันบนเครื่องจริง**
+  - **ClickUp (Ten สั่ง + รับทราบกฎ 80%):** Open → `completed` 6 ใบ: B-08 · H-07 · H-10 · B-47 · B-29 · B-32
+- **PR:** zyra-app #565 #566 #567 #568 #569 → **merged เข้า `develop`** ตามที่ Ten สั่ง (CI `lint-and-build` เขียวทุก PR ก่อน merge)
+- **verify ถึงไหน:**
+  - **build / test:** แต่ละ PR — `vitest run` ทั้งหมด 349 ไฟล์ / 4,296 ผ่าน (#568) · `tsc` ไม่มี error ใหม่ (7 เดิม) · eslint สะอาด · develop หลัง merge ครบ (`30a1832d`) ไฟล์ test ที่แตะ 4 ไฟล์ / 450 ผ่าน
+  - **เบราว์เซอร์:** B-08 `/dev/mobile-preview?screen=lite-profile-page&page=camera` 390×844 (กล่อง ~357×466) + 844×390 (ไม่ล้น) · Browser pane ใช้กล้องไม่ได้
+  - **deploy dev:** CI ของ `30a1832d` ยังรันอยู่ตอนเขียน — ต้องเช็ค `app.dev.zyra.center/api/version` อีกครั้ง
+  - **บนเครื่องจริง: ยังไม่ได้เทสทุกข้อ**
+- **ให้ Ten / QA เทสบน dev:** (1) B-08 preview กล้องเต็มความกว้าง (2) H-07 เห็นวง joystick ตอนพักบนแมพพื้นเข้ม (3) ลาก joystick ครึ่งทางเดิน / สุดวิ่ง / ถอยกลับเดิน (4) H-10 ห้องที่มีคนเป็นสีเขียว (5) B-47 ค้นหาใน Private zones ด้วยชื่อห้องและชื่อคน (6) B-29 สลับแอปนาน ๆ แล้วกลับมา → ถ้าแมพหายต้องเห็น Reconnect Now ไม่ใช่จอขาว (7) คุยในสายแล้วสลับแอป / ล็อกจอ 1–2 นาที ทั้ง iOS และ Android (APK ใหม่)
+- **ติดอะไร:** การ์ดสายนี้ที่เหลือรอ PM (B-36, B-45, Q-03) และรอข้อมูล QA (H-03, H-06, B-44, B-13, B-31, B-40)
+
+## 2026-10-14 (รอบ 55) · Ten + Claude — B-12 desktop · B-01 / B-21 ฝั่ง server · B-32 Android foreground service · CI lint develop · ClickUp assignee 36 ใบ
+
+- **ทำอะไร (Ten เลือกทำทั้ง 4 ข้อ):**
+  - **B-12 desktop** — [zyra-app#552](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/552): แชท meeting (`ZoneEnterPanel` prop ใหม่ `chatPhotoFor`) และแชท Spotlight บนเว็บใช้รูปโปรไฟล์จาก member list แทนครอป sprite ตัวละคร (กลไกเดียวกับมือถือ #547) · ไม่มีรูป → ตัวอักษรย่อ
+  - **B-01 server** — [zyra-ws#78](https://github.com/Maximumsoft-Co-LTD/zyra-ws/pull/78): `ws:audio:muteAll` ใช้ gate เดียวกับ `ws:meeting:kick` (workspace owner / admin / meeting owner = คนแรกที่เข้าห้อง) · คนอื่นได้ `error` ไม่มีใครถูก mute
+  - **B-21 server** — zyra-ws#78 เดียวกัน (มติ Ten: จบทันที): คนพูดหลุด / connection ถูกแทนที่ / แอปเข้า presence grace → `removeFromSpotlight` ทันที (`stopped`) · **ลบกลไก EC-04** (ค้าง `paused` 2 นาที + resume) ทั้งหมด: suspend / resume / sweep, `spotlightGrace`, `SpotlightSpeaker.Disconnected`, event `paused` / `resumed` · คนพูดที่กลับมาแล้วยังยืนบน marker → client re-assert เปิด **session ใหม่** (ไม่เด้งการ์ด who-is-speaking)
+  - **B-32 Android ล็อกจอระหว่างประชุม (task 1.17)** — [zyra-mobile#10](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/10): `MeetingForegroundService` (Java, type `microphone|mediaPlayback` · ไม่มีสิทธิ์ไมค์ → `mediaPlayback` อย่างเดียว) + notification เงียบ "Zyra — in a meeting" (EN / TH) แตะแล้วเปิดแอป + plugin `MeetingService` + permission `FOREGROUND_SERVICE*` · [zyra-app#553](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/553): `lib/native/foreground-service.ts` เปิดตอน media room แรกต่อติด ปิดพร้อม call-audio hold (หลังห้องสุดท้าย 2 วิ) · iOS / เว็บไม่เปลี่ยน
+  - **CI lint ของ develop แดงตั้งแต่ #551** (`react-hooks/refs` — hero อ่าน `wsClientRef.current` ตอน render ส่ง cooldown ให้การ์ด Bubble) → [zyra-app#554](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/554) ส่ง `getCooldownMs` แบบ `AskToJoinButton` · **eslint ในเครื่องไม่จับ error นี้ — ต้องรอ CI `lint-and-build` เขียวก่อน merge** (#552 / #553 ถูก merge ตอน check นี้แดงอยู่ แต่ไม่ใช่ต้นเหตุ)
+  - **ClickUp:** ใส่ assignee Ponlawat Lueakaew ให้การ์ดสายแนวนอน 21 + ทั้งสองแนว 15 = **36 ใบ** ตามที่ Ten สั่ง (ก่อนหน้าไม่มี assignee เลย · ไม่แตะ status) · สายแนวตั้ง 32 ใบเป็นของ dev อีกคน
+- **PR:** zyra-app #552 #553 #554 · zyra-ws #78 · zyra-mobile #10 → **merged เข้า `develop` ทั้งหมด** ตามที่ Ten สั่ง
+- **verify ถึงไหน:**
+  - **build / test:** zyra-app `vitest run` 341 ไฟล์ / 4,217 case ผ่าน · `tsc` ไม่มี error ใหม่ (7 เดิม) · CI `lint-and-build` เขียวหลัง #554 · zyra-ws `go vet` + `go test -race ./...` ผ่าน (test ใหม่: mute-all gate, speaker หลุด 4 แบบ, Lite) · zyra-mobile CI "Android APK" success (run 38518898991) — **เครื่องนี้ไม่มี Android SDK ตรวจได้แค่ว่า compile ผ่าน**
+  - **deploy dev:** zyra-app CI ของ `b65f3634` success · `app.dev.zyra.center/api/version` buildId `06:01:00` · zyra-ws `ws.dev.zyra.center/healthz` → `dev-6793a95`
+  - **บนเครื่องจริง: ยังไม่ได้เทส ทั้ง 4 ข้อ**
+- **ให้ Ten / QA เทสบน dev:** (1) B-12 เว็บ: แชท meeting / Spotlight เห็นรูปโปรไฟล์ (2) B-01: คนที่ไม่ใช่ host กด Mute all (ถ้าเห็นปุ่ม) → ไม่มีใครถูก mute (3) B-21: คนพูด Spotlight ปิดเน็ต / ปิดแอป → stage ของคนดูปิดทันที (4) B-32: **ลง APK ใหม่** → เข้าประชุม → ล็อกจอ 1–2 นาที → ยังได้ยินกันทั้งสองฝั่ง · notification ขึ้นระหว่างประชุม หายหลังออก
+- **ต่อจากนี้:** ส่ง store ต้องกรอก foreground service declaration (microphone / mediaPlayback) ใน Play Console · description การ์ด completed หลายใบ (B-14, B-17–B-20, H-05, H-08) ยังเขียน "ยังไม่มีใครแก้" จาก 10-12 — แก้ตามที่ Ten สั่ง
+- **ติดอะไร:** การ์ดสายนี้ที่เหลือรอ PM / design (B-08, B-36, B-45, Q-03, B-47, H-07, H-10) และรอข้อมูล QA (H-03, H-06, B-44, B-13, B-29, B-31, B-40)
+
+## 2026-10-14 (รอบ 54) · Ten + Claude — การ์ด Bubble แทน minimap · Dynamic Island "Now Playing"
+
+- **ทำอะไร (feedback ของ Ten จากการเทสบน dev):**
+  - **Ask to Join บนมือถือแนวนอน:** ปุ่มลอยเหนือ Bubble (จาก #541 — H-04) บังแมพและคนในวง และตัวหนังสือหักเป็น "Ask / to / Join" · Ten ขอให้เป็นเมนูที่ขึ้นทับ minimap แทน → บนมือถือไม่แสดงปุ่มลอยแล้ว · Bubble ที่ยืนใกล้ (มีสมาชิกห่าง ≤ 3 ช่อง, `PHONE_BUBBLE_NEAR_TILES`) ขึ้นเป็น **การ์ดที่มุม minimap** (`vo-phone-bubble-card.tsx`: "Circle · N people here", รูปคนในวง, ปุ่ม Ask to Join + สถานะรอคำตอบ / cooldown) และ **minimap หายระหว่างนั้น** · ลอจิกขอเข้ารวมเป็น `askToJoinCircle()` ใช้ร่วมกับปุ่มลอยของ desktop · ลบ prop `alwaysVisible` ที่เพิ่มใน #541 · ไม่มี Figma — ใช้สไตล์ Lite
+  - **Dynamic Island ขึ้นว่า Zyra กำลังเล่นเพลง (การ์ด Now Playing, ขึ้นตลอดตั้งแต่เข้า workspace):** ต้นเหตุที่น่าจะเป็นที่สุด = `use-autopip-eligibility.ts` เปิดไมค์ค้างแบบเงียบตลอดที่อยู่ใน office (มีไว้ให้ Auto-PiP ของ Chrome desktop) ซึ่งไปทำงานในแอป iOS ด้วย → เปิดเฉพาะเมื่อมี `window.documentPictureInPicture` (Chrome desktop) · ในแอปมือถือ / Safari / Firefox ไม่เปิดไมค์แล้ว
+- **PR:** [zyra-app#551](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/551) → **merged เข้า `develop`** (`28586e00`) ตามที่ Ten สั่ง
+- **verify ถึงไหน:**
+  - **build / test:** `vitest run` 340 ไฟล์ / 4,213 case ผ่าน · `tsc --noEmit` ไม่มี error ใหม่ · eslint ไม่มี warning ใหม่ (hero เทียบกับ develop) · test ใหม่: การ์ด Bubble (แสดง / ขอเข้า / รอคำตอบ / cooldown) · ไม่มี Document PiP → ไม่เรียก `getUserMedia`
+  - **เบราว์เซอร์:** `/dev/mobile-preview?screen=spatial-hud&bubble=1` — การ์ดอยู่ที่มุม minimap ถูกตำแหน่ง
+  - **deploy dev:** CI success · image `web:dev-28586e0` · `app.dev.zyra.center/api/version` → buildId `05:06:00` = ขึ้น dev แล้ว
+  - **บนเครื่องจริง: ยังไม่ได้เทส** · ต้นเหตุ Now Playing มาจากการอ่านโค้ด ยังไม่ยืนยัน
+- **ให้ Ten / QA เทสบน dev:** (1) แอป iOS เข้า workspace แล้วรอ → ไม่มีการ์ด Now Playing / จุดส้มไมค์บน Dynamic Island (2) เดินใกล้ Bubble → การ์ดขึ้นแทน minimap → กด Ask to Join ส่งคำขอได้ → เดินออก → minimap กลับมา
+- **ClickUp:** อัปเดต description การ์ด [H-04](https://app.clickup.com/t/14zd0zubp9a) — เพิ่มหัวข้อ "อัปเดต 2026-10-14" บนสุด (2 รอบที่เปลี่ยน: ปุ่มลอย #541 → การ์ดแทน minimap #551 · สถานะ merged + ขึ้น dev `web:dev-28586e0` · ขั้นตอนให้ QA เทส 5 ข้อ) · เก็บบทวิเคราะห์เดิมไว้ข้างล่าง · status คง `completed` (ไม่ได้แตะ)
+- **ติดอะไร:** ถ้า Now Playing ยังขึ้นหลังแก้ ตัวที่ต้องไล่ต่อคือโหมดเสียง `playback` (`lib/native/audio-session.ts`) ที่ตั้งไว้ให้เสียงดังแม้เปิดโหมดเงียบ (Ten 2026-10-07) — เปลี่ยนเป็น `ambient` จะหาย Now Playing แต่เสียงเอฟเฟกต์จะเงียบตามสวิตช์เงียบ ต้องให้ Ten เลือก
+
+## 2026-10-14 (รอบ 53) · Ten + Claude — มติ megaphone (B-42 / B-15) · merge 13 PR ขึ้น develop + deploy dev · ClickUp completed 20 ใบ
+
+- **ทำอะไร:**
+  - **มติ Ten (B-42 / B-15):** megaphone บนมือถือ = **Announcement แบบเว็บ** ไม่ใช่ Spotlight · เริ่ม Spotlight แนวนอน = **เดินเข้าจุดเองแล้วกด Play ในแถบล่าง** แบบ desktop · Lite ไม่เปลี่ยน → [zyra-app#550](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/550): megaphone เปิด `AnnouncementSurface` เต็มจอใน `MobileSubPage` (Owner / Admin เท่านั้น) · `VOHud` มือถือมีปุ่ม Play (สีจางระหว่างเดินไม่ถึงจุด) · ลบ `handleMegaphone` (เดินไป marker เอง)
+  - **เอกสาร:** ux-ui-plan เพิ่ม **§18.10** (แทนที่ §3.9 / §18.7 ข้อ 4 / §18.9 ข้อ 4) · ขีดฆ่า + ชี้ §18.10 ใน technical-design · task-breakdown (0.49 ยกเลิก) · code-map · test-plan (FE-VO-04, FE-SPOT-04) · screens · work-split แถว B-15 / B-42 ([zyra-doc#57](https://github.com/N2Pluto/zyra-doc/pull/57))
+  - **Ten สั่งเอาขึ้น develop:** squash-merge zyra-app **#538–#550 (13 PR)** เข้า `develop` ตามลำดับ (#542, #543 ก่อน) + [zyra-mobile#9](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/9)
+  - **ClickUp:** แก้ description B-42 / B-15 / B-16 (มติ + สถานะ merge / deploy + ขั้นตอนเทส) · **Ten แก้กฎ** `.claude/rules/13-clickup-status.md` + `CLAUDE.md`: AI เปลี่ยน status ได้เมื่อผู้ใช้อนุญาตในแชท (เฉพาะคำสั่งนั้น) → เปลี่ยน **20 การ์ดที่อยู่บน develop เป็น `completed`** ตามที่ Ten สั่ง: B-14 B-17 B-18 B-19 B-20 H-05 H-08 H-09 H-04 B-07 H-02 B-04 B-21 B-12 B-30 B-42 B-15 B-16 (จาก Open) · H-01 B-01 (จาก in progress)
+- **verify ถึงไหน:**
+  - **develop หลัง merge:** `vitest run` 340 ไฟล์ / 4,210 case ผ่าน · `tsc --noEmit` ไม่มี error ใหม่ (7 เดิม) · `eslint .` 0 error
+  - **deploy dev:** CI `Deploy zyra-app (GitOps → k3s)` ของ `26fa1588` success (run ก่อนหน้าถูก cancel ตาม concurrency) · image `web:dev-26fa158` · `https://app.dev.zyra.center/api/version` ตอบ buildId `04:22:03` ตรงกับเวลา build ของ image นี้ = **ขึ้น dev จริงแล้ว** · zyra-mobile CI "Android APK" success (run 38510899567)
+  - **บนเครื่องจริง: ยังไม่ได้เทส** — 20 การ์ดเป็น `completed` ทั้งที่ยังไม่ได้เทสตามกฎ 80% (04-test.md) · Ten รับทราบแล้วสั่งให้เปลี่ยน · ถ้า QA เจอปัญหาให้เปิดการ์ดกลับ
+  - **Before/After (rule 18): ยังไม่ได้วัด**
+- **ให้ QA เทสบน dev (16 ข้อ):** หน้า Spotlight แนวนอนกดได้ · ชิป "N | M" · เลื่อนรายชื่อ (B-17 B-14 B-18 B-19) · meeting กลับมาขยายหลัง Spotlight จบ (B-20) · Play บนจุด Spotlight (B-15) · megaphone = Announcement ของ Owner / Admin (B-42) · เสียงตอนเดินด้วย joystick (H-05) · Meeting rooms ห้องล็อก + Join ไปเก้าอี้ (H-08) · Join จากเมนู Member / โปรไฟล์ (H-09) · Ask to join Bubble (H-04) · Invite ใน meeting (B-07) · เข้า Spatial ครั้งแรก / Rotate / Reconnect (H-01) · สลับโหมดแล้วแมพขึ้น (H-02) · Accept ห้องล็อก (B-04) · Spotlight หายทันทีเมื่อ host ออก (B-21) · รูปโปรไฟล์ในแชท meeting (B-12) · splash ไม่มีจอดำ — **ต้องลง APK ใหม่** (B-30) · Mute all บนเว็บเฉพาะ host (B-01)
+- **ต่อจากนี้:** รอผลเทสจาก Ten / QA ว่าตรงไหม · dev สายแนวตั้งเริ่มได้แล้ว (#542 / #543 merged — ไม่ชนกัน)
+- **ติดอะไร:**
+  - เอกสารใน `plan/MobileApp/` ส่วนใหญ่ **ยังไม่เคย commit** (ux-ui-plan, code-map, test-plan, screens, open-items, clickup-spec = untracked · spec / technical-design / task-breakdown มีงานค้างของคนอื่น) — แก้ §18.10 ไว้ในเครื่องแล้ว รอ Ten ตัดสินว่าจะ commit ทั้งโฟลเดอร์ไหม
+  - หน้า Announcement ยังไม่มีดีไซน์มือถือ (ใช้หน้า desktop เต็มจอ)
+  - B-01 ฝั่ง server ยังเปิด · B-08 / B-32 / B-47 และการ์ดรอ PM / QA ตามรอบ 52
 
 ## 2026-10-14 (รอบ 52) · Ten + Claude — กลุ่ม "ทั้งสองแนว": แก้ 5 การ์ด (6 PR) · รัน stack local · ทำไมคนอื่นไม่เห็นหน้า mobile
 
