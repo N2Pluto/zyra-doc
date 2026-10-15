@@ -3,7 +3,7 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-15 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
-## 2026-10-15 · Ten + Claude — Report & Block (store compliance audit #2)
+## 2026-10-15 (รอบ 65) · Ten + Claude — Report & Block (store compliance audit #2)
 
 - **คำขอ:** App Store Guideline 1.2 + Google Play UGC policy บังคับให้แอปที่มี chat มี report เนื้อหา + block ผู้ใช้ — zyra-app / zyra-api ยังไม่มี
 - **มติ Ten:** block ระดับบัญชี (ทุก workspace) · report → DB + Discord + email (admin page ทำรอบหลัง) · UI ใช้ style prototype · scope chat + DM เท่านั้น (ไม่ซ่อนใน VO) — แผน: [report-block-plan.md](report-block-plan.md)
@@ -24,6 +24,19 @@
   **วัดยังไง:** นับจากโค้ด (route + UI) ก่อน / หลัง PR · **production:** ยังไม่ได้วัด — ฟีเจอร์ใหม่ไม่มี baseline; หลัง deploy นับ row ใน `tb_content_report` / `tb_user_block`
 - **ต่อจากนี้:** review + merge #168 → รัน migration 113 บน dev → merge #599 → เทส 2 บัญชีบน dev (report → Discord + email, block → ข้อความ / DM หาย, unblock → กลับมา) ทั้ง web / Lite / Spatial → เขียน review notes สำหรับ App Store / Play Console · admin page `/admin/reports` รอบหลัง
 - **ติดอะไร:** ไม่มี — รอ review
+
+## 2026-10-15 (รอบ 64) · Ten + Claude — เตรียมส่ง App Store / Play Store (UAT → PROD)
+
+- **คำขอ Ten:** เตรียมความพร้อมส่ง review ทั้งสอง store โดยมี version UAT ก่อน แล้ว PROD
+- **มติ Ten:** มีบัญชี Apple + Play แล้ว · UAT = app แยก `co.zyraworld.app.uat` (TestFlight / Play internal เท่านั้น) · PROD = `co.zyraworld.app` ส่ง review · รอบแรก build manual, CI ทีหลัง
+- **ทำอะไร:**
+  - checklist ใหม่ [store-release-checklist.md](store-release-checklist.md) — งาน console แยก UAT / PROD + เจ้าของ, วิธี build manual, upload keystore, เคสทดสอบบนเครื่องจริง
+  - zyra-mobile `feat/store-release-prep`: `version.json` เป็นที่เดียวที่กำหนด version / build · `DEVELOPMENT_TEAM` · `arm64` · Android release signing จาก `keystore.properties` / env · `npm run bundle:uat|prod`
+  - zyra-app `fix/mobile-legal-links`: ลิงก์ `/legal/terms` `/legal/privacy` (ไม่มี route → 404) 8 จุด → `/legal?section=…`
+  - zyra-infra `chore/api-mobile-version-keys`: key force-update / store URL 6 ตัวใน template uat + prod
+- **verify ถึงไหน:** iOS `-showBuildSettings` (uat) ได้ Team / bundle id / 1.0.0 (1) ถูก + build simulator Release ผ่าน · zyra-app eslint ไฟล์ที่แก้ผ่าน, `tsc` เหลือ 7 error เดิมใน `__tests__` · **Android ยังไม่ได้ build ในเครื่อง** (เครื่องไม่มี JDK) → ใช้ CI `android-apk.yml` (debug) · release signing ยังไม่ได้ลองกับ key จริง · ยังไม่มีอะไรขึ้นเครื่องจริง
+- **ต่อจากนี้:** Ten ทำ U1–U8 ใน checklist → build UAT → ทดสอบ §5 → zyra-app ขึ้น prod → Phase PROD
+- **ติดอะไร:** Firebase uat / prod ต้องได้ OK จาก Ten (แตะ project ที่มี prod) · store assets รอ Design · ข้อความ permission รอ sign-off
 
 ## 2026-10-15 (รอบ 63) · Ten + Claude — B-45 language pack · เปลี่ยนภาษาทันที · V-13 Circle วาร์ป · ไล่ B-05 / B-25
 
