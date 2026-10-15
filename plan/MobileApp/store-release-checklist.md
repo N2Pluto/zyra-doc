@@ -18,6 +18,62 @@
 > ต้องขึ้น prod (tag `v*`) **ก่อน** ส่ง prod review ไม่งั้น reviewer จะเห็นเว็บ prod เวอร์ชันเก่า
 > (ตอนนี้ develop นำ main อยู่หลายสิบ commit — ดู progress รอบ 63)
 
+## 0. สรุป — เหลือแค่ให้คนที่มีสิทธิ์กด (อัปเดต 2026-10-15)
+
+เตรียมฝั่งทีมไว้ครบแล้ว: โค้ด + config merge เข้า develop แล้ว · Bundle ID uat + prod · app Zyra UAT ใน App Store Connect · Firebase uat + prod · OAuth iOS uat · release CI (zyra-mobile#14) · ข้อความ listing / privacy / data safety / review notes ร่างไว้ใน [store-listing-draft.md](store-listing-draft.md)
+
+### 0.1 ส่งให้เจ้าของบัญชี (copy ไปส่งได้เลย)
+
+> **Apple — Account Holder ของ Team Maximum Soft (Z8TW83PNG3)** (~1 นาที)
+> 1. login https://developer.apple.com/account
+> 2. แถบเหลือง "Program License Agreement updated" → **Review Agreement** → ติ๊กยอมรับ → **Agree**
+> 3. https://appstoreconnect.apple.com → Users and Access → **Integrations → App Store Connect API** → ถ้าขึ้น "Request Access" ให้กดขอ (ครั้งเดียว — ทำให้ทีมสร้าง API key สำหรับอัปโหลดอัตโนมัติได้)
+>
+> **Google Play Console — account owner ของ Maximumsoft** (~15 นาที + รอ Google ตรวจ 2–7 วัน)
+> 1. login https://play.google.com/console → หน้า Home
+> 2. **Verify your identity** → Get started → อัปโหลดหนังสือรับรองบริษัท + บัตรประชาชน / พาสปอร์ตของผู้มีอำนาจ (ชื่อ / ที่อยู่ต้องตรงกับในบัญชี)
+> 3. **Verify your phone numbers** → ใส่เบอร์ → กรอก OTP
+> 4. **Verify your organization's website** → ใส่ URL เว็บบริษัทใน Developer account → Account details → Send verification request → ไปกด approve ใน Google Search Console (เว็บต้อง verify ใน Search Console ไว้ก่อน — ทีมช่วยเตรียมได้ถ้าบอกโดเมน)
+> 5. เมื่อผ่านแล้ว แจ้งทีม — ทีมสร้าง app + ตั้งค่าที่เหลือเอง
+
+### 0.2 Ten รันเอง (เกี่ยวกับรหัส / key — AI จับแทนไม่ได้)
+
+**ก. Upload keystore** (ครั้งเดียว ใช้ทั้ง uat + prod · รหัสเก็บใน password manager ของทีม)
+
+```bash
+mkdir -p ~/zyra-keys && keytool -genkeypair -v -keystore ~/zyra-keys/zyra-upload.jks -storetype pkcs12 -alias upload -keyalg RSA -keysize 2048 -validity 10000
+keytool -list -v -keystore ~/zyra-keys/zyra-upload.jks -alias upload | grep -E 'SHA1|SHA256'
+```
+
+แล้วตั้ง secret ของ release CI (ถามรหัสทีละตัว ไม่ขึ้นบนจอ):
+
+```bash
+for e in uat production; do base64 -i ~/zyra-keys/zyra-upload.jks | gh secret set ANDROID_UPLOAD_KEYSTORE_BASE64 -R Maximumsoft-Co-LTD/zyra-mobile -e $e; gh secret set ANDROID_UPLOAD_KEY_ALIAS -R Maximumsoft-Co-LTD/zyra-mobile -e $e -b upload; gh secret set ANDROID_UPLOAD_STORE_PASSWORD -R Maximumsoft-Co-LTD/zyra-mobile -e $e; gh secret set ANDROID_UPLOAD_KEY_PASSWORD -R Maximumsoft-Co-LTD/zyra-mobile -e $e; done
+```
+
+**ข. `APPLE_CLIENT_IDS` ใน zyra-api uat** (Sign in with Apple ในแอป UAT)
+
+```bash
+gcloud secrets versions access latest --secret=zyra-api-uat-env-json --project=gather-dev-458614 | jq -c '.APPLE_CLIENT_IDS="co.zyraworld.app.uat"' | gcloud secrets versions add zyra-api-uat-env-json --project=gather-dev-458614 --data-file=-
+```
+
+รอ ≥5 นาที (ESO `refreshInterval: 5m`) แล้วค่อย bump `zyra.center/env-secret-version` ใน `zyra-infra/gitops/envs/uat/services/api/values.yaml` (ตอนนี้ `"5"` → `"6"`) — บอก AI ทำ PR ให้ได้
+
+**ค. App Store Connect API key** (หลังข้อ 0.1 Apple ข้อ 3) → Integrations → App Store Connect API → **+** → ชื่อ `zyra-release-ci`, role **Admin** → ดาวน์โหลด `.p8` (โหลดได้ครั้งเดียว) แล้ว:
+
+```bash
+gh secret set ASC_KEY_ID -R Maximumsoft-Co-LTD/zyra-mobile
+gh secret set ASC_ISSUER_ID -R Maximumsoft-Co-LTD/zyra-mobile
+base64 -i ~/Downloads/AuthKey_XXXXXXXXXX.p8 | gh secret set ASC_KEY_P8_BASE64 -R Maximumsoft-Co-LTD/zyra-mobile
+```
+
+**ง. บัญชีทดสอบสำหรับ reviewer** — สร้างบน **prod** 2 บัญชี (reviewer + เพื่อนร่วมทีมตัวอย่าง) + workspace "Zyra Review" · รหัสใส่ใน App Store Connect / Play App access เท่านั้น
+
+### 0.3 หลังเจ้าของบัญชีกดแล้ว — AI ทำต่อได้
+
+- Apple ยอมรับสัญญาแล้ว → archive UAT + upload TestFlight (manual ผ่าน Xcode หรือ Store Release workflow ถ้ามี ASC key)
+- Play ยืนยันแล้ว → สร้าง app Zyra UAT / Zyra World · เปิด Play App Signing · สร้าง OAuth Android client (SHA-1 จาก 0.2 ก + app signing key) · service account `PLAY_SERVICE_ACCOUNT_JSON` · กรอกฟอร์มตาม store-listing-draft.md
+
 ## 1. โค้ด / config ที่ทำแล้ว
 
 | Repo | PR | เปลี่ยนอะไร |
