@@ -1,6 +1,6 @@
 # รายงาน: Apple login บนเว็บ · บัญชี Apple กับ Gmail อีเมลเดียวกัน · การกดปุ่มและภาพเคลื่อนไหวบนมือถือ
 
-> **สถานะ:** โค้ดครบบน develop (dev) — ยังไม่ขึ้น uat/prod · Apple บนเว็บยังซ่อนอยู่ทุก env เพราะยังไม่มี Services ID (ดู [รอบที่ 2](#รอบที่-2--2026-10-15)) · desktop press feedback รอ merge · **อัปเดต:** 2026-10-15 · **repo ที่เกี่ยวข้อง:** zyra-app, zyra-api
+> **สถานะ:** โค้ดครบบน develop (dev) — ยังไม่ขึ้น uat/prod · Apple บนเว็บเปิดแล้วบน **dev** (Services ID `co.zyraworld.web`) · uat/prod ยังไม่ตั้ง (ดู [รอบที่ 2](#รอบที่-2--2026-10-15)) · desktop press feedback รอ merge · **อัปเดต:** 2026-10-15 · **repo ที่เกี่ยวข้อง:** zyra-app, zyra-api
 >
 > สรุปล่าสุดอยู่ที่ **รอบที่ 2** ด้านล่าง — รอบที่ 1 คือรายงานแรก (บางข้อถูกแก้ไปแล้ว)
 
@@ -255,6 +255,20 @@ Ten สั่ง: "เช็ค apple กับ gmail ว่าเมลเด�
 
 **verify ถึงไหน:** โค้ด + test ผ่านตั้งแต่ #573 · ตรวจว่าบน local ไม่มีปุ่ม Apple เพราะไม่มี Services ID ✅ · **ยังไม่ได้ลองกับ Apple จริง** — รอขั้นตอน 1
 
+**อัปเดต 2026-10-15 (บ่าย) — เปิดบน dev แล้ว:**
+
+| ทำอะไร | ผล |
+|---|---|
+| Apple Developer (team MAXIMUM SOFT `Z8TW83PNG3`): สร้าง Services ID `co.zyraworld.web` ชื่อ "Zyra World" · เปิด Sign in with Apple · primary App ID `co.zyraworld.app` | ✅ · domains + return URL `/login` ใส่ครบ 4 โดเมน (dev, uat, prod ×2) ไว้แล้ว |
+| zyra-api `zyra-api-dev-env-json` v11: `APPLE_CLIENT_IDS=co.zyraworld.app.develop,co.zyraworld.web` → roll pod ([zyra-infra#56](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/56), `env-secret-version` 11) | ✅ `printenv` ใน pod dev ได้ค่าใหม่ |
+| zyra-app GitHub Environment `dev`: `NEXT_PUBLIC_APPLE_SERVICES_ID=co.zyraworld.web` → build dev ใหม่ | ✅ ปุ่ม "ดำเนินการต่อด้วย Apple" ขึ้นบน app.dev.zyra.center/login |
+| `appleid.apple.com/auth/authorize` ด้วย client_id ของเรา | ✅ ได้หน้า sign-in จริง (ID ปลอมได้ `invalid_client`) |
+| login จริงด้วย Apple ID จนเข้าแอป | ⏳ ยังไม่ได้ลอง — ต้องใช้ Apple ID ของคน |
+
+- ปุ่ม Apple อยู่หน้า "Welcome to Zyra World" (default) เท่านั้น — หน้า "Welcome back" (มีบัญชี Google ที่จำไว้) มีแค่ Google กับ Mail ตามโค้ดเดิม
+- ไม่ต้องสร้าง Key — api ตรวจ identity token กับ public key ของ Apple ไม่ได้แลก code
+- uat / prod: ต้องเพิ่ม `co.zyraworld.web` ใน `APPLE_CLIENT_IDS` (ยังไม่มี key นี้เลย ต้องใส่ bundle id ของแอปด้วย) + secret `NEXT_PUBLIC_APPLE_SERVICES_ID` ใน Environment `uat` / `production` ตอนจะขึ้น
+
 ### C. กดปุ่มแล้วรู้สึกว่ากด + loading ทั้งแอป
 
 **สถานะก่อนรอบนี้:** #574 #575 #576 #582 (merged develop 2026-10-14) ทำเฉพาะ **จอ touch / มือถือ** — desktop กดด้วยเมาส์แล้วไม่มีอะไรเปลี่ยน และปุ่มฝั่ง desktop / admin หลายจุดยังไม่มี loading
@@ -274,5 +288,5 @@ Ten สั่ง: "เช็ค apple กับ gmail ว่าเมลเด�
 ### ต่อจากนี้
 
 1. merge #593 #594 เข้า develop → ลองกดบน dev
-2. สร้าง Services ID ที่ Apple Developer (ข้อ B ขั้นตอน 1) → ส่ง identifier มา จะใส่ `APPLE_CLIENT_IDS` + `NEXT_PUBLIC_APPLE_SERVICES_ID` ให้
+2. ลอง login ด้วย Apple ID จริงบน dev (ข้อ B ข้อสุดท้ายในตาราง)
 3. ขึ้น uat / prod: ต้อง merge develop → main → tag (รวม zyra-api#166 ที่ปิดช่องโหว่ยึดบัญชีด้วย)
