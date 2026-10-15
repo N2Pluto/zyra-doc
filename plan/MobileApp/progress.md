@@ -3,6 +3,28 @@
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
 > **อัปเดตล่าสุด:** 2026-10-15 · **คนล่าสุด:** Ten (ten_dev) + Claude
 
+## 2026-10-15 · Ten + Claude — Report & Block (store compliance audit #2)
+
+- **คำขอ:** App Store Guideline 1.2 + Google Play UGC policy บังคับให้แอปที่มี chat มี report เนื้อหา + block ผู้ใช้ — zyra-app / zyra-api ยังไม่มี
+- **มติ Ten:** block ระดับบัญชี (ทุก workspace) · report → DB + Discord + email (admin page ทำรอบหลัง) · UI ใช้ style prototype · scope chat + DM เท่านั้น (ไม่ซ่อนใน VO) — แผน: [report-block-plan.md](report-block-plan.md)
+- **ทำอะไร:**
+  - **zyra-api** [#168](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/168): migration `113_report_block` (+ down) · `POST /api/user/reports` · `GET/POST/DELETE /api/user/blocks` · ซ่อนข้อความคนที่บล็อกใน list / thread / pinned / search / unread / preview / notification / push · DM กับคนที่บล็อก = ซ่อนฝั่งคนบล็อก + ส่ง / forward ไม่ได้ทั้งสองฝั่ง (403 `user blocked`)
+  - **zyra-app** [#599](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/599): Report message ในเมนูข้อความ (web / Lite / Spatial) · Report / Block / Unblock ทุกจุดที่มีโปรไฟล์สมาชิก · Report sheet (เหตุผล + รายละเอียด + บล็อกด้วย) · Settings → Blocked users (web, Lite, Spatial) · กรองข้อความ realtime · i18n en + th
+- **ถึงไหน:** PR ทั้งสองเปิดเข้า `develop` รอ review — ยังไม่ merge
+- **verify ถึงไหน:**
+  - **build / test:** zyra-api `go test ./...` 11 package ผ่าน + `go vet` / `gofmt` สะอาด · zyra-app vitest 3 ไฟล์ใหม่ 29 test ผ่าน (ทั้ง suite 365 ไฟล์ / 4,410 ผ่าน) · `tsc` 7 error เดิม (ไฟล์ test ที่ไม่ได้แตะ) · eslint 0 error
+  - **live-test:** ยังไม่ได้ทำ — SQL ยังไม่ได้รันกับ Postgres จริง (เครื่องไม่มี server) และ UI ยังไม่ได้เปิดบน browser
+- **Before / After:**
+
+  | Metric | Before | After | Δ |
+  |---|---|---|---|
+  | ช่องทาง report เนื้อหา chat | 0 | 2 (ข้อความ, ผู้ใช้) | +2 |
+  | ช่องทาง block ผู้ใช้ | 0 | 1 (ระดับบัญชี) | +1 |
+
+  **วัดยังไง:** นับจากโค้ด (route + UI) ก่อน / หลัง PR · **production:** ยังไม่ได้วัด — ฟีเจอร์ใหม่ไม่มี baseline; หลัง deploy นับ row ใน `tb_content_report` / `tb_user_block`
+- **ต่อจากนี้:** review + merge #168 → รัน migration 113 บน dev → merge #599 → เทส 2 บัญชีบน dev (report → Discord + email, block → ข้อความ / DM หาย, unblock → กลับมา) ทั้ง web / Lite / Spatial → เขียน review notes สำหรับ App Store / Play Console · admin page `/admin/reports` รอบหลัง
+- **ติดอะไร:** ไม่มี — รอ review
+
 ## 2026-10-15 (รอบ 63) · Ten + Claude — B-45 language pack · เปลี่ยนภาษาทันที · V-13 Circle วาร์ป · ไล่ B-05 / B-25
 
 - **คำขอ Ten:** (1) ทำ B-45 ต่อ (2) เช็คการ์ดที่ยังไม่ได้ทำใน parent 86d4bfpym (3) อธิบาย B-05 / B-25 เพิ่ม (4) V-13 ให้ตัวละคร Lite วาร์ปพร้อมประกายแทนการเดิน ทุกเมนูที่เกี่ยวกับ meeting / Circle / private zone (5) เปลี่ยนภาษาแล้วค้าง 2–10 วิ แม้บน iPhone Pro Max
