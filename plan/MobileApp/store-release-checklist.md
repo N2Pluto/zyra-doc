@@ -166,7 +166,7 @@ keytool -list -v -keystore zyra-upload.jks -alias upload   # เอา SHA-1 / S
 |---|---|---|---|
 | P1 | ทำ U1–U8 ซ้ำสำหรับ `co.zyraworld.app` (ใช้ upload key ตัวเดิม) · `APPLE_CLIENT_IDS` ใน **prod** secret | Ten | ☐ |
 | P2 | Store listing: ชื่อ, subtitle, คำอธิบาย (EN + TH), keywords, support URL, marketing URL | PM | ☐ |
-| P3 | Screenshots: iPhone 6.9" + 6.5" (iPad ถ้าเปิด `TARGETED_DEVICE_FAMILY` = 1,2 ไว้ — ตอนนี้เปิดอยู่ → ต้องมี iPad 13" ด้วย หรือปิด iPad) · Android phone · Play feature graphic 1024×500 | Design (Pai) | ☐ |
+| P3 | Screenshots: iPhone 6.9" + 6.5" (iPhone อย่างเดียว — ไม่ต้องมี iPad, มติ Ten 2026-10-15) · Android phone · Play feature graphic 1024×500 | Design (Pai) | ☐ |
 | P4 | Apple: App Privacy (data types: email, name, user content, audio/video ระหว่าง meeting, location coarse, device ID สำหรับ push) · Age rating · Export compliance (ตั้ง `ITSAppUsesNonExemptEncryption = false` แล้ว) | PM | ☐ |
 | P5 | Apple review notes: **test account + workspace ตัวอย่าง** ที่มีคนอื่น / object ให้ลอง · อธิบาย native features (push, background audio, Sign in with Apple, haptics, share, asset pack) — กัน Guideline 4.2 (technical-design §3.2) | Dev / PM | ☐ |
 | P6 | Play: Data safety form · Foreground service declaration (`microphone` + `mediaPlayback` + วิดีโอสั้นอธิบาย) · Account deletion URL (`https://app.zyraworld.co/setting/delete-account`) · Content rating · Target audience · App access (test account เดียวกับ P5) | PM | ☐ |

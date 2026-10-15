@@ -119,7 +119,7 @@
 | Store | ขนาด | จำนวน |
 |---|---|---|
 | iOS iPhone 6.9" | 1320 × 2868 (แนวตั้ง) | 3–10 |
-| iOS iPad 13" | 2064 × 2752 — **จำเป็นถ้าไม่ปิด iPad** (`TARGETED_DEVICE_FAMILY = 1,2` ตอนนี้) | 3–10 |
+| iOS iPad 13" | **ไม่ต้อง** — iPhone อย่างเดียว (มติ Ten 2026-10-15, zyra-mobile#17) | — |
 | Play phone | 1080 × 1920 ขึ้นไป | 2–8 |
 | Play feature graphic | 1024 × 500 | 1 |
 | Play icon | 512 × 512 (มีแล้วใน `demo file/icon/512x512`) | 1 |

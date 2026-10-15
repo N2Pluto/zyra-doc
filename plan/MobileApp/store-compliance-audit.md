@@ -18,7 +18,7 @@ UAT ที่แจกผ่าน TestFlight internal / Play internal **ไม�
 | 5 | **Privacy policy** กว้างเกินไป — ไม่พูดถึงแอปมือถือ, กล้อง / ไมค์, location, push, vendor (Sentry, Mixpanel, GA4, Firebase, LiveKit), session replay, ระยะเก็บข้อมูล, วิธีลบบัญชี, ช่องทางติดต่อ | Apple 5.1.1(i) · Play User Data policy | `messages/en.json:4080-4093` (อัปเดต 06 May 2026) | เขียนใหม่ให้ตรงกับคำตอบ App Privacy / Data safety — **PM / legal** | zyra-app (ข้อความ) |
 | 6 | Google login บน iOS **prod** ไม่มี iOS client id → fallback เป็น popup เว็บ น่าจะค้างใน Safari | Apple 2.1 (login ใช้ไม่ได้) | `flavors.json` prod `iosGoogleClientId: ""` | สร้าง OAuth iOS client ของ prod + ใส่ `flavors.json` + secret `NEXT_PUBLIC_GOOGLE_IOS_CLIENT_ID` ใน env `production` ของ zyra-app | zyra-mobile + config |
 | 7 | ลบบัญชีแล้ว **ไม่ revoke Apple token** | Apple 5.1.1(v) (Sign in with Apple) | zyra-api ไม่มี call `appleid.apple.com/auth/revoke` | ส่ง authorization code ไป api → แลก refresh token ด้วย `.p8` → revoke ใน `DELETE /me` | zyra-app + zyra-api |
-| 8 | **iPad** เปิดอยู่ (`TARGETED_DEVICE_FAMILY = 1,2`) แต่ B-40 (iPad Pro 13") ยังรอ QA และไม่มี screenshot iPad | Apple 2.1 / 4.0 | `project.pbxproj:365,384` | ทำ screenshot iPad 13" + QA บน iPad จริง หรือปิด iPad (iPhone only) | zyra-mobile |
+| 8 | ~~**iPad** เปิดอยู่แต่ยังไม่ได้ QA~~ | Apple 2.1 / 4.0 | — | ✅ **มติ Ten 2026-10-15: iPhone อย่างเดียวรอบแรก** — `TARGETED_DEVICE_FAMILY = 1` (zyra-mobile#17) · iPad ยังติดตั้งได้แบบ iPhone compatibility mode (Guideline 2.4.1) · ไม่ต้องมี screenshot iPad · เปิด iPad ได้ในเวอร์ชันถัดไป | zyra-mobile |
 
 ## ตรวจก่อน upload prod
 
