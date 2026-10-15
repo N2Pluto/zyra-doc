@@ -1,6 +1,6 @@
 # Report & Block — แผนงาน (store compliance)
 
-> **สถานะ:** PR เปิดแล้ว รอ review — [zyra-api#168](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/168) · [zyra-app#599](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/599) · unit test ผ่าน · ยังไม่ได้เทสบน dev (ดู progress.md) · มติ Ten ข้อ 8 · **วันที่:** 2026-10-15 · **repo:** zyra-api, zyra-app (zyra-ws ไม่แตะ)
+> **สถานะ:** v1 merged เข้า develop ([zyra-api#168](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/168), [zyra-app#599](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/599), migration 113 รันบน dev แล้ว) · **v2 block แบบ Facebook** (Ten 2026-10-15) PR รอ review — [zyra-api#170](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/170) · [zyra-app#602](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/602) · unit test ผ่าน · ยังไม่ได้เทสบน dev · มติ Ten ข้อ 8 · **วันที่:** 2026-10-15 · **repo:** zyra-api, zyra-app (zyra-ws ไม่แตะ)
 > **ที่มา:** compliance audit 2026-10-15 ข้อ #2 — Apple Guideline 1.2 (User-Generated Content) + Google Play UGC policy บังคับให้แอปที่มี chat ระหว่างผู้ใช้ต้องมี (1) วิธี report เนื้อหา (2) block ผู้ใช้ (3) ทีมตอบสนอง report ได้ทันเวลา · ตอนนี้ zyra-app / zyra-api ไม่มีทั้งสองอย่าง
 > **ไม่มี Figma:** UI ใช้ pattern จาก [prototype.html](../../web/mobile-ui-proposals/prototype.html) (`SH.memberAct`, `SH.memberProfile`, `msgMenuHTML`) — prototype ไม่มี mockup ของ report / block โดยตรง
 
@@ -23,17 +23,35 @@
 
 **ขอบเขต:** ระดับบัญชี — บล็อกครั้งเดียวมีผลทุก workspace ที่ทั้งคู่อยู่ (ดูคำถาม Q1)
 
+> **v2 (Ten 2026-10-15): block แบบ Facebook** — แชทยังเห็นอยู่ แค่ส่งหากันไม่ได้ และ unblock ได้จากในแชท · แทนตาราง "ซ่อน" ของ v1
+
+| สิ่งที่ A (คนบล็อก) / B (คนถูกบล็อก) เห็น | ผล |
+|---|---|
+| ข้อความของ B ใน channel / group / thread / pinned / search | **ยังเห็นปกติ** ทั้งสองฝั่ง ส่งใน group / channel ได้ตามปกติ |
+| DM ระหว่าง A กับ B | **ยังเห็น** พร้อมประวัติ · เปิดได้ทั้งสองฝั่ง · **ส่ง / forward ไม่ได้ทั้งสองทาง** → 403 `cannot_message_user` (code กลาง ๆ ไม่บอกว่าโดนบล็อก) |
+| ช่องพิมพ์ใน DM ฝั่ง A | แทนด้วยแถบ "You blocked {name}." (คุณบล็อก {name} แล้ว) + ปุ่ม **Unblock** (เลิกบล็อก) |
+| ช่องพิมพ์ใน DM ฝั่ง B | แทนด้วยแถบ "You can't reply to this conversation." (คุณตอบกลับการสนทนานี้ไม่ได้) — ไม่บอกว่าโดนบล็อก |
+| เริ่ม DM ใหม่ (ยังไม่เคยมี DM) | ไม่ได้ทั้งสองฝั่ง → 403 `cannot_message_user` |
+| unread count / badge | นับปกติ |
+| bell notification / chat digest email / push จากข้อความของ B ถึง A | **ไม่ส่ง** (ทั้ง DM และ group) |
+| Unblock | ปุ่มในแถบ DM + Settings → **Blocked users** (web, Lite, Spatial) + เมนูโปรไฟล์ |
+
+**API:** DM ใน `ListConversations` / `GetConversation` มี `blocked_by_me` + `messaging_blocked` ให้ client เลือกแถบ · ไม่มี migration ใหม่ (ใช้ 113)
+
+<details><summary>v1 (merged แล้ว ถูกแทนด้วย v2) — ซ่อนทุกอย่าง</summary>
+
 | สิ่งที่ A เห็น / ได้รับ | ผล |
 |---|---|
 | ข้อความของ B ใน channel / group / thread / pinned / search | ซ่อน (server ไม่ส่งกลับ + client กรอง realtime) |
 | DM กับ B | ซ่อนจากรายการ conversation · A เปิด DM ใหม่กับ B ไม่ได้ |
 | unread count / bell notification / chat digest email / push จากข้อความของ B | ไม่นับ ไม่ส่ง |
-| B ส่ง DM หา A | ถูกปฏิเสธ 403 "You can't message this user." (ไม่สามารถส่งข้อความถึงผู้ใช้นี้ได้) — B ส่งใน channel / group ได้ตามปกติ แต่ A ไม่เห็น |
-| Unblock | Settings → **Blocked users** (ผู้ใช้ที่บล็อกไว้) + ปุ่มเดียวกันในโปรไฟล์ |
+| B ส่ง DM หา A | ถูกปฏิเสธ 403 |
+
+</details>
 
 **ไม่อยู่ใน scope v1** (เสนอทำทีหลังถ้าต้องการ): ซ่อนตัวละคร / เสียง / วิดีโอของ B ใน VO, กัน Wave จาก B, block ใน meeting chat ชั่วคราว (ephemeral) — store ไม่ได้บังคับระดับนี้
 
-**Realtime:** zyra-ws ส่ง `chat:message:new` ให้สมาชิกทุกคนเหมือนเดิม — client กรองที่ `lib/api/chat-ws.ts` ด้วยรายชื่อที่โหลดจาก `GET /api/user/blocks` (เก็บใน store) → ไม่ต้องแก้ zyra-ws
+**Realtime:** zyra-ws relay เฉพาะข้อความที่ client บันทึกผ่าน API สำเร็จแล้ว — API ปฏิเสธการส่งใน DM ที่มีการบล็อก จึงไม่มีอะไรถูก relay → ไม่ต้องแก้ zyra-ws · v2: client ทิ้งข้อความ relay จากคนที่บล็อกเฉพาะใน DM (กันไว้อีกชั้น) ส่วน group / channel แสดงปกติ
 
 ## 3. Report ไปไหน
 
@@ -63,7 +81,7 @@
 | POST | `/api/admin/reports/:id/remove-message` | soft delete ข้อความ + broadcast `chat:message:deleted` · ตั้ง status = `actioned` |
 
 ### เปลี่ยนพฤติกรรม endpoint chat เดิม
-`ListConversations`, `ListMessages`, `ListThreads`, `ListWorkspaceThreads`, `ListThreadReplies`, `ListPinned`, chat search, `GetUnreadCounts`, `CreateDM` (A → B = 403 `ErrUserBlocked`), `SendMessage` ใน DM (ฝั่งใดบล็อก = 403), `NotificationService.CreateForMessage` + chat digest (ข้ามผู้รับที่บล็อกผู้ส่ง)
+**v2:** `CreateDM` (DM เดิมเปิดได้ · DM ใหม่ = 403 `cannot_message_user` ถ้ามีการบล็อกฝั่งใดฝั่งหนึ่ง) · `SendMessage` / forward ใน DM (ฝั่งใดบล็อก = 403 `cannot_message_user`) · `ListConversations` เพิ่ม `blocked_by_me`, `messaging_blocked` · `NotificationService.CreateForMessage` + push (ข้ามผู้รับที่บล็อกผู้ส่ง) · list / search / unread **ไม่กรองแล้ว** (v1 กรอง)
 
 ## 5. Migration — `113_report_block.sql` (+ `.down.sql`)
 
@@ -129,6 +147,7 @@ DROP TABLE IF EXISTS tb_user_block;
 - **Q2 →** DB + Discord + email ก่อน · admin page / admin API ทำรอบหลัง
 - **Q3 →** ใช้ style prototype ได้เลย
 - **Q4 →** chat + DM พอ (ไม่ซ่อนใน VO)
+- **v2 (หลัง merge v1) →** block แบบ Facebook: แชทยังเห็น แค่ส่งหากันไม่ได้ + Unblock ในแชท · group / channel ยังเห็นข้อความกันปกติ (Claude เลือกแบบ minimal: แค่ไม่แจ้งเตือนจากคนที่บล็อก)
 
 ### คำถามเดิม
 - **Q1** Block ระดับบัญชี (ทุก workspace) — แนะนำ · หรือแยกต่อ workspace ตามที่ brief เขียน
