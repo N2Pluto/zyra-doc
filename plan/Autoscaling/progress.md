@@ -2,6 +2,15 @@
 
 > log ต่อรอบ (entry ใหม่อยู่บนสุด) · แผน: [plan.md](plan.md)
 
+## 2026-10-20 03:31 — P1-1 roll เสร็จบน prod
+
+- **03:20:** `zyra-sfu` เดิมครบ grace 90 นาทีแล้วถูกตัด ห้องที่ค้าง 3 ห้อง / 14 คนไม่จบเองระหว่าง drain (น่าจะเป็นแท็บที่เปิดค้างไว้)
+- **03:22:** `zyra-sfu` ใหม่ Ready บน SFU node แล้ว `lk-resume-lite` resume lite ให้ (unit จบเองตามปกติ)
+- **03:31:** `zyra-sfu-lite` ใหม่ Ready · ทั้ง 2 deployment `paused` ว่าง, ready 1/1 · pod ทั้งสองมี label `zyra.center/livekit-signaling=true` · endpoint ของ `zyra-livekit` = 10.148.0.19 + 10.148.0.18 (ready ทั้งคู่) · `https://sfu.zyraworld.co/` ตอบ 200
+- **ห้องกระจาย 2 เครื่อง:** `max_over_time(livekit_room_total[15m])` → main 6 · lite 3 (lite รับห้องตอน main ถูกตัด) · ตอน 03:31 ห้องกลับไปอยู่ main ทั้งหมด (2 ห้อง / 10 คน) เพราะ lite เพิ่ง restart
+- **คนออนไลน์รวม** (`sum(livekit_participant_total)` ทุก 5 นาที 01:45–03:31): 14–19 ตลอดช่วง drain แล้วลดเหลือ 10 ตอนจบ — คนส่วนหนึ่งไม่ได้ต่อกลับหลังโดนตัด (ตี 3 แท็บที่ค้างไว้อาจไม่ reconnect เอง) ยังไม่ได้แยกว่ากี่คนหลุดเพราะการตัด กี่คนออกเอง
+- **ต่อ:** P1-3 schedule + P1-4 drain-before-stop · runbook ต้องมีขั้น pause lite ระหว่าง roll ทั้งสองตัว
+
 ## 2026-10-20 ~01:45 — P1-1 ขึ้น prod (zyra-infra#74)
 
 **ทำอะไร**
