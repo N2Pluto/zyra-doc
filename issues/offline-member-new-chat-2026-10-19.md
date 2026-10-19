@@ -1,6 +1,6 @@
 # สมาชิกที่ Offline เลือกเริ่ม New chat ไม่ได้ (web + mobile)
 
-> **สถานะ:** แก้แล้วบน branch `fix/offline-member-dm` — PR [zyra-app#622](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/622) (2026-10-19) · **build + unit test เขียว · ยังไม่ได้ live-test บน dev** (ดู [Verify ถึงไหน](#verify-ถึงไหน))
+> **สถานะ:** PR [zyra-app#622](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/622) **merge เข้า `develop` แล้ว** (2026-10-19, merge `f6a1f7f2`) และ dev deploy แล้ว (`GET /api/health` บน app.dev.zyra.center ตอบ `dev-f6a1f7f`) · **build + unit test เขียว · ยังไม่ได้ live-test บน dev** (ดู [Verify ถึงไหน](#verify-ถึงไหน))
 > **Repo ที่กระทบ:** `zyra-app` (Virtual Office — member panel + player context menu) · zyra-mobile เป็น WebView โหลด zyra-app จึงได้ fix เดียวกันเมื่อ deploy · **ไม่ต้องแก้ `zyra-api`**
 > **ที่มา:** Ten รายงานในแชท 2026-10-19
 
@@ -61,7 +61,8 @@
 | `vitest run` ทั้งชุด | ✅ 381 files / 4565 tests ผ่าน |
 | `eslint` ไฟล์ที่แก้ | ✅ 0 error (warning ที่ขึ้นใน hero มีอยู่ก่อนแล้ว) |
 | `tsc --noEmit` | ✅ ไม่มี error ในไฟล์ที่แก้ (error ที่เหลือใน `__tests__/pixi-game-scene.test.ts`, `pet-creation-wizard.test.tsx`, `environment-weather-fx.test.ts` มีอยู่ก่อนบน develop) |
-| live-test บน dev | ❌ **ยังไม่ได้ทำ** — built-in browser ไม่ได้ login dev และอีก session กำลังขอ Ten login อยู่ จึงไม่เปิดคำขอซ้ำ |
+| dev deploy | ✅ `develop` @ `f6a1f7f2` → workflow `Deploy zyra-app (GitOps → k3s)` สำเร็จ → `GET https://app.dev.zyra.center/api/health` = `{"status":"ok","version":"dev-f6a1f7f"}` |
+| live-test บน dev | ❌ **ยังไม่ได้ทำ** — built-in browser ยังไม่ได้ login dev (รอ Ten login) |
 
 **ขั้นตอน live-test หลัง merge เข้า develop (dev deploy อัตโนมัติ):**
 1. Web: เข้า Virtual Office → Member panel → ส่วน **Offline** → กดชื่อสมาชิก → ต้องขึ้น context menu ที่มีสถานะ "Offline" และปุ่ม **Message** (ไม่มี Wave / Follow / Go to) → กด Message → chat half view เปิด DM กับคนนั้น → ส่งข้อความได้
