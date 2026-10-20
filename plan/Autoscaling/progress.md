@@ -2,6 +2,29 @@
 
 > log ต่อรอบ (entry ใหม่อยู่บนสุด) · แผน: [plan.md](plan.md)
 
+## 2026-10-20 — P1-5 alert เตือนก่อนเต็ม (PR เปิดไว้ ยังไม่ merge)
+
+**ทำอะไร**
+- เพิ่ม `gitops/observability/chart/alerts/capacity.yaml` (PrometheusRule `zyra-alerts-capacity`) ส่งเข้า Discord ตัวเดิม:
+  - CPU zyra-k3s > 60% นาน 30 นาที
+  - Traefik open connections > 600 นาน 15 นาที
+  - LiveKit pod ใด pod หนึ่งใช้ CPU > 70% ของ limit นาน 10 นาที (LiveKit หยุดรับห้องใหม่ที่ 80%)
+  - LiveKit ทุก pod > 70% นาน 5 นาที (critical)
+
+**PR**
+- [zyra-infra#75](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/75) ยังไม่ merge (Ten สั่งให้เปิด PR ไว้ก่อน)
+
+**verify ถึงไหน**
+- render แล้ว ได้ label `release` ตรงกับที่ ruleSelector ต้องการ
+- `kubectl apply --dry-run=server` บน prod ผ่าน
+- ทุก expression รันบน prod Prometheus ได้ (`success`) และตอนนี้ยังไม่มีตัวไหน fire
+- backtest 7 วัน: CPU ช่วงที่ต่อเนื่องนานสุดในหน้าต่าง 30 นาทีอยู่ที่ 59.7% → ไม่ fire (ถ้าใช้ 15 นาทีจะ fire 1 ครั้ง) · connection peak 257 · LiveKit สูงสุด 0.54 ของ limit
+- **ยังไม่ได้เทส:** ข้อความเข้า Discord จริง ต้องรอ merge ก่อน
+
+**ต่อจากนี้**
+- merge เมื่อ Ten สั่ง
+- P1-3 schedule + P1-4 drain-before-stop
+
 ## 2026-10-20 03:31 — P1-1 roll เสร็จบน prod
 
 - **03:20:** `zyra-sfu` เดิมครบ grace 90 นาทีแล้วถูกตัด ห้องที่ค้าง 3 ห้อง / 14 คนไม่จบเองระหว่าง drain (น่าจะเป็นแท็บที่เปิดค้างไว้)
