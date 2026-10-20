@@ -39,6 +39,9 @@
 | 1.11 | หน้า offline native + retry — ตรวจ `server.url` reachable ก่อนโหลด, error page ของ WebView ถูกแทนด้วยหน้าของแอป | zyra-mobile | 1.1 | ปิดเน็ตแล้วเปิดแอป → เห็นหน้า offline ของเรา |
 | 1.12 | CI — GitHub Actions: iOS (macos runner + fastlane match/sign + TestFlight), Android (AAB + Play internal) · secrets ใน GitHub Environment · version = tag `v*` | zyra-mobile `.github/workflows/` | 1.2 | push tag → build ขึ้น TestFlight + Play internal อัตโนมัติ |
 | 1.13 | Store listing + review notes (test account, workspace demo, วิดีโอ) · submit | store consoles | ทุกข้อใน Phase 1 | approve ทั้งสอง store |
+| 1.18 | แจ้งเตือนค้างระหว่างประชุม — **Android**: `MeetingForegroundService` ใช้ `CallStyle.forOngoingCall` + chronometer + จำนวนคน + ปุ่ม Mute/Leave · plugin เพิ่ม `start(info)` / `update(info)` / event `action` ([meeting-ongoing-notification.md](meeting-ongoing-notification.md) §4.1–4.2) | zyra-mobile `android/.../MeetingForegroundService.java`, `MeetingServicePlugin.java`, receiver ใหม่, `res/values{,-th}/strings.xml` | 1.17 | SC-MOB-11 ข้อ 1–10 ผ่านบน Android จริง |
+| 1.19 | แจ้งเตือนค้างระหว่างประชุม — **iOS Live Activity**: Widget Extension (ActivityKit) + `NSSupportsLiveActivities` + plugin Swift `MeetingService` + `LiveActivityIntent` ปุ่ม Mute/Leave (iOS 17+) · provisioning / fastlane สำหรับ bundle id ใหม่ (§4.3) | zyra-mobile `ios/App/` (target ใหม่), `Info.plist`, `fastlane/`, `.github/workflows/release.yml` | 1.7 | SC-MOB-11 ข้อ 1–10 ผ่านบน iPhone จริง (Dynamic Island + หน้าล็อก) |
+| 1.20 | แจ้งเตือนค้างระหว่างประชุม — **zyra-app**: ส่ง `OngoingCallInfo` (ชื่อห้อง, เวลาเริ่ม, จำนวนคน, ไมค์) ไป native ทั้ง Android/iOS · รับ action → `toggleMic` / leave · shell เก่าไม่พัง (§4.4) | zyra-app `lib/native/foreground-service.ts`, `views/user/virtual-office/hero-virtual-office.tsx`, `use-meeting-media.ts` + unit test | contract §4.1 | unit test ผ่าน · ใช้ร่วมกับ 1.18 / 1.19 ได้ |
 
 ## Phase 2 — Push backend
 
@@ -57,7 +60,7 @@
 | 3.1 | วัด crash-free / FPS / session length จาก Sentry + Mixpanel แยก platform 2 สัปดาห์แรก | ตัดสินใจ Plan B จากตัวเลขนี้ |
 | 3.2 | Custom plugin screen share — ReplayKit (iOS) / MediaProjection (Android) → publish track เข้า LiveKit | งานใหญ่ ต้อง native ทั้งสอง platform |
 | 3.3 | CallKit + VoIP push สำหรับ meeting invite | iOS ต้องผ่าน PushKit review เพิ่ม |
-| 3.4 | Native PiP ของวิดีโอประชุม · Live Activities | |
+| 3.4 | Native PiP ของวิดีโอประชุม | Live Activities ย้ายไป 1.19 (2026-10-19) |
 | 3.5 | ประเมิน bundle asset ลงแอป (technical-design §3.2) ถ้าต้องการ offline shell หรือลด dependency กับ server | |
 
 ## สิ่งที่ต้องได้ก่อนเริ่ม (ไม่ใช่ task โค้ด)

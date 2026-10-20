@@ -1,7 +1,65 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
-> **อัปเดตล่าสุด:** 2026-10-14 · **คนล่าสุด:** rif + Claude
+> **อัปเดตล่าสุด:** 2026-10-19 · **คนล่าสุด:** rif + Claude
+
+## 2026-10-19 (รอบ 8) · rif + Claude — Lite: แชร์จอ / กล้อง เต็มจอแนวนอน
+
+- **คำขอ rif:** ใน Lite meeting ภาพแชร์จอ / กล้องเล็กเกิน → กดขยายเต็มจอแล้วเป็นแนวนอน · ตอบ 5 ข้อ: กล้องด้วย · หมุนทันทีที่กด · รอกด (ไม่เปิดเอง) · ต้องเห็นภาพเต็ม ปุ่มขึ้นเมื่อแตะ · ทั้งแอปหมุนเอง และเว็บหมุนภาพ
+- **ทำ:** zyra-app [#620](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/620) → `develop` — `lite/lite-video-fullscreen.tsx` ใหม่ (object-contain, ปุ่มปิด + ชื่อ ขึ้น 3 วิ / แตะ, Esc) · แชร์จอใช้ตัวนี้แทน overlay แนวตั้งเดิม · กล้องเพิ่ม ⤢ บนทุก tile ที่เปิดกล้อง (Spotlight ด้วย) · `screen-orientation.ts` เพิ่ม `holdOrientation` (แอปหมุนแนวนอนทับ lock แนวตั้งของ Lite, ปล่อยแล้ว `NativeOrientation` lock ตาม route) · เว็บ / แอปที่หมุนไม่สำเร็จ = หมุนภาพ 90° ในหน้า
+- **verify:** test ใหม่ + suite Lite meeting / Spotlight / orientation 146 ผ่าน · CI ผ่าน · **ยังไม่เทสบนเครื่องจริง**
+
+## 2026-10-19 (รอบ 7) · rif + Claude — bug: เปลี่ยนชื่อบน Android บางทีขึ้น "last name is required"
+
+- **สาเหตุ:** `PUT /api/user/me` บังคับ `lastname` (`profile_service.go` `validateProfileInput`) · หน้า Edit profile บนมือถือ (`lite-account-pages.tsx`) แก้ได้แค่ display name และส่ง lastname เดิมกลับ · บัญชีจาก Google (`newGoogleUser` ใช้ `claims.FamilyName`) / Apple (ชื่อมาแค่ครั้งแรก) มี lastname ว่างได้ → บัญชีพวกนั้นบันทึกไม่ได้ทุกครั้ง
+- **แก้ (rif เลือก "ปรับ api ให้ไม่บังคับ"):** zyra-api [#175](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/175) → `develop` `95736b7` — ลบ `ErrLastNameRequired` + mapping ใน handler · ชื่อจริงยังบังคับ · test `TestValidateProfileInput` ใหม่ · CI ผ่าน · ยังไม่เทสบนเครื่อง
+
+## 2026-10-19 (รอบ 6) · rif + Claude — bug: Manage workspace จาก Workspace Lists (Lite) ไม่เต็มจอ กด Audio ไม่ได้
+
+- **QA (Safari, Lite):** Workspace Lists → ⋮ → Manage workspace เปิด modal Setting ของ desktop (Audio / ตาราง Manage members) → ถูกตัดขอบ กดแท็บ Audio ไม่ได้ (screenshot จาก rif)
+- **สาเหตุ:** `lite/lite-workspace-lists.tsx` ยังใช้ `ManageMembersModal` · Space builder บนมือถือแก้ไปแล้วใน HP-03 (`hero-user-workspace.tsx` ใช้ `LiteManageMembersPage`)
+- **แก้:** zyra-app [#617](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/617) → `develop` — ใช้ `LiteManageMembersPage` (เต็มจอ, ‹ กลับ list, invite / leave เดิม) · Audio ของ Lite อยู่ Profile → Audio เหมือนเดิม · test `lite-workspace-lists` แก้ให้เช็กหน้าเต็มจอ + back · CI ผ่านครบ · ยังไม่เทสบน Safari จริง
+
+## 2026-10-19 (รอบ 5) · rif + Claude — App Links ขึ้น dev แล้ว · icon หน้าเลือกโหมด
+
+- **App Links:** #615 → `develop` `2ea01c5` · zyra-mobile #24 → `develop` `3548888` · ตรวจ `https://app.dev.zyra.center/.well-known/assetlinks.json` = 200 `application/json` (version `dev-2ea01c5`) · APK บน develop: zyra-mobile Actions run `39210613720` (`zyra-world-dev-apk`) · ยังไม่เทสบนเครื่อง (ต้องลบแอปเดิมแล้วลงใหม่)
+- **Select workspace mode (0.15):** การ์ด Lite / Spatial ยังเป็นวงกลมเทา (Figma `6392:1128982` ก็ยังเป็น placeholder) → rif ขอใส่ icon → lucide: Lite = `Smartphone` ตั้ง + `MessageCircle` · Spatial = `Smartphone` หมุน 90° + `Map` · zyra-app [#616](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/616) → `develop` `c6983d5` · test `select-mode-icons.test.tsx` ใหม่ + CI ผ่านครบ · ต้องแจ้ง design ว่ายังรอ art จริง
+
+## 2026-10-19 (รอบ 4) · rif + Claude — bug: กด Join Workspace จาก Gmail บน Android แล้วเปิดเว็บแทนแอป
+
+- **QA:** Owner (iOS) เชิญทาง Gmail → กด Join Workspace บน Android → ไม่เข้าแอป แสดง URL zyra แทน
+- **สาเหตุ:** Android ยังไม่มี App Links — manifest มีแค่ `zyra://` (comment เดิม "wait for the release signing SHA-256 / assetlinks.json") และเว็บไม่มี `/.well-known/assetlinks.json` · iOS มี AASA แล้ว · ลิงก์เชิญ = `APP_URL + "/join/" + token` (zyra-api `workspace_member_service.go:1039`) · หน้าเว็บรับ https ของ origin ตัวเองอยู่แล้ว (`lib/native/deep-link.ts`)
+- **แก้:** zyra-app [#615](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/615) `fix/android-app-links` — route `/.well-known/assetlinks.json` (3 package) + test · zyra-mobile [#24](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/24) `fix/android-app-links` — intent filter `autoVerify` https `/join/`, `/workspace/` + `manifestPlaceholders appLinkHost` ต่อ flavor
+- **fingerprint:** ใส่แค่ debug keystore ที่ commit ไว้ (`2F:A4:…:76:51` — คำนวณด้วย openssl) = APK ที่ CI build ให้ tester · **ยังขาด upload key + Play App Signing key** (Play Console → App integrity) → build จาก Play Store ยังเปิดเบราว์เซอร์จนกว่าจะเพิ่ม
+- **verify:** vitest assetlinks + AASA ผ่าน · eslint ผ่าน · ยังไม่ได้เทสบนเครื่อง — ต้อง deploy dev ก่อน แล้ว **ลง APK ใหม่** (Android ตรวจตอนติดตั้ง)
+
+## 2026-10-19 (รอบ 3) · rif + Claude — SC-MOB-11 merge เข้า develop
+
+- **PR:** zyra-app [#614](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/614) → `develop` `8c529f8` · zyra-mobile [#22](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/22) Android → `7c7b403` · [#23](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/23) iOS (+ `version.json` build 5) → `dbd3e15` · squash ทั้งหมด · rif สั่ง "ทำแค่บน develop ก่อน" — **ไม่แตะ main / UAT**
+- **CI:** #614 ผ่านครบ (lint-and-build, vitest-coverage, e2e-mobile-harness, e2e-parse, visual-regression, CodeRabbit ไม่มี comment) · #22 APK dev/uat/prod ผ่าน · #23 Store Release dry run (unsigned) ทั้ง iOS + Android ผ่าน → target `ZyraLiveActivity` compile ได้
+- **TestFlight ไม่ได้:** สั่ง Store Release `uat` + `ios` + upload แล้ว fail — repo ไม่มี secret `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_KEY_P8_BASE64` (มีแต่ secret Android) · ต้องให้คนถือ Apple account ตั้ง secret หรืออัปโหลดจาก Xcode เอง · และแอป UAT เปิดเว็บ UAT ซึ่งยังไม่มี #614 → เทส iOS ได้ต่อเมื่อเว็บ UAT มีโค้ดนี้ หรือลง dev flavor ผ่าน Xcode
+- **เทสได้ตอนนี้:** Android APK flavor `dev` จาก workflow Android APK บน `develop` (เปิดเว็บ dev ที่มี #614)
+- **ยังไม่ได้เทสบนเครื่องจริง**
+
+## 2026-10-19 (รอบ 2) · rif + Claude — SC-MOB-11 implement: task 1.18 / 1.19 / 1.20
+
+- **ทำอะไร:** rif สั่งเริ่ม → แยก 3 branch จาก `develop` push แล้ว **ยังไม่เปิด PR** (เครื่องนี้ไม่มี `gh`)
+  - zyra-app `feat/meeting-ongoing-notification` (`0aeba71`) — 1.20: ส่งข้อมูลการ์ด + รับ Mute/Leave จากหน้าออฟฟิศ (ประชุม, วงคุย, Spotlight คนพูด/คนดู) และ Lite (ประชุม, Spotlight คนพูด/คนดู) · i18n `OngoingCall` EN/TH
+  - zyra-mobile `feat/meeting-call-card-android` (`8aa5d6b`) — 1.18: notification แบบ CallStyle + chronometer + ปุ่ม
+  - zyra-mobile `feat/meeting-call-card-ios` (`a43f325`) — 1.19: Widget Extension `ZyraLiveActivity` + plugin Swift
+  - รายละเอียดที่ต่างจาก proposal → [meeting-ongoing-notification.md §8](meeting-ongoing-notification.md#8-implementation-2026-10-19)
+- **verify แล้ว:** zyra-app vitest — test ใหม่ 2 ไฟล์ + test native / Lite / หน้าออฟฟิศที่เกี่ยวผ่านทั้งหมด · `tsc` ไม่มี error ในไฟล์ที่แก้ (error เดิมใน test อื่น 7 ตัว) · eslint 0 error · Android ตรวจ signature `JSObject` กับ source Capacitor แล้ว
+- **ยังไม่ verify:** build Android / iOS (เครื่องไม่มี JDK / Xcode) — รอ workflow **Android APK** (รันตอน push `feat/**`) และ **Store Release** dry run (รันตอนเปิด PR ที่แก้ pbxproj) · ยังไม่เทสบนเครื่องจริง
+- **ต่อจากนี้:** เปิด PR 3 ตัว · ดูผล CI · ลง APK / TestFlight แล้วเทส AC §5 · iOS signed build ครั้งแรกต้องให้คนถือ Apple account ดูว่า bundle id `.LiveActivity` ลงทะเบียนอัตโนมัติผ่าน
+- **ติดอะไร:** วงคุยที่ไม่มีที่นั่ง → ไม่มีปุ่ม Leave (ไม่มีที่ให้เดินกลับ) · Android ปุ่ม Leave เป็นข้อความ "Hang up" ของ OS
+
+## 2026-10-19 · rif + Claude — แจ้งเตือนค้างระหว่างประชุมแบบ Google Meet (SC-MOB-11) · planning
+
+- **ทำอะไร:** rif ขอให้มือถือขึ้น notification ตอนอยู่ในห้องประชุม / คุยกับคนใกล้ ๆ แบบ Google Meet → ถาม 5 ข้อ rif ตอบ: ทั้ง meeting และ circle · แสดงชื่อห้อง + เวลา + จำนวนคน + ปุ่ม Mute/Leave · ทำ iOS พร้อมกัน · แตะแล้วกลับเข้าห้อง · หน้าตามาตรฐาน OS → เขียน [meeting-ongoing-notification.md](meeting-ongoing-notification.md) (baseline, gap, contract plugin, Android CallStyle, iOS Live Activity, AC 10 ข้อ) · spec เพิ่ม SC-MOB-11 + Live Activities ออกจาก Tier 3 · task **1.18–1.20 ใหม่** · 3.4 เอา Live Activities ออก
+- **ตรวจโค้ดแล้ว:** Android มี foreground service + notification แล้วจาก B-32 / 1.17 (zyra-mobile `develop` `MeetingForegroundService.java` · zyra-app `lib/native/foreground-service.ts`) และครอบ meeting / circle / Spotlight อยู่แล้ว แต่ข้อความตายตัว ไม่มีข้อมูลห้อง ไม่มีปุ่ม · iOS ไม่มีอะไร
+- **ยังไม่ทำ:** โค้ด · ClickUp task · test-plan (ไม่มีไฟล์ test-plan ใน checkout นี้ — AC อยู่ในเอกสารใหม่ §5)
+- **rif ตอบ Open question ครบ 4 ข้อ (2026-10-19):** Spotlight ขึ้นด้วย · Leave ของวงคุย = เดินกลับแบบ `handleLeaveMeetingGoHome` · หน้าล็อกแสดงชื่อ zone + จำนวนคน วงคุยไม่ใส่ชื่อ · iOS 16 ไม่มีปุ่มรับได้
+- **ติดอะไร:** iOS (1.19) ต้องเพิ่ม bundle id ของ Widget Extension ใน provisioning / fastlane · 1.18 / 1.20 พร้อมเริ่ม
 
 ## 2026-10-14 (รอบ 63) · rif + Claude — สายแนวตั้ง: กลุ่ม A ครบ 13 การ์ด (10 PR merged) · รีวิวหลัง merge · B-10
 
