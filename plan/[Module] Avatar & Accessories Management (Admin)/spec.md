@@ -2,7 +2,7 @@
 
 > **สถานะ:** Planning — ดึงข้อมูลจาก ClickUp มาเก็บครบ 2026-10-21 + ยกตัวอย่าง flow upload จาก prototype Avatar Studio (§5) · ยังไม่ได้ review กับโค้ดจริง/Figma · **repo:** zyra-api, zyra-app (zyra-ws ถ้ามี broadcast ตาม EC-02)
 > **ที่มา:** ClickUp task หลัก [[Module] · Avatar & Accessories Management (Admin)](https://app.clickup.com/t/86d43pbbj) (`86d43pbbj`) + subtask 8 ใบ
-> **เอกสารคู่กัน:** [requirements.md](requirements.md) (แยกเป็น req ว่าต้องการอะไร + ของเดิมที่มีแล้ว + คำถามค้าง) · [clickup-raw.md](clickup-raw.md) (เนื้อหาดิบจาก ClickUp ทุกใบ ไม่ตัดต่อ) · [data/](data/) (data contract JSON + API ตัวอย่าง ส่งทีมหน้าบ้านทำ module ฝั่ง user)
+> **เอกสารคู่กัน:** [requirements.md](requirements.md) (แยกเป็น req ว่าต้องการอะไร + ของเดิมที่มีแล้ว + คำถามค้าง) · [clickup-raw.md](clickup-raw.md) (เนื้อหาดิบจาก ClickUp ทุกใบ ไม่ตัดต่อ) · [ux-ui-plan.md](ux-ui-plan.md) (ค่า Figma pixel-perfect ทุกหน้าจอ) · [test-plan.md](test-plan.md) · [data/](data/) (data contract JSON + API ตัวอย่าง ส่งทีมหน้าบ้านทำ module ฝั่ง user)
 > **เกี่ยวข้อง:** [AvatarCustomization/](../AvatarCustomization/) (แผน paper-doll ที่มีมติ "ไม่มีหน้า admin อัปโหลดรูป" — **ขัดกับโมดูลนี้** ดู requirements §6) · [AvatarManagement/SC-AV-01-user-count-fix.md](../AvatarManagement/SC-AV-01-user-count-fix.md)
 
 ---
