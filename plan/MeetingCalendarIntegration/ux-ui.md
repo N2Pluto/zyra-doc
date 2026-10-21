@@ -1,6 +1,7 @@
 # Meeting — Calendar Integration — UX/UI Spec (from Figma)
 
-> **สถานะ (2026-10-12): ถอดได้บางส่วน — Figma MCP ชน tool-call limit (Starter plan) ระหว่างดึง** · ส่วนที่ถอดได้แล้วคือ (1) โครง frame/state ครบทั้ง 7 section จาก `get_metadata` (2) sticky note ของ designer ทุกตัว (3) **Schedule event modal ค่าเริ่มต้น** แบบละเอียด (`get_design_context`) (4) ขนาด/ตำแหน่งของ Calendar panel + empty state จาก metadata ของ HP-04
+> **สถานะ (2026-10-20): ค่าของ HP-01 ดึงครบแล้ว (quota กลับมา) และ implement ตามนั้น — ดู [§10](#10-hp-01-ค่าที่ดึงเพิ่ม-2026-10-20-และที่-implement)** · scenario อื่น (HP-02/03/04, EP-*) ยังเป็นค่าเดิมจากรอบ 2026-10-12
+> (รอบ 2026-10-12) ถอดได้บางส่วน — Figma MCP ชน tool-call limit (Starter plan) ระหว่างดึง · ส่วนที่ถอดได้แล้วคือ (1) โครง frame/state ครบทั้ง 7 section จาก `get_metadata` (2) sticky note ของ designer ทุกตัว (3) **Schedule event modal ค่าเริ่มต้น** แบบละเอียด (`get_design_context`) (4) ขนาด/ตำแหน่งของ Calendar panel + empty state จาก metadata ของ HP-04
 > **ส่วนที่ยังไม่มีค่า px/hex/copy:** Integration Settings ทุก state, Toast, General modal, Calendar half/full view, event chip, warning ของ EP-02/EP-03, submenu, Mini Calendar, Event details → ดู [§9 รายการ node ที่ต้องดึงต่อ](#9-node-ที่ยังต้องดึง-รอ-quota-figma)
 > **กติกา:** ตัวเลขทุกตัวในไฟล์นี้มาจาก Figma MCP เท่านั้น ([`rules/10-figma-fidelity.md`](../../../rules/10-figma-fidelity.md)) · ช่องที่ยังดึงไม่ได้เขียนว่า **"ยังไม่ได้ดึง"** · ห้าม implement ค่าที่เดาเอง
 > **Figma file:** [Zyra design (More Organised ver.) — Copy](https://www.figma.com/design/4SQDUkxARPaqDynY2IH6kt/Zyra-design--More-Organised-ver.---Copy-) (`4SQDUkxARPaqDynY2IH6kt`) · node id ตรงกับไฟล์ต้นฉบับ `Map8gX0L2hk7HnkaFRfhtj`
@@ -412,3 +413,56 @@ Figma MCP ตอบกลับว่า *"You've reached the Figma MCP tool cal
 7. `get_screenshot` ทีละ top-level frame เพื่อเทียบภาพรวม
 
 เมื่อดึงได้ให้เติม §3, §5 และส่วนที่เหลือของ §4 แล้วลบเครื่องหมาย ⚠️ ออก
+
+
+---
+
+## 10. HP-01: ค่าที่ดึงเพิ่ม (2026-10-20) และที่ implement
+
+ภาพอ้างอิงที่ผู้ใช้ export ไว้: `zyra/CLDI-HP-01 · Connect Google Calendar สำเร็จ/` (10 ภาพ) · ค่าทุกตัวด้านล่างมาจาก `get_design_context` / `get_variable_defs` (ไฟล์ `4SQDUkxARPaqDynY2IH6kt`)
+
+### 10.1 Integrations — connected (`3254:621515`, toast `3298:5019`)
+
+| ชิ้น | ค่า | โค้ด |
+|---|---|---|
+| แถวโลโก้ | โลโก้ 56 · gap 8 · ไอคอน `insert-link` 24 · การ์ดบัญชี | `IntegrationRow` ใน `vo-setting-modal.tsx` (ใช้ lucide `Link2` ตาม rule 12) |
+| การ์ดบัญชี | `bg rgba(26,27,30,0.5)` · border `rgba(255,255,255,0.2)` · radius 8 · p 8 · gap 8 · avatar 40 (component **Avatar profile ของ Zyra**) · ชื่อ Body/Bold 14/18 ขาว · อีเมล 12/15 `#8C99A6` tracking −0.0516 | avatar = รูป/ตัวย่อของ user Zyra แบบเดียวกับ rail · ชื่อ+อีเมล = บัญชี Google |
+| Disconnect | h32 · px16 py8 · radius 6 · `bg rgba(240,58,58,0.05)` · border `rgba(240,58,58,0.2)` · ข้อความ `#F03A3A` 14/18 | กดแล้วตัดทันที (confirm modal เป็นของ HP-04) |
+| Toast สำเร็จ | 336 กว้าง · `#1A1B1E` · radius 16 · p16 · icon box `rgba(88,214,141,0.2)` 40 · check 24 · title Body/Bold · body Body/Regular · ปุ่ม X 16 · "Google Calendar connected" / "Your account is now synced with Zyra." | `zyraToast.successWithTitle(..., { layout: "figma" })` ของเดิมตรงทุกค่า |
+
+> copy คำอธิบายใน Figma = "…without leaving Zyra." แต่ i18n เดิมเป็น "…without leaving Zyra World." — **ไม่ได้แก้** (นอก scope) บันทึกไว้ให้ design/PM ตัดสิน
+
+### 10.2 Calendar panel — half view (`3290:702456`)
+
+| ชิ้น | ค่า |
+|---|---|
+| Panel | 320 · `#2B3540` · radius 16 · p16 · gap 16 |
+| Title | "Calendar" Title/Bold 20/25 · ปุ่ม 32 (`bg 5%` · border 20% · radius 6 · p8 · icon 16) · ปุ่ม + `#58D68D` (**ซ่อน** — ยังไม่มี scheduled meeting) |
+| Search | h42 · `#242B32` · border 20% · radius 8 · px12 py8 · placeholder `#636D76` "Search for meeting" |
+| หัว section | 14/18 `#8C99A6` + chevron 14 |
+| Mini calendar | `#242B32` · radius 16 · p8 · หัวเดือน 14/18 + chevron 14 gap 8 · ชื่อวัน Caption 1/Semi 12/15 `#8C99A6` · ช่อง h32 14/18 · นอกเดือน `#636D76` · วันที่เลือก `#58D68D` radius 90 |
+| Upcoming card | `#242B32` · border `rgba(255,255,255,0.05)` · radius 16 · p12 · gap 8 · กล่องไอคอนวิดีโอ (`bg 5%` border 20% radius 6 p8) · ชื่อ Body/Medium · เวลา/สถานที่ 12/15 `#8C99A6` + icon 16 gap 4 · การ์ดที่เลยเวลาแล้ว opacity 60 · เส้นเวลาปัจจุบัน `#F03A3A` (จุด 8 + เส้น 2) |
+| Calendar list | gap 16 · checkbox 16 radius 4 (เขียว `#58D68D` = primary, ฟ้า `#2DB6FF` = holiday, ไม่ติ๊ก border `#D1D1D6`) · label 14/18 |
+| Banner ยังไม่เชื่อม (`3898:776232`) | `rgba(88,214,141,0.1)` · border `rgba(88,214,141,0.2)` · radius 8 · p8 · gap 16 · ปุ่ม `#58D68D` h32 radius 6 · X 16 มุมขวาบน · รูป mascot 109 ที่ (211, 96) = `public/image/footer/6/C-hand2 1.webp` ที่มีอยู่แล้ว |
+
+### 10.3 Full view (`3298:4784`)
+
+| ชิ้น | ค่า |
+|---|---|
+| Header | `#2B3540` · p16 · ปุ่ม Today/Sync now h42 radius 8 Sub/Regular 16/22 · เดือน Title/Medium 20/25 · chevron 16 |
+| Tab Day/Week/Month | กว้าง 259 · border 20% · radius 8 · p4 · ช่อง h32 · active `rgba(88,214,141,0.2)` radius 8 |
+| แถววันที่ | pl 80 · ช่อง p16 gap 4 · ชื่อวัน 14/18 · เลขวัน 45×45 16/22 · วันนี้ `#58D68D` |
+| Grid | `#344354` (Theme colour/Teritery) · border-top 20% · ช่องชั่วโมง border `rgba(255,255,255,0.05)` · 12 ชั่วโมงต่อ 800px · label เวลา 14/18 ชิดขวา |
+| Event chip | p2 radius 4 · แถบ 2×8 radius 90 · ข้อความ Caption 2 10/13 tracking −0.043 · ตอบรับแล้ว `rgba(88,214,141,0.2)` + แถบ `#58D68D` · ยังไม่ตอบ border 20% + แถบขาว · Holiday `#2DB6FF` ไม่มีแถบ |
+
+### 10.4 สิ่งที่ต่างจาก Figma (ตั้งใจ — รอ design/PM ยืนยัน)
+
+| เรื่อง | Figma | ที่ทำ | เหตุผล |
+|---|---|---|---|
+| My calendar / ปุ่ม + | มี | ไม่แสดง | ยังไม่มี Zyra scheduled meeting (Q1) — ตัดสินกับผู้ใช้ 2026-10-20 |
+| Upcoming card | ห้องของ Zyra | `location` ของ event Google (ไม่มีแถวนี้ถ้าว่าง) · การ์ดยังกดไม่ได้ | ไม่มี Zyra meeting / join link |
+| Calendar list ตอนยังไม่เชื่อม | My calendar + Thai holidays | ซ่อนทั้ง section | Thai holidays อ่านได้ต่อเมื่อมี token Google |
+| Day / Month view | ไม่มี frame | Day = grid เดียวกับ Week 1 คอลัมน์ · Month = ตาราง 6×7 ใช้ token เดียวกัน (chip ≤3 + "+N") | ต้องมีให้ tab ใช้งานได้ — **ต้องขอ frame จาก design** |
+| ชื่อวันใน mini calendar (th) | S M T W T F S | อา จ อ พ พฤ ศ ส | i18n |
+| Mobile | ไม่มี frame | ปฏิทินไม่เปิดบน phone · Integrations บน phone ยัง coming soon | U10 |
+| ไอคอน | asset ของ Figma | lucide (`Video`, `Clock`, `MapPin`, `Maximize2`, `RefreshCw`, `Link2`, `Check`) | rule 12 |

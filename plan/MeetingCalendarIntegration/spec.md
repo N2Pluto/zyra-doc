@@ -1,6 +1,6 @@
 # SC-MTG-CAL-01 · Meeting — Calendar Integration (Google Calendar + Microsoft Outlook)
 
-> **สถานะ (2026-10-12):** **Draft spec — ยังไม่ implement · ยังไม่พร้อม implement** (ติด blocker 3 ข้อ ดู [§ Readiness](#readiness))
+> **สถานะ (2026-10-20):** **HP-01 implemented (Google only) — ยังไม่ commit · ยังไม่ live-test กับ Google จริง** · scenario อื่นยังไม่ทำ · ดู [progress.md](progress.md) และ [§9 Decision log](#9-decision-log)
 > **วันที่ถอด:** 2026-10-12 · **ClickUp:** [[Feature] Meeting — Calendar Integration](https://app.clickup.com/t/86d3nbcrq) (`pending` · priority High · tag `client` · assignee Ponlawat Lueakaew · creator Moss Pm)
 > **Repo ที่กระทบ (คาด):** `zyra-app` (Integrations tab, calendar view, OAuth popup) · `zyra-api` (OAuth code exchange, token storage, sync worker, event push, notification type) · `zyra-ws` (อาจใช้ relay `vo:notify` ที่มีอยู่ — ยังไม่ยืนยัน) · `zyra-notifications` (เฉพาะถ้า EP-02 ต้องส่ง email — ยังไม่ยืนยัน)
 > **โครงเอกสาร:** §1–§4 = requirement ต้นทางจาก ClickUp/Figma (ถอดตามที่เขียน ไม่แต่งเติม) · §5 = current implementation (ตรวจโค้ดจริง 2026-10-12) · §6 = gap · §7 = ข้อขัดแย้ง/คำถาม · §8 = ข้อเสนอของ Agent (ยังไม่ใช่ decision)
@@ -246,6 +246,11 @@ So that colleagues who use Google/Outlook can also see them
 
 ---
 
+### 5.4 อัปเดต 2026-10-20 (หลังเอกสารชุดแรก)
+
+- N2Pluto push `origin/feat/calendar-google-integration` (`05f8e1d`, 2026-10-19): migration **115** `tb_user_calendar_integration` (1 แถวต่อ user ต่อ provider — ผูกกับ **user** ไม่ใช่ workspace), เข้ารหัส token AES-256-GCM, config `GOOGLE_CALENDAR_*` (ปิดเป็นค่าเริ่มต้น), model ของ `/api/user/integrations/google/*` · commit อ้างเอกสาร `zyra-doc/plan/CalendarIntegration` + scenario `SC-CAL-01..08` ซึ่ง**ไม่มีใน zyra-doc**
+- HP-01 ถูก implement บน `feat/calendar` ของ zyra-api + zyra-app (uncommitted) — รายละเอียดไฟล์และผล test อยู่ใน [progress.md](progress.md)
+
 ## 6. Gap (requirement เทียบกับ baseline)
 
 | Requirement | สิ่งที่ต้องมีเพิ่ม | ขึ้นกับ |
@@ -351,6 +356,30 @@ So that colleagues who use Google/Outlook can also see them
 
 ---
 
+## 9. Decision log
+
+| วันที่ | เรื่อง | ตัดสินใจ | ใครตัดสิน | ปิดคำถาม |
+|---|---|---|---|---|
+| 2026-10-20 | Connection scope | ผูกกับ **user ทั้งบัญชี** (connect ครั้งเดียวใช้ได้ทุก workspace) — ตาม schema 115 ของ N2Pluto | ตามโค้ดที่มีอยู่ + ผู้ใช้ให้ merge งานนั้นมาใช้ | Q2 (ฝั่ง Google) |
+| 2026-10-20 | Sync model | ดึง event สดจาก Google ผ่าน zyra-api ทุกครั้งที่เปิด/เปลี่ยนช่วง/กด Sync now · ไม่มีตาราง event · ไม่มี worker | ผู้ใช้ | Q4 บางส่วน (initial ≤30 วิ ผ่านเพราะอ่านสด · ยังไม่มี periodic/push จาก Google) |
+| 2026-10-20 | Google scopes | `calendar.readonly` + `calendar.events` ตาม ClickUp (+ `openid email profile`) | ผู้ใช้ | Q8 เฉพาะ scope (OAuth app/credential ยังเปิด) |
+| 2026-10-20 | Calendar UI ใน HP-01 | ทำ half/full view ครบ แต่แสดงเฉพาะ Google · ไม่มี My calendar · ซ่อนปุ่ม + · Thai Holidays = Google holiday calendar (`en.th#holiday@group.v.calendar.google.com`) หลัง connect | ผู้ใช้ | Q1 **ยังเปิด** (scheduled meeting) · U8 บางส่วน |
+| 2026-10-20 | Callback | `GET /api/integrations/google/callback` (public) แลก code ฝั่ง server · state = HS256 JWT 10 นาที + nonce ใน cookie httpOnly (กัน callback จาก browser อื่น) · redirect กลับ `/integrations/google/callback?status=` แล้ว popup ส่งผลให้ tab หลักผ่าน localStorage | Agent (ตาม pattern Google login เดิม) | — |
+| 2026-10-20 | Error code ของ API | `calendar_reauth_required` ตอบ **409** ไม่ใช่ 401 (401 จะทำให้ `authFetch` ของ app ตัด session Zyra) | Agent | — |
+
+### API ที่ implement (member, UserGuard — rule 15)
+
+| Method | Path | Request | Response `data` | Error |
+|---|---|---|---|---|
+| POST | `/api/user/integrations/google/connect` | `{ "return_to"?: "/integrations/google/callback" }` | `{ auth_url }` + Set-Cookie `zyra_gcal_state` | 401 |
+| GET | `/api/integrations/google/callback` (public) | `code`, `state`, `error` จาก Google | 302 → `${APP_URL}{return_to}?provider=google&status=connected\|denied\|scope_missing\|expired\|error` | — |
+| GET | `/api/user/integrations/google/status` | — | `{ provider, connected, state?, email?, name?, scopes?, connected_at? }` | 401 |
+| GET | `/api/user/integrations/google/calendars` | — | `{ items: [{ id, summary, primary, holiday, background_color }] }` | 404 `calendar_not_connected` · 409 `calendar_reauth_required` · 502 `calendar_provider_unavailable` |
+| GET | `/api/user/integrations/google/events` | `time_min`, `time_max` (RFC3339, ≤62 วัน), `calendar_id` ซ้ำได้ ≤20 | `{ time_min, time_max, items: [{ id, calendar_id, summary, start, end, all_day, location, meet_link, html_link, status, response_status }] }` | 400 · 404 · 409 · 502 ตามด้านบน |
+| DELETE | `/api/user/integrations/google` | — | `{ connected: false, revoked }` | 401 |
+
+Error body ใช้รูปเดียวกับ environment/pet handler: `{ status, message: <code>, detail: { code } }` · `GOOGLE_CALENDAR_ENABLED` ปิด = ไม่ลงทะเบียน route (404) และ app แสดง coming soon แบบเดิม
+
 ## Readiness
 
 | เงื่อนไข | สถานะ |
@@ -358,9 +387,9 @@ So that colleagues who use Google/Outlook can also see them
 | Requirement ต้นทางถอดครบ | ✅ ClickUp parent + 7 subtasks (2026-10-12) |
 | Figma | ⚠️ [ux-ui.md](ux-ui.md) (2026-10-12): โครง frame + sticky ครบ 7/7 section · ดึงค่าละเอียดได้แค่ Schedule event modal + ขนาดของ Calendar panel/empty state · ที่เหลือติด Figma MCP rate limit (รายการ node ที่ต้องดึงต่ออยู่ใน ux-ui.md §9) |
 | Baseline โค้ด | ✅ ตรวจแล้ว 2026-10-12 (§5) |
-| Blocker | ❌ **Q1** (scheduled meeting / calendar view) · **Q2** (connection scope) · **Q8** (OAuth app + credentials) |
-| Technical design | ยังไม่เริ่ม — รอ Q1–Q4 |
+| Blocker | ❌ **Q1** (scheduled meeting — กระทบ AC-HP01-5, HP-03, EC-03/04) · **Q8** (OAuth app + credential สำหรับ dev/prod + Google verification) · ~~Q2~~ ปิดแล้ว (§9) |
+| Technical design | contract ของ HP-01 อยู่ใน §9 · ยังไม่มี `technical-design.md` แยก |
 
-**สรุป:** ยังไม่พร้อม implement · Phase 1 (connect/disconnect) เริ่มออกแบบได้ทันทีที่ตอบ Q2 + Q8 · Phase 2–3 ต้องรอ Q1
+**สรุป (2026-10-20):** HP-01 ฝั่ง Google implement แล้ว (ยกเว้น AC-HP01-5) แต่ยังไม่ live-test เพราะยังไม่มี OAuth credential · HP-02/HP-03/EC ยังติด Q1/Q8
 
-**Next step:** PM/ทีมตอบ Q1–Q13 → ถอด Figma ที่เหลือลง `ux-ui-plan.md` → เขียน `technical-design.md` (API contract, schema, OAuth flow, sync worker) → `task-breakdown.md`
+**Next step:** ตั้ง OAuth client + env บน dev แล้ว live-test HP-01 (checklist ใน [progress.md](progress.md)) → หาเอกสาร `plan/CalendarIntegration` ของ N2Pluto มารวม → PM ตอบ Q1 (scheduled meeting) ก่อนเริ่ม HP-03 · Q ที่เหลือยังต้องตอบก่อน scenario ที่เกี่ยวข้อง
