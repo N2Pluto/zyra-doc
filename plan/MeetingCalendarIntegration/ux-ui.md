@@ -1,6 +1,6 @@
 # Meeting — Calendar Integration — UX/UI Spec (from Figma)
 
-> **สถานะ (2026-10-20): ค่าของ HP-01 ดึงครบแล้ว (quota กลับมา) และ implement ตามนั้น — ดู [§10](#10-hp-01-ค่าที่ดึงเพิ่ม-2026-10-20-และที่-implement)** · scenario อื่น (HP-02/03/04, EP-*) ยังเป็นค่าเดิมจากรอบ 2026-10-12
+> **สถานะ (2026-10-21): HP-01 ดึงครบ + implement ([§10](#10-hp-01-ค่าที่ดึงเพิ่ม-2026-10-20-และที่-implement)) · HP-03 ดึงครบ + implement ([§11](#11-hp-03-ค่าที่ดึง-2026-10-21-และที่-implement))** · scenario อื่น (HP-02/04, EP-*) ยังเป็นค่าเดิมจากรอบ 2026-10-12
 > (รอบ 2026-10-12) ถอดได้บางส่วน — Figma MCP ชน tool-call limit (Starter plan) ระหว่างดึง · ส่วนที่ถอดได้แล้วคือ (1) โครง frame/state ครบทั้ง 7 section จาก `get_metadata` (2) sticky note ของ designer ทุกตัว (3) **Schedule event modal ค่าเริ่มต้น** แบบละเอียด (`get_design_context`) (4) ขนาด/ตำแหน่งของ Calendar panel + empty state จาก metadata ของ HP-04
 > **ส่วนที่ยังไม่มีค่า px/hex/copy:** Integration Settings ทุก state, Toast, General modal, Calendar half/full view, event chip, warning ของ EP-02/EP-03, submenu, Mini Calendar, Event details → ดู [§9 รายการ node ที่ต้องดึงต่อ](#9-node-ที่ยังต้องดึง-รอ-quota-figma)
 > **กติกา:** ตัวเลขทุกตัวในไฟล์นี้มาจาก Figma MCP เท่านั้น ([`rules/10-figma-fidelity.md`](../../../rules/10-figma-fidelity.md)) · ช่องที่ยังดึงไม่ได้เขียนว่า **"ยังไม่ได้ดึง"** · ห้าม implement ค่าที่เดาเอง
@@ -466,3 +466,45 @@ Figma MCP ตอบกลับว่า *"You've reached the Figma MCP tool cal
 | ชื่อวันใน mini calendar (th) | S M T W T F S | อา จ อ พ พฤ ศ ส | i18n |
 | Mobile | ไม่มี frame | ปฏิทินไม่เปิดบน phone · Integrations บน phone ยัง coming soon | U10 |
 | ไอคอน | asset ของ Figma | lucide (`Video`, `Clock`, `MapPin`, `Maximize2`, `RefreshCw`, `Link2`, `Check`) | rule 12 |
+
+---
+
+## 11. HP-03: ค่าที่ดึง (2026-10-21) และที่ implement
+
+ภาพอ้างอิงที่ผู้ใช้ export ไว้: `zyra/CLDI-HP-03 · สร้าง Zyra Meeting แล้ว Sync ไป Calendar ภายนอก/` (21 ภาพ) · ค่าด้านล่างมาจาก `get_design_context` (ไฟล์ `4SQDUkxARPaqDynY2IH6kt`) · ค่าของ modal ค่าเริ่มต้นอยู่ใน [§4](#4-schedule-event-modal-ค่าเริ่มต้น--ดึงแล้ว)
+
+### 11.1 ค่าที่ดึงเพิ่ม
+
+| ชิ้น (node) | ค่า | โค้ด |
+|---|---|---|
+| Modal กรอกครบ (`3586:282647`) | Create enabled `#58D68D` ขาว 16/22 · Guest list: แถว h53 p8 radius 8 avatar 32 ชื่อ Body/Medium รอง 12/15 `#8C99A6` · แถว hover `rgba(255,255,255,0.05)` + X 16 · Organiser แถวแรก · หัว "Permission" 14/18 ขาว + chevron 14 · กล่อง `#2B3540` radius 8 p8 gap 8 · checkbox ติ๊ก `#58D68D` · Divider ขาว 20% | `calendar-schedule-event.tsx` |
+| Submenu เวลา (`3586:260164`) | 146 กว้าง · `#242B32` radius 16 p8 shadow `0 4 16 rgba(255,255,255,0.08)` · แถว min-h 42 p12 radius 8 14/18 · ค่าที่เลือก `rgba(255,255,255,0.1)` · ทีละ 15 นาที | `TimeField` (reuse `TIME_OPTIONS` ของ Announcement) |
+| Submenu Location (`3586:260388`) | แถวแรก "Any available meeting room" + check 16 · divider · ห้องละแถว + badge จำนวน (`#1A1B1E` radius 90 p1 · Caption 2/Medium 10/14 กว้าง 16) + ไอคอน member 16 | ตัวเลข = `present_count` ของ zone section (คนในห้องตอนนี้) |
+| Submenu Guest (`3586:261992`) | แถว p12 radius 8 · avatar 32 border 20% · ชื่อ 14 medium · อีเมล 12/15 `#8C99A6` | สมาชิก confirm ของ workspace ยกเว้นตัวเองและคนที่เพิ่มแล้ว · ค้นจากชื่อ/อีเมล |
+| Mini Calendar (`3586:260046`) | เหมือน mini calendar ของ panel + shadow | reuse `CalendarMiniMonth` |
+| Event details (`3594:752725`) | 340 · `#242B32` radius 16 p16 gap 16 shadow · หัว: ช่อง 12 `#58D68D` radius 4 + ชื่อ Sub/Medium 16/22 + X 16 · วัน • เวลา / ห้อง 14/18 `#8C99A6` icon 16 gap 16 · Join h24 px8 py6 radius 4 `#58D68D` icon video 16 · "N participants (1 yes and N awaiting)" · แถว guest h53 · link + ปุ่ม copy p4 radius 4 `rgba(255,255,255,0.05)` border 20% | `calendar-event-details.tsx` |
+| Toast สำเร็จ (`3590:283992`) | "Meeting scheduled" / "Your meeting has been created." | `zyraToast.successWithTitle(..., { layout: "figma" })` |
+| Toast sync ล้มเหลว (`3601:759930`) | icon box `rgba(255,212,0,0.1)` · warning-triangle `#ECC819` · "Calendar sync failed" / "Your meeting wasn't synced to your calendar. Please sync again." | `zyraToast.cautionWithTitle(..., { layout: "figma" })` — ตรงทุกค่า |
+| General modal (`3613:202062`) | 458 · `#242B32` radius 16 p16 gap 24 blur 4 · "Discard this event" Sub/Medium + X 24 · divider · "Your changes won't be saved." 14 `#8C99A6` · ปุ่ม h32 radius 6: Discard ขาว / Keep Editing `#58D68D` | ใน `calendar-schedule-event.tsx` |
+| Event chip กำลังสร้าง (`3613:132943`) | `rgba(88,214,141,0.2)` border `#58D68D` radius 4 p2 · 2 บรรทัด "No title" / "10:00 - 10:30" 10/13 | `CalendarDraftChip` |
+
+### 11.2 ตำแหน่ง
+
+- Schedule event: ห่าง panel 24 (x=416), บน 8 จากขอบ panel · คลิกช่องใน full view → เกาะข้างคอลัมน์ที่คลิก (ไม่พอทางขวาจะไปทางซ้าย) และไม่ล้นจอ
+- Event details: x=416 ชิดล่าง (y=581 → bottom 8)
+- เปิด modal → ปิด Event details และกลับกัน
+
+### 11.3 สิ่งที่ต่างจาก Figma / ตัดสินใจเอง (รอ Design/PM ยืนยัน)
+
+| เรื่อง | Figma | ที่ทำ | เหตุผล |
+|---|---|---|---|
+| เลือกหลายวัน (`3598:756788`) | sticky บอกแค่ "คลิกที่วัน" ไม่มี frame ของปฏิทินช่วงวัน | คลิกครั้งแรก = วันเริ่ม (picker ยังเปิด) · คลิกวันถัดไป = วันสุดท้าย · วันกลางใช้ `rgba(88,214,141,0.2)` · ทำได้ทั้ง half และ full view (U9) | ไม่มี design ของ range |
+| เวลาเริ่มต้นของปุ่ม + | ตัวอย่าง 10:00 - 10:30 | วันนี้ = ครึ่งชั่วโมงถัดไป · วันอื่น = 10:00 · ยาว 30 นาที | ไม่มี rule ใน Figma |
+| คลิกช่องเวลา | 10:00 - 10:30 | snap ครึ่งชั่วโมงตามจุดที่คลิก ยาว 30 นาที | — |
+| Location ไม่เลือก | placeholder "Please select location" | ไม่บังคับ — ไม่เลือก = Any available meeting room | Create disabled เฉพาะไม่มี title (ตาม frame ค่าเริ่มต้น) |
+| เปิด Event details ภายหลัง | มีแค่หลังสร้างเสร็จ | กดการ์ด Upcoming / chip ของ Zyra meeting ได้ | ไม่งั้น Join/link ใช้ได้แค่ครั้งเดียว — **ถ้าไม่ต้องการให้ถอดออก** |
+| จุดสถานะใน Event details | asset เดียวกันทุกแถว แต่ภาพ guest เป็นสีเทา | Organiser เขียว `#58D68D` · guest เทา `#8C99A6` | Zyra ยังไม่มี RSVP → "1 yes" = organiser, ที่เหลือ awaiting |
+| ข้อความ participants | "3 participants (1 yes and 3 awaiting)" (เลขไม่ตรงกัน) | นับจริง: ทั้งหมด = 1 + guests, yes = 1, awaiting = guests | — |
+| Scrollbar ใน modal | thumb 6×64 custom | scrollbar ปกติของ browser | ไม่มี utility เดิม |
+| Upcoming / chip ของ guest | — | meeting ที่เราเป็น guest ใช้ chip "ยังไม่ตอบรับ" | ไม่มี RSVP ใน Zyra |
+| Link ใน Event details | "Zyraworld.com" | join URL จริง (ตัด `https://`) | — |
