@@ -1,7 +1,24 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
-> **อัปเดตล่าสุด:** 2026-10-15 · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **อัปเดตล่าสุด:** 2026-10-21 · **คนล่าสุด:** Ten (ten_dev) + Claude
+
+## 2026-10-21 (รอบ 69) · Ten + Claude — ส่ง review ทั้ง App Store และ Google Play (prod 1.0.0)
+
+- **ทำอะไร:**
+  - **App Store (Zyra World `6823101211`):** รูปหน้าจอ 5 รูปแนวนอน (ช่อง iPhone 6.1"/6.3" ขนาด 2622×1206 — ASC ตอนนี้ให้ช่องนี้เป็นช่องหลักแทน 6.9") · บัญชีทดสอบ `ten_dev+applereview@…` (Owner) + `ten_dev+applereview2@…` (Member) ใน workspace **Zyra Review** บน prod · ราคาฟรี · เปิดเฉพาะ**ไทย** · App Privacy publish (Ten) · submit 1.0.0 (4) วันที่ 19 ต.ค.
+  - **โดนตีกลับ 21 ต.ค. — Guideline 2.5.4** (`UIBackgroundModes: audio` แต่ reviewer หาฟีเจอร์ไม่เจอ) → เก็บ background audio ไว้ (ใช้ให้ประชุมไม่หลุดตอนออกจากแอป) · เพิ่มย่อหน้า + วิธีทดสอบใน App Review Notes · ตอบกลับพร้อมวิดีโอจาก iPhone จริง (Ten / QA อัด)
+  - **Google Play (Zyra World, `co.zyraworld.app`):** สร้างแอป · App content ครบ (privacy policy, ads = ไม่มี, advertising ID = ไม่ใช้, sign-in details 2 บัญชี, content rating = All ages / Users Interact, target audience 18+, data safety 12 ประเภท, government / financial / health = ไม่มี, foreground service = Media playback + Background audio input + วิดีโอ Drive) · store listing (ข้อความจาก [store-listing-draft.md](store-listing-draft.md), ไอคอน, รูป 16:9 1920×1080 ห้ารูป, feature graphic 1024×500 ที่ Claude ทำ) · หมวด Business · contact `ten_dev@hpktechnology.com`
+  - **AAB:** zyra-mobile [#25](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/25) (merge แล้ว) — Store Release input `android_signed_aab` = เซ็น AAB แล้วแนบไว้ใน run (ยังไม่มี Play service account และ upload ครั้งแรกต้องทำมือ) · **upload key ใหม่** (ตัวเดิมสร้างด้วย LibreSSL → Gradle เปิดไม่ได้ "keystore password was incorrect") สร้างด้วย keytool ของ JDK 21 · upload SHA-1 `58:61:9D:4B:…:05:B6:52` · app signing SHA-1 `09:00:65:01:…:DC:C1`
+  - Internal testing: email list "Zyra internal testers" (ตอนนี้มี ten_dev คนเดียว) · publish 1.0.0 (5) · Production: ไทยอย่างเดียว · release 1.0.0 (5) · **Ten กด Submit for review แล้ว**
+  - Google OAuth: เพิ่ม Android client "Zyra World (Android, Play signing)" (`…-qtnf07jo…`) ด้วย app signing SHA-1 · client เดิม "Zyra World (Android)" = SHA-1 ของ `android/app/debug.keystore` (APK ทดสอบ)
+- **ถึงไหน:** App Store = Rejected รอ Apple ตอบคำตอบ + วิดีโอ · Play = Changes in review
+- **verify ถึงไหน:**
+  - **live-test:** Ten / QA ทดสอบบน iPhone จริง — ออกไปหน้าโฮมแล้วเสียงประชุมยังอยู่ · Drive video เปิดได้โดยไม่ login (`curl` 200)
+  - **build:** AAB เซ็นแล้ว `jarsigner -verify` ผ่าน · SHA-1 ตรงกับ upload key ใหม่ · ไม่มี com.facebook / AD_ID · Play รับไฟล์ (API 24+, target 36)
+  - **ยังไม่ได้ทดสอบ:** Google login ในแอป Android ที่ติดตั้งจาก Play · Android foreground service บนเครื่องจริงกับ build จาก Play
+- **ต่อจากนี้:** รอผลทั้งสองร้าน · เพิ่มอีเมลผู้ทดสอบ Play internal · ลอง Google login จาก Play internal · ถ้า Apple ให้ resubmit → กด Resubmit · ใส่ลิงก์วิดีโอใน App Review Notes (Apple ขอไว้สำหรับรอบหน้า) · Play service account (`PLAY_SERVICE_ACCOUNT_JSON`) เพื่อให้ CI upload เอง
+- **ติดอะไร:** รอ review · รหัส upload key ใหม่ Ten ถือไว้คนเดียว (ไฟล์ `~/zyra-keys/zyra-upload.jks`) — ต้องสำรองไว้
 
 ## 2026-10-15 (รอบ 66) · Ten + Claude — แก้ store compliance ครบ · TestFlight UAT + PROD build 3 · privacy policy ใหม่
 
