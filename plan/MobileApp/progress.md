@@ -6,7 +6,7 @@
 ## 2026-10-21 (รอบ 68) · Claude — Android เครื่องสเปกต่ำ ชุด B: engine (lazy outline · culling · depth step · dust pool · weather budget · name tag)
 
 - **คำขอ:** ทำ **ชุด B** (engine) ต่อจากรอบ 67 เป็น PR แยก (มติ Ten 2026-10-21) — 6 ขั้น แต่ละขั้นมี setter เพื่อ A/B จาก console
-- **ทำอะไร — [zyra-app#631](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/631) (`feat/vo-lowend-android-engine`, stack บน `feat/vo-lowend-android` ของ #630 → GitHub retarget เป็น `develop` เองเมื่อ #630 merge · ยังไม่ merge):**
+- **ทำอะไร — [zyra-app#632](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/632) (`feat/vo-lowend-android-engine` → `develop` · เดิมคือ #631 ที่ stack บน #630 — GitHub ปิดทิ้งตอน #630 merge แล้ว branch ถูกลบ จึงเปิดใหม่ · ยังไม่ merge):**
   - **lazy outline slot** — `utils.ts makeOutlineSlot` คืน `offsets: []` + container / anchor · `showOutlineSlot` สร้าง 8 sprite ครั้งแรกที่โชว์ ลง parent ปัจจุบันของชิ้น (ชิ้นที่ `_liftZoneObjects` ยกเข้า `_spotlightFg` ได้ outline ชั้นนั้น) · ผู้อ่าน `offsets` ทุกจุดเช็คแล้ว (`_detachOutlineSlot`, `_liftZoneObjects`, destroy, self / peer, pet-layer) · `setLazyOutlineSlots(on)` · `mainContainer.children` ต่อชิ้น 9 → 1
   - **view culling** — `SceneObject.viewBox` (AABB รวมทุกชิ้น) cache ตอน import / delta · `_renderUpdate` หลัง camera transform: เมื่อ signature กล้อง (camX, camY, zoom, vw, vh) หรือ `_objectsVersion` เปลี่ยน → `piece.sprite.culled = !inView` ทุกชิ้น (วนจาก `sceneObjects` ไม่ใช่ children) · remote player ทุกเฟรม (sprite / name tag / compact avatar / bubbles / wave) · ไม่ cull ตัวเอง · margin = 1 tile + ชิ้นสูงสุด · ไม่ใช้ `Culler.shared` · `setViewCulling(on)` default on · `getRenderStats().culled` → overlay Nodes `N −culled`
   - **depth step** — `setDepthStep(px)` quantise foot row ก่อน `sortRowDrawOrder` (self + peers, คนนั่งใช้ row เก้าอี้เหมือนเดิม) · `ladderEffects(level).depthStepPx = level ≥ 2 ? 4 : 1` · hero wire คู่กับ `setWalkAnimationScale`
@@ -25,13 +25,13 @@
   | `Graphics` + `GraphicsContext` ใหม่ต่อ dust puff | 1 + 1 | 0 หลัง warm-up — จาก unit test | — |
   | JS heap หลัง 5 นาที | ยังไม่ได้วัด | ยังไม่ได้วัด | — |
 
-  **ยังไม่ได้วัด — เหตุผล:** ต้องใช้แอป Zyra build dev บน Android ≤ 4 GB ของ Ten + USB debugging (Claude ไม่มีเครื่อง) · **วิธีวัด** เหมือนรอบ 67 (overlay `vo_stats`) · before = build ที่มี #630 ไม่มี #631 · after = มีทั้งคู่ · แล้ว A/B ทีละ setter ด้วย `__vo` ดูว่าขั้นไหนให้ fps จริง
+  **ยังไม่ได้วัด — เหตุผล:** ต้องใช้แอป Zyra build dev บน Android ≤ 4 GB ของ Ten + USB debugging (Claude ไม่มีเครื่อง) · **วิธีวัด** เหมือนรอบ 67 (overlay `vo_stats`) · before = build ที่มี #630 ไม่มี #632 · after = มีทั้งคู่ · แล้ว A/B ทีละ setter ด้วย `__vo` ดูว่าขั้นไหนให้ fps จริง
 - **verify ถึงไหน:**
   - **build / test:** `vitest run` 382 ไฟล์ / 4,623 ผ่าน (+13 เคสชุด B: lazy outline object / peer / pet · culling flip ตาม camX / ปิด / peer ไกล · depth step 1 px vs 4 px · dust pool reuse / ปิด · weather budget · `__vo` · ladder effects · `phoneNameTagResolution(dpr, level)`) · `tsc` = 7 error เดิม · `eslint --quiet` ไฟล์ที่แตะ 0 · Prettier ผ่าน
   - **browser / เครื่องจริง: ยังไม่ได้เทส**
 - **ให้ Ten / QA เทส:** (1) desktop: hover / เลือก object, hover เพื่อน, pet → outline เหมือนเดิม · spotlight zone object ที่เลือกยังสว่าง (2) ลากกล้องสุดแมพแล้วกลับ / ซูมออกสุด → ไม่มีชิ้นหรือเพื่อนหาย (3) มือถือ L2+: เดินหน้า-หลังเฟอร์นิเจอร์ลำดับถูก (คลาด ≤ 2 px) · L3 ไม่มีฝุ่น (4) **วัดตาราง before / after** + A/B ด้วย `__vo`
 - **trade-off ที่ต้องรู้:** depth step 4 → depth ผิดได้ ≤ 2 px เทียบ object quarter-tile (L2+ เท่านั้น) · culling → ตอนลากกล้อง ชิ้นที่ข้าม margin ทำให้ render group rebuild instruction (เหมือน `CullerPlugin`) — ถ้าวัดแล้วแย่กว่าปิดด้วย `setViewCulling(false)`
-- **ต่อจากนี้:** review + merge #630 → #631 · วัดตัวเลขบนเครื่อง Ten แล้วกรอกตารางทั้งรอบ 67 / 68 · ที่ยังค้างจากรายการชุด B รอบ 67: **L4 simple map** UI · media (carousel / speaker grid ไม่มี page limit · LiveKit 720p ทุกเครื่อง) · zyra-ws `moving` / `stopped` ทั้ง floor ไม่ใช่ AOI · dead deps
+- **ต่อจากนี้:** #630 merge เข้า develop แล้ว (e59b1343) → review + merge #632 · วัดตัวเลขบนเครื่อง Ten แล้วกรอกตารางทั้งรอบ 67 / 68 · ที่ยังค้างจากรายการชุด B รอบ 67: **L4 simple map** UI · media (carousel / speaker grid ไม่มี page limit · LiveKit 720p ทุกเครื่อง) · zyra-ws `moving` / `stopped` ทั้ง floor ไม่ใช่ AOI · dead deps
 - **ติดอะไร:** ตัวเลข before / after รอเครื่องของ Ten
 
 ## 2026-10-21 (รอบ 67) · Ten + Claude — Android เครื่องสเปกต่ำ: ladder เริ่มจากสเปกเครื่อง · ชวนไป Lite ที่ L3 · เครื่องมือวัด FPS บนมือถือ
