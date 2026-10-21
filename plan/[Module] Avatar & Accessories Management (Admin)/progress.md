@@ -1,6 +1,6 @@
 # [Module] Avatar & Accessories Management (Admin) — Progress / Handoff
 
-> **สถานะรวม:** POC version 10 พร้อมรีวิว (icon Figma, เก้าอี้จาก object จริง, card ตัวละครใส่ชิ้น, แถบ Shade) — Ten สั่งให้ทำใน POC ก่อน ยังไม่ลง zyra-app · PR zyra-app#636 (category panel) **ปิดแล้ว** โดยไม่ merge, branch `feat/accessory-category-panel` ยังอยู่บน origin เผื่อหยิบกลับ · ux-ui-plan.md ยังไม่เขียน
+> **สถานะรวม:** POC version 10 + ux-ui-plan.md v1.0 + test-plan.md v1.0 พร้อมรีวิว (icon Figma, เก้าอี้จาก object จริง, card ตัวละครใส่ชิ้น, แถบ Shade) — Ten สั่งให้ทำใน POC ก่อน ยังไม่ลง zyra-app · PR zyra-app#636 (category panel) **ปิดแล้ว** โดยไม่ merge, branch `feat/accessory-category-panel` ยังอยู่บน origin เผื่อหยิบกลับ · ux-ui-plan.md ยังไม่เขียน
 > **อัปเดตล่าสุด:** 2026-10-21 · **คนล่าสุด:** Ten (ผ่าน Claude Code)
 
 ## 2026-10-21 (รอบ 5 · POC) · Ten (ผ่าน Claude Code)
@@ -13,7 +13,7 @@
   - สี: swatch ลงสีของหมวดนั้นเอง (Eyes → ตา, Hair/Facial Hair → ผม, เสื้อผ้า → primary/secondary) · เปลี่ยนเป็นเลือกสีหลัก 12 สีจาก Figma แล้วเลื่อนแถบ Shade ปรับความเข้ม (ซ้ายจางถึงพาสเทล ขวาเข้มถึงเกือบดำ)
 - **ถึงไหน:** POC ใช้รีวิวได้ครบ 6 scenario · zyra-app#636 ปิดแล้ว (Ten ให้ทำใน POC ก่อน)
 - **verify ถึงไหน:** เปิดผ่าน local server ในแอปที่ 1440px ทุกรอบ ไม่มี console error · ยังไม่ได้ให้ทีม design รีวิว
-- **ต่อจากนี้:** ทีม design รีวิว POC · แถบ Shade ไม่มีใน Figma (ออกแบบเอง) รอ design ยืนยัน · เขียน ux-ui-plan.md
+- **ต่อจากนี้:** ทีม design รีวิว POC · แถบ Shade ไม่มีใน Figma (ออกแบบเอง) รอ design ยืนยัน · ~~เขียน ux-ui-plan.md~~ เขียนแล้ว → [ux-ui-plan.md](ux-ui-plan.md) (ค่า Figma ทุก node + สิ่งที่ POC ต่างจาก Figma + คำถาม U1–U8) · [test-plan.md](test-plan.md) (EP/BVA/decision table/state transition + traceability ครบ 8 scenario) · ถัดไป technical-design + task-breakdown
 - **ติดอะไร:** Map management icon ใน Figma ไม่ตรง lucide ตัวไหน
 
 ## 2026-10-21 · Ten (ผ่าน Claude Code)
