@@ -1,7 +1,43 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** Planning — มติเลือก **Capacitor + native feature จริง** แล้ว · **มติ 2026-09-30: Lite Mode (แนวตั้ง, ไม่โหลดแมพ, ghost) / Spatial Mode (แนวนอน) ผู้ใช้เลือกเอง เปลี่ยนใน Settings** (spec.md + technical-design §16 + ux-ui-plan.md) · Figma HP-03–07 ถอดแล้ว (ค้างตอบ: HP-04 ข้อ 9–10, HP-05 ข้อ 1, HP-06 ข้อ 5/7/8, HP-07 ทั้ง 10 ข้อ) · ClickUp spec ถอดครบ (clickup-spec.md) · รอ UI Figma · technical-design §11–15 (native/background/reconnect + inventory ครบทั้ง repo) เสร็จ · เว็บสรุป https://mobile-app-plan.vercel.app · ยังไม่เริ่ม task ไหน (Phase 0 ยังไม่เริ่ม)
-> **อัปเดตล่าสุด:** 2026-10-15 · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **อัปเดตล่าสุด:** 2026-10-21 · **คนล่าสุด:** Ten (ten_dev) + Claude
+
+## 2026-10-21 (รอบ 67) · Ten + Claude — Android เครื่องสเปกต่ำ: ladder เริ่มจากสเปกเครื่อง · ชวนไป Lite ที่ L3 · เครื่องมือวัด FPS บนมือถือ
+
+- **คำขอ Ten:** "ประสิทธิภาพในมือถือ Android ช้ามากเมื่อเครื่องไม่แรง มีอะไรช่วยให้เครื่องไม่แรงใช้งานได้บ้าง"
+- **มติ Ten (แชท):** รอบแรกทำ **ชุด A** (ตรวจเครื่องล่วงหน้า + ตัดงานพื้นหลัง + วัดผล) · **ใช่ — toast ชวนไป Lite เมื่อถึง L3** (ของใหม่ ต่างจากมติ 2026-10-02 "ปรับเองอย่างเดียว" → ux-ui-plan §19.9 ต้องแจ้ง Pai / PM) · เครื่องวัด = แอป Zyra (Capacitor) บน Android ≤ 4 GB
+- **สิ่งที่พบก่อนแก้ (จากโค้ด `develop`, ไม่ใช่จากการวัด):**
+  - ladder 0.38 เป็น reactive อย่างเดียว — ลง L2 ต้องรอ FPS ตก 20 วิ, L3 30 วิ · เครื่อง 2 GB เริ่มคุณภาพเต็มทุกครั้ง (สร้าง weather 560 GifSprite แล้วค่อยปิด) · ไม่มีการอ่าน `deviceMemory` / `hardwareConcurrency` เลย
+  - Pixi `EventSystem` ยังเปิด ทั้งที่ scene ใช้ DOM listener เอง → hit-test ทั้ง stage (ชิ้น × 9 child) ทุก touchmove
+  - Sentry Replay (`replaysOnErrorSampleRate: 1.0` → recorder buffer ทุก session) + Mixpanel session record / heatmap รันทุกเครื่อง
+  - hero re-render ทุก 1 วิ ตลอด session (`setAskCooldownTick`) + ทุก 100 ms เมื่อมีคนเดิน · rAF loop นอก engine 2 ตัวที่ 60 Hz แม้แมพ pace 30
+  - stats overlay เปิดได้แค่ `⌘ + >` → บนมือถือวัด FPS ไม่ได้ (เหตุที่ 0.38 "ยังไม่ได้วัด" ค้างมาตั้งแต่รอบ 48)
+  - Android shell (zyra-mobile) แทบไม่ได้ตั้งค่า WebView — `hardwareAccelerated` default เปิดอยู่แล้ว ไม่ใช่ต้นเหตุ
+  - ที่ยังค้างจาก TD §15.4 (ไม่ทำรอบนี้ = ชุด B): ไม่มี culling (G3) · outline slot 8 sprite ต่อชิ้นสร้างล่วงหน้า (child ใน sorted container ×9) · avatar zIndex เปลี่ยนทุก px → Pixi re-sort/re-batch ทั้ง container ทุกเฟรมที่เดิน · dust Graphics ใหม่ทุก puff · L4 simple map ยังล็อก `maxLevel: 3`
+- **ทำอะไร — [zyra-app#630](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/630) (`feat/vo-lowend-android` → develop, ยังไม่ merge):**
+  - `lib/platform.ts` `readPerfSignals()` / `isLowEndDevice()` · `lib/mobile-perf-ladder.ts` `initialLadderLevel()`: ≤ 2 GB → **L2** · 4 GB / Android ≤ 9 / ≤ 4 cores → **L1** · iOS (ไม่มี `deviceMemory`) → L0 · hook รับ `initialLevel` (อ่านหลัง mount เพราะหน้า prerender) เริ่มเงียบ ๆ ไม่มี toast · ladder ขึ้น-ลงจากตรงนั้นตามเดิม (L2 sticky ตามเดิมเพราะ 30 fps ไม่ถึง 45)
+  - **toast ชวน Lite ที่ L3** — ครั้งเดียวต่อ session · "This map is heavy for your phone" (แมพนี้หนักสำหรับเครื่องของคุณ) / "Lite Mode skips the map and keeps meetings, chat and Circle." · ปุ่ม Keep map (ใช้แมพต่อ) / Switch to Lite (สลับไป Lite) → `saveWorkspaceMode("lite", "day")` + rejoin ผ่าน `/loading` (จำแค่วันนี้) · layout toast §15.2 ไอคอนเตือน · key `perfLiteSuggest*` ใน en / th
+  - `scene.ts` `app.init` `eventFeatures: { move/globalMove/click/wheel: false }` · ไม่ใส่ `powerPreference` (Android GPU เดียว WebView ไม่สน) · ไม่ใส่ `preference` (default webgl อยู่แล้ว)
+  - Sentry Replay + Mixpanel record / heatmap ปิดเมื่อ `platform === "app"` หรือ `deviceMemory ≤ 4` (`instrumentation-client.ts`, `lib/analytics/mixpanel.ts`) · เว็บ desktop ไม่เปลี่ยน
+  - hero: cooldown tick รันเฉพาะช่วง `askCooldownUntil` ยังไม่หมด · flush `setOtherPlayers` 250 ms บนมือถือ (desktop 100 เดิม) · camera-store / popup rAF ข้ามเฟรมเว้นเฟรมเมื่อ `perfFx.fps30`
+  - overlay: `localStorage.vo_stats = "1"` เปิดตอน mount · แถว Perf (`L2 @1x`), Nodes (`mainContainer.children.length` ผ่าน `getRenderStats()` ใหม่), Heap (`performance.memory` — Chrome / WebView เท่านั้น)
+  - เอกสาร: ux-ui-plan §19.9 +1 แถว · open-items §2 +1 ข้อ (Pai วาด frame toast ชวน Lite)
+- **Before / After (rule 18):**
+
+  | Metric | Before | After | Δ |
+  |---|---|---|---|
+  | fps S1 ยืนนิ่ง / S2 เดิน + เพื่อน 2 คน / S3 ลากแมพ / S4 ซูม (min / p50, 30 วิต่อสถานการณ์) | **ยังไม่ได้วัด** | **ยังไม่ได้วัด** | — |
+  | map ready → ladder ถึง level ที่ใช้จริง (เครื่อง 2 GB) | 20 วิ (2 ขั้น × 10 วิ) — จากโค้ด | 0 วิ (เริ่ม L2) — จากโค้ด | — |
+  | JS heap หลัง 5 นาที · `mainContainer.children.length` | ยังไม่ได้วัด | ยังไม่ได้วัด | — |
+
+  **ยังไม่ได้วัด — เหตุผล:** ต้องใช้แอป Zyra build dev บน Android ≤ 4 GB ของ Ten + USB debugging (Claude ไม่มีเครื่อง) · **วิธีวัด:** ตั้ง `localStorage.vo_stats = "1"` ผ่าน chrome://inspect → เปิด Spatial แมพใหญ่สุดที่ทีมใช้ → อ่าน overlay (fps / Perf / Nodes / Heap) · ชาร์จ > 50 % เครื่องเย็น พัก 5 นาทีระหว่างรอบ · **before = build develop ก่อน #630 + เปิด overlay ด้วย ⌘ + > ผ่าน chrome://inspect console (`window.dispatchEvent(new KeyboardEvent("keydown", {key: ">", metaKey: true}))`)** · after = build ที่ merge #630 · ระบุรุ่น + RAM + Android version + เวอร์ชัน Android System WebView ลงตารางนี้
+- **verify ถึงไหน:**
+  - **build / test:** `vitest run` 382 ไฟล์ / 4,613 ผ่าน (+ `initialLadderLevel` 4 · hook 4 · `readPerfSignals` 3 · mixpanel per-device 3 · scene init / render-stats 2) · `tsc` = 7 error เดิม · `eslint --quiet` ไฟล์ที่แตะ 0 error
+  - **browser / เครื่องจริง: ยังไม่ได้เทส**
+- **ให้ Ten / QA เทส:** (1) เครื่อง ≤ 2 GB เปิด Spatial → overlay `L2 @1x` ตั้งแต่แรก ไม่มี toast ขาลง · เดิน / ลาก / ซูมได้ (2) FPS < 15 นาน 10 วิ → "Animations reduced" + toast ชวน Lite · Switch → Lite Home · Keep map → อยู่ต่อ ไม่ขึ้นซ้ำ (3) iPhone / desktop ไม่เปลี่ยน (4) **วัดตาราง before / after ข้างบน**
+- **ต่อจากนี้ (รอบถัดไป ไม่ทำรอบนี้):** **ชุด B** engine โครงสร้าง (~1 สัปดาห์): lazy outline slot (`utils.ts makeOutlineSlot` สร้าง 8 sprite ตอน `showOutlineSlot` ครั้งแรก) · cull piece / avatar นอกจอด้วย `culled` ใน `_renderUpdate` ใช้ rect เดียวกับ nature layer (ไม่ใช้ `Culler.shared`) · avatar zIndex เป็นขั้น 4 px ที่ L2+ · dust / sparkle pool + ปิดที่ L3 · weather budget ตาม level · name tag res ×1 ที่ L2+ · ข้าม `BitmapText` (Text raster ครั้งเดียว ไม่ใช่ตัวกิน fps + ต้องรองรับไทย / emoji) · **L4 simple map** (engine พร้อม: `setRenderSuspended` + `walkToTile` เหลือ UI `vo-simple-map.tsx` ตาม Figma 6663-235292) · media: `lite-participants-carousel.tsx` / Spotlight speaker grid ไม่มี page limit → attach ทุกกล้อง · LiveKit capture 720p ทุกเครื่อง · zyra-ws: `moving` / `stopped` JSON ส่งทั้ง floor ไม่ใช่ AOI · dead deps `phaser` / `phaser3-rex-plugins` / `pixi-filters`
+- **ติดอะไร:** ตัวเลข before / after รอเครื่องของ Ten · แจ้ง Pai / PM เรื่อง toast ชวน Lite (§19.9) · Pai วาด frame toast (open-items §2)
 
 ## 2026-10-15 (รอบ 66) · Ten + Claude — แก้ store compliance ครบ · TestFlight UAT + PROD build 3 · privacy policy ใหม่
 
