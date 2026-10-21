@@ -1,6 +1,6 @@
 # SC-AV-01 · Test Plan — Accessory Management (Admin)
 
-> **สถานะ:** Draft v1.0 · 2026-10-21 · ยังไม่มีโค้ด (zyra-app#636 ปิดไปแล้ว) — ชื่อ function / endpoint ในเอกสารนี้เป็น **ชื่อที่เสนอ** ต้องแก้ให้ตรงตอนเขียน technical-design · **repo:** zyra-api, zyra-app, zyra-ws
+> **สถานะ:** Draft v1.0 · 2026-10-21 · ยังไม่มีโค้ด (zyra-app#636 ปิดไปแล้ว) — ชื่อ function / endpoint ตรงกับ [technical-design.md](technical-design.md) แล้ว (2026-10-21) · **repo:** zyra-api, zyra-app, zyra-ws
 > **อ้างอิง:** [spec.md](spec.md) (scenario จาก ClickUp) · [requirements.md](requirements.md) (AV-*) · [ux-ui-plan.md](ux-ui-plan.md) (ค่า Figma + สิ่งที่ POC ตกลง) · POC [poc/accessory-admin-poc.html](poc/accessory-admin-poc.html)
 > **กฎที่ยึด:** [04-test.md](../../../.claude/rules/04-test.md) (testify table-driven, mock DB, Vitest + `vi.mock`, test ทุก sentinel error) · [05-review.md](../../../.claude/rules/05-review.md)
 
@@ -25,9 +25,9 @@
 
 | Layer | ขอบเขต | Target |
 |---|---|---|
-| Unit Go | `internal/service/accessory_service.go` (+ validator) | ≥ 80% |
-| Unit TS | `lib/api/accessories.ts`, `lib/accessory/*.ts` (validate, shade, chair, render) | ≥ 80% |
-| API | ทุก route ใต้ `/api/admin/accessories*` + route member ที่แตะ | 100% endpoint |
+| Unit Go | `internal/service/avatar_part_service.go` (+ validator) | ≥ 80% |
+| Unit TS | `lib/api/avatar-parts.ts`, `lib/avatar-part/*.ts` (validate, shade, chair, render) | ≥ 80% |
+| API | ทุก route ใต้ `/api/admin/avatar-parts*` + route member ที่แตะ | 100% endpoint |
 | Component | critical paths: category panel, form Save gating, delete modal | ตาม §4 |
 | E2E | 6 scenario happy + error path | ตาม §5 |
 
@@ -105,11 +105,11 @@ Framework `testify/assert` + `require` · DB mock ผ่าน interface · S3 m
 
 → เขียนเป็น test เดียวแบบ table-driven `TestRequiredSheets` (AC-U-28)
 
-### 1.4 `AccessoryService` — CRUD (mock DB + mock S3)
+### 1.4 `AvatarPartService` — CRUD (mock DB + mock S3)
 
 | ID | Test | Expected |
 |---|---|---|
-| AC-U-29 | `Create_Success` | อัปโหลด S3 key `static/accessory/{id}/…` · บันทึก URL ไม่ใช่ path local ([11-s3-storage.md](../../../.claude/rules/11-s3-storage.md)) · สถานะเริ่มต้นตาม §0 |
+| AC-U-29 | `Create_Success` | อัปโหลด S3 key `static/avatar-part/{part_id}/…` · บันทึก URL ไม่ใช่ path local ([11-s3-storage.md](../../../.claude/rules/11-s3-storage.md)) · สถานะเริ่มต้นตาม §0 |
 | AC-U-30 | `Create_DuplicateNameSameCategory` | `ErrNameExists` · ไม่อัปโหลด S3 |
 | AC-U-31 | `Create_SameNameOtherCategory` | ผ่าน (ซ้ำได้ข้ามหมวด) |
 | AC-U-32 | `Create_S3Nil` | `ErrStorageNotConfigured` |
@@ -180,23 +180,23 @@ Framework `testify/assert` + `require` · DB mock ผ่าน interface · S3 m
 
 | ID | Endpoint (เสนอ) | Case | Expected |
 |---|---|---|---|
-| AC-A-01 | ทุก route `/api/admin/accessories*` | ไม่มี token | 401 |
-| AC-A-02 | ทุก route `/api/admin/accessories*` | token ของ MEMBER | 403 (AdminGuard) |
-| AC-A-03 | `GET /api/admin/accessories?category=&status=&search=&page=&limit=` | ปกติ | 200 · `data.items` + `total` |
+| AC-A-01 | ทุก route `/api/admin/avatar-parts*` | ไม่มี token | 401 |
+| AC-A-02 | ทุก route `/api/admin/avatar-parts*` | token ของ MEMBER | 403 (AdminGuard) |
+| AC-A-03 | `GET /api/admin/avatar-parts?category=&status=&search=&page=&limit=` | ปกติ | 200 · `data.items` + `total` |
 | AC-A-04 | `GET …?limit=0` / `limit=1000` | ค่าขอบ | clamp เป็น 1 / 100 หรือ 400 — ตามที่กำหนด |
-| AC-A-05 | `GET /api/admin/accessories/category-counts` | ปกติ | 200 · ครบ 18 key |
-| AC-A-06 | `POST /api/admin/accessories` (multipart) | ไฟล์ไม่ใช่ PNG | 400 `INVALID_FILE_TYPE` |
+| AC-A-05 | `GET /api/admin/avatar-parts/category-counts` | ปกติ | 200 · ครบ 18 key |
+| AC-A-06 | `POST /api/admin/avatar-parts` (multipart) | ไฟล์ไม่ใช่ PNG | 400 `INVALID_FILE_TYPE` |
 | AC-A-07 | 〃 | > 2 MB | 400 `FILE_TOO_LARGE` |
 | AC-A-08 | 〃 | มิติผิด | 400 `INVALID_DIMENSIONS` |
 | AC-A-09 | 〃 | ขาดชีท | 400 `MISSING_DIRECTION` / `MISSING_SHEET` |
 | AC-A-10 | 〃 | ชื่อซ้ำในหมวด | 409 `ACCESSORY_NAME_EXISTS` |
-| AC-A-11 | `PATCH /api/admin/accessories/{id}` | เปลี่ยน status | 200 · status ใหม่ |
+| AC-A-11 | `PATCH /api/admin/avatar-parts/{id}` | เปลี่ยน status | 200 · status ใหม่ |
 | AC-A-12 | `PATCH …/{id}` ของชิ้นที่ Deleted | — | 409 / 410 |
-| AC-A-13 | `GET /api/admin/accessories/{id}/usage` | — | 200 · `user_count` ตรง DB (ห้ามเป็น 0 ตายตัว — บักเดิม [AvatarManagement/SC-AV-01-user-count-fix.md](../AvatarManagement/SC-AV-01-user-count-fix.md)) |
-| AC-A-14 | `DELETE /api/admin/accessories/{id}` | ผู้ใช้ > 100 ไม่ส่งชื่อยืนยัน | 400 `CONFIRM_NAME_REQUIRED` |
+| AC-A-13 | `GET /api/admin/avatar-parts/{id}/usage` | — | 200 · `user_count` ตรง DB (ห้ามเป็น 0 ตายตัว — บักเดิม [AvatarManagement/SC-AV-01-user-count-fix.md](../AvatarManagement/SC-AV-01-user-count-fix.md)) |
+| AC-A-14 | `DELETE /api/admin/avatar-parts/{id}` | ผู้ใช้ > 100 ไม่ส่งชื่อยืนยัน | 400 `CONFIRM_NAME_REQUIRED` |
 | AC-A-15 | 〃 | ส่งชื่อยืนยันไม่ตรง | 400 `CONFIRM_NAME_MISMATCH` |
 | AC-A-16 | 〃 | ตรง | 202 · `job_id` (ไม่บล็อก) |
-| AC-A-17 | `GET /api/admin/accessories/reset-jobs/{job_id}` | กำลังทำ | 200 · `done` / `total` |
+| AC-A-17 | `GET /api/admin/avatar-parts/reset-jobs/{job_id}` | กำลังทำ | 200 · `done` / `total` |
 | AC-A-18 | ฝั่ง member `/api/user/*` ที่คืน catalog | ชิ้น Hidden / Deleted | **ไม่อยู่ในผลลัพธ์** ([15-member-api-separation.md](../../../.claude/rules/15-member-api-separation.md)) |
 
 ---
@@ -205,11 +205,11 @@ Framework `testify/assert` + `require` · DB mock ผ่าน interface · S3 m
 
 ห้าม call `/api/*` จริง — `vi.mock("@/lib/api/client")` เสมอ
 
-### 3.1 `lib/api/accessories.ts`
+### 3.1 `lib/api/avatar-parts.ts`
 
 | ID | Test |
 |---|---|
-| AC-T-01 | แต่ละ function เรียก path `/api/admin/accessories…` ถูก method / query (happy path) |
+| AC-T-01 | แต่ละ function เรียก path `/api/admin/avatar-parts…` ถูก method / query (happy path) |
 | AC-T-02 | status ≠ 200 → คืน error code ให้ UI map เป็น toast ถูกตัว (error path) |
 | AC-T-03 | upload ใช้ `FormData` ตาม pattern [02-design.md](../../../.claude/rules/02-design.md) |
 
