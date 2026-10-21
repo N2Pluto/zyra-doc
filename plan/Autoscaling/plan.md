@@ -100,7 +100,7 @@
 | P1-3 | GCE instance schedule (`google_compute_resource_policy` แบบ `instance_schedule_policy`) ผูกกับ `zyra-sfu-node-0`: **เปิด 08:00 · ปิด 20:00 จ.–ศ. · ปิดเสาร์–อาทิตย์** (Asia/Bangkok) | VM ที่ stop ไม่คิดค่า CPU/RAM (ยังคิด disk 40 GB + static IP ~$7/เดือน) |
 | P1-4 | ก่อนปิด 20:00: ให้ LiveKit drain (ไม่รับห้องใหม่) ~10 นาที เพื่อไม่ตัดประชุมที่ค้าง | หรือยอมให้ห้องที่ค้างตอน 20:00 reconnect ไป sfu-lite (~30 วินาที) |
 | P1-5 | Alert เตือนก่อนเต็ม: CPU เครื่องหลัก > 60% นาน 30 นาที · Traefik connection > 600 · LiveKit pod > 70% ของ CPU limit · LiveKit ทุก pod > 70% (critical) | PR [zyra-infra#75](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/75) (ยังไม่ merge) · backtest 7 วันไม่ fire |
-| P1-6 | **ตัวควบคุมเปิด/ปิดเครื่อง SFU ตามโหลด** (ดู §แนวทาง ขั้น A) — เปิดเมื่อ sfu-lite > 50% / > 20 คน · drain + ปิดเมื่อไม่มีห้อง 30 นาทีนอกเวลางาน · P1-3 เป็นตัวสำรอง | เทสบน clone ก่อน · ต้องการ SA ที่ start/stop VM ได้เฉพาะ `zyra-sfu-node-0` |
+| P1-6 | **ตัวควบคุมเปิด/ปิดเครื่อง SFU ตามโหลด** — PR [zyra-infra#79](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/79) เทสบน clone ผ่าน (เปิดที่ 60% ตาม Ten) (ดู §แนวทาง ขั้น A) — เปิดเมื่อ sfu-lite > 50% / > 20 คน · drain + ปิดเมื่อไม่มีห้อง 30 นาทีนอกเวลางาน · P1-3 เป็นตัวสำรอง | เทสบน clone ก่อน · ต้องการ SA ที่ start/stop VM ได้เฉพาะ `zyra-sfu-node-0` |
 
 **ค่าใช้จ่าย:** c2d-highcpu-4 ≈ $0.185/ชม. · ปิด 108 ชม./สัปดาห์ (จ.–ศ. 12 ชม. + ส.–อา. 48 ชม.) = 64% ของเวลา → ≈ **$87/เดือน** (ราคา list Singapore, ยังไม่หักส่วนลด/CUD)
 
@@ -112,7 +112,7 @@
 
 | # | Task |
 |---|---|
-| P2-1 | ขยาย `zyra-k3s` 4 → 8 vCPU (ทางที่ load test ยืนยันแล้ว: 1,000 คน/workspace p95 288 ms) — ครั้งเดียว ไม่ใช่ตามเวลา |
+| P2-1 | ขยาย `zyra-k3s` 4 → 8 vCPU (ทางที่ load test ยืนยันแล้ว: 1,000 คน/workspace p95 288 ms) — ครั้งเดียว ไม่ใช่ตามเวลา · ✅ **ทำแล้ว 2026-10-20** (ก่อนไลฟ์ — [ops](../../ops/live-event-2026-10-20.md)) |
 | P2-2 | api presence → Redis แล้วให้ api / app มี HPA (2–4 replica) |
 | P2-3 | แยก dev/uat ออกจากเครื่อง prod หรือ agent node pool สำหรับ app/api (แบบเดียวกับ SFU pool) — ให้เครื่องเพิ่ม/ลดได้โดยไม่แตะ control plane |
 | P2-4 | zyra-ws: AOI / batching (fix-plan ข้อ 4) แล้วค่อยออกแบบหลาย instance (route ตาม workspace) |

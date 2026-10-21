@@ -2,6 +2,43 @@
 
 > log ต่อรอบ (entry ใหม่อยู่บนสุด) · แผน: [plan.md](plan.md)
 
+## 2026-10-20 — P1-6 sfu-autoscaler (เปิด/ปิดเครื่อง SFU ตามโหลด) เทสบน clone ผ่าน · PR ยังไม่ merge
+
+**ทำอะไร**
+- เพิ่ม `gitops/cluster-addons/sfu-autoscaler` เป็น CronJob ทุก 1 นาทีบน zyra-k3s:
+  - อ่าน Prometheus แล้วเรียก GCE API ด้วย SA ของเครื่อง k3s · สิทธิ์ get/start/stop ได้เฉพาะ instance SFU (`terraform/sfu-autoscaler.tf`)
+  - **เปิด** เมื่อ sfu-lite CPU ≥ 60% ของ limit (Ten เลือก) หรือมีคน ≥ 20 หรือ sfu-lite ไม่ Ready
+  - **ปิด** เมื่อเครื่อง SFU ไม่มีห้องเลยนาน 30 นาที และ sfu-lite เงียบ (CPU < 30% และคน < 10) และอยู่นอกเวลางาน (จ.–ศ. 09:00–18:00) และพ้น cooldown 30 นาทีแล้ว · drain ก่อนปิดทุกครั้ง
+  - prod ตั้งเป็น `DRY_RUN=true` (บันทึกการตัดสินใจอย่างเดียว)
+
+**PR**
+- [zyra-infra#79](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/79) ยังไม่ merge
+- ก่อน merge ต้อง `terraform apply -target` สิทธิ์ IAM ก่อน
+
+**verify ถึงไหน** (clone สร้างใหม่ 2026-10-20 ตั้งเวลาว่างไว้แค่ 5 นาที ไม่มีเวลางาน)
+- รอบ 1: เปิดเครื่องได้ แต่**สลับเปิด/ปิด (flapping)** ทุก ~3 นาที เพราะกฎปิดดูแค่ CPU → แก้ให้ต้องมีคน < 10 ด้วย
+- รอบ 3 (หลังแก้):
+  - 20:00:29 ปล่อยโหลด
+  - **20:01:27 เปิดเครื่อง**
+  - 20:02:20 node Ready + uncordon + LiveKit Ready
+  - เปิดค้างตลอดช่วงโหลด ไม่สลับ
+  - 20:20 หยุด probe
+  - **20:25:30 drain + ปิด**
+  - ระหว่างนั้น join สำเร็จ 132/132 · load test 24/24 คน loss 0%
+- **ยังไม่ได้เทส:**
+  - การเปิดด้วยกฎ CPU (รอบนี้ไปติดกฎจำนวนคนก่อน)
+  - การกันเวลางาน
+  - drain ที่ timeout เพราะห้องค้างนาน
+  - IAM ของ prod
+
+**ต่อจากนี้**
+- Ten อนุมัติ → apply IAM → merge (DRY_RUN) → ดู log 2–3 วัน → เปลี่ยน `DRY_RUN=false`
+
+**ติดอะไร**
+- รอ Ten
+
+**คืนนี้ (ไลฟ์ 20:00) ดูแยกที่** [ops/live-event-2026-10-20.md](../../ops/live-event-2026-10-20.md) — ขยายทั้งสองเครื่องเป็น 8 vCPU แล้ว ทำให้ข้อ P2-1 (k3s 8 vCPU) เกิดขึ้นแล้ว
+
 ## 2026-10-20 — P1-5 alert เตือนก่อนเต็ม (PR เปิดไว้ ยังไม่ merge)
 
 **ทำอะไร**
