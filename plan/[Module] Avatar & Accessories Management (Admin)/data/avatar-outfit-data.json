@@ -1,0 +1,294 @@
+{
+  "$schema_note": "Data contract สำหรับ module แต่งตัวละครฝั่ง user (member) · ดึงจาก prototype Zyra Avatar Studio (https://claude.ai/artifact/5CWTCN9yMtbQ4czt29FVty) · version 0.1 · 2026-10-21 · อ่านคู่กับ README.md ในโฟลเดอร์นี้",
+  "version": "0.1.0",
+  "status": "draft — ยังไม่ผ่าน PM/ศิลปิน · ค่าใน parts/palettes เป็นชุดตัวอย่างจาก prototype ไม่ใช่ของจริงบน server",
+  "source": {
+    "prototype": "https://claude.ai/artifact/5CWTCN9yMtbQ4czt29FVty",
+    "spec": "zyra-doc/plan/[Module] Avatar & Accessories Management (Admin)/spec.md §5",
+    "requirements": "zyra-doc/plan/[Module] Avatar & Accessories Management (Admin)/requirements.md"
+  },
+
+  "sheet": {
+    "frame": { "width": 48, "height": 48 },
+    "rows": ["down", "left", "right", "up"],
+    "row_label_th": { "down": "ลง", "left": "ซ้าย", "right": "ขวา", "up": "ขึ้น" },
+    "walk": {
+      "file": "walk.png",
+      "cols": 4,
+      "cols_with_blink": 5,
+      "size": "192x192",
+      "size_with_blink": "240x192",
+      "col_meaning": { "0": "walk", "1": "idle (ยืน)", "2": "walk", "3": "walk", "4": "blink (หลับตา) — optional" }
+    },
+    "sit": {
+      "file": "sit.png",
+      "cols": 4,
+      "cols_with_blink": 5,
+      "size": "192x192",
+      "size_with_blink": "240x192",
+      "col_meaning": { "0": "sitting-down 1", "1": "sitting-down 2", "2": "seated (นั่ง)", "3": "stand-up (ลุก)", "4": "blink while seated — optional" },
+      "optional": true,
+      "fallback": "ถ้าชิ้นไม่มี sit sheet ใช้เฟรมจาก walk sheet แทน"
+    },
+    "blink_fallback": "ชิ้นที่ไม่มีคอลัมน์ 4 (blink) → ใช้คอลัมน์ 1 ของ walk / คอลัมน์ 2 ของ sit แทน",
+    "alpha_rule": "pixel ต้อง alpha = 0 หรือ 255 เท่านั้น (ห้ามโปร่งครึ่ง)",
+    "format": "PNG, พื้นโปร่ง, 1 px = 1 px (ไม่ scale)"
+  },
+
+  "baked_output": {
+    "note": "server ประกอบชุดตอน user กด Save → ได้ไฟล์ชุดนี้ต่อ user 1 คน · VO/ws รับ URL ต่อคนเหมือนเดิม",
+    "path_pattern": "outfits/{outfit_hash}/",
+    "files": [
+      { "name": "walk.png", "size": "240x192", "cols": 5, "note": "server เติมคอลัมน์หลับตาให้เสมอ" },
+      { "name": "sit.png", "size": "240x192", "cols": 5, "note": "server เติมคอลัมน์หลับตาให้เสมอ" },
+      { "name": "thumb.png", "size": "TBD", "note": "prototype ไม่ระบุขนาด · thumbnail ใน UI ตัดจาก frame down/walk col 1" }
+    ],
+    "default_outfit_shared": "ชุด default ใช้ไฟล์เดียวกันทุก user ที่ยังไม่เคยแต่ง"
+  },
+
+  "thumbnail_crop": {
+    "note": "วิธีตัด thumbnail ของ item card ใน prototype · อ้างอิงจาก frame down / walk / col 1 (ยืน) ขนาดเฟรม 48x48",
+    "head_slots": { "crop": { "x": 9, "y": 0, "w": 30, "h": 28 }, "scale": 3 },
+    "body_slots": { "crop": { "x": 8, "y": 0, "w": 32, "h": 45 }, "scale": 2 }
+  },
+
+  "render_order": ["body", "eyes", "bottom", "shoes", "top", "costume", "facial_hair", "accessory", "hair", "glasses", "hat"],
+
+  "slots": [
+    { "id": "body",        "name_th": "ตัว",           "name_en": "Body",        "icon": "person-standing", "required": true,  "head": false, "color_channels": ["skin"],                         "note": "base character ตัวเดียว เลือกได้แค่สีผิว" },
+    { "id": "eyes",        "name_th": "ตา",            "name_en": "Eyes",        "icon": "eye",             "required": true,  "head": true,  "color_channels": ["eye", "skin", "hair"],          "note": "ชิ้นเดียวที่มีคอลัมน์ blink (5 คอลัมน์)" },
+    { "id": "hair",        "name_th": "ผม",            "name_en": "Hair",        "icon": "scissors",        "required": false, "head": true,  "color_channels": ["hair"] },
+    { "id": "facial_hair", "name_th": "หนวด",          "name_en": "Facial hair", "icon": "smile",           "required": false, "head": true,  "color_channels": ["hair"],                         "note": "ใช้สีผมร่วมกับ hair เสมอ" },
+    { "id": "top",         "name_th": "เสื้อ",          "name_en": "Top",         "icon": "shirt",           "required": true,  "head": false, "color_channels": ["primary", "secondary", "skin"] },
+    { "id": "bottom",      "name_th": "กางเกง",        "name_en": "Bottom",      "icon": "columns-2",       "required": true,  "head": false, "color_channels": ["primary", "secondary"] },
+    { "id": "shoes",       "name_th": "รองเท้า",       "name_en": "Shoes",       "icon": "footprints",      "required": false, "head": false, "color_channels": ["primary", "secondary"] },
+    { "id": "hat",         "name_th": "หมวก",          "name_en": "Hat",         "icon": "crown",           "required": false, "head": true,  "color_channels": ["primary", "secondary"] },
+    { "id": "glasses",     "name_th": "แว่น",          "name_en": "Glasses",     "icon": "glasses",         "required": false, "head": true,  "color_channels": ["primary"] },
+    { "id": "accessory",   "name_th": "เครื่องประดับ", "name_en": "Accessory",   "icon": "gem",             "required": false, "head": false, "color_channels": ["primary", "secondary"] },
+    { "id": "costume",     "name_th": "ชุด Special",   "name_en": "Special",     "icon": "sparkles",        "required": false, "head": false, "color_channels": [],                               "occupies": ["top", "bottom"], "note": "ทับเสื้อ+กางเกง · ใช้สีตามไฟล์ทั้งชิ้น ไม่มีตัวเลือกสี · มีช่วงเวลาเปิด/ปิด (until) · เลือก top/bottom ใหม่ = ถอด costume อัตโนมัติ" }
+  ],
+
+  "color_channels": {
+    "note": "สี key ที่ศิลปินใช้วาดบนชีท · ระบบ swap เป็น palette ที่ user เลือก · shade: 1 highlight · 2 base · 3 shadow · 4 deep · ใช้เฉดระหว่างกลางในโทนเดียวกันได้ ระบบไล่ตามความสว่าง",
+    "skin":      { "name_th": "ผิว",            "scope": "global", "palette": "skin",  "key": ["#FFA0FF", "#FF00FF", "#A000A0", "#500050"] },
+    "hair":      { "name_th": "ผม",             "scope": "global", "palette": "hair",  "key": ["#A0FFFF", "#00FFFF", "#00A0A0", "#005050"] },
+    "eye":       { "name_th": "ตา",             "scope": "global", "palette": "eye",   "key": ["#FFFFA0", "#FFFF00", "#A0A000", "#505000"] },
+    "primary":   { "name_th": "สีหลักของชิ้น",  "scope": "slot",   "palette": "cloth", "key": ["#FFA0A0", "#FF0000", "#A00000", "#500000"] },
+    "secondary": { "name_th": "สีรองของชิ้น",   "scope": "slot",   "palette": "cloth", "key": ["#A0FFA0", "#00FF00", "#00A000", "#005000"] },
+    "scope_meaning": { "global": "เลือกครั้งเดียวใช้ทั้งตัว (เก็บใน outfit.colors)", "slot": "เลือกแยกต่อชิ้น (เก็บใน outfit.slots.<slot>.colors)" }
+  },
+
+  "palettes": {
+    "skin": [
+      { "id": "base", "name_th": "สีจากไฟล์ base", "c": ["#FEE8D6", "#FFE8BF", "#FFD3B0", "#F6AF83"] },
+      { "id": "s1",   "name_th": "ผิวขาวอมชมพู",    "c": ["#FFF1EC", "#FCDFD3", "#F4C6B6", "#DE9884"] },
+      { "id": "s3",   "name_th": "ผิวแทน",          "c": ["#F8D4B2", "#EBBC90", "#DBA476", "#BB7B51"] },
+      { "id": "s4",   "name_th": "ผิวน้ำตาล",       "c": ["#DCA680", "#C68C65", "#AE744E", "#875338"] },
+      { "id": "s5",   "name_th": "ผิวเข้ม",          "c": ["#A47559", "#8D6046", "#784E37", "#583525"] },
+      { "id": "s0",   "name_th": "เทาแบบตัวเดิม",   "c": ["#F6F7F3", "#E4E6E0", "#D0D3CB", "#A9AEA5"] }
+    ],
+    "hair": [
+      { "id": "black",     "name_th": "ดำ",          "c": ["#5A5A66", "#2E2E38", "#1C1C24", "#0A0A0F"] },
+      { "id": "darkbrown", "name_th": "น้ำตาลเข้ม",  "c": ["#7A5A48", "#4E3426", "#36231A", "#17100A"] },
+      { "id": "brown",     "name_th": "น้ำตาล",      "c": ["#B0805A", "#7A5032", "#553620", "#24160C"] },
+      { "id": "chestnut",  "name_th": "น้ำตาลแดง",   "c": ["#D49A74", "#A0603C", "#6E3E26", "#30190E"] },
+      { "id": "blonde",    "name_th": "บลอนด์",       "c": ["#FFF0B8", "#F2C860", "#C99A3A", "#5E4416"] },
+      { "id": "ginger",    "name_th": "ส้ม",          "c": ["#FFC08A", "#E57A33", "#B0521C", "#4E220A"] },
+      { "id": "pink",      "name_th": "ชมพู",         "c": ["#FFD6E8", "#F28CB8", "#C9608E", "#5E2340"] },
+      { "id": "blue",      "name_th": "ฟ้า",          "c": ["#C2E0FF", "#5C9EE6", "#3A6CB0", "#162D55"] },
+      { "id": "purple",    "name_th": "ม่วง",         "c": ["#D9C4FF", "#9A74E0", "#6346A6", "#2A1B4E"] },
+      { "id": "silver",    "name_th": "เทาเงิน",      "c": ["#FFFFFF", "#C8CAD2", "#9497A3", "#3E4150"] },
+      { "id": "white",     "name_th": "ขาว",          "c": ["#FFFFFF", "#F2F2F6", "#D8D8E0", "#8E8E9C"] }
+    ],
+    "eye": [
+      { "id": "teal",  "name_th": "เขียวน้ำทะเล", "c": ["#7FD6D2", "#2F8F94", "#17555A", "#0A2A2E"] },
+      { "id": "brown", "name_th": "น้ำตาล",       "c": ["#C9956A", "#7A4B2C", "#3E2416", "#140A05"] },
+      { "id": "blue",  "name_th": "ฟ้า",           "c": ["#A8D4FF", "#3A7BD5", "#1C4A8F", "#0A1A33"] },
+      { "id": "green", "name_th": "เขียว",         "c": ["#B8E6A0", "#3E9A3E", "#1E5C1E", "#0A240A"] },
+      { "id": "gray",  "name_th": "เทา",           "c": ["#D5DAE0", "#7D8794", "#4E5662", "#1E2228"] }
+    ],
+    "cloth": [
+      { "id": "navy",      "name_th": "กรมท่า",       "c": ["#7092D6", "#3A5AA8", "#26407A", "#132144"] },
+      { "id": "red",       "name_th": "แดง",          "c": ["#FF9C92", "#E53935", "#B02A2A", "#5C1212"] },
+      { "id": "green",     "name_th": "เขียว",        "c": ["#AEEA9E", "#56B85A", "#33853A", "#16401C"] },
+      { "id": "teal",      "name_th": "เขียวอมฟ้า",   "c": ["#A8F5E6", "#2FC2AC", "#1A8676", "#0A3D36"] },
+      { "id": "yellow",    "name_th": "เหลือง",       "c": ["#FFF6B8", "#FFD54F", "#D1A626", "#6B5210"] },
+      { "id": "pink",      "name_th": "ชมพู",         "c": ["#FFE0EE", "#F48FB1", "#C9608A", "#6A2442"] },
+      { "id": "purple",    "name_th": "ม่วง",         "c": ["#D8C7FF", "#9675E6", "#6748B0", "#2C1D5C"] },
+      { "id": "brown",     "name_th": "น้ำตาล",       "c": ["#D8B48C", "#966C46", "#684830", "#30200F"] },
+      { "id": "white",     "name_th": "ขาว",          "c": ["#FFFFFF", "#EDEDF3", "#C2C2D0", "#6A6A7A"] },
+      { "id": "black",     "name_th": "ดำ",           "c": ["#74747F", "#3E3E48", "#26262E", "#0E0E12"] },
+      { "id": "halloween", "name_th": "ส้มฮาโลวีน",   "c": ["#FFC27A", "#FF7A1A", "#C24E05", "#5A2404"], "special": true, "until": "31 ต.ค." }
+    ]
+  },
+
+  "parts": {
+    "note": "ตัวอย่างจาก prototype · ของจริงมาจาก API (admin เป็นคนเพิ่ม) · ch = channel สีที่ชิ้นนั้นใช้ (ว่าง = สีตายตัว เปลี่ยนไม่ได้) · ทุก slot ที่ required=false ต้องมีตัวเลือก 'ไม่ใส่' (id null) นำหน้า",
+    "body": [
+      { "id": "std", "name_th": "ตัว base (Avatar default)", "ch": ["skin"] }
+    ],
+    "eyes": [
+      { "id": "classic", "name_th": "แบบตัวเดิม", "ch": ["eye"] },
+      { "id": "sparkle", "name_th": "ตาโตวิ้ง",    "ch": ["eye"] },
+      { "id": "happy",   "name_th": "ยิ้มตาปิด",   "ch": [],  "note": "เปลี่ยนสีตาไม่ได้" }
+    ],
+    "hair": [
+      { "id": "short", "name_th": "หน้าม้าสั้น", "ch": ["hair"] },
+      { "id": "bob",   "name_th": "บ๊อบ",        "ch": ["hair"] },
+      { "id": "long",  "name_th": "ยาว",         "ch": ["hair"] },
+      { "id": "swept", "name_th": "แสกข้าง",     "ch": ["hair"] },
+      { "id": "spiky", "name_th": "ตั้ง",         "ch": ["hair"] },
+      { "id": "bun",   "name_th": "มวย",         "ch": ["hair"] },
+      { "id": "thai",  "name_th": "ทรงไทย (ไฟล์วาดจริง)", "ch": ["hair"], "note": "ชิ้นเดียวใน prototype ที่เป็น PNG วาดจริง มีทั้ง walk + sit sheet" }
+    ],
+    "facial_hair": [
+      { "id": "beard",  "name_th": "เครา",     "ch": ["hair"] },
+      { "id": "goatee", "name_th": "เคราแพะ",  "ch": ["hair"] }
+    ],
+    "top": [
+      { "id": "tee",    "name_th": "เสื้อยืด", "ch": ["primary", "secondary"], "sleeve": "short" },
+      { "id": "hoodie", "name_th": "ฮู้ด",     "ch": ["primary", "secondary"], "sleeve": "long" },
+      { "id": "shirt",  "name_th": "เชิ้ต",    "ch": ["primary", "secondary"], "sleeve": "long" },
+      { "id": "tank",   "name_th": "กล้าม",    "ch": ["primary", "secondary"], "sleeve": "none" }
+    ],
+    "bottom": [
+      { "id": "pants",  "name_th": "ขายาว",   "ch": ["primary"] },
+      { "id": "shorts", "name_th": "ขาสั้น",  "ch": ["primary"] },
+      { "id": "skirt",  "name_th": "กระโปรง", "ch": ["primary", "secondary"] }
+    ],
+    "shoes": [
+      { "id": "sneaker", "name_th": "ผ้าใบ", "ch": ["primary"] },
+      { "id": "boots",   "name_th": "บูท",   "ch": ["primary", "secondary"] }
+    ],
+    "hat": [
+      { "id": "beret",  "name_th": "เบเร่ต์", "ch": ["primary", "secondary"] },
+      { "id": "cap",    "name_th": "แก๊ป",    "ch": ["primary", "secondary"] },
+      { "id": "beanie", "name_th": "ไหมพรม",  "ch": ["primary", "secondary"] }
+    ],
+    "glasses": [
+      { "id": "rim", "name_th": "แว่นกรอบ",   "ch": ["primary"] },
+      { "id": "sun", "name_th": "แว่นกันแดด", "ch": [] }
+    ],
+    "accessory": [
+      { "id": "scarf",    "name_th": "ผ้าพันคอ", "ch": ["primary", "secondary"] },
+      { "id": "necklace", "name_th": "สร้อยทอง", "ch": [] }
+    ],
+    "costume": [
+      { "id": "pumpkin", "name_th": "ฟักทองฮาโลวีน", "ch": [], "occupies": ["top", "bottom"], "until": "31 ต.ค." },
+      { "id": "astro",   "name_th": "นักบินอวกาศ",    "ch": [], "occupies": ["top", "bottom"], "until": null }
+    ]
+  },
+
+  "outfit_state_shape": {
+    "note": "รูปแบบ state ที่หน้าบ้านถือ และเป็น payload ตอน Save · colors = channel global · slots.<slot> = null (ไม่ใส่) หรือ {id, colors?} · colors ในชิ้นมีเฉพาะ channel primary/secondary ที่ชิ้นนั้นใช้",
+    "example": {
+      "colors": { "skin": "base", "hair": "black", "eye": "teal" },
+      "slots": {
+        "body": { "id": "std" },
+        "eyes": { "id": "classic" },
+        "hair": { "id": "thai" },
+        "facial_hair": null,
+        "top": { "id": "hoodie", "colors": { "primary": "teal", "secondary": "white" } },
+        "bottom": { "id": "pants", "colors": { "primary": "navy" } },
+        "shoes": { "id": "sneaker", "colors": { "primary": "red" } },
+        "hat": null,
+        "glasses": null,
+        "accessory": null,
+        "costume": null
+      }
+    },
+    "rules": [
+      "slot ที่ required=true ห้ามเป็น null",
+      "costume != null → ตอน save ให้ normalize: top และ bottom เป็น null (costume occupies)",
+      "เลือก top หรือ bottom ใหม่ขณะใส่ costume → costume = null + toast 'ถอดชุด special ออกแล้ว'",
+      "เปลี่ยนชิ้นใน slot เดิม → คง colors primary/secondary เดิมไว้ถ้าชิ้นใหม่ใช้ channel นั้น ไม่งั้นใช้ default_cloth",
+      "ชิ้นที่ ch ว่าง → ไม่แสดง swatch สี แสดงข้อความ 'ชิ้นนี้ศิลปินวาดสีมาแล้ว เปลี่ยนสีไม่ได้'",
+      "costume → ไม่แสดง swatch เลย แสดง 'ชุด special ใช้สีตามที่วาดมาเสมอ ไม่มีตัวเลือกสี'",
+      "costume ที่หมดช่วง (until ผ่านแล้ว): คนที่ใส่อยู่ใส่ต่อได้ แต่เลือกใหม่ไม่ได้ (ข้อเสนอ ยังไม่ confirm — AvatarCustomization ข้อค้าง 5)"
+    ]
+  },
+
+  "default_cloth": { "primary": "navy", "secondary": "white" },
+
+  "outfits": {
+    "default": {
+      "note": "ชุดที่ user ใหม่ / user เดิมที่ไม่เคยแต่ง ได้อัตโนมัติ · ปุ่ม 'ชุดเริ่มต้น' reset มาที่นี่",
+      "colors": { "skin": "base", "hair": "black", "eye": "teal" },
+      "slots": {
+        "body": { "id": "std" }, "eyes": { "id": "classic" }, "hair": null, "facial_hair": null,
+        "top": { "id": "tee", "colors": { "primary": "white", "secondary": "navy" } },
+        "bottom": { "id": "pants", "colors": { "primary": "navy" } },
+        "shoes": { "id": "sneaker", "colors": { "primary": "black" } },
+        "hat": null, "glasses": null, "accessory": null, "costume": null
+      }
+    },
+    "prototype_start": {
+      "note": "ชุดที่ prototype เปิดมาให้ดู (ไม่ใช่ default ของระบบ)",
+      "colors": { "skin": "base", "hair": "black", "eye": "teal" },
+      "slots": {
+        "body": { "id": "std" }, "eyes": { "id": "classic" }, "hair": { "id": "thai" }, "facial_hair": null,
+        "top": { "id": "hoodie", "colors": { "primary": "teal", "secondary": "white" } },
+        "bottom": { "id": "pants", "colors": { "primary": "navy" } },
+        "shoes": { "id": "sneaker", "colors": { "primary": "red" } },
+        "hat": null, "glasses": null, "accessory": null, "costume": null
+      }
+    }
+  },
+
+  "randomize": {
+    "note": "ปุ่ม 'สุ่ม' ใน prototype",
+    "optional_slot_skip_chance": 0.45,
+    "costume_chance": 0.12,
+    "exclude_special_palettes": true
+  },
+
+  "animation": {
+    "tick_ms": 125,
+    "walk": { "sheet": "walk", "cols": [0, 1, 2, 3], "note": "วนทุก tick" },
+    "stand": { "sheet": "walk", "col": 1, "blink_col": 4 },
+    "sit": { "sheet": "sit", "enter_cols": [0, 1, 2], "seated_col": 2, "stand_up_col": 3, "blink_col": 4, "note": "เข้านั่งไล่ col 0→1→2 ทีละ tick แล้วค้างที่ 2 · blink ได้เมื่อนั่งแล้ว" },
+    "blink": { "duration_ms": 100, "interval_min_ms": 1800, "interval_max_ms": 4600 },
+    "auto_rotate": { "order": ["down", "left", "up", "right"], "every_ticks": 14 }
+  },
+
+  "ui_text_th": {
+    "stage_modes": { "stand": "ยืน", "walk": "เดิน", "sit": "นั่ง" },
+    "auto_rotate": "หมุนดูรอบตัวอัตโนมัติ",
+    "random": "สุ่ม",
+    "reset": "ชุดเริ่มต้น",
+    "none_item": "ไม่ใส่",
+    "none_costume": "ไม่ใส่ชุด special",
+    "remove_costume": "ถอดชุด special",
+    "tab_hint_required": "ต้องมี",
+    "tab_hint_optional": "ใส่หรือไม่ใส่ก็ได้",
+    "tab_hint_costume": "ชุดตามเทศกาล ขึ้นเฉพาะช่วงที่เปิด",
+    "badge_until": "ถึง {until}",
+    "badge_special": "Special",
+    "swatch_skin": { "title": "สีผิว", "sub": "ใช้ทั้งตัว", "hint": "ใช้กับทุกชิ้นที่เห็นผิว เช่น แขนที่โผล่จากเสื้อ และเปลือกตาตอนกะพริบ" },
+    "swatch_eye": { "title": "สีตา", "hint": "ตอนกะพริบ เปลือกตาใช้สีผิวที่เลือกไว้ในแท็บตัว" },
+    "swatch_hair": { "title": "สีผม", "sub": "ใช้ร่วมกัน", "hint": "ผมกับหนวดใช้สีเดียวกันเสมอ" },
+    "swatch_primary": "สีหลัก",
+    "swatch_secondary": "สีรอง",
+    "fixed_color_part": "ชิ้นนี้ศิลปินวาดสีมาแล้ว เปลี่ยนสีไม่ได้",
+    "fixed_color_costume": "ชุด special ใช้สีตามที่วาดมาเสมอ ไม่มีตัวเลือกสี",
+    "fixed_eye_base": "ตาเดิมจากไฟล์ base เปลี่ยนสีไม่ได้ เลือกทรงอื่นถ้าอยากเปลี่ยนสีตา",
+    "pick_part_first": "เลือกชิ้นก่อน แล้วค่อยเลือกสี",
+    "pick_costume_first": "เลือกชุดก่อน",
+    "status_saved": "ใช้ชุดนี้ในทุก workspace",
+    "status_dirty": "ยังไม่ได้บันทึก",
+    "save": "บันทึก",
+    "saving": "กำลังประกอบชุด…",
+    "cancel": "ยกเลิก",
+    "toast_saved": "บันทึกแล้ว ทุก workspace จะเห็นชุดนี้",
+    "toast_already_saved": "ชุดนี้บันทึกไว้แล้ว",
+    "toast_costume_removed": "ถอดชุด special ออกแล้ว"
+  },
+
+  "open_questions": [
+    "API endpoint สำหรับ โหลด catalog / โหลดชุดปัจจุบัน / save ยังไม่กำหนด (ดู requirements.md §4 AV-API-09)",
+    "thumb.png ขนาดจริง",
+    "costume หมดช่วงแล้วคนที่ใส่อยู่ทำยังไง (AvatarCustomization ข้อค้าง 5)",
+    "palette ชุดสุดท้าย (จำนวนสีต่อ ramp) ยังไม่ confirm กับศิลปิน (AvatarCustomization ข้อค้าง 7)",
+    "slot list สุดท้าย + slot ไหนบังคับ (AvatarCustomization ข้อค้าง 6 / requirements Q3)"
+  ]
+}

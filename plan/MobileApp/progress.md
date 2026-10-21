@@ -1,7 +1,70 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** **ขึ้น dev + TestFlight แล้ว (2026-10-08)** — app "Zyra World Dev" (`co.zyraworld.app.develop`) build 1–3 บน TestFlight กลุ่ม Zyra Team 5 คน · login Apple/Google ในแอปแก้แล้ว (entitlement + `APPLE_CLIENT_IDS` dev v9 + iOS OAuth client) **รอ Ten ลอง build 2+** · asset store A1+A2 merge แล้ว เปิดบน dev (`NEXT_PUBLIC_MOBILE_ASSET_STORE=true`) **ยังไม่ได้วัด Before/After** ([asset-store.md](asset-store.md)) · ถัดไป B0/B1 (วัด + observability) · Android: Google native ยังไม่มี OAuth client (SHA-1) · doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48)
-> **อัปเดตล่าสุด:** 2026-10-15 (รอบ 63 — B-45 language pack · เปลี่ยนภาษาทันที · V-13 Circle วาร์ป) · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **อัปเดตล่าสุด:** 2026-10-21 (รอบ 69 — ส่ง review ทั้ง App Store และ Google Play (prod 1.0.0)) · **คนล่าสุด:** Ten (ten_dev) + Claude
+
+## 2026-10-21 (รอบ 69) · Ten + Claude — ส่ง review ทั้ง App Store และ Google Play (prod 1.0.0)
+
+- **ทำอะไร:**
+  - **App Store (Zyra World `6823101211`):** รูปหน้าจอ 5 รูปแนวนอน (ช่อง iPhone 6.1"/6.3" ขนาด 2622×1206 — ASC ตอนนี้ให้ช่องนี้เป็นช่องหลักแทน 6.9") · บัญชีทดสอบ `ten_dev+applereview@…` (Owner) + `ten_dev+applereview2@…` (Member) ใน workspace **Zyra Review** บน prod · ราคาฟรี · เปิดเฉพาะ**ไทย** · App Privacy publish (Ten) · submit 1.0.0 (4) วันที่ 19 ต.ค.
+  - **โดนตีกลับ 21 ต.ค. — Guideline 2.5.4** (`UIBackgroundModes: audio` แต่ reviewer หาฟีเจอร์ไม่เจอ) → เก็บ background audio ไว้ (ใช้ให้ประชุมไม่หลุดตอนออกจากแอป) · เพิ่มย่อหน้า + วิธีทดสอบใน App Review Notes · ตอบกลับพร้อมวิดีโอจาก iPhone จริง (Ten / QA อัด)
+  - **Google Play (Zyra World, `co.zyraworld.app`):** สร้างแอป · App content ครบ (privacy policy, ads = ไม่มี, advertising ID = ไม่ใช้, sign-in details 2 บัญชี, content rating = All ages / Users Interact, target audience 18+, data safety 12 ประเภท, government / financial / health = ไม่มี, foreground service = Media playback + Background audio input + วิดีโอ Drive) · store listing (ข้อความจาก [store-listing-draft.md](store-listing-draft.md), ไอคอน, รูป 16:9 1920×1080 ห้ารูป, feature graphic 1024×500 ที่ Claude ทำ) · หมวด Business · contact `ten_dev@hpktechnology.com`
+  - **AAB:** zyra-mobile [#25](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/25) (merge แล้ว) — Store Release input `android_signed_aab` = เซ็น AAB แล้วแนบไว้ใน run (ยังไม่มี Play service account และ upload ครั้งแรกต้องทำมือ) · **upload key ใหม่** (ตัวเดิมสร้างด้วย LibreSSL → Gradle เปิดไม่ได้ "keystore password was incorrect") สร้างด้วย keytool ของ JDK 21 · upload SHA-1 `58:61:9D:4B:…:05:B6:52` · app signing SHA-1 `09:00:65:01:…:DC:C1`
+  - Internal testing: email list "Zyra internal testers" (ตอนนี้มี ten_dev คนเดียว) · publish 1.0.0 (5) · Production: ไทยอย่างเดียว · release 1.0.0 (5) · **Ten กด Submit for review แล้ว**
+  - Google OAuth: เพิ่ม Android client "Zyra World (Android, Play signing)" (`…-qtnf07jo…`) ด้วย app signing SHA-1 · client เดิม "Zyra World (Android)" = SHA-1 ของ `android/app/debug.keystore` (APK ทดสอบ)
+- **ถึงไหน:** App Store = Rejected รอ Apple ตอบคำตอบ + วิดีโอ · Play = Changes in review
+- **verify ถึงไหน:**
+  - **live-test:** Ten / QA ทดสอบบน iPhone จริง — ออกไปหน้าโฮมแล้วเสียงประชุมยังอยู่ · Drive video เปิดได้โดยไม่ login (`curl` 200)
+  - **build:** AAB เซ็นแล้ว `jarsigner -verify` ผ่าน · SHA-1 ตรงกับ upload key ใหม่ · ไม่มี com.facebook / AD_ID · Play รับไฟล์ (API 24+, target 36)
+  - **ยังไม่ได้ทดสอบ:** Google login ในแอป Android ที่ติดตั้งจาก Play · Android foreground service บนเครื่องจริงกับ build จาก Play
+- **ต่อจากนี้:** รอผลทั้งสองร้าน · เพิ่มอีเมลผู้ทดสอบ Play internal · ลอง Google login จาก Play internal · ถ้า Apple ให้ resubmit → กด Resubmit · ใส่ลิงก์วิดีโอใน App Review Notes (Apple ขอไว้สำหรับรอบหน้า) · Play service account (`PLAY_SERVICE_ACCOUNT_JSON`) เพื่อให้ CI upload เอง
+- **ติดอะไร:** รอ review · รหัส upload key ใหม่ Ten ถือไว้คนเดียว (ไฟล์ `~/zyra-keys/zyra-upload.jks`) — ต้องสำรองไว้
+
+## 2026-10-15 (รอบ 66) · Ten + Claude — แก้ store compliance ครบ · TestFlight UAT + PROD build 3 · privacy policy ใหม่
+
+- **ทำอะไร:**
+  - แก้ครบ 8 ข้อใน [store-compliance-audit.md](store-compliance-audit.md): ซ่อน upgrade / ราคาในแอป (zyra-app#597) · report / block (zyra-api#168, zyra-app#599, migration 113) · ตัด Facebook SDK + PrivacyInfo + push channel (zyra-mobile#16) · Google iOS client prod (zyra-mobile#18) · revoke Apple token (zyra-api#169, zyra-app#598, migration 114) · iPhone อย่างเดียว (zyra-mobile#17)
+  - App Store Connect: สร้าง app **Zyra World** (`6823101211`) + subtitle / category / privacy URL · upload **UAT + PROD 1.0.0 (3)** ขึ้น TestFlight (ยังไม่ submit review)
+  - Privacy policy ใหม่จาก PM (`demo file/policy`) + แก้ให้ตรงแอป (Ten อนุมัติ): zyra-app#601 · zyra-landing#11 #12 (live บน zyra-world.com)
+  - คู่มือให้เจ้าของบัญชี (Play verify + Apple agreement) — doc "ขั้นตอนยืนยันบัญชี Play / Apple" + ค่า TXT ของ maximumsoft.co.th
+- **verify ถึงไหน:** CI เขียวทุก PR · migration 113 / 114 รันบน **dev** แล้ว · dev api `dev-6cfcd86` endpoint ใหม่ตอบ 401 (มี route) · landing live ตรวจด้วย curl แล้ว · **ยังไม่ได้เทสบนเครื่องจริง** และยังไม่ได้เทส report / block ด้วย 2 บัญชี
+- **ต่อจากนี้:** เทส report / block บน dev · TestFlight internal group (รอรายชื่อ) · develop → main → tag (ต้อง confirm) + migration 113 / 114 บน uat / prod ก่อน
+- **ติดอะไร:** Play owner verify (MD) · Apple License Agreement (Chatchai) · TXT ของ maximumsoft.co.th (คนดูแล Cloudflare) · Ten: key .p8, upload keystore, บัญชี reviewer
+
+## 2026-10-15 (รอบ 65) · Ten + Claude — Report & Block (store compliance audit #2)
+
+- **คำขอ:** App Store Guideline 1.2 + Google Play UGC policy บังคับให้แอปที่มี chat มี report เนื้อหา + block ผู้ใช้ — zyra-app / zyra-api ยังไม่มี
+- **มติ Ten:** block ระดับบัญชี (ทุก workspace) · report → DB + Discord + email (admin page ทำรอบหลัง) · UI ใช้ style prototype · scope chat + DM เท่านั้น (ไม่ซ่อนใน VO) — แผน: [report-block-plan.md](report-block-plan.md)
+- **ทำอะไร:**
+  - **zyra-api** [#168](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/168): migration `113_report_block` (+ down) · `POST /api/user/reports` · `GET/POST/DELETE /api/user/blocks` · ซ่อนข้อความคนที่บล็อกใน list / thread / pinned / search / unread / preview / notification / push · DM กับคนที่บล็อก = ซ่อนฝั่งคนบล็อก + ส่ง / forward ไม่ได้ทั้งสองฝั่ง (403 `user blocked`)
+  - **zyra-app** [#599](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/599): Report message ในเมนูข้อความ (web / Lite / Spatial) · Report / Block / Unblock ทุกจุดที่มีโปรไฟล์สมาชิก · Report sheet (เหตุผล + รายละเอียด + บล็อกด้วย) · Settings → Blocked users (web, Lite, Spatial) · กรองข้อความ realtime · i18n en + th
+- **ถึงไหน:** PR ทั้งสองเปิดเข้า `develop` รอ review — ยังไม่ merge
+- **verify ถึงไหน:**
+  - **build / test:** zyra-api `go test ./...` 11 package ผ่าน + `go vet` / `gofmt` สะอาด · zyra-app vitest 3 ไฟล์ใหม่ 29 test ผ่าน (ทั้ง suite 365 ไฟล์ / 4,410 ผ่าน) · `tsc` 7 error เดิม (ไฟล์ test ที่ไม่ได้แตะ) · eslint 0 error
+  - **live-test:** ยังไม่ได้ทำ — SQL ยังไม่ได้รันกับ Postgres จริง (เครื่องไม่มี server) และ UI ยังไม่ได้เปิดบน browser
+- **Before / After:**
+
+  | Metric | Before | After | Δ |
+  |---|---|---|---|
+  | ช่องทาง report เนื้อหา chat | 0 | 2 (ข้อความ, ผู้ใช้) | +2 |
+  | ช่องทาง block ผู้ใช้ | 0 | 1 (ระดับบัญชี) | +1 |
+
+  **วัดยังไง:** นับจากโค้ด (route + UI) ก่อน / หลัง PR · **production:** ยังไม่ได้วัด — ฟีเจอร์ใหม่ไม่มี baseline; หลัง deploy นับ row ใน `tb_content_report` / `tb_user_block`
+- **ต่อจากนี้:** review + merge #168 → รัน migration 113 บน dev → merge #599 → เทส 2 บัญชีบน dev (report → Discord + email, block → ข้อความ / DM หาย, unblock → กลับมา) ทั้ง web / Lite / Spatial → เขียน review notes สำหรับ App Store / Play Console · admin page `/admin/reports` รอบหลัง
+- **ติดอะไร:** ไม่มี — รอ review
+
+## 2026-10-15 (รอบ 64) · Ten + Claude — เตรียมส่ง App Store / Play Store (UAT → PROD)
+
+- **คำขอ Ten:** เตรียมความพร้อมส่ง review ทั้งสอง store โดยมี version UAT ก่อน แล้ว PROD
+- **มติ Ten:** มีบัญชี Apple + Play แล้ว · UAT = app แยก `co.zyraworld.app.uat` (TestFlight / Play internal เท่านั้น) · PROD = `co.zyraworld.app` ส่ง review · รอบแรก build manual, CI ทีหลัง
+- **ทำอะไร:**
+  - checklist ใหม่ [store-release-checklist.md](store-release-checklist.md) — งาน console แยก UAT / PROD + เจ้าของ, วิธี build manual, upload keystore, เคสทดสอบบนเครื่องจริง
+  - zyra-mobile `feat/store-release-prep`: `version.json` เป็นที่เดียวที่กำหนด version / build · `DEVELOPMENT_TEAM` · `arm64` · Android release signing จาก `keystore.properties` / env · `npm run bundle:uat|prod`
+  - zyra-app `fix/mobile-legal-links`: ลิงก์ `/legal/terms` `/legal/privacy` (ไม่มี route → 404) 8 จุด → `/legal?section=…`
+  - zyra-infra `chore/api-mobile-version-keys`: key force-update / store URL 6 ตัวใน template uat + prod
+- **verify ถึงไหน:** iOS `-showBuildSettings` (uat) ได้ Team / bundle id / 1.0.0 (1) ถูก + build simulator Release ผ่าน · zyra-app eslint ไฟล์ที่แก้ผ่าน, `tsc` เหลือ 7 error เดิมใน `__tests__` · **Android ยังไม่ได้ build ในเครื่อง** (เครื่องไม่มี JDK) → ใช้ CI `android-apk.yml` (debug) · release signing ยังไม่ได้ลองกับ key จริง · ยังไม่มีอะไรขึ้นเครื่องจริง
+- **ต่อจากนี้:** Ten ทำ U1–U8 ใน checklist → build UAT → ทดสอบ §5 → zyra-app ขึ้น prod → Phase PROD
+- **ติดอะไร:** Firebase uat / prod ต้องได้ OK จาก Ten (แตะ project ที่มี prod) · store assets รอ Design · ข้อความ permission รอ sign-off
 
 ## 2026-10-15 (รอบ 63) · Ten + Claude — B-45 language pack · เปลี่ยนภาษาทันที · V-13 Circle วาร์ป · ไล่ B-05 / B-25
 
