@@ -74,6 +74,15 @@ Figma มี 18 หมวด · data contract ฝั่ง member มี 11 slot
 | พื้นโปร่งใส | ต้องมี alpha channel และมี pixel โปร่งอย่างน้อย 1 จุด → ไม่ผ่าน = `NOT_TRANSPARENT` (error ตาม Figma · ux-ui-plan U3) | Figma toast |
 | สี key | scan ตอนอัปโหลด เก็บ `color_channels` | AvatarCustomization §3.3 |
 
+**ท่านั่งของชิ้นบนหัว (2026-10-22 · zyra-app#645):** `hair`, `eyes`, `face`, `facial_hair`, `hat`, `glasses`, `mask` (`followsHead`) **ไม่ต้องมีชีทนั่ง** — ตอนนั่งใช้เฟรมยืน (walk col 1) แล้วเลื่อนตามหัวด้วย `HEAD_SIT_SHIFT[ทิศ][คอลัมน์ sit]` (`lib/avatar-part/constants.ts`) · ค่าวัดจากไฟล์จริง: ชีทนั่งของหนวดที่ศิลปินวาด = เฟรมยืนเลื่อนตามตารางนี้พอดี (ต่างกัน 0 พิกเซล) และหัวของตัว base เลื่อนเท่ากัน · ถ้าชิ้นมีชีทนั่งของตัวเองใช้ชีทนั้นก่อน · ชิ้นส่วนลำตัว (shoes, neck, belt, bag, back, companion) ไม่เลื่อน · **bake ฝั่ง server (AvatarCustomization) ต้องใช้ตารางเดียวกัน**
+
+| ทิศ | sit col 0 | col 1 | col 2 (นั่ง) | col 3 |
+|---|---|---|---|---|
+| down | (1, −1) | (0, 1) | (0, −1) | (0, 1) |
+| left | (0, 2) | (1, 3) | (1, 0) | (1, 3) |
+| right | (−1, 3) | (−1, 0) | (−1, 3) | (0, 2) |
+| up | (2, −1) | (0, 1) | (0, −1) | (0, 1) |
+
 Validator (Go) `internal/service/avatar_part_validate.go` — ต่อยอดของเดิม `readAndValidatePNG` / `avatarPNGMagic` ใน `avatar_service.go` ใช้ `image/png` + `golang.org/x/image` (มีใน go.mod แล้ว)
 
 ---
