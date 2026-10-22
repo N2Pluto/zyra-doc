@@ -82,12 +82,14 @@ Validator (Go) `internal/service/avatar_part_validate.go` — ต่อยอด
 
 > ⚠️ GitOps deploy ไม่รัน `migrations/*.sql` (`internal/database/postgres.go` comment บรรทัด ~356 "It has now bitten three times") → ทุกตาราง/คอลัมน์ใหม่ต้องใส่ **ทั้ง** migration file **และ** embedded DDL ใน `postgres.go`
 
-### 4.1 Migration `115_avatar_parts_admin.sql` (+ `.down.sql`)
+### 4.1 Migration `118_avatar_parts_admin.sql` (+ `.down.sql`)
+
+> เลข 115–117 ถูกใช้ไปแล้ว (calendar) → ใช้ **118** · ทำแล้วใน zyra-api#179 · สร้าง `tb_avatar_part` + `tb_user_outfit` เองด้วย `IF NOT EXISTS` (D6) · ไม่สร้าง `tb_avatar_palette` (admin ไม่ใช้)
 
 ถ้า AvatarCustomization A1 ยังไม่ได้สร้าง `tb_avatar_part` → migration นี้สร้างเอง ตามร่าง §5 ของเอกสารนั้น บวกส่วนขยายด้านล่าง ถ้าสร้างไปแล้ว → ใช้แค่ `ALTER` ส่วนขยาย
 
 ```sql
--- migration 115: admin accessory management
+-- migration 118: admin accessory management
 -- ส่วนขยายบน tb_avatar_part (AvatarCustomization §5)
 ALTER TABLE tb_avatar_part
   ADD COLUMN IF NOT EXISTS deleted_at  TIMESTAMPTZ,
@@ -189,7 +191,7 @@ Error code (map 1:1 กับ toast/inline ใน ux-ui-plan §7–8 และ t
 | 400 | `INVALID_DIMENSIONS` | `ErrInvalidDimensions` |
 | 400 | `NOT_TRANSPARENT` | `ErrNotTransparent` |
 | 400 | `MISSING_SHEET` (+ `detail.sheet`, `detail.variant`) | `ErrMissingSheet` |
-| 400 | `INVALID_CATEGORY` · `NAME_REQUIRED` · `NAME_TOO_LONG` · `INVALID_DATE_RANGE` · `VARIANT_REQUIRED` | ตามชื่อ |
+| 400 | `INVALID_CATEGORY` · `NAME_REQUIRED` · `NAME_TOO_LONG` · `INVALID_DATE_RANGE` · `VARIANT_REQUIRED` · `VARIANT_NAME_REQUIRED` · `VARIANT_NAME_TOO_LONG` · `INVALID_COLOR_TAG` | `ErrPart…` ตามชื่อ (prefix `ErrPart` เพราะ `ErrFileTooLarge` มีใน object_service แล้ว) |
 | 400 | `CONFIRM_NAME_REQUIRED` · `CONFIRM_NAME_MISMATCH` | — |
 | 404 | `PART_NOT_FOUND` | `ErrAccessoryNotFound` |
 | 409 | `ACCESSORY_NAME_EXISTS` · `VARIANT_NAME_EXISTS` | `ErrNameExists` · `ErrVariantDuplicate` |
@@ -320,6 +322,6 @@ i18n/messages-scope.ts                             + AdminAccessoryManagement �
 | D3 | สถานะเริ่มต้น Active หรือ Hidden | default ของฟอร์ม + API | PM |
 | D4 | 18 หมวด → ขยาย data contract ฝั่ง member | member เลือกชิ้นหมวดใหม่ไม่ได้ | PM + Ten (U4) |
 | D5 | Hair / Facial Hair ต้องมีชีทนั่งไหม | `CATEGORY_REQUIRES_SIT` | PM + ศิลปิน (U5) |
-| D6 | AvatarCustomization A1 (สร้าง tb_avatar_part) ทำก่อนหรือรวมกับ migration 115 | ลำดับ PR | Ten |
+| D6 | AvatarCustomization A1 (สร้าง tb_avatar_part) ทำก่อนหรือรวมกับ migration 118 | ลำดับ PR | Ten |
 | R1 | bake ต่อคนใน reset job — 892 คนอาจช้า | admin รอ progress นาน | วัดตอน API-5 · dedupe ด้วย bake_hash ช่วยได้มาก |
 | R2 | `PREVIEW_CHAIR_OBJECT_ID` ต่างกันแต่ละ env | preview ไม่มีเก้าอี้ | ใส่ใน env build (`NEXT_PUBLIC_PREVIEW_CHAIR_ID`) หรือ fallback ไม่วาดเก้าอี้ |

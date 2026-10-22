@@ -1,7 +1,24 @@
 # [Module] Avatar & Accessories Management (Admin) — Progress / Handoff
 
-> **สถานะรวม:** POC version 10 + ux-ui-plan.md v1.0 + test-plan.md + technical-design.md + task-breakdown.md v1.0 พร้อมรีวิว (icon Figma, เก้าอี้จาก object จริง, card ตัวละครใส่ชิ้น, แถบ Shade) — Ten สั่งให้ทำใน POC ก่อน ยังไม่ลง zyra-app · PR zyra-app#636 (category panel) **ปิดแล้ว** โดยไม่ merge, branch `feat/accessory-category-panel` ยังอยู่บน origin เผื่อหยิบกลับ · ux-ui-plan.md ยังไม่เขียน
-> **อัปเดตล่าสุด:** 2026-10-21 · **คนล่าสุด:** Ten (ผ่าน Claude Code)
+> **สถานะรวม:** เริ่ม implement แล้ว (รอบ 6) — เปิด PR 4 ตัว รอ review: zyra-app#638 (APP-1 renderer lib) · zyra-app#639 (APP-2 shell + category panel) · zyra-api#179 (API-1 schema) · zyra-api#180 (API-2 validator) · ยังไม่ merge · D1–D6 ยังไม่มีคำตอบ ใช้ค่าตามเอกสารไปก่อน (ระบุใน PR)
+> **อัปเดตล่าสุด:** 2026-10-22 · **คนล่าสุด:** Ten (ผ่าน Claude Code)
+
+## 2026-10-22 (รอบ 6 · เริ่ม implement) · Ten (ผ่าน Claude Code)
+
+- **ทำอะไร:**
+  - APP-1 `lib/avatar-part/{constants,shade,render,chair,validate}.ts` ยกจาก POC · ใช้ layout ชีทจาก `zyra-engine/avatar-frames` (ไม่ประกาศซ้ำ) · `chairOffsets` คำนวณจาก composition จริงด้วยสูตร VO (piece − 176, เท้า = sitPoint + 5) · base sheet `public/avatar/base/{walk,sit}.png`
+  - APP-2 หยิบ branch `feat/accessory-category-panel` กลับมา rebase บน develop · icon 18 หมวดจาก Figma เข้า `components/ui/icon.tsx` (`AccessoryCategoryIcon`, currentColor) · panel อ่านรายชื่อหมวดจาก `lib/avatar-part/constants.ts`
+  - API-1 migration **118** (115–117 ถูกใช้แล้ว) + embedded DDL: `tb_avatar_part`, `tb_avatar_part_variant`, `tb_avatar_part_audit`, `tb_avatar_reset_job`, `tb_user_outfit` + GIN · model + ค่าคงที่ 18 หมวด
+  - API-2 `ValidateAccessorySheet` / `ValidateAccessoryInput` / `CheckRequiredSheets` · code ใหม่ `VARIANT_NAME_REQUIRED`, `VARIANT_NAME_TOO_LONG`, `INVALID_COLOR_TAG` (เพิ่มใน technical-design §5)
+- **ถึงไหน:** 4 PR เปิดเข้า develop · ลำดับ merge: #638 → #639 · #179 → #180 (ตัวหลังมี commit ของตัวหน้า)
+- **PR:** zyra-app#638 · zyra-app#639 · zyra-api#179 · zyra-api#180
+- **verify ถึงไหน:**
+  - build เขียว: vitest renderer 64 ผ่าน (coverage `lib/avatar-part` 98%) · Go `go test ./...` เขียว · validator 44 sub-test (AC-U-01~28) · model parity AC-T-04 ทั้งสองฝั่ง
+  - migration: รันบน dev DB ใน transaction แล้ว ROLLBACK (ไม่มีอะไรค้าง) — up 5 ตาราง · up ซ้ำไม่ error · ชื่อซ้ำในหมวดเดียวกันโดนบล็อก / ข้ามหมวด + หลังลบใช้ซ้ำได้ · query นับผู้ใช้ใช้ GIN index · down → up ได้
+  - UI: category panel เปิดใน browser ผ่าน harness ชั่วคราวที่ 1440×1024 — icon ครบ 18 · active เป็นสีเขียว · ไม่มี console error
+  - **ยังไม่ได้** เทสหลัง login admin บน dev · ยังไม่ได้บูต pod จริงกับ migration 118 (เกิดหลัง merge)
+- **ต่อจากนี้:** review + merge 4 PR → API-3 (service CRUD + R2 + thumbnail) → API-4 (routes + permission) → APP-3 (list)
+- **ติดอะไร:** D1–D6 ยังไม่ตอบ (ใช้ 48px · ไม่โปร่งใส = error · sit ตาม sticky · `tb_avatar_part` สร้างใน API-1) · เอกสาร `plan/AvatarCustomization/` ที่อ้างถึงยังไม่ขึ้น main (มีแค่ในเครื่อง)
 
 ## 2026-10-21 (รอบ 5 · POC) · Ten (ผ่าน Claude Code)
 

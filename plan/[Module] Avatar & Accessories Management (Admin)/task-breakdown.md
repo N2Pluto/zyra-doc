@@ -1,6 +1,6 @@
 # Accessory Management (Admin) — Task Breakdown
 
-> **สถานะ:** Draft v1.0 · 2026-10-21 · ยังไม่เริ่ม · 1 แถว = 1 PR · branch แตกจาก `develop` (`feat/<name>`) ตาม [17-git-branch-workflow.md](../../../.claude/rules/17-git-branch-workflow.md)
+> **สถานะ:** v1.0 · เริ่ม 2026-10-22 — APP-1 #638 · APP-2 #639 · API-1 #179 · API-2 #180 (รอ review) · 1 แถว = 1 PR · branch แตกจาก `develop` (`feat/<name>`) ตาม [17-git-branch-workflow.md](../../../.claude/rules/17-git-branch-workflow.md)
 > **อ้างอิง:** [technical-design.md](technical-design.md) · [test-plan.md](test-plan.md) (test ID ในตาราง) · [ux-ui-plan.md](ux-ui-plan.md) · POC [poc/accessory-admin-poc.html](poc/accessory-admin-poc.html)
 > **ประมาณการ:** วัน-คน ของ dev 1 คน ไม่รวมรอ review · รวมทั้งหมด ≈ 17.5 วัน (api 7 · ws 0.5 · app 9 · E2E/QA 1) · ทำ 2 คนขนานกัน ≈ 3 สัปดาห์
 
@@ -25,7 +25,7 @@
 
 | ID | PR title | ทำอะไร | Test (test-plan) | ขึ้นกับ | วัน |
 |---|---|---|---|---|---|
-| API-1 | `feat(api): avatar part schema for admin accessories` | migration `115_avatar_parts_admin.sql` + `.down.sql` · **embedded DDL ใน `internal/database/postgres.go`** (ห้ามลืม) · model `AvatarPart`, `AvatarPartVariant`, `ResetJob` · constants 18 หมวด / layer / requires-sit | migration up/down บน dev DB · AC-T-04 parity (Go ฝั่ง) | D6 | 1 |
+| API-1 | `feat(api): avatar part schema for admin accessories` | migration `118_avatar_parts_admin.sql` + `.down.sql` · **embedded DDL ใน `internal/database/postgres.go`** (ห้ามลืม) · model `AvatarPart`, `AvatarPartVariant`, `ResetJob` · constants 18 หมวด / layer / requires-sit | migration up/down บน dev DB · AC-T-04 parity (Go ฝั่ง) | D6 | 1 |
 | API-2 | `feat(api): validate accessory sprite sheets` | `avatar_part_validate.go`: magic bytes, ≤ 2 MB, 192×192, alpha, โปร่งใส, scan สี key, ตาราง required sheets · sentinel errors ทั้งชุด | AC-U-01~12, AC-U-13~28 | API-1, D1, D2, D5 | 1 |
 | API-3 | `feat(api): avatar part service crud + list` | service Create/Update/Get/List/CountByCategory/SetStatus · upload R2 + rollback · thumbnail ฝั่ง server · audit · user count แบบ containment query | AC-U-29~42, AC-U-44~45 | API-2, D3 | 2 |
 | API-4 | `feat(api): admin avatar-parts routes` | handler + route ใต้ admin + `RequirePermission(PermAdminAvatarManage)` · map error code ตาม technical-design §5 · envelope `model.APIResponse` | AC-A-01~13, AC-A-18 | API-3 | 1 |
