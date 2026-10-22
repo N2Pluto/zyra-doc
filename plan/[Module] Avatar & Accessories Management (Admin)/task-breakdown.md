@@ -1,6 +1,6 @@
 # Accessory Management (Admin) — Task Breakdown
 
-> **สถานะ:** v1.0 · เริ่ม 2026-10-22 — APP-1 #638 · APP-2 #639 · API-1 #179 · API-2 #180 (รอ review) · 1 แถว = 1 PR · branch แตกจาก `develop` (`feat/<name>`) ตาม [17-git-branch-workflow.md](../../../.claude/rules/17-git-branch-workflow.md)
+> **สถานะ:** v1.0 · 2026-10-22 ทำครบทุกแถวและ merge เข้า develop แล้ว — api #179–#184 · ws #86 · app #638–#643 · QA-1 #644 (merge แล้ว ยังไม่ได้รันบน dev) · QA-2 manual ยังไม่ทำ · 1 แถว = 1 PR · branch แตกจาก `develop` (`feat/<name>`) ตาม [17-git-branch-workflow.md](../../../.claude/rules/17-git-branch-workflow.md)
 > **อ้างอิง:** [technical-design.md](technical-design.md) · [test-plan.md](test-plan.md) (test ID ในตาราง) · [ux-ui-plan.md](ux-ui-plan.md) · POC [poc/accessory-admin-poc.html](poc/accessory-admin-poc.html)
 > **ประมาณการ:** วัน-คน ของ dev 1 คน ไม่รวมรอ review · รวมทั้งหมด ≈ 17.5 วัน (api 7 · ws 0.5 · app 9 · E2E/QA 1) · ทำ 2 คนขนานกัน ≈ 3 สัปดาห์
 
