@@ -85,6 +85,7 @@ Validator (Go) `internal/service/avatar_part_validate.go` — ต่อยอด
 ### 4.1 Migration `118_avatar_parts_admin.sql` (+ `.down.sql`)
 
 > เลข 115–117 ถูกใช้ไปแล้ว (calendar) → ใช้ **118** · ทำแล้วใน zyra-api#179 · สร้าง `tb_avatar_part` + `tb_user_outfit` เองด้วย `IF NOT EXISTS` (D6) · ไม่สร้าง `tb_avatar_palette` (admin ไม่ใช้)
+> **ชุดแยกต่อ workspace (มติ C-14 — [AvatarCustomization/spec.md](../AvatarCustomization/spec.md) §8.3, §9.2):** migration **119** `119_user_outfit_per_workspace.sql` (zyra-api#185) เพิ่ม `workspace_id UUID NOT NULL → tb_workspace ON DELETE CASCADE` และเปลี่ยน PK เป็น `(user_id, workspace_id)` + index `workspace_id` · ทำตอนตารางยังว่างทุกที่ (ยังไม่มี member API เขียน) → ไม่ต้องย้ายข้อมูล · embedded DDL ใช้ `DO $$` ที่สลับ PK เฉพาะตอน PK ยังเป็น `user_id` คอลัมน์เดียว (รันซ้ำทุก boot ได้)
 
 ถ้า AvatarCustomization A1 ยังไม่ได้สร้าง `tb_avatar_part` → migration นี้สร้างเอง ตามร่าง §5 ของเอกสารนั้น บวกส่วนขยายด้านล่าง ถ้าสร้างไปแล้ว → ใช้แค่ `ALTER` ส่วนขยาย
 
@@ -149,11 +150,11 @@ CREATE INDEX IF NOT EXISTS idx_tb_user_outfit_outfit_gin
 
 ### 4.2 จำนวนผู้ใช้ต่อชิ้น (card count, modal ลบ)
 
-**ไม่เก็บเป็นคอลัมน์** (บักเดิม `user_count = 0` ตลอด — [AvatarManagement/SC-AV-01-user-count-fix.md](../AvatarManagement/SC-AV-01-user-count-fix.md)) → นับสดจาก `tb_user_outfit`:
+**ไม่เก็บเป็นคอลัมน์** (บักเดิม `user_count = 0` ตลอด — [AvatarManagement/SC-AV-01-user-count-fix.md](../AvatarManagement/SC-AV-01-user-count-fix.md)) → นับสดจาก `tb_user_outfit` · ชุดแยกต่อ workspace → นับ **คนไม่ซ้ำ** (คนเดียวใส่ใน 3 workspace = 1 คน · ClickUp "ถูกใช้โดย X users"):
 
 ```sql
 -- รู้ slot ของชิ้นอยู่แล้ว → ใช้ containment (@>) ซึ่ง GIN jsonb_path_ops ใช้ index ได้
-SELECT count(*) FROM tb_user_outfit
+SELECT count(DISTINCT user_id) FROM tb_user_outfit
 WHERE outfit @> jsonb_build_object('slots', jsonb_build_object($1::text, jsonb_build_object('part_id', $2::text)))
 -- $1 = slot (category), $2 = part_id
 ```
@@ -233,29 +234,34 @@ Layer: `handler/avatar_part_handler.go` (รับ input, validate ผิว) �
 ### 8.2 Delete
 ```
 DELETE /:id
-  tx: SELECT … FOR UPDATE · ตรวจ confirm_name ถ้า user_count > 100
-      UPDATE is_deleted, deleted_at · audit(deleted, affected_user_count)
-      ถ้า user_count > 0 → INSERT tb_avatar_reset_job(total) 
-  commit → 202 {job_id}
-  go resetWorker(job_id)            (goroutine ใน process เดียว — replicas = 1 ตอนนี้)
+  ตรวจ confirm_name (ตรงตัวหลัง trim) ถ้า user_count (คนไม่ซ้ำ) > 100
+  tx: UPDATE is_deleted, deleted_at
+      outfits = จำนวนแถว tb_user_outfit ที่ใส่ชิ้นนี้ (ทุก workspace)
+      ถ้า outfits > 0 → INSERT tb_avatar_reset_job(total = outfits)
+      audit(deleted, {affected_user_count, affected_outfit_count, job_id})
+  commit → ไม่มีใครใส่: 200 {job_id: null, total: 0, user_count: 0}
+          มีคนใส่:     202 {job_id, total = outfits, user_count}
+  ปลุก reset worker (channel) — ไม่ต้องรอ poll 30 วินาที
 ```
 
-### 8.3 Reset worker (EC-02)
+### 8.3 Reset worker (EC-02) — ทำแล้วใน zyra-api#183, ปรับต่อ workspace ใน #185
 ```
-loop:
-  SELECT user_id, outfit FROM tb_user_outfit
-   WHERE outfit @> {slots:{<slot>:{part_id:<id>}}}      -- query เดียวกับ §4.2
-   ORDER BY user_id LIMIT 100 FOR UPDATE SKIP LOCKED
-  ถ้าไม่มีแถว → job completed
-  ต่อคน: ถอด slot ที่ใช้ชิ้นนี้ (slot บังคับ → ใส่ชิ้น default ของ slot) → bake (dedupe ด้วย bake_hash) → UPDATE แถว
-  UPDATE job.done += n · commit
-  ต่อคน: publish Redis {outfit_reset_user_id} (หลัง commit เท่านั้น)
+ทุก batch (1 tx):
+  SELECT job … FOR UPDATE OF job SKIP LOCKED           -- replica อื่นถือ job อยู่ → ข้าม
+  WITH picked AS (SELECT user_id, workspace_id FROM tb_user_outfit
+                   WHERE outfit @> {slots:{<slot>:{part_id:<id>}}}   -- query เดียวกับ §4.2
+                   LIMIT 100 FOR UPDATE SKIP LOCKED)
+  UPDATE tb_user_outfit SET outfit = outfit #- {slots,<slot>}, bake_hash = ''   -- ทีละแถว (user, workspace)
+  job.done += n · จบเมื่อได้ไม่ครบ 100 หรือ done + n ≥ total → completed (done = total)
+  หลัง commit: publish Redis {workspace_id, outfit_reset_user_id} ต่อแถว
 ```
-- **resume ได้:** query หา "คนที่ยังใส่ชิ้นนี้" ทุกรอบ → job ตายกลางทางแล้วรันใหม่ ไม่ reset ซ้ำคนที่เสร็จแล้ว (AC-U-55) · ตอน api start ให้หยิบ job `running` ที่ค้างมารันต่อ
-- **เมื่อ replicas > 1** (มีแผน [Autoscaling](../Autoscaling/)): หุ้ม worker ด้วย `pg_try_advisory_lock(hashtext(job_id))` — มี precedent `pg_advisory_xact_lock` ใน `pet_xp_config_service.go`
+- **ยังไม่มี bake ของ AvatarCustomization (A2)** → ใช้ทางสำรองตาม task-breakdown: ถอด slot + ล้าง `bake_hash` แล้ว re-bake ตอนโหลดชุดครั้งหน้า · เมื่อมี A2 ค่อยเปลี่ยนเป็น "slot บังคับ → ใส่ชิ้น default ของ slot → bake"
+- **หน่วยของ progress = ชุด (แถว)** ไม่ใช่คน · modal แสดงจำนวนคนจาก `user_count`
+- **resume ได้:** query หา "ชุดที่ยังใส่ชิ้นนี้" ทุกรอบ → job ตายกลางทางแล้วรันใหม่ ไม่ reset ซ้ำ (AC-U-55) · ตอน api start หยิบ job `running` ที่ค้างมารันต่อ
+- **หลาย replica:** `FOR UPDATE SKIP LOCKED` ทั้งแถว job และแถวชุด → ไม่ต้องใช้ advisory lock
 
 ### 8.4 Hard delete หลัง 30 วัน
-`cmd/avatar-cleanup` มีอยู่แต่ **ไม่เคยถูกรัน**: Dockerfile build แค่ `/app/server` และใน `zyra-infra` ไม่มี CronJob ของมัน → ทำเป็น **ticker ใน process** (ทุก 24 ชม. + `pg_try_advisory_lock` คงที่) ลบ R2 prefix `static/avatar-part/{id}/` ด้วย `DeleteByPrefix` แล้วลบแถว · S3 พังให้ log แล้วข้ามไปชิ้นถัดไป (AC-U-49) · ใช้ ticker เดียวกันลบชิ้นของ `tb_avatar` เดิมได้ด้วย (แก้บักนี้ในทีเดียว)
+`cmd/avatar-cleanup` มีอยู่แต่ **ไม่เคยถูกรัน**: Dockerfile build แค่ `/app/server` และใน `zyra-infra` ไม่มี CronJob ของมัน → ทำเป็น **ticker ใน process** (ทุก 24 ชม. + `pg_try_advisory_lock` คงที่) ลบ R2 prefix `static/avatar-part/{id}/` ด้วย `DeleteByPrefix` แล้วลบแถว · S3 พังให้ log แล้วข้ามไปชิ้นถัดไป (AC-U-49) · ทำแล้วใน zyra-api#184 แบบ 1 ชิ้นต่อ tx + `FOR UPDATE SKIP LOCKED` (แทน advisory lock) · **ยังไม่ครอบ `tb_avatar` เดิม** — เปิดเมื่อไหร่จะลบ avatar เดิมที่ถูกลบเกิน 30 วันบน prod ถาวรทันทีที่ deploy → รอ Ten ตัดสิน
 
 ---
 
@@ -265,11 +271,11 @@ loop:
 
 | ฝั่ง | งาน |
 |---|---|
-| zyra-api | เพิ่ม field `OutfitResetUserID string \`json:"outfit_reset_user_id,omitempty"\`` + `PublishOutfitReset(ctx, userID)` (แบบเดียวกับ `PublishUserDeleted`) |
-| zyra-ws | เจอ field นี้ → ส่ง `{"type":"outfit_reset"}` ไปทุก socket ของ user นั้น · เพิ่ม `MsgOutfitReset` ใน `message.go` |
-| zyra-app (VO) | ได้ `outfit_reset` → `GET /api/user/me/outfit` → อัปเดต avatar_url ของตัวเอง → ส่งใน `move` ถัดไป → room.go (`avatarChanged`) broadcast ให้คนอื่นเห็นเองตามกลไกเดิม |
+| zyra-api | field `OutfitResetUserID` (`outfit_reset_user_id`) + `WorkspaceID` ใน envelope · `PublishOutfitReset(ctx, userID, workspaceID)` ต่อชุดที่ถูก reset (zyra-api#183, #185) |
+| zyra-ws | เจอ field นี้ → ส่ง `{"type":"outfit_reset"}` ไปที่ socket ของ user นั้น **เฉพาะห้องของ workspace นั้น** (ชุดของ workspace อื่นไม่ได้เปลี่ยน) · `MsgOutfitReset` (zyra-ws#86, #87) |
+| zyra-app (VO) | ได้ `outfit_reset` → `GET /api/user/workspaces/:id/avatar/outfit` → อัปเดต avatar_url ของตัวเอง → ส่งใน `move` ถัดไป → room.go (`avatarChanged`) broadcast ให้คนอื่นเห็นเองตามกลไกเดิม · **ยังไม่ได้ทำ** (รอระบบชุดฝั่ง member) |
 
-ผู้ใช้ offline: ไม่ต้องทำอะไร — เข้า VO ครั้งหน้าได้ชุดใหม่จาก DB (AC-U-59)
+ผู้ใช้ offline: ไม่ต้องทำอะไร — เข้า VO ครั้งหน้าได้ชุดใหม่จาก DB (AC-U-59) · ผู้ใช้อยู่หลาย workspace: ได้ 1 event ต่อ workspace ที่ชุดถูก reset (AC-U-60)
 
 ---
 

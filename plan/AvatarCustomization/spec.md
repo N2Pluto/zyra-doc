@@ -1,6 +1,6 @@
 # SC-AV-02 — Avatar Customization (Client)
 
-> **สถานะ: Draft spec (รอบ 5) — ยังไม่ implement · มติแล้ว: paper-doll (Q-1), ต่อ workspace (C-14), Skin = Default ไม่อัปโหลด (C-13), 18 หมวด (Q-5) — §8.3 · skin 5 เฉด (Q-4b) · ยังติด Q-4c (ค่าสี) และต้องแจ้งทีม Admin ก่อน zyra-api#179 merge**
+> **สถานะ: Draft spec (รอบ 5) — ยังไม่ implement · มติแล้ว: paper-doll (Q-1), ต่อ workspace (C-14), Skin = Default ไม่อัปโหลด (C-13), 18 หมวด (Q-5) — §8.3 · skin 5 เฉด (Q-4b) · ยังติด Q-4c (ค่าสี) · ฝั่ง Admin ทำตามมติ C-14 แล้ว (zyra-api#185 + zyra-ws#87 — `tb_user_outfit` PK `(user_id, workspace_id)`)**
 > วันที่: 2026-10-22 · ผู้เขียน: rif (ผ่าน Claude Code)
 > ClickUp: [[Module] Avatar Customization (Client)](https://app.clickup.com/t/86d43pc9w) — status `in progress`, priority High, due 2026-10-19 (เลยกำหนดแล้ว), tag `client`, Desktop ✓, assignee: P A, rif fullstack
 > โมดูลคู่ฝั่ง Admin: [[Module] · Avatar & Accessories Management (Admin)](https://app.clickup.com/t/86d43pbbj) (SC-AV-01) — `in progress`
@@ -488,10 +488,20 @@ Admin `/api/admin/avatars` (:655-665, permission `admin.avatar.manage`): List/Cr
 
 ---
 
-### 5.6 งานฝั่ง Admin ที่กำลังทำ (ยังไม่ merge — ตาม `[Module] Avatar & Accessories Management (Admin)/progress.md` รอบ 6, 2026-10-22)
+### 5.6 งานฝั่ง Admin (อัปเดต 2026-10-22 — merge เข้า `develop` และขึ้น dev แล้ว)
 
-| PR / branch | สาระ | สถานะ |
+| PR | สาระ | สถานะ |
 |---|---|---|
+| zyra-api#179 (API-1) | migration **118** + embedded DDL: `tb_avatar_part`, `tb_avatar_part_variant`, `tb_avatar_part_audit`, `tb_avatar_reset_job`, `tb_user_outfit` + GIN · ค่าคงที่ 18 หมวด | merged |
+| zyra-api#180–#184 (API-2~6) | validator ชีท · service CRUD · route `/api/admin/avatar-parts*` (+ `admin.avatar.manage`) · ลบ + reset job + `outfit_reset` · ลบถาวรหลัง 30 วัน | merged |
+| **zyra-api#185** | **migration 119 — `tb_user_outfit` PK `(user_id, workspace_id)` ตามมติ C-14** · นับคนไม่ซ้ำ · reset ต่อแถว · `outfit_reset` มี `workspace_id` | merged |
+| zyra-ws#86 / **#87** | `outfit_reset` → socket ของ user · #87 ส่งเฉพาะห้องของ workspace นั้น | merged |
+| zyra-app#638–#644 (APP-1~6, QA-1) | renderer `lib/avatar-part/*` · หน้า admin ครบ (list, ฟอร์ม, Special Costume, hide/delete) · e2e | merged |
+
+- ยังไม่มี member API (`/api/user/avatar/*`, `/api/user/workspaces/:id/avatar/outfit`) — เป็นงาน M-1~M-3 ของ spec นี้ · ข้อเสนอ path อยู่ใน [`data/api-example.md`](<../[Module] Avatar & Accessories Management (Admin)/data/api-example.md>) (อัปเดตเป็นต่อ workspace แล้ว)
+- §5.1–5.5 ตรวจจาก working tree **ก่อน** PR ข้างบน merge — ต้องตรวจใหม่ก่อนเริ่ม M-1
+
+---|---|---|
 | zyra-api#179 `feat/avatar-part-schema` (API-1) | migration **118** + embedded DDL: `tb_avatar_part`, `tb_avatar_part_variant`, `tb_avatar_part_audit`, `tb_avatar_reset_job`, **`tb_user_outfit` (`user_id` PRIMARY KEY — ไม่มี `workspace_id`)** + GIN · ค่าคงที่ 18 หมวด | เปิด รอ review |
 | zyra-api#180 `feat/avatar-part-validate` (API-2) | validator ชีท (`ValidateAccessorySheet` ฯลฯ) | เปิด รอ review |
 | `feat/avatar-part-service`, `feat/avatar-part-routes`, `feat/avatar-part-delete` (API-3~5) | CRUD + routes + delete/reset job + `PublishOutfitReset` (`internal/cache/notification.go`) | มี branch บน origin แล้ว (ล้ำ progress.md) · ยังไม่เข้า `develop` |
@@ -505,7 +515,7 @@ Admin `/api/admin/avatars` (:655-665, permission `admin.avatar.manage`): List/Cr
 
 ## 6. ระบบเป้าหมายที่ทีมกำลังสร้าง (จากเอกสาร Admin — ไม่ใช่ ClickUp SC-AV-02)
 
-> สรุปจาก [technical-design.md](<../[Module] Avatar & Accessories Management (Admin)/technical-design.md>) (Draft v1.0, 2026-10-21), [requirements.md](<../[Module] Avatar & Accessories Management (Admin)/requirements.md>), [data/](<../[Module] Avatar & Accessories Management (Admin)/data/>) — เอกสารเหล่านั้นอ้าง **"มติ AvatarCustomization 2026-10-05"** และ `AvatarCustomization/technical-design.md` ซึ่ง**ยังไม่ขึ้น git** (อยู่ในเครื่องผู้เขียนเท่านั้น — progress Admin รอบ 6 ยืนยัน) → ข้อความ "มติ" ด้านล่างเป็นการอ้างทอด ยังไม่เห็นต้นฉบับ
+> สรุปจาก [technical-design.md](<../[Module] Avatar & Accessories Management (Admin)/technical-design.md>) (Draft v1.0, 2026-10-21), [requirements.md](<../[Module] Avatar & Accessories Management (Admin)/requirements.md>), [data/](<../[Module] Avatar & Accessories Management (Admin)/data/>) — เอกสารเหล่านั้นอ้าง **"มติ AvatarCustomization 2026-10-05"** และ [`technical-design.md`](technical-design.md) — ต้นฉบับร่าง 2026-10-05 ขึ้น git แล้ว (2026-10-22) พร้อมหมายเหตุส่วนที่ถูกแทนด้วยมติใน §8.3
 
 ### 6.1 หลักการ
 
@@ -570,7 +580,7 @@ ClickUp SC-AV-02 มอง Skin เป็น **item ที่ admin อัปโ
 |---|---|---|---|---|
 | G-1 | Skin + accessories แยก layer | character ทั้งตัว | ✅ paper-doll + bake | ทำตาม §6 · ตกลงรายชื่อ slot (D4) |
 | G-2 | Skin = item ที่ admin ซ่อนได้ | `tb_avatar` | ❌ skin = palette | **มติ C-13 ✅** → skin = Default ชีท body + ดูด ramp (§9.3) |
-| G-3 | เก็บต่อ **(user, workspace)** | global (`tb_user_avatar`) | ❌ global (`tb_user_outfit`) | **มติ C-14 ✅** → เพิ่ม `workspace_id` ใน `tb_user_outfit` + path API ก่อน PR #179 merge (§9.2) |
+| G-3 | เก็บต่อ **(user, workspace)** | global (`tb_user_avatar`) | ❌ global (`tb_user_outfit`) | **มติ C-14 ✅** → ทำแล้ว: `workspace_id` + PK `(user_id, workspace_id)` ใน zyra-api#185 (migration 119) · path API ต่อ workspace ใน data contract (§9.2) |
 | G-4 | Preview animated `idle_s` composite | ภาพนิ่ง | ✅ renderer palette swap ฝั่ง client (APP-1 #638) + animation ใน data contract | reuse `lib/avatar-part/render.ts` |
 | G-5 | Z-order 5 layer (Wings/Bag หลังตัว) | ไม่มี | ✅ `CATEGORY_LAYER` (back = 1 หลังตัว, bag = 6) | ใช้ค่าตาม TD — ต่างจาก ClickUp (Bag ไม่ได้อยู่หลังตัว) C-15 |
 | G-6 | VO แสดงชุดใหม่ | 1 sprite/URL | ✅ ยัง URL เดียว (baked) | ไม่ต้องแก้ renderer VO นอกจาก sheet 5 คอลัมน์ 240×192 vs grid เดิม (ตรวจ `avatar-frames.ts`) |
@@ -630,7 +640,7 @@ C-5, C-7, C-8, C-10, C-12 ของรอบแรก (per-workspace vs global, 
 | 2026-10-22 (รอบ 4) | Q-6b | ถูกลบออกจากสมาชิก workspace แล้วถูกเชิญกลับ → **เก็บชุดเดิมไว้** (ไม่ลบแถว) | rif | §9.2 · ลบแถวเฉพาะตอน user/workspace ถูกลบ |
 | 2026-10-22 (รอบ 5) | Q-4b | **มี skin เริ่มต้น 5 เฉดให้ user เลือก** (ของระบบ ไม่ใช่ admin อัปโหลด) · ชีท body ตัวเดียว + palette swap · ค่าสียังไม่ยืนยัน (Q-4c) | rif | §9.3 · AC-HP02 ใช้ได้ |
 
-> มติ C-14 (ต่อ workspace) **ขัดกับเอกสาร Admin ปัจจุบัน** (technical-design §4.1, §4.2, §8.3, §9 · data contract "ใช้ชุดนี้ในทุก workspace") — เอกสาร Admin เป็นของทีม Admin ผมไม่ได้แก้ ต้องให้เจ้าของ (Ten) อัปเดตตาม · มติ Q-1 / C-13 / Q-5 ตรงกับทิศทางของทีม Admin อยู่แล้ว · ClickUp SC-AV-02 ต้องแก้ให้ตรงกับมติทั้งหมด (ดู §11)
+> มติ C-14 (ต่อ workspace) — **ทีม Admin อัปเดตเอกสารตามแล้ว 2026-10-22** (technical-design §4.1, §4.2, §8.2–8.3, §9 · data contract: path `/api/user/workspaces/:id/avatar/outfit` + ข้อความ "ใช้ชุดนี้ใน {workspace}") · ข้อความเดิมของย่อหน้านี้: เอกสาร Admin ยังขัดกับมติ ต้องให้เจ้าของ (Ten) อัปเดตตาม · มติ Q-1 / C-13 / Q-5 ตรงกับทิศทางของทีม Admin อยู่แล้ว · ClickUp SC-AV-02 ต้องแก้ให้ตรงกับมติทั้งหมด (ดู §11)
 
 ---
 
@@ -657,7 +667,7 @@ C-5, C-7, C-8, C-10, C-12 ของรอบแรก (per-workspace vs global, 
 
 ### 9.2 ชุดแยกต่อ workspace (มติ C-14)
 
-**DB** — ต้องแก้ใน zyra-api#179 (`feat/avatar-part-schema`, migration 118) **ก่อน merge** เพราะเปลี่ยน primary key:
+**DB** — ✅ ทำแล้วใน **zyra-api#185** (migration **119** `119_user_outfit_per_workspace.sql`) · #179 merge ไปก่อนที่ spec นี้ขึ้น main จึงแก้ด้วย migration ใหม่แทนการแก้ 118 — ผลเหมือนกัน (ตารางยังว่างทุกที่):
 
 ```sql
 -- ปัจจุบันใน branch: tb_user_outfit (user_id VARCHAR PRIMARY KEY, outfit JSONB, bake_hash VARCHAR(64),
@@ -677,7 +687,7 @@ CREATE TABLE IF NOT EXISTS tb_user_outfit (
 -- GIN (outfit jsonb_path_ops) เดิมใช้ต่อได้
 ```
 
-> ยังไม่ merge และตารางยังไม่มีข้อมูลจริง → แก้ใน migration 118 ตรง ๆ ได้ ไม่ต้องเขียน migration ย้ายข้อมูล · ต้องแก้ทั้งไฟล์ migration และ embedded DDL ใน `postgres.go` (TD §4)
+> 119 เพิ่ม `workspace_id NOT NULL` + สลับ PK ด้วย `DO $$` ที่รันเฉพาะตอน PK ยังเป็น `user_id` คอลัมน์เดียว (รันซ้ำทุก boot ได้) · มีทั้งไฟล์ migration และ embedded DDL ใน `postgres.go` · ตรวจบน dev DB ใน transaction + ROLLBACK แล้ว
 
 **API (member)**
 
@@ -697,11 +707,11 @@ CREATE TABLE IF NOT EXISTS tb_user_outfit (
 - **ไม่ลบแถว** ตอนออกจาก VO หรือ logout (AC-HP06-5) · ลบตาม `ON DELETE CASCADE` เมื่อ user หรือ workspace ถูกลบ · ถูก**ลบออกจากสมาชิก**แล้วเชิญกลับ → **เก็บชุดเดิมไว้** (มติ Q-6b) — ห้ามลบแถวตอน remove member
 - Bake dedupe ด้วย hash ใช้ข้าม workspace ได้ (ชุดเหมือนกัน = ไฟล์เดียวกัน)
 
-**ผลต่อฝั่ง Admin (ต้องแจ้ง Ten)**
+**ผลต่อฝั่ง Admin — ✅ ทำแล้วใน zyra-api#185 + zyra-ws#87**
 
 - นับผู้ใช้ต่อชิ้น (TD §4.2) → `count(DISTINCT user_id)` ไม่ใช่ `count(*)` — ไม่งั้นคนเดียวที่ใส่ใน 3 workspace นับเป็น 3 (ClickUp แสดง "ถูกใช้โดย X users")
-- Reset job (TD §8.3) → loop ต่อ**แถว** `(user_id, workspace_id)` · `affected_user_count` ใน audit = จำนวนคนไม่ซ้ำ · progress "450/892" นับคนหรือแถว = ตัดสินฝั่ง Admin
-- `outfit_reset` (TD §9) → payload เพิ่ม `workspace_id`
+- Reset job (TD §8.3) → loop ต่อ**แถว** `(user_id, workspace_id)` · `affected_user_count` ใน audit = จำนวนคนไม่ซ้ำ · progress "450/892" นับคนหรือแถว = ตัดสินฝั่ง Admin → **นับแถว (ชุด)** · `DELETE` คืน `{job_id, total = ชุด, user_count = คน}` · audit มี `affected_user_count` + `affected_outfit_count`
+- `outfit_reset` (TD §9) → payload เพิ่ม `workspace_id` · ws ส่งเฉพาะห้องของ workspace นั้น
 
 **UI**
 
@@ -753,7 +763,7 @@ CREATE TABLE IF NOT EXISTS tb_user_outfit (
 
 | # | Repo | งาน | ขึ้นกับ |
 |---|---|---|---|
-| M-0 | api | แก้ `tb_user_outfit` เป็น PK `(user_id, workspace_id)` ใน #179 + DDL ใน `postgres.go` | **มติ C-14 ✅** · Ten รับทราบ |
+| ~~M-0~~ ✅ | api | ~~แก้ `tb_user_outfit` เป็น PK `(user_id, workspace_id)`~~ → ทำแล้วใน zyra-api#185 (migration 119) | **มติ C-14 ✅** · Ten รับทราบ |
 | M-0b | api + app | ตัวดูด ramp สีผิว 4 เฉดจากชีท body (Go bake + TS preview, parity test) | มติ Q-4 ✅ · ชีท body Default จากศิลปิน |
 | M-1 | api | `GET catalog` (18 หมวด) / `GET default` / `GET workspaces/:id/avatar/outfit` + test | M-0, M-0b |
 | M-2 | api | `PUT workspaces/:id/avatar/outfit` + validate (member, hidden) + bake + R2 + test | M-1, #180 |
@@ -769,8 +779,8 @@ CREATE TABLE IF NOT EXISTS tb_user_outfit (
 | # | คำถาม | ถามใคร | Block |
 |---|---|---|---|
 | ~~Q-1~~ ✅ | ~~ยึด paper-doll แทน Skin + 5 accessory?~~ → **มติ: ประกอบเป็นชิ้น ๆ** (§8.3) · เหลือ: แก้ ClickUp SC-AV-02 ให้ตรง | rif | — |
-| ~~Q-2~~ ✅ | ~~(C-14) ชุดแยกต่อ workspace หรือชุดเดียว?~~ → **มติ 2026-10-22: แยกต่อ workspace** (§8.3) · เหลือ: แจ้ง Ten ให้แก้ #179 ก่อน merge | rif | — |
-| Q-3 | เอกสาร `AvatarCustomization/spec.md` + `technical-design.md` ต้นฉบับ (มติ 2026-10-05) — โฟลเดอร์ `zyra/custom avatar/` ที่ได้มา **เป็นไฟล์ sprite 72 ไฟล์ ไม่ใช่เอกสาร** (ตรงกับ "demo file/custom avatar" ที่ Admin TD §3 อ้าง) → เอกสารต้นฉบับยังไม่มี · ถ้าไม่มีแล้วจริง ให้ถือไฟล์นี้เป็นฉบับหลัก | rif / ผู้เขียนเดิม | ความครบของ spec |
+| ~~Q-2~~ ✅ | ~~(C-14) ชุดแยกต่อ workspace หรือชุดเดียว?~~ → **มติ 2026-10-22: แยกต่อ workspace** (§8.3) · ✅ ทำแล้ว zyra-api#185 / zyra-ws#87 | rif | — |
+| Q-3 | เอกสาร `AvatarCustomization/spec.md` + `technical-design.md` ต้นฉบับ (มติ 2026-10-05) — โฟลเดอร์ `zyra/custom avatar/` ที่ได้มา **เป็นไฟล์ sprite 72 ไฟล์ ไม่ใช่เอกสาร** (ตรงกับ "demo file/custom avatar" ที่ Admin TD §3 อ้าง) → เอกสารต้นฉบับยังไม่มี · ถ้าไม่มีแล้วจริง ให้ถือไฟล์นี้เป็นฉบับหลัก · **อัปเดต 2026-10-22:** `technical-design.md` ต้นฉบับ (ร่าง 2026-10-05) ขึ้น git แล้วพร้อมหัวเอกสารบอกส่วนที่ถูกแทน · `spec.md` ต้นฉบับ (ร่าง 2026-10-08) ยังไม่ขึ้น git — มีสำเนาในเครื่อง Ten (`zyra-doc-local-backup-2026-10-22/`) ถ้าต้องใช้ให้บอก | rif / ผู้เขียนเดิม | ความครบของ spec |
 | ~~Q-4~~ ✅ | ~~ชิ้น skin เก็บอะไร~~ → **ชีท body ตัวเต็ม + ดูดสีผิว 4 เฉดอัตโนมัติ** (§9.3) | rif | — |
 | ~~Q-4b~~ ✅ | ~~เลือกเฉดสีผิวได้ไหม~~ → **มี skin เริ่มต้น 5 เฉดให้เลือก** (ของระบบ ไม่อัปโหลด) (§9.3) | rif | — |
 | **Q-4c** | ค่าสี 5 เฉดคือชุดไหน? data contract มี 6 (`base`, `s1`, `s3`, `s4`, `s5`, `s0`) · เฉดไหนเป็น Default · ตรวจ Figma `7615:207396` / `7615:207397` | Designer | ค่าสีใน bake + UI |
@@ -794,8 +804,8 @@ CREATE TABLE IF NOT EXISTS tb_user_outfit (
 
 ## 11. Dependencies
 
-- **Admin PR #179 / #180 / #638 / #639** merge → แล้ว API-3~5 (CRUD, routes, reset job) เพื่อให้มีชิ้นส่วนจริงใน catalog
-- **แจ้งมติ C-14 ให้ Ten (เจ้าของงาน Admin) ก่อน #179 merge** — แก้ `tb_user_outfit` PK เป็น `(user_id, workspace_id)`, `count(DISTINCT user_id)`, reset job ต่อแถว, `outfit_reset` มี `workspace_id` (§9.2) และแก้เอกสาร Admin (TD §4/§8/§9, data contract) ให้ตรง · แจ้งเรื่องตัวดูด ramp สีผิว (§9.3)
+- ~~Admin PR #179 / #180 / #638 / #639 merge → API-3~5~~ ✅ merge เข้า develop ครบแล้ว (api #179–#184, app #638–#644) + #185 / ws#87 (C-14)
+- ~~แจ้งมติ C-14 ให้ Ten ก่อน #179 merge~~ ✅ Ten รับทราบ 2026-10-22 → แก้ตามใน zyra-api#185 + zyra-ws#87 + เอกสาร Admin
 - แก้ ClickUp SC-AV-02 ให้ตรงกับมติ (paper-doll 18 หมวด, skin = Default)
 - ยืนยันค่าสี 5 เฉดสีผิว (Q-4c)
 - Asset: **ชีท body Default** (ไม่มีใน `zyra/custom avatar/`) + ชิ้น default ของหมวดบังคับ + palette ชุดสุดท้าย (ศิลปิน) · ชิ้นอื่นมีแล้ว 72 ไฟล์ใน `zyra/custom avatar/` (ยังไม่ได้อยู่ใน git — โฟลเดอร์อยู่ที่ root workspace ซึ่งไม่ใช่ repo)
@@ -820,14 +830,14 @@ CREATE TABLE IF NOT EXISTS tb_user_outfit (
 |---|---|
 | Source link ครบ | ✅ ClickUp 9 subtask + Admin 6 ใบ + เอกสาร Admin (TD/requirements/data) |
 | Scenario / AC (ClickUp) | ✅ ถอดครบ 9 scenario (55 AC) |
-| Baseline โค้ด | ✅ ตรวจ 2026-10-22 (ก่อน Admin PR merge) |
-| ระบบเป้าหมาย | 🟡 สรุปจากเอกสาร Admin — ต้นฉบับ AvatarCustomization ยังไม่ขึ้น git |
+| Baseline โค้ด | 🟡 ตรวจ 2026-10-22 ก่อน Admin PR merge — ต้องตรวจใหม่ (§5.6) |
+| ระบบเป้าหมาย | 🟡 สรุปจากเอกสาร Admin · ต้นฉบับ [technical-design.md](technical-design.md) ขึ้น git แล้ว (ร่าง 2026-10-05 บางส่วนถูกแทน) |
 | Figma | ⚠ อ่านได้ 1/7 node (rate limit) |
 | Scope ตกลงแล้ว | 🟡 Q-1 ✅ paper-doll · C-14 ✅ ต่อ workspace · C-13 ✅ skin = Default · Q-4 ✅ · Q-5 ✅ 18 หมวด · Q-6b ✅ · Q-4b ✅ 5 เฉด · ❌ Q-4c (ค่าสี 5 เฉด) |
 | API / WS contract | ❌ ข้อเสนอ (§9.2, §9.4) — รอ Q-13, Q-14 + ทีม Admin รับมติ |
-| Dependency Admin | ❌ PR ยังไม่ merge · API-3~5 ยังไม่เริ่ม |
+| Dependency Admin | ✅ API-1~6 + APP + C-14 (zyra-api#185 / zyra-ws#87) merge เข้า develop แล้ว |
 
-**สรุป: ยังไม่พร้อม implement** — ขั้นต่อไป: แจ้ง Ten เรื่องมติ C-14 (ก่อน #179 merge) + ยืนยัน Q-4c → แก้ ClickUp SC-AV-02 → `technical-design.md` (ฝั่ง member) + `ux-ui-plan.md` → `task-breakdown.md` / `test-plan.md`
+**สรุป: ยังไม่พร้อม implement** — ขั้นต่อไป: ~~แจ้ง Ten เรื่องมติ C-14~~ (ทำแล้ว) · ยืนยัน Q-4c → แก้ ClickUp SC-AV-02 → `technical-design.md` (ฝั่ง member) + `ux-ui-plan.md` → `task-breakdown.md` / `test-plan.md`
 
 ---
 
@@ -840,3 +850,4 @@ CREATE TABLE IF NOT EXISTS tb_user_outfit (
 | 2026-10-22 (รอบ 3) | **มติ rif: C-14 → ชุดแยกต่อ workspace · C-13 → Skin เป็นชิ้นที่ admin อัปโหลด/ซ่อนได้** (ยึด ClickUp ทั้งสองข้อ) → เพิ่ม §8.3 decision log, เขียน §9 ใหม่ (§9.2 schema/API/UI ต่อ workspace + ผลต่อ Admin, §9.3 หมวด `skin` + hidden/deleted + ทางเลือกเก็บข้อมูล skin, §9.6 PR M-0/M-0b), ปิด Q-2, เขียน Q-4 ใหม่, เพิ่ม Q-6b, Q-3 = rif มีไฟล์ต้นฉบับแล้ว |
 | 2026-10-22 (รอบ 4) | มติ rif: **Q-1 paper-doll · C-13 แก้เป็น Skin = Default ไม่อัปโหลด · Q-4 ชีท body ตัวเต็ม + ดูดสีผิว 4 เฉด · Q-5 18 หมวด · Q-6b เก็บชุดเดิม** → เขียน §9.3 ใหม่, แก้ §8.3/§9.1/§9.6/§10/§11/§13 · เพิ่ม Q-4b (เลือกเฉดสีผิวได้ไหม) · Q-3: `zyra/custom avatar/` เป็นไฟล์ sprite 72 ไฟล์ (192×192 → 48 px) ไม่ใช่เอกสาร |
 | 2026-10-22 (รอบ 5) | Q-4b: skin เริ่มต้น 5 เฉด (ของระบบ) → แก้ §9.3, §9.1, §8.3, AC ที่ใช้ได้ (AC-HP02 กลับมาใช้) · เพิ่ม Q-4c (ค่าสี 5 เฉด vs 6 ค่าใน data contract) |
+| 2026-10-22 (รอบ 6) | ฝั่ง Admin (Ten ผ่าน Claude Code) อัปเดตตามมติ C-14: §5.6 สถานะ PR (merge แล้ว + #185 / ws#87) · §9.2 DB ทำแล้วด้วย migration 119 (แทนการแก้ 118 เพราะ #179 merge ก่อน spec ขึ้น main) · ผลต่อ Admin ทำแล้ว · M-0 / Q-2 / §11 / §13 อัปเดต · ต้นฉบับ `technical-design.md` (ร่าง 2026-10-05) ขึ้น git |

@@ -112,12 +112,12 @@ mount
  └─ GET outfit   ──▶ ["avatar","outfit","me"]     → set state `outfit` + `saved`
 user กด item / swatch ──▶ reducer (§6) → `outfit` เปลี่ยน → renderer วาดใหม่ (debounce ไม่ต้อง วาด 1 เฟรม < 5ms)
 isDirty = JSON.stringify(normalize(outfit)) !== JSON.stringify(normalize(saved))
-กด บันทึก ──▶ PUT outfit (body = normalize(outfit)) → สำเร็จ: saved = outfit, invalidate ["avatar","outfit","me"], toast "บันทึกแล้ว ทุก workspace จะเห็นชุดนี้"
+กด บันทึก ──▶ PUT /api/user/workspaces/:id/avatar/outfit (body = normalize(outfit)) → สำเร็จ: saved = outfit, invalidate ["avatar","outfit",workspaceId], toast "บันทึกแล้ว ทุก workspace จะเห็นชุดนี้"
 กด ยกเลิก ──▶ outfit = saved
 กด ชุดเริ่มต้น ──▶ outfit = default (จาก GET outfit/default) ยังไม่ save
 ```
 
-สถานะมุมล่างซ้าย: ไม่ dirty = จุดเขียว "ใช้ชุดนี้ในทุก workspace" · dirty = จุดเหลือง "ยังไม่ได้บันทึก" · ขณะ save ปุ่มขึ้น "กำลังประกอบชุด…" + `aria-busy`
+สถานะมุมล่างซ้าย: ไม่ dirty = จุดเขียว "ใช้ชุดนี้ใน [ชื่อ Workspace]" · dirty = จุดเหลือง "ยังไม่ได้บันทึก" · ขณะ save ปุ่มขึ้น "กำลังประกอบชุด…" + `aria-busy`
 
 ---
 
@@ -380,7 +380,7 @@ export function randomize(o: Outfit, catalog: AvatarCatalog): Outfit {
 - [ ] เปิด route แล้วเห็นตัวละคร base หมุน + กะพริบ (ใช้ไฟล์ base จริงจาก Ten)
 - [ ] เปลี่ยนสีผิว/ผม/ตา เห็นผลทันที
 - [ ] ใส่ผมทรงไทย (ไฟล์จริง) แล้วเปลี่ยนสีผมได้ → พิสูจน์ palette swap ทำงานกับไฟล์ที่ศิลปินวาด
-- [ ] save ผ่าน mock → สถานะเปลี่ยนเป็น "ใช้ชุดนี้ในทุก workspace"
+- [ ] save ผ่าน mock → สถานะเปลี่ยนเป็น "ใช้ชุดนี้ใน [ชื่อ Workspace]" · เปิดอีก workspace → ยังเป็นชุดของ workspace นั้น (ชุดแยกต่อ workspace — C-14)
 - [ ] `npx tsc --noEmit` + `npm run lint` + `vitest run` เขียว
 - [ ] PR เข้า `develop` พร้อม screenshot 4 ทิศ × 3 ท่า
 

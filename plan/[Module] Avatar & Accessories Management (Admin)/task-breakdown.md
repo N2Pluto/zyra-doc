@@ -32,6 +32,7 @@
 | API-5 | `feat(api): delete accessory with async user reset` | DELETE + confirm_name (> 100) · `tb_avatar_reset_job` · worker batch 100 + `SKIP LOCKED` + resume ตอน start · bake ต่อคน (dedupe hash) · `PublishOutfitReset` · progress endpoint | AC-U-43, 46, 50~57 · AC-A-14~17 | API-4, AvatarCustomization bake (A2) | 1.5 |
 | API-6 | `feat(api): daily hard-delete ticker for avatar parts` | ticker 24 ชม. + `pg_try_advisory_lock` · `DeleteByPrefix` R2 · ลบแถว · ครอบ `tb_avatar` เดิมด้วย (แทน `cmd/avatar-cleanup` ที่ไม่เคยถูกรัน) | AC-U-47~49 | API-1 | 0.5 |
 
+> **ตามหลัง (2026-10-22):** zyra-api#185 + zyra-ws#87 — ชุดแยกต่อ workspace ตามมติ C-14 (migration 119, นับคนไม่ซ้ำ, reset ต่อแถว, `outfit_reset` มี `workspace_id`)
 > API-5 ต้องมี bake ของ AvatarCustomization (A2) ก่อน · ถ้า A2 ยังไม่มา ให้ทำ API-5 แบบ "ถอด slot + ล้าง `bake_hash`" แล้วปล่อยให้ lazy re-bake ตอน `GET /me/outfit` (ผู้ใช้ online จะเห็นเปลี่ยนเมื่อโหลดชุดใหม่ ซึ่ง `outfit_reset` สั่งอยู่แล้ว)
 
 ## 2. zyra-ws
