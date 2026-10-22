@@ -43,7 +43,7 @@
 | ขนาดชีท | 192 × 192 (4 × 4 เฟรม 48 px — ไฟล์จริง 72 ไฟล์) | ClickUp HP-02 = เฟรม 64 px | requirements Q13 |
 | พื้นไม่โปร่งใส | Figma = toast **error** (บล็อก) | EP-01 = warning เหลือง **ไม่บล็อก** | ux-ui-plan U3 |
 | สถานะเริ่มต้นตอนสร้าง | Figma = toggle Active | ClickUp = Hidden | PM |
-| หมวดที่ต้องมี Sitting | Top, Outer, Dress, Bottoms, Special Costume (sticky) | ไฟล์จริงของ Hair / Facial Hair มีชีทนั่ง | ux-ui-plan U5 |
+| ~~หมวดที่ต้องมี Sitting~~ ✅ | Hair, Facial Hair, Top, Outer, Dress, Bottoms, Shoes, Special Costume | — | ตอบแล้ว Ten 2026-10-22 (D5) |
 | ชื่อซ้ำนับยังไง | ซ้ำ **ในหมวดเดียวกัน** (HP-03 `ACCESSORY_NAME_EXISTS`) · ไม่สนตัวพิมพ์เล็กใหญ่? | ยังไม่ระบุ | PM |
 | จำนวนหมวด | 18 (Figma) | data contract ฝั่ง user 11 slot | ux-ui-plan U4 |
 
@@ -100,7 +100,8 @@ Framework `testify/assert` + `require` · DB mock ผ่าน interface · S3 m
 | Special Costume (ทุก variant) | ✓ | ✓ | ผ่าน |
 | Special Costume — variant ใดขาดชีท | ✓ | ✗ | `ErrMissingSheet{variant, sit}` |
 | หมวดอื่น (Hair, Eyes, Hat …) | ✓ | — | ผ่าน |
-| หมวดอื่น | ✓ | ✓ (ส่งมาเกิน) | ผ่าน · เก็บหรือทิ้ง sitting ตาม U5 |
+| หมวดอื่น | ✓ | ✓ (ส่งมาเกิน) | ผ่าน |
+| Hair / Facial Hair / Shoes | ✓ | ✗ | `ErrMissingSheet{sit}` (2026-10-22) |
 | ทุกหมวด | ✗ | ✗ | `ErrMissingSheet{walk}` |
 
 → เขียนเป็น test เดียวแบบ table-driven `TestRequiredSheets` (AC-U-28)

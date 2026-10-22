@@ -37,15 +37,15 @@ Figma มี 18 หมวด · data contract ฝั่ง member มี 11 slot
 
 | กลุ่ม | category (ค่าใน DB) | ชีท | สีเปลี่ยนได้ | วาดทับลำดับ (ต่ำ→สูง) |
 |---|---|---|---|---|
-| Head | `hair` | walk (+sit ตาม U5) | hair | 9 |
+| Head | `hair` | walk + sit | hair | 9 |
 | | `eyes` | walk | eye | 2 |
 | | `face` | walk | — (สีตายตัว) | 3 |
-| | `facial_hair` | walk (+sit ตาม U5) | hair | 7 |
+| | `facial_hair` | walk + sit | hair | 7 |
 | Body | `top` | walk + sit | primary, secondary | 5 |
 | | `outer` | walk + sit | primary, secondary | 6 |
 | | `dress` | walk + sit | primary, secondary | 5 (ทับ top+bottoms) |
 | | `bottoms` | walk + sit | primary, secondary | 4 |
-| | `shoes` | walk | primary, secondary | 4 |
+| | `shoes` | walk + sit | primary, secondary | 4 |
 | | `special_costume` | walk + sit **ต่อ variant** | — (สีตามไฟล์) | 5 (ทับ top+bottoms) |
 | Accessory | `hat` | walk | primary, secondary | 11 |
 | | `glasses` | walk | primary | 10 |
@@ -58,7 +58,7 @@ Figma มี 18 หมวด · data contract ฝั่ง member มี 11 slot
 
 - base (`body`) ไม่อยู่ในหน้า admin — เป็นไฟล์ใน repo ตามมติเดิม (ลำดับ 0)
 - ลำดับวาดเก็บเป็น constant `CATEGORY_LAYER` ตัวเดียว ใช้ทั้ง Go (bake) และ TS (preview) · เทส parity ตาม test-plan §3.2
-- "ต้องมีชีทนั่ง" เก็บเป็น `CATEGORY_REQUIRES_SIT` — ค่าเริ่มต้นตาม sticky Figma (`top`, `outer`, `dress`, `bottoms`, `special_costume`)
+- "ต้องมีชีทนั่ง" เก็บเป็น `CATEGORY_REQUIRES_SIT` (Go `RequiresSit` / TS `requiresSit`) = `hair`, `facial_hair`, `top`, `outer`, `dress`, `bottoms`, `shoes`, `special_costume` — sticky Figma 5 หมวด + 3 หมวดที่ไฟล์ศิลปินมีชีทนั่ง (Ten 2026-10-22 · D5) · หมวดอื่น (eyes, face, hat, glasses, …) walk อย่างเดียว · ชิ้นบนหัวที่ไม่มีชีทนั่งเลื่อนตามหัว (§3)
 - `dress` / `special_costume` มี `occupies = [top, bottoms]` (ใส่แล้วสองช่องนั้นว่าง)
 
 ---
@@ -337,7 +337,7 @@ i18n/messages-scope.ts                             + AdminAccessoryManagement �
 | D2 | พื้นไม่โปร่งใส = error หรือ warning | ข้อความ + test AC-U-10 | PM (U3) |
 | D3 | สถานะเริ่มต้น Active หรือ Hidden | default ของฟอร์ม + API | PM |
 | D4 | 18 หมวด → ขยาย data contract ฝั่ง member | member เลือกชิ้นหมวดใหม่ไม่ได้ | PM + Ten (U4) |
-| D5 | Hair / Facial Hair ต้องมีชีทนั่งไหม | `CATEGORY_REQUIRES_SIT` | PM + ศิลปิน (U5) |
+| ~~D5~~ ✅ | ~~Hair / Facial Hair ต้องมีชีทนั่งไหม~~ **ตอบแล้ว (Ten 2026-10-22):** บังคับชีทนั่ง `hair`, `facial_hair`, `shoes` เพิ่ม — ตรงกับไฟล์ศิลปิน (ผม 5 · หนวด 3 · รองเท้า 2 มีชีทนั่งครบ) · zyra-api#187 / zyra-app#646 | `CATEGORY_REQUIRES_SIT` | Ten |
 | D6 | AvatarCustomization A1 (สร้าง tb_avatar_part) ทำก่อนหรือรวมกับ migration 118 | ลำดับ PR | Ten |
 | R1 | bake ต่อคนใน reset job — 892 คนอาจช้า | admin รอ progress นาน | วัดตอน API-5 · dedupe ด้วย bake_hash ช่วยได้มาก |
 | R2 | `PREVIEW_CHAIR_OBJECT_ID` ต่างกันแต่ละ env | preview ไม่มีเก้าอี้ | ใส่ใน env build (`NEXT_PUBLIC_PREVIEW_CHAIR_ID`) หรือ fallback ไม่วาดเก้าอี้ |
