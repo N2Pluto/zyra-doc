@@ -33,6 +33,7 @@
 | SC-MOB-08 | สลับแอปออกไประหว่างประชุม เสียงยังต่อ กลับมาแล้ว WS/LiveKit reconnect เอง | iOS background audio mode |
 | SC-MOB-09 | เปิด deep link `zyra://workspace/<id>` หรือ universal link แล้วเข้า workspace นั้นตรง ๆ | |
 | SC-MOB-10 | Server ล่ม/ไม่มีเน็ต → เห็นหน้า offline ของแอป (ไม่ใช่ error page ของ Safari/Chrome) + ปุ่ม retry | |
+| SC-MOB-11 | อยู่ในห้องประชุมหรือคุยกับคนใกล้ ๆ แล้วออกจากแอป / ล็อกจอ → เห็นแจ้งเตือนค้างแบบ Google Meet (ชื่อห้อง, เวลา, จำนวนคน, ปุ่ม Mute / Leave) แตะแล้วกลับเข้าห้อง | Android = notification ของ foreground service เดิม · iOS = Live Activity · ขอเพิ่ม 2026-10-19 ([meeting-ongoing-notification.md](meeting-ongoing-notification.md)) |
 
 ### Native feature — แบ่ง 3 Tier
 
@@ -40,7 +41,7 @@
 |---|---|---|
 | **1 — บังคับตั้งแต่ submit รอบแรก** | Phase 1 | Push (APNs/FCM) · Sign in with Apple + Google native · Deep link / universal link · Background audio · Permission กล้อง/ไมค์ native พร้อมข้อความอธิบาย · หน้า offline native + auto reconnect |
 | **2 — ทำให้รู้สึกเป็นแอป** | Phase 1–2 | Haptics ตอน wave/knock · Badge count จาก unread · Share sheet ส่ง invite link · Keep-awake ตอนอยู่ใน VO · Keyboard handling ให้ chat input ไม่ถูกบัง · Splash / status bar สี `#1A1B1E` |
-| **3 — ของที่ WebView ทำไม่ได้ ต้องเขียน plugin เอง** | Phase 3 (ตาม demand) | CallKit + VoIP push (meeting invite เด้งเหมือนสายเข้า) · Screen share ผ่าน ReplayKit / MediaProjection · Native Picture-in-Picture ของวิดีโอประชุม · Live Activities (Dynamic Island) แสดงว่ากำลังประชุม |
+| **3 — ของที่ WebView ทำไม่ได้ ต้องเขียน plugin เอง** | Phase 3 (ตาม demand) | CallKit + VoIP push (meeting invite เด้งเหมือนสายเข้า) · Screen share ผ่าน ReplayKit / MediaProjection · Native Picture-in-Picture ของวิดีโอประชุม · ~~Live Activities (Dynamic Island) แสดงว่ากำลังประชุม~~ → ดึงมาทำพร้อม SC-MOB-11 (rif 2026-10-19) |
 
 Tier 1 คือสิ่งที่ทำให้ผ่าน Apple Guideline 4.2 (minimum functionality) — แอปที่เป็นแค่ WebView เปล่าจะโดนปฏิเสธ
 

@@ -26,9 +26,9 @@
 | [G. zyra-ws](#g-zyra-ws) | 5 | — | 1 | — | 6 |
 | [H. zyra-api](#h-zyra-api) | 7 | 2 | 5 | — | 14 |
 | [I. zyra-notifications](#i-zyra-notifications) | — | — | 1 | — | 1 |
-| [J. Native shell `zyra-mobile` + `lib/native/*`](#j-native-shell-zyra-mobile--libnative) | 1 | 15 | 1 | 4 | 21 |
+| [J. Native shell `zyra-mobile` + `lib/native/*`](#j-native-shell-zyra-mobile--libnative) | 1 | 18 | 1 | 4 | 24 |
 | [K. Infra / CI / store](#k-infra--ci--store) | 1 | 3 | 1 | — | 5 |
-| **รวม** | **75** | **20** | **10** | **5** | **110 แถว = 90 task** (88 เดิม + 0.62 🆕 + 1.17 🆕) |
+| **รวม** | **75** | **23** | **10** | **5** | **113 แถว = 93 task** (88 เดิม + 0.62 🆕 + 1.17 🆕 + 1.18–1.20 จาก rif 2026-10-19) |
 
 ## ลำดับทำ / critical path
 
@@ -231,10 +231,13 @@ repo ใหม่ `zyra-mobile` · wrapper plugin `zyra-app/lib/native/*.ts` · 
 | [1.15](code-map.md#t-1-15) | 1 | RAM ต่ำ (EP-01 · OQ 30) → toast · **ข้อความห้ามพูดถึง Performance mode** (0.39 ตัดแล้ว) | `lib/nature-performance.ts:7,46,69` | `MemoryPlugin.swift` / `.kt` · `lib/native/memory.ts` | 1.1, 0.38 | toast ขึ้นครั้งเดียวต่อ session |
 | [1.16](code-map.md#t-1-16) | 1 | Tablet + font: iPad 4 ทิศ + multitasking · `resizeableActivity` · lock portrait เฉพาะมือถือ · text zoom 100% (TD §16.6) | — (จุดเรียก lock = หน้า 0.15) | Info.plist `~ipad` · `MainActivity` · `lib/native/screen-orientation.ts` | 1.2, 0.15, 0.41 | Split View ใช้ได้ · font ใหญ่สุดไม่แตก |
 | [1.17](code-map.md#t-1-17) 🆕 | 1 | **Android foreground service ตอนประชุม** (TD §13.1 / §14.1 A2 — งาน native ชิ้นเดียวของ Tier 1) · เพิ่ม 2026-10-05 จาก code map | `use-meeting-media.ts:995,1011` (จุดเริ่ม / หยุด) | `MeetingForegroundService.kt` · AndroidManifest · `lib/native/foreground-service.ts` | 1.1, 1.6 | (ข้อเสนอ) Android 14 ออกจากแอปกลางประชุม ≥ 5 นาทียังพูด / ฟังได้ |
+| 1.18 | 1 | แจ้งเตือนค้างระหว่างประชุม — **Android**: `MeetingForegroundService` ใช้ `CallStyle.forOngoingCall` + chronometer + จำนวนคน + ปุ่ม Mute/Leave · plugin เพิ่ม `start(info)` / `update(info)` / event `action` ([meeting-ongoing-notification.md](meeting-ongoing-notification.md) §4.1–4.2) | — | zyra-mobile `android/.../MeetingForegroundService.java`, `MeetingServicePlugin.java`, receiver ใหม่, `res/values{,-th}/strings.xml` | 1.17 | SC-MOB-11 ข้อ 1–10 ผ่านบน Android จริง |
+| 1.19 | 1 | แจ้งเตือนค้างระหว่างประชุม — **iOS Live Activity**: Widget Extension (ActivityKit) + `NSSupportsLiveActivities` + plugin Swift `MeetingService` + `LiveActivityIntent` ปุ่ม Mute/Leave (iOS 17+) · provisioning / fastlane สำหรับ bundle id ใหม่ (§4.3) | — | zyra-mobile `ios/App/` (target ใหม่), `Info.plist`, `fastlane/`, `.github/workflows/release.yml` | 1.7 | SC-MOB-11 ข้อ 1–10 ผ่านบน iPhone จริง (Dynamic Island + หน้าล็อก) |
+| 1.20 | 1 | แจ้งเตือนค้างระหว่างประชุม — **zyra-app**: ส่ง `OngoingCallInfo` (ชื่อห้อง, เวลาเริ่ม, จำนวนคน, ไมค์) ไป native ทั้ง Android/iOS · รับ action → `toggleMic` / leave · shell เก่าไม่พัง (§4.4) | `views/user/virtual-office/hero-virtual-office.tsx`, `use-meeting-media.ts` | `lib/native/foreground-service.ts` + unit test | contract §4.1 | unit test ผ่าน · ใช้ร่วมกับ 1.18 / 1.19 ได้ |
 | [2.6a](code-map.md#t-2-6) | 2 | แตะ push → route · foreground = banner ในแอป · badge = unread chat + notification | — | `lib/push.ts` | **1.8** (แก้จาก "1.3"), 2.3 | แตะจาก lock screen เปิดห้องถูก · badge ตรง unread |
 | [3.2](code-map.md#t-3-2) | 3 | Screen share native (ReplayKit / MediaProjection → LiveKit) | `sfu-client.ts:816-829,905` | Broadcast Upload Extension · `ScreenCaptureService.kt` · `lib/native/screen-share.ts` | 1.13 | งานใหญ่ ต้อง native ทั้งสอง platform |
 | [3.3](code-map.md#t-3-3) ⚠️ | 3 | ~~CallKit + VoIP push~~ — **ตัด 2026-10-05 (Ten): ย้ายไป Plan B** (ขัดกับ TD §11.1 / §13.1 / §14.1 A5) | — | — | ตัดสิน Plan B | iOS ต้องผ่าน PushKit review |
-| [3.4](code-map.md#t-3-4) | 3 | Native PiP · Live Activities | `use-document-pip.ts` · `use-autopip-eligibility.ts` (ปิดบน native ได้ตั้งแต่ Phase 1) | plugin PiP · ActivityKit | 1.13 | — |
+| [3.4](code-map.md#t-3-4) | 3 | Native PiP (Live Activities ย้ายไป 1.19 — 2026-10-19) | `use-document-pip.ts` · `use-autopip-eligibility.ts` (ปิดบน native ได้ตั้งแต่ Phase 1) | plugin PiP · ActivityKit | 1.13 | — |
 | [3.5](code-map.md#t-3-5) | 3 | ประเมิน bundle asset ลงแอป (TD §3.2) | `next.config.ts:35,111-127` · `app/api/*` · `zyra-api auth_handler.go:243` · `zyra-ws handler.go:76-93` | — | 3.1 | — |
 
 ## K. Infra / CI / store
