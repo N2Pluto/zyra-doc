@@ -1,7 +1,27 @@
 # [Module] Avatar & Accessories Management (Admin) — Progress / Handoff
 
-> **สถานะรวม:** เริ่ม implement แล้ว (รอบ 6) — เปิด PR 4 ตัว รอ review: zyra-app#638 (APP-1 renderer lib) · zyra-app#639 (APP-2 shell + category panel) · zyra-api#179 (API-1 schema) · zyra-api#180 (API-2 validator) · ยังไม่ merge · D1–D6 ยังไม่มีคำตอบ ใช้ค่าตามเอกสารไปก่อน (ระบุใน PR)
+> **สถานะรวม:** implement ครบทุกแถวใน task-breakdown แล้ว (รอบ 7) และ merge เข้า develop / deploy ขึ้น dev แล้ว รวม QA-1 (zyra-app#644 — ยังไม่ได้รันบน dev) · ยังไม่ได้เทสหลัง login admin บน dev · ยังไม่ขึ้น uat/prod (develop → main ต้องถาม Ten) · D1–D6 ยังไม่มีคำตอบ ใช้ค่าตามเอกสารไปก่อน
 > **อัปเดตล่าสุด:** 2026-10-22 · **คนล่าสุด:** Ten (ผ่าน Claude Code)
+
+## 2026-10-22 (รอบ 7 · ทำครบ + merge เข้า develop) · Ten (ผ่าน Claude Code)
+
+- **ทำอะไร:** Ten สั่ง "ทำทั้งหมดให้เสร็จเลย" → ทำแถวที่เหลือทั้งหมดใน [task-breakdown.md](task-breakdown.md)
+  - API-3 `AvatarPartService` (create/get/list/usage/counts/status/update) · อัปโหลด R2 + rollback · thumbnail ฝั่ง server (base + ชิ้น, `go:embed` base sheet)
+  - API-4 route `/api/admin/avatar-parts*` + `RequirePermission(admin.avatar.manage)` · error = code ใน `message` + `detail`
+  - API-5 DELETE + reset job (batch 100, `FOR UPDATE SKIP LOCKED`, resume ตอน start) + `outfit_reset_user_id` ใน Redis envelope · ทางสำรองตามเอกสาร: ถอด slot + ล้าง `bake_hash` (ยังไม่มี bake ของ AvatarCustomization A2)
+  - API-6 ลบถาวรหลัง 30 วัน (ลบ R2 prefix → แถว → audit) · **ไม่ได้ครอบ `tb_avatar` เดิม** เพราะจะลบข้อมูลเดิมบน prod ถาวรทันทีที่ deploy — รอ Ten ตัดสิน
+  - WS-1 `outfit_reset` ส่งทุก socket ของผู้ใช้ทุก workspace
+  - APP-3 ~ APP-6 (list, ฟอร์ม add/edit, Special Costume variants, hide/delete + progress) — ทำโดย sub-agent ขนานกับ backend · QA-1 Playwright AC-E-01~09
+- **ถึงไหน:** merge เข้า develop แล้ว — zyra-api #179–#184 · zyra-ws #86 · zyra-app #638–#644 · dev ตอนนี้ api มี route ใหม่ · app `dev-c2c771c` · ws deploy แล้ว
+- **PR:** zyra-api#181 #182 #183 #184 · zyra-ws#86 · zyra-app#640 #641 #642 #643 #644 (รอบ 6: zyra-api#179 #180 · zyra-app#638 #639)
+- **verify ถึงไหน:**
+  - build เขียว: `go test ./...` ทั้ง api / ws · vitest ฝั่ง app 171 เทส (accessory) · coverage service api 82.7% / render 94.7% / validate 97.2% · `lib/avatar-part` 98%
+  - SQL จริงบน dev DB ใน transaction + ROLLBACK (ก่อน merge): store ทุก method · ลบ + reset 95 คน (ผู้ใช้ทั้งหมดบน dev) · batch 40 → progress 40/80/95 · purge 29 วัน 23 ชม. เก็บไว้ / 30 วัน + 1 นาที ลบ · เทส live เจอบั๊ก `%` ใน ILIKE (แก้แล้ว)
+  - หลัง deploy dev: `/api/admin/avatar-parts` ตอบ 401 เมื่อไม่มี token (เดิม 404) · ตาราง migration 118 ครบ 5 ตาราง + index บน dev DB (ตรวจแบบ read-only) · zyra-ws `/healthz` 200
+  - UI: sub-agent ตรวจทุก flow ผ่าน harness ชั่วคราว + mock API ที่ 1440×1024
+  - **ยังไม่ได้:** login admin บน dev แล้วกดจริง (QA-1 ต้องใช้ `E2E_ADMIN_*`) · ส่ง `outfit_reset` ผ่าน Redis จริง · ดู log pod api บน dev (Grafana MCP ต่อไม่ได้ ต้อง port-forward)
+- **ต่อจากนี้:** รัน QA-1 บน dev ด้วย account admin (`E2E_LIVE=1 E2E_BASE_URL=https://app.dev.zyra.center E2E_ADMIN_USERNAME=… E2E_ADMIN_PASSWORD=…`) → QA-2 manual (AC-M-01~16) + กฎ 80% ก่อนเปลี่ยนการ์ดเป็น Completed → ถาม Ten ก่อน develop → main
+- **ติดอะไร:** D1–D6 · ฝั่ง member ยังไม่มีระบบชุด (AvatarCustomization) → AC-E-07, ครึ่ง member ของ AC-E-05, AC-A-18, AC-R-04 ยังเทสไม่ได้ · flaky test `TestListKeepsMeetingsGoogleCannotAnswer` (calendar ไม่เกี่ยวกับงานนี้) ทำ CI coverage แดงเป็นครั้งคราว
 
 ## 2026-10-22 (รอบ 6 · เริ่ม implement) · Ten (ผ่าน Claude Code)
 

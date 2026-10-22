@@ -193,7 +193,8 @@ Error code (map 1:1 กับ toast/inline ใน ux-ui-plan §7–8 และ t
 | 400 | `MISSING_SHEET` (+ `detail.sheet`, `detail.variant`) | `ErrMissingSheet` |
 | 400 | `INVALID_CATEGORY` · `NAME_REQUIRED` · `NAME_TOO_LONG` · `INVALID_DATE_RANGE` · `VARIANT_REQUIRED` · `VARIANT_NAME_REQUIRED` · `VARIANT_NAME_TOO_LONG` · `INVALID_COLOR_TAG` | `ErrPart…` ตามชื่อ (prefix `ErrPart` เพราะ `ErrFileTooLarge` มีใน object_service แล้ว) |
 | 400 | `CONFIRM_NAME_REQUIRED` · `CONFIRM_NAME_MISMATCH` | — |
-| 404 | `PART_NOT_FOUND` | `ErrAccessoryNotFound` |
+| 404 | `PART_NOT_FOUND` · `RESET_JOB_NOT_FOUND` | `ErrPartNotFound` · `ErrResetJobNotFound` |
+| 400 | `INVALID_REQUEST` (multipart / JSON อ่านไม่ได้) · `INVALID_STATUS` | handler |
 | 409 | `ACCESSORY_NAME_EXISTS` · `VARIANT_NAME_EXISTS` | `ErrNameExists` · `ErrVariantDuplicate` |
 | 409 | `PART_DELETED` | `ErrAccessoryDeleted` |
 | 503 | `STORAGE_NOT_CONFIGURED` | `ErrStorageNotConfigured` |
