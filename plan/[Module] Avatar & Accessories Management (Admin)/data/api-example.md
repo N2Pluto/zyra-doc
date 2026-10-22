@@ -2,6 +2,7 @@
 
 > **สถานะ:** ข้อเสนอ (proposal) 2026-10-21 · **ยังไม่มีใน zyra-api** · ใช้ให้หน้าบ้านเริ่ม mock ได้ก่อน backend เสร็จ · path/field เปลี่ยนได้ ถ้าเปลี่ยนให้แก้ไฟล์นี้ + [avatar-outfit-data.json](avatar-outfit-data.json) คู่กัน
 > **กฎที่ยึด:** member เรียกได้เฉพาะ `/api/user/*` ([15-member-api-separation.md](../../../../.claude/rules/15-member-api-separation.md)) · response ใช้ envelope `{ status, message, data }` เหมือน `model.APIResponse` · client ใช้ `authFetch` จาก `lib/api/client.ts` เหมือน `lib/api/avatars.ts` เดิม
+> **ชุดแยกต่อ workspace (มติ C-14 · [AvatarCustomization/spec.md](../../AvatarCustomization/spec.md) §9.2):** `tb_user_outfit` PK `(user_id, workspace_id)` (zyra-api#185) → endpoint ของ "ชุดของฉัน" อยู่ใต้ `/api/user/workspaces/:id/…` · catalog / ชุด default / preview ไม่ผูก workspace · ไม่ใช่ member ของ workspace → `403 NOT_WORKSPACE_MEMBER`
 > **ของเดิมที่ยังอยู่:** `GET /api/user/avatars`, `GET /api/user/avatars/default`, `PUT /api/user/me/avatar-selection` เป็น model "เลือกตัวสำเร็จรูป" — ชุดใหม่นี้จะมาแทน ไม่ต่อยอด (requirements Q2)
 
 ชื่อ type/field ตรงกับ [avatar-outfit-data.json](avatar-outfit-data.json) ทั้งหมด
@@ -13,8 +14,8 @@
 | # | Method | Path | ทำอะไร | Guard |
 |---|---|---|---|---|
 | 1 | GET | `/api/user/avatar/catalog` | โหลด slot + ชิ้นส่วนที่ **active** + palette + สี key + sheet spec (ทุกอย่างที่ต้องใช้เปิดหน้าแต่งตัว) | UserGuard |
-| 2 | GET | `/api/user/avatar/outfit` | ชุดปัจจุบันของฉัน + URL ไฟล์ที่ bake แล้ว | UserGuard |
-| 3 | PUT | `/api/user/avatar/outfit` | บันทึกชุด → server validate + bake → คืน URL ใหม่ | UserGuard |
+| 2 | GET | `/api/user/workspaces/:id/avatar/outfit` | ชุดของฉัน**ใน workspace นี้** + URL ไฟล์ที่ bake แล้ว | UserGuard + member ของ workspace |
+| 3 | PUT | `/api/user/workspaces/:id/avatar/outfit` | บันทึกชุด**ของ workspace นี้** → server validate + bake → คืน URL ใหม่ (upsert `(user_id, workspace_id)`, last-write-wins) | UserGuard + member ของ workspace |
 | 4 | POST | `/api/user/avatar/outfit/preview` | (optional) ขอ preview sheet ของชุดที่ยังไม่ save — ใช้ถ้าหน้าบ้านไม่ render เอง | UserGuard |
 | 5 | GET | `/api/user/avatar/outfit/default` | ชุด default ของ platform (ปุ่ม "ชุดเริ่มต้น") | UserGuard |
 
@@ -87,7 +88,7 @@
 
 ---
 
-## 2. `GET /api/user/avatar/outfit`
+## 2. `GET /api/user/workspaces/:id/avatar/outfit`
 
 **Response 200 — เคยแต่งแล้ว**
 
@@ -124,11 +125,13 @@
 }
 ```
 
-**Response 200 — ไม่เคยแต่ง (ได้ชุด default อัตโนมัติ)** → `is_default: true`, `outfit` = ชุด default, `baked` ชี้ไฟล์ default ที่ใช้ร่วมกัน, `updated_at: null`
+**Response 200 — ยังไม่เคยแต่งใน workspace นี้ (ได้ชุด default อัตโนมัติ)** → `is_default: true`, `outfit` = ชุด default, `baked` ชี้ไฟล์ default ที่ใช้ร่วมกัน, `updated_at: null` · ชุดของ workspace อื่นไม่ถูกนำมาใช้ (AC-HP06-4)
+
+**Response 403** — ไม่ใช่ member ของ workspace นี้ → `{ "status": 403, "message": "NOT_WORKSPACE_MEMBER" }`
 
 ---
 
-## 3. `PUT /api/user/avatar/outfit`
+## 3. `PUT /api/user/workspaces/:id/avatar/outfit`
 
 **Request** (`Content-Type: application/json`) — รูปเดียวกับ `outfit_state_shape` ใน data file
 
@@ -151,7 +154,7 @@
 }
 ```
 
-Server ทำ: validate → normalize (costume ≠ null → top/bottom = null) → bake walk.png + sit.png + thumb.png (240×192) → upload R2 → เก็บ outfit JSON + hash → broadcast ให้ VO ที่ user อยู่ (ถ้าอยู่) → ตอบ
+Server ทำ: validate → normalize (costume ≠ null → top/bottom = null) → bake walk.png + sit.png + thumb.png (240×192) → upload R2 → เก็บ outfit JSON + hash → broadcast ให้ VO **ของ workspace นี้** ที่ user อยู่ (ถ้าอยู่) → ตอบ · ชุดของ workspace อื่นไม่เปลี่ยน
 
 **Response 200** — เหมือน GET ข้อ 2 (`is_default: false`, `baked` ใหม่)
 
@@ -163,6 +166,7 @@ Server ทำ: validate → normalize (costume ≠ null → top/bottom = null) �
 | 400 | `PART_NOT_FOUND` | id ไม่มี / hidden / deleted / costume นอกช่วง | `{ "slot": "hat", "id": "cap" }` |
 | 400 | `PALETTE_NOT_FOUND` | palette id ไม่มี หรือ special หมดช่วง | `{ "channel": "primary", "id": "halloween" }` |
 | 400 | `CHANNEL_NOT_ALLOWED` | ส่ง colors ของ channel ที่ชิ้นนั้นไม่ใช้ | `{ "slot": "glasses", "channel": "secondary" }` |
+| 403 | `NOT_WORKSPACE_MEMBER` | ไม่ใช่ member ของ workspace `:id` | — |
 | 500 | `BAKE_FAILED` | ประกอบรูปไม่สำเร็จ | — |
 
 ```json
@@ -286,23 +290,23 @@ export async function getAvatarCatalog(): Promise<CatalogResponse> {
   return authFetch<CatalogResponse>("/api/user/avatar/catalog")
 }
 
-export async function getMyOutfit(): Promise<OutfitResponse> {
-  return authFetch<OutfitResponse>("/api/user/avatar/outfit")
+export async function getMyOutfit(workspaceId: string): Promise<OutfitResponse> {
+  return authFetch<OutfitResponse>(`/api/user/workspaces/${workspaceId}/avatar/outfit`)
 }
 
 export async function getDefaultOutfit(): Promise<OutfitResponse> {
   return authFetch<OutfitResponse>("/api/user/avatar/outfit/default")
 }
 
-export async function saveMyOutfit(outfit: Outfit): Promise<OutfitResponse> {
-  return authFetch<OutfitResponse>("/api/user/avatar/outfit", {
+export async function saveMyOutfit(workspaceId: string, outfit: Outfit): Promise<OutfitResponse> {
+  return authFetch<OutfitResponse>(`/api/user/workspaces/${workspaceId}/avatar/outfit`, {
     method: "PUT",
     body: JSON.stringify(outfit),
   })
 }
 ```
 
-ใช้กับ TanStack Query ตาม [guides/tanstack-query-migration.md](../../../guides/tanstack-query-migration.md) — key แนะนำ `["avatar", "catalog"]`, `["avatar", "outfit", "me"]` · หลัง `saveMyOutfit` สำเร็จ invalidate `["avatar", "outfit", "me"]`
+ใช้กับ TanStack Query ตาม [guides/tanstack-query-migration.md](../../../guides/tanstack-query-migration.md) — key แนะนำ `["avatar", "catalog"]`, `["avatar", "outfit", workspaceId]` · หลัง `saveMyOutfit` สำเร็จ invalidate `["avatar", "outfit", workspaceId]` (ชุดแยกต่อ workspace)
 
 ---
 

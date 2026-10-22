@@ -170,7 +170,7 @@ Framework `testify/assert` + `require` · DB mock ผ่าน interface · S3 m
 |---|---|---|
 | AC-U-58 | ผู้ใช้ online ใน workspace | ได้ event เปลี่ยน avatar 1 ครั้ง · คนอื่นในห้องเห็น URL ใหม่ |
 | AC-U-59 | ผู้ใช้ offline | ไม่มี event · เข้า VO ครั้งหน้าได้ชุดที่ reset แล้ว (อ่านจาก DB) |
-| AC-U-60 | ผู้ใช้อยู่หลาย workspace | ได้ event ทุก workspace ที่อยู่ |
+| AC-U-60 | ผู้ใช้ใส่ชิ้นนี้ในหลาย workspace (ชุดแยกต่อ workspace — C-14) | ได้ 1 event ต่อ workspace ที่ชุดถูก reset · workspace ที่ชุดไม่ได้ใส่ชิ้นนี้ไม่ได้ event · จำนวนผู้ใช้นับคนไม่ซ้ำ (1 คน 2 workspace = 1 คน / 2 ชุด) |
 
 ---
 

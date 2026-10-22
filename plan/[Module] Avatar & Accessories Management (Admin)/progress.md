@@ -1,7 +1,19 @@
 # [Module] Avatar & Accessories Management (Admin) — Progress / Handoff
 
-> **สถานะรวม:** implement ครบทุกแถวใน task-breakdown แล้ว (รอบ 7) และ merge เข้า develop / deploy ขึ้น dev แล้ว รวม QA-1 (zyra-app#644 — ยังไม่ได้รันบน dev) · ยังไม่ได้เทสหลัง login admin บน dev · ยังไม่ขึ้น uat/prod (develop → main ต้องถาม Ten) · D1–D6 ยังไม่มีคำตอบ ใช้ค่าตามเอกสารไปก่อน
+> **สถานะรวม:** implement ครบทุกแถว + ปรับชุดเป็นแยกต่อ workspace ตามมติ C-14 (รอบ 8) · merge เข้า develop / ขึ้น dev แล้ว · ยังไม่ได้เทสหลัง login admin บน dev · ยังไม่ขึ้น uat/prod (develop → main ต้องถาม Ten) · D1–D6 ยังไม่มีคำตอบ
 > **อัปเดตล่าสุด:** 2026-10-22 · **คนล่าสุด:** Ten (ผ่าน Claude Code)
+
+## 2026-10-22 (รอบ 8 · ชุดแยกต่อ workspace — มติ C-14) · Ten (ผ่าน Claude Code)
+
+- **ทำอะไร:** ตรวจ [AvatarCustomization/spec.md](../AvatarCustomization/spec.md) (ของ rif ขึ้น main 13:10) เจอว่ามติ C-14 ต้องการ `tb_user_outfit` PK `(user_id, workspace_id)` "ก่อน #179 merge" แต่ #179 merge ไปแล้ว 12:52 → แก้ตาม
+  - zyra-api#185: migration **119** เพิ่ม `workspace_id` + สลับ PK (ตารางว่างทุกที่ ไม่ต้องย้ายข้อมูล) · `user_count` = คนไม่ซ้ำ · reset job นับ/ถอดทีละแถว (user, workspace) · `DELETE` คืน `{job_id, total = ชุด, user_count = คน}` · audit `affected_user_count` + `affected_outfit_count` · `outfit_reset` มี `workspace_id`
+  - zyra-ws#87: ส่ง `outfit_reset` เฉพาะห้องของ workspace นั้น
+  - เอกสาร: technical-design §4.1/4.2/8.2/8.3/8.4/9 · `data/api-example.md` (path `/api/user/workspaces/:id/avatar/outfit`, 403 `NOT_WORKSPACE_MEMBER`) · `frontend-guide.md` · data file (ข้อความ "ใช้ชุดนี้ใน {workspace}") · test-plan AC-U-60 · AvatarCustomization spec §5.6/§9.2/§11/§13 + changelog · นำ `AvatarCustomization/technical-design.md` (ร่าง 2026-10-05 ที่อยู่เครื่องเดียว) ขึ้น git พร้อมหัวเอกสารบอกส่วนที่ถูกแทน
+- **ถึงไหน:** zyra-api#185 + zyra-ws#87 merge เข้า develop แล้ว · dev รัน migration 119 แล้ว (`tb_user_outfit` PK = `(user_id, workspace_id)` ตรวจแบบ read-only)
+- **PR:** zyra-api#185 · zyra-ws#87 · zyra-doc (PR นี้)
+- **verify ถึงไหน:** unit test `-race` (1 คน 2 workspace = 1 คน / 2 ชุด, reset ครบทุกชุด, event ต่อ user@workspace) · SQL จริงบน dev DB ใน transaction + ROLLBACK: 118 → 119 → 119 ซ้ำ ได้ PK `(user_id, workspace_id)` · ชุดซ้ำ (user, workspace) ถูกปฏิเสธ · usage 2 / total 3 / reset 0 ค้าง · ws test ส่งเฉพาะห้องนั้น · **ยังไม่ได้** เทส `outfit_reset` ผ่าน Redis จริง (ยังไม่มีใครใส่ชุด)
+- **ต่อจากนี้:** เหมือนรอบ 7 (QA-1 บน dev ด้วย account admin → QA-2 → ถาม Ten ก่อน develop → main) · ฝั่ง member (rif) เริ่ม M-1 ได้บนตารางต่อ workspace
+- **ติดอะไร:** D1–D6 · Q-4c (ค่าสีผิว 5 เฉด) · `spec.md` ต้นฉบับ AvatarCustomization (ร่าง 2026-10-08) ยังไม่ขึ้น git (สำเนาในเครื่อง Ten) · ลบถาวร `tb_avatar` เดิมรอ Ten ตัดสิน
 
 ## 2026-10-22 (รอบ 7 · ทำครบ + merge เข้า develop) · Ten (ผ่าน Claude Code)
 
