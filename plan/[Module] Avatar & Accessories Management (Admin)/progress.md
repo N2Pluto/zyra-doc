@@ -10,10 +10,10 @@
   - zyra-api#187 + zyra-app#646: บังคับชีทนั่ง Hair, Facial Hair, Shoes เพิ่ม (D5 ✅) — ตรวจไฟล์ใน `demo file/custom avatar` ครบ 72 ไฟล์ พบว่า 3 หมวดนี้มีชีทนั่งครบทุกชิ้นแต่ระบบยังไม่บังคับ · หมวดอื่นที่มีไฟล์ (eyes, face, hat, glasses) ไม่มีชีทนั่ง
   - (ยกเลิก) zyra-api#186 "บังคับทุกหมวดยกเว้นตา" — Ten ให้แก้กลับ ปิด PR ไม่ได้ merge
   - **นำไฟล์ศิลปินทั้งหมดเข้า dev:** 39 ชิ้น / 72 ไฟล์ ผ่าน `AvatarPartService.Create` (validator + R2 `zgather-dev` + thumbnail + audit เหมือน API) · ชื่อตาม POC · `created_by = import:demo-file-2026-10-22` · สคริปต์ชั่วคราว ไม่ได้ commit
-- **ถึงไหน:** #645, zyra-api#187 merge แล้ว · zyra-app#646 รอ CI
+- **ถึงไหน:** #645, zyra-api#187, zyra-app#646 merge แล้ว · dev รัน `dev-33b1556`
 - **PR:** zyra-app#645 · zyra-api#187 · zyra-app#646 · (ปิด) zyra-api#186
-- **verify ถึงไหน:** dry-run ก่อนนำเข้า 39/39 ผ่าน · หลังนำเข้า (read-only): ทุกหมวดครบตามจำนวน · 8 หมวดที่บังคับมีชีทนั่งครบ · special costume 3 ชุด 7 สี · audit 39 แถว · ไฟล์ walk / sit / thumbnail บน R2 ตอบ 200 · **ยังไม่ได้** เปิดดูหน้า admin บน dev หลัง login
-- **ต่อจากนี้:** เปิดหน้า Accessory บน dev ดูชิ้นที่นำเข้า (ท่านั่ง ทุกทิศ) · QA-1 / QA-2
+- **verify ถึงไหน:** dry-run ก่อนนำเข้า 39/39 ผ่าน · หลังนำเข้า (read-only): ทุกหมวดครบตามจำนวน · 8 หมวดที่บังคับมีชีทนั่งครบ · special costume 3 ชุด 7 สี · audit 39 แถว · ไฟล์ walk / sit / thumbnail บน R2 ตอบ 200 · **live-test บน dev: Ten เปิดหน้า Accessory หลัง login admin แล้ว แท็บ Sitting ท่านั่งตรงทุกทิศ (2026-10-22)**
+- **ต่อจากนี้:** QA-1 (e2e บน dev) / QA-2 manual (AC-M) · ถาม Ten ก่อน develop → main
 - **ติดอะไร:** ชิ้นทดสอบ "test 01 / test 1" 9 ชิ้นของทีมยังอยู่บน dev (ไม่ได้แตะ) · Mask, Neck, Belt, Bag, Back, Companion ยังไม่มีไฟล์ศิลปิน
 
 ## 2026-10-22 (รอบ 8 · ชุดแยกต่อ workspace — มติ C-14) · Ten (ผ่าน Claude Code)
