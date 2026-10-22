@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Zyra Prod Clone Load Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~72ch) with full-width tables/diagram blocks; a sticky section index on wide screens */
+:root {
+  --bg: #f6f7f5;
+  --surface: #ffffff;
+  --fg: #1c2321;
+  --muted: #5d6a66;
+  --line: #d9dfdc;
+  --accent: #0f7a6c;
+  --accent-soft: #e2f1ee;
+  --warn: #b86a00;
+  --warn-soft: #fbf0df;
+  --bad: #b3261e;
+  --bar: #9fb3ad;
+  --bar-hot: #0f7a6c;
+  --display: "Anuphan", "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, sans-serif;
+  --body: "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121615; --surface: #1a201e; --fg: #e4ebe8; --muted: #9aa8a3; --line: #2c3532;
+    --accent: #4cc2b0; --accent-soft: #163330; --warn: #e6a64a; --warn-soft: #33281a; --bad: #ef7a72;
+    --bar: #4a5a55; --bar-hot: #4cc2b0; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121615; --surface: #1a201e; --fg: #e4ebe8; --muted: #9aa8a3; --line: #2c3532;
+  --accent: #4cc2b0; --accent-soft: #163330; --warn: #e6a64a; --warn-soft: #33281a; --bad: #ef7a72;
+  --bar: #4a5a55; --bar-hot: #4cc2b0; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 400 16px/1.75 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 48px; }
+@media (max-width: 860px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; } nav.toc { display: none; } }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; font-size: 13px; line-height: 1.6; }
+nav.toc a { display: block; color: var(--muted); text-decoration: none; padding: 3px 0 3px 10px; border-left: 2px solid var(--line); }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent); border-left-color: var(--accent); outline: none; }
+main { min-width: 0; display: flex; flex-direction: column; gap: 56px; }
+header { display: flex; flex-direction: column; gap: 14px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(30px, 5vw, 42px)/1.25 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 24px/1.35 var(--display); margin: 0 0 14px; text-wrap: balance; }
+h3 { font: 600 17px/1.4 var(--display); margin: 22px 0 8px; }
+p { margin: 0 0 12px; max-width: 68ch; }
+.lede { font-size: 18px; color: var(--muted); max-width: 62ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font: 400 13px/1.5 var(--mono); color: var(--muted); }
+.meta b { color: var(--fg); font-weight: 500; }
+ul { margin: 0 0 12px; padding-left: 22px; max-width: 68ch; }
+li { margin: 4px 0; }
+code, .num { font-family: var(--mono); font-size: .92em; }
+.num { font-variant-numeric: tabular-nums; }
+.ask { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; }
+.ask h2 { margin: 0; font-size: 19px; }
+.ask ol { margin: 0; padding-left: 22px; }
+.ask li { margin: 6px 0; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 6px 0 16px; }
+.kpi { border-top: 2px solid var(--fg); padding-top: 10px; display: flex; flex-direction: column; gap: 2px; }
+.kpi .v { font: 600 26px/1.2 var(--display); font-variant-numeric: tabular-nums; }
+.kpi .l { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.tbl { overflow-x: auto; margin: 6px 0 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; line-height: 1.55; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 12px/1.4 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); background: transparent; }
+tr:last-child td { border-bottom: 0; }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.total td { font-weight: 600; border-top: 2px solid var(--fg); }
+.pill { display: inline-block; font: 500 12px/1.4 var(--mono); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.ok { background: var(--accent-soft); color: var(--accent); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.no { background: transparent; color: var(--bad); border: 1px solid currentColor; }
+.note { border-left: 3px solid var(--warn); background: var(--warn-soft); padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 10px 0 14px; max-width: 72ch; }
+.note p:last-child { margin: 0; }
+.src { font-size: 13px; color: var(--muted); }
+/* CPU bars, scale 0–1 core */
+.bars { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 6px; max-width: 640px; }
+.bar { display: grid; grid-template-columns: 150px minmax(0, 1fr) 64px; align-items: center; gap: 12px; font-size: 14px; }
+.bar .track { height: 14px; background: var(--line); border-radius: 3px; position: relative; overflow: hidden; }
+.bar .fill { position: absolute; inset: 0 auto 0 0; background: var(--bar); border-radius: 3px; }
+.bar.hot .fill { background: var(--bar-hot); }
+.bar .val { font: 400 13px/1 var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.axis { display: grid; grid-template-columns: 150px minmax(0, 1fr) 64px; gap: 12px; font: 400 11px/1 var(--mono); color: var(--muted); max-width: 640px; }
+.axis .ticks { display: flex; justify-content: space-between; }
+@media (max-width: 520px) { .bar, .axis { grid-template-columns: 96px minmax(0, 1fr) 52px; gap: 8px; } }
+/* architecture */
+.arch { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 18px; margin: 6px 0 14px; }
+.arch svg { display: block; min-width: 720px; width: 100%; height: auto; }
+.arch text { font-family: var(--body); fill: var(--fg); }
+.arch .sm { font-size: 12px; fill: var(--muted); }
+.arch .box { fill: var(--bg); stroke: var(--line); stroke-width: 1.5; }
+.arch .zone { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 6 5; }
+.arch .ln { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+.arch .tag { font: 500 11px var(--mono); fill: var(--accent); letter-spacing: .06em; }
+.phases { display: flex; flex-direction: column; gap: 0; border-left: 2px solid var(--line); margin: 8px 0 0 6px; }
+.phase { position: relative; padding: 0 0 18px 22px; }
+.phase::before { content: ""; position: absolute; left: -7px; top: 8px; width: 12px; height: 12px; border-radius: 50%; background: var(--bg); border: 2px solid var(--accent); }
+.phase.done::before { background: var(--accent); }
+.phase h3 { margin: 0 0 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.phase p { margin: 0; color: var(--muted); font-size: 15px; }
+.qs { display: flex; flex-direction: column; gap: 10px; }
+.q { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 4px 12px; }
+.q .id { font: 600 15px/1.6 var(--mono); color: var(--accent); }
+.q .t { font-weight: 600; }
+.q .rec { grid-column: 2; font-size: 14.5px; color: var(--muted); }
+.q .rec b { color: var(--fg); font-weight: 600; }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+a { color: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { nav.toc a { transition: color .15s, border-color .15s; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="toc" aria-label="สารบัญ">
+    <a href="#summary">สรุป</a>
+    <a href="#why">ทำไมต้องทำ</a>
+    <a href="#today">prod วันนี้</a>
+    <a href="#proposal">ข้อเสนอ</a>
+    <a href="#cost">ค่าใช้จ่าย</a>
+    <a href="#plan">แผนงาน</a>
+    <a href="#safety">ความปลอดภัย</a>
+    <a href="#fidelity">ผลใช้ได้แค่ไหน</a>
+    <a href="#outcome">ผลที่จะได้</a>
+    <a href="#decide">ต้องตัดสิน</a>
+    <a href="#findings">เรื่องที่เจอเพิ่ม</a>
+  </nav>
+
+  <main>
+    <header>
+      <span class="eyebrow">ข้อเสนอ · Load Test</span>
+      <h1>ยิง load test บน prod clone</h1>
+      <p class="lede">สร้าง environment ชั่วคราวที่สเปกเครื่องเท่า prod ทุกตัว แต่แยกออกจาก prod ทั้งหมด เพื่อวัดว่าระบบรับคนได้จริงเท่าไร โดยไม่กระทบลูกค้า แล้วลบทิ้งเมื่อยิงเสร็จ</p>
+      <div class="meta">
+        <span>วันที่ <b>6 ต.ค. 2026</b></span>
+        <span>สถานะ <b>รออนุมัติ</b></span>
+        <span>ตรวจของจริงแล้ว <b>Phase 0</b></span>
+        <span>งบประมาณ <b>≈ $12 / วันทำงาน</b></span>
+      </div>
+    </header>
+
+    <section id="summary" class="ask" aria-labelledby="ask-h">
+      <h2 id="ask-h">ขออนุมัติ 3 เรื่อง</h2>
+      <ol>
+        <li><b>งบ</b> ประมาณ <span class="num">$1.17</span> ต่อชั่วโมงที่เปิดใช้ (≈ <span class="num">$12</span> ต่อวันทำงาน 10 ชั่วโมง) — เปิดเฉพาะวันที่ยิง ยิงเสร็จลบทิ้ง</li>
+        <li><b>ข้อมูลใน DB ของ clone</b> จะ restore จากข้อมูลจริงของ prod แล้วลบอีเมล/token ลูกค้าออก หรือใช้ข้อมูลทดสอบอย่างเดียว (Q1)</li>
+        <li><b>ขอบเขตรอบแรก</b> รวมระบบเสียง/วิดีโอ (LiveKit) ด้วยเลย หรือเริ่มที่ REST + WebSocket ก่อน (Q4)</li>
+      </ol>
+    </section>
+
+    <section id="why">
+      <h2>ทำไมต้องทำ</h2>
+      <p>ทุกวันนี้เรายังไม่รู้ว่า prod รับคนพร้อมกันได้กี่คน ตัวเลขที่มีอยู่ทั้งหมดเป็นการประมาณ เพราะยังไม่มีที่ไหนยิงขนาดเต็มได้อย่างปลอดภัย</p>
+      <ul>
+        <li><b>ตอนนี้มี 2 node แต่ทุก env ยังใช้ร่วมกันทั้งคู่</b>
+          <ul>
+            <li><b>เครื่องหลัก</b> (e2-standard-4) รัน app, api, ws ของ prod, uat และ dev พร้อมกัน → ยิง REST/WebSocket ที่ dev หนักเมื่อไหร่ prod ช้าตาม เคยเกิดจริงแล้ว 2 ครั้ง (10 ก.ย. และ 22 ก.ย.)</li>
+            <li><b>เครื่องวิดีโอ</b> (c2d-highcpu-4, แยกออกมาเมื่อ 24 ก.ย.) รัน LiveKit ตัวเดียวที่ทุก env ใช้ร่วมกัน → ยิงห้องประชุม/Spotlight ที่ dev ก็กระทบวิดีโอของ prod</li>
+          </ul>
+          กฎตอนนี้จึงจำกัดการยิงไว้ไม่เกิน 5 คนจำลอง</li>
+        <li><b>ยิงจากเครื่องในออฟฟิศไปหา dev ใช้วัดไม่ได้</b> เวลาเดินทางของเน็ตปนเข้าไปในผล เช่น เข้า office ช้า 1.7 วินาทีตั้งแต่ 5 คน ซึ่งไม่ได้มาจากโหลด</li>
+        <li><b>การตัดสินใจที่รอตัวเลขนี้อยู่:</b> จะขยายเครื่องไหม, ต้องทำ tick overhaul Phase B/C ไหม (ตั้งเกณฑ์ไว้ที่ 1,000 คน/แผนที่), เปิด Movement V2 เป็นค่าเริ่มต้นได้หรือยัง, ห้องประชุมพร้อมกันได้กี่ห้อง</li>
+      </ul>
+      <p>script ยิงพร้อมแล้ว 19 scenario ใน <code>zyra-loadtest</code> และทดสอบแบบย่อผ่านทุกตัว สิ่งที่ขาดคือที่ยิง</p>
+    </section>
+
+    <section id="today">
+      <h2>prod วันนี้ (วัดจริง 6 ต.ค.)</h2>
+      <p>ตรวจจากระบบจริงแบบอ่านอย่างเดียว ทั้งค่าเครื่อง ค่า DB และ Prometheus ย้อนหลัง 7 วัน ไม่ได้แก้อะไรใน prod</p>
+      <div class="kpis">
+        <div class="kpi"><span class="v">75 คน</span><span class="l">ออนไลน์ตอนวัด ขณะเครื่องหลักใช้ CPU 32%</span></div>
+        <div class="kpi"><span class="v">2.5 / 4</span><span class="l">core ที่ใช้สูงสุดใน 7 วัน (เครื่องหลัก)</span></div>
+        <div class="kpi"><span class="v">13.4 / 16</span><span class="l">GiB หน่วยความจำสูงสุดใน 7 วัน</span></div>
+        <div class="kpi"><span class="v">30 rps</span><span class="l">request สูงสุดเข้าหน้าเว็บ (เฉลี่ย 5 นาที)</span></div>
+      </div>
+      <div class="note"><p>ตัวเลขเดิมที่ว่า "prod รับได้ 40–60 คนแล้วเต็ม" วัดตอนที่ระบบวิดีโอยังอยู่เครื่องเดียวกัน ตอนนี้ย้ายออกแล้ว และวันนี้มี 75 คนโดยเครื่องยังว่าง จึงใช้ตัวเลขเดิมเป็นฐานไม่ได้แล้ว ต้องวัดใหม่</p></div>
+
+      <h3>เครื่องหลักของ prod ไม่ได้รันแค่ prod</h3>
+      <p>CPU สูงสุดใน 7 วัน แยกตามส่วน (หน่วย core, เครื่องมี 4 core) ส่วนที่ไม่ใช่ prod รวมกันราว 1.7 core ตอนพีค clone จึงต้องมีส่วนเหล่านี้ด้วย ไม่งั้นผลจะดูดีกว่าความจริง</p>
+      <div class="bars" role="img" aria-label="CPU สูงสุดใน 7 วันแยกตาม namespace">
+        <div class="bar"><span>วิดีโอสำรอง (sfu-lite)</span><span class="track"><span class="fill" style="width:80.2%"></span></span><span class="val">0.80</span></div>
+        <div class="bar hot"><span>prod (app/api/ws)</span><span class="track"><span class="fill" style="width:70.1%"></span></span><span class="val">0.70</span></div>
+        <div class="bar"><span>monitoring</span><span class="track"><span class="fill" style="width:29.4%"></span></span><span class="val">0.29</span></div>
+        <div class="bar"><span>Argo CD</span><span class="track"><span class="fill" style="width:26.6%"></span></span><span class="val">0.27</span></div>
+        <div class="bar"><span>ระบบ k3s / Traefik</span><span class="track"><span class="fill" style="width:24.1%"></span></span><span class="val">0.24</span></div>
+        <div class="bar"><span>dev</span><span class="track"><span class="fill" style="width:9.1%"></span></span><span class="val">0.09</span></div>
+        <div class="bar"><span>uat</span><span class="track"><span class="fill" style="width:4.4%"></span></span><span class="val">0.04</span></div>
+      </div>
+      <div class="axis" aria-hidden="true"><span></span><span class="ticks"><span>0</span><span>0.25</span><span>0.5</span><span>0.75</span><span>1 core</span></span><span></span></div>
+      <p class="src">แหล่ง: Prometheus ใน cluster, max_over_time 7 วัน ของ rate 5 นาที · แต่ละส่วนไม่ได้พีคพร้อมกัน</p>
+    </section>
+
+    <section id="proposal">
+      <h2>ข้อเสนอ: clone ที่สเปกเท่า prod แยกทุกชิ้น</h2>
+      <div class="arch">
+        <svg viewBox="0 0 760 330" role="img" aria-label="ภาพรวม prod clone">
+          <rect class="zone" x="200" y="16" width="544" height="298" rx="10"/>
+          <text class="tag" x="216" y="38">LOADTEST ENV · แยกจาก PROD ทั้งหมด</text>
+
+          <rect class="box" x="16" y="120" width="150" height="86" rx="8"/>
+          <text x="91" y="152" text-anchor="middle" font-weight="600" font-size="14">เครื่องยิง</text>
+          <text class="sm" x="91" y="172" text-anchor="middle">k6 + lk</text>
+          <text class="sm" x="91" y="190" text-anchor="middle">e2-standard-8</text>
+
+          <rect class="box" x="220" y="56" width="300" height="140" rx="8"/>
+          <text x="236" y="80" font-weight="600" font-size="14">เครื่องหลัก · e2-standard-4</text>
+          <text class="sm" x="236" y="102">app ×2 · api · ws · notifications</text>
+          <text class="sm" x="236" y="122">sfu-lite · monitoring · Argo CD</text>
+          <text class="sm" x="236" y="142">dev/uat จำลอง (ให้ CPU ว่างเท่า prod)</text>
+          <text class="sm" x="236" y="174">version / replicas / resources = prod</text>
+
+          <rect class="box" x="540" y="56" width="190" height="140" rx="8"/>
+          <text x="556" y="80" font-weight="600" font-size="14">เครื่องวิดีโอ</text>
+          <text class="sm" x="556" y="102">c2d-highcpu-4</text>
+          <text class="sm" x="556" y="122">LiveKit (version เดียวกับ prod)</text>
+          <text class="sm" x="556" y="142">ถ้าเลือกทำในรอบแรก (Q4)</text>
+
+          <rect class="box" x="220" y="226" width="160" height="70" rx="8"/>
+          <text x="236" y="252" font-weight="600" font-size="14">AlloyDB</text>
+          <text class="sm" x="236" y="274">2 vCPU · Postgres 17</text>
+
+          <rect class="box" x="396" y="226" width="160" height="70" rx="8"/>
+          <text x="412" y="252" font-weight="600" font-size="14">Redis</text>
+          <text class="sm" x="412" y="274">BASIC 1 GB · 7.2</text>
+
+          <rect class="box" x="572" y="226" width="158" height="70" rx="8"/>
+          <text x="588" y="252" font-weight="600" font-size="14">Bucket + Secret</text>
+          <text class="sm" x="588" y="274">ชุดใหม่ ไม่ใช้ของ prod</text>
+
+          <path class="ln" d="M166 163 H220"/>
+          <path class="ln" d="M166 150 C190 150 190 30 520 30 C640 30 640 40 640 56"/>
+          <path class="ln" d="M300 196 V226"/>
+          <path class="ln" d="M470 196 V226"/>
+          <path class="ln" d="M520 126 H540"/>
+          <path class="ln" d="M500 196 C500 212 650 210 650 226"/>
+        </svg>
+      </div>
+      <h3>หลักการ</h3>
+      <ul>
+        <li><b>สเปกเท่า prod:</b> ประเภทเครื่อง, จำนวน replica, CPU/RAM ที่จองไว้, version ของทุก service, ขนาด DB และ Redis คัดลอกจาก prod ตรงๆ</li>
+        <li><b>ไม่มีอะไรชี้กลับไป prod:</b> DB, Redis, bucket, LiveKit, secret, key ที่ใช้ออก token และระบบ deploy เป็นชุดใหม่ทั้งหมด token ที่ออกให้ clone ใช้กับ prod ไม่ได้</li>
+        <li><b>มีงานพื้นหลังเท่า prod:</b> ลง monitoring, Argo CD, sfu-lite และ dev/uat จำลองบนเครื่องเดียวกัน เพื่อให้ CPU ว่างเท่าของจริง</li>
+        <li><b>เครื่องยิงแยกออกมา</b> ไม่แย่ง CPU กับระบบที่ถูกวัด</li>
+        <li><b>ชั่วคราว:</b> ทุก resource ขึ้นต้นด้วย <code>lt-</code> สร้างก่อนยิง ลบทั้งชุดได้ด้วยคำสั่งเดียว เพราะใช้ Terraform แยกจากของ prod</li>
+      </ul>
+    </section>
+
+    <section id="cost">
+      <h2>ค่าใช้จ่าย</h2>
+      <p>ราคา on-demand ภูมิภาค Singapore จาก Cloud Billing Catalog API (6 ต.ค. 2026) หน่วย USD ยังไม่หักส่วนลดใดๆ</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>รายการ</th><th>สเปก</th><th class="r">$ / ชม.</th></tr></thead>
+          <tbody>
+            <tr><td>เครื่องหลัก</td><td>e2-standard-4 (4 vCPU / 16 GB)</td><td class="r">0.165</td></tr>
+            <tr><td>เครื่องวิดีโอ</td><td>c2d-highcpu-4 (4 vCPU / 8 GB)</td><td class="r">0.185</td></tr>
+            <tr><td>AlloyDB</td><td>2 vCPU / 16 GB, ZONAL</td><td class="r">0.383</td></tr>
+            <tr><td>Redis</td><td>Memorystore BASIC 1 GB</td><td class="r">0.065</td></tr>
+            <tr><td>เครื่องยิง</td><td>e2-standard-8 (8 vCPU / 32 GB)</td><td class="r">0.331</td></tr>
+            <tr><td>Disk + IP</td><td>3 × 40 GB, IP 2–3 ตัว</td><td class="r">≈ 0.04</td></tr>
+            <tr class="total"><td colspan="2">รวมครบชุด</td><td class="r">≈ 1.17</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>ใช้นานเท่าไร</th><th class="r">ครบชุด</th><th class="r">ไม่รวมเครื่องวิดีโอ</th></tr></thead>
+          <tbody>
+            <tr><td>1 วันทำงาน (10 ชม.) — แนะนำ</td><td class="r">≈ $12</td><td class="r">≈ $10</td></tr>
+            <tr><td>เปิดค้าง 24 ชม.</td><td class="r">≈ $28</td><td class="r">≈ $24</td></tr>
+            <tr><td>เปิดค้าง 7 วัน</td><td class="r">≈ $197</td><td class="r">≈ $165</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="src">ยังไม่รวม: พื้นที่เก็บข้อมูลของ AlloyDB ที่ restore มา (คิดตาม GB), ค่าส่งข้อมูลออก (egress), Cloud Logging และค่า build image ใน CI · เป็นราคาตามรายการ ไม่ใช่ใบแจ้งหนี้จริง</p>
+    </section>
+
+    <section id="plan">
+      <h2>แผนงาน</h2>
+      <div class="phases">
+        <div class="phase done"><h3>Phase 0 · ตรวจของจริง <span class="pill ok">เสร็จ 6 ต.ค.</span></h3><p>อ่านค่าเครื่อง, DB, Redis, โหลด 7 วัน และราคา จาก GCP และ cluster จริง ไม่ได้แก้อะไร</p></div>
+        <div class="phase"><h3>Phase 1 · สร้าง infra <span class="pill warn">รออนุมัติงบ</span></h3><p>Terraform ชุดใหม่ (state แยกจาก prod): network, เครื่องหลัก, เครื่องวิดีโอ, AlloyDB, Redis, bucket, เครื่องยิง</p></div>
+        <div class="phase"><h3>Phase 2 · Secret + DNS</h3><p>secret ชุดใหม่ (ปิดอีเมล, ปิด weather provider, ปิด Discord/Sentry ของ prod) และชื่อโดเมน <code>*.lt.zyra.center</code></p></div>
+        <div class="phase"><h3>Phase 3 · Deploy</h3><p>Argo CD ของ clone เอง คัดลอก config จาก prod · build หน้าเว็บใหม่จาก commit เดียวกับ prod (URL ถูกฝังตอน build) · ลง monitoring</p></div>
+        <div class="phase"><h3>Phase 4 · ข้อมูล</h3><p>restore จาก backup ของ prod แล้วล้างข้อมูลส่วนตัว หรือ schema + ข้อมูลทดสอบ ตาม Q1 · สร้างผู้ใช้ทดสอบ <code>lt_</code> 1,000 คน</p></div>
+        <div class="phase"><h3>Phase 5 · ตรวจก่อนยิง</h3><p>สคริปต์เช็กว่าทุก URL/IP เป็นของ clone ไม่มีค่าใดชี้ไป prod แล้วรัน smoke 1 คน</p></div>
+        <div class="phase"><h3>Phase 6 · ยิง + สรุป + ลบ</h3><p>รัน scenario จากเบาไปหนัก เก็บผลพร้อมกราฟ CPU/RAM ช่วงเดียวกัน สรุปเป็นตาราง แล้วลบ clone ทั้งชุดและเช็ก billing ว่าไม่มีอะไรค้าง</p></div>
+      </div>
+    </section>
+
+    <section id="safety">
+      <h2>ความปลอดภัย</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>ความเสี่ยง</th><th>ป้องกันด้วย</th></tr></thead>
+          <tbody>
+            <tr><td>ยิงพลาดไปโดน prod</td><td>ตัวยิงบล็อกโดเมน/IP ของ prod ในโค้ด · สคริปต์ตรวจก่อนยิงทุกรอบต้องผ่าน · key ออก token คนละชุดกับ prod</td></tr>
+            <tr><td>Terraform ไปแก้เครื่อง prod</td><td>Terraform ชุดแยกพร้อม state แยก · ห้ามรัน apply ใน Terraform ของ prod ระหว่างงานนี้ (ตอนนี้มีค่าที่ drift จนถ้า apply จะสร้างเครื่อง prod ใหม่)</td></tr>
+            <tr><td>clone อ่าน secret ของ prod ได้</td><td>service account ใหม่ ให้สิทธิ์อ่านเฉพาะ secret ของ loadtest (ของ prod ตอนนี้อ่านได้ทั้ง project)</td></tr>
+            <tr><td>ส่งอีเมลหาลูกค้าจริง</td><td>ปิดค่าอีเมลใน secret ของ clone · ผู้ใช้ทดสอบใช้โดเมน <code>@loadtest.invalid</code> · ถ้า restore ข้อมูลจริง เปลี่ยนอีเมลทุกแถวก่อนเปิด service</td></tr>
+            <tr><td>ข้อมูลลูกค้าหลุด (ถ้าเลือก restore)</td><td>ล้างอีเมล/token ก่อนเปิดระบบ · เข้าถึงได้เฉพาะทีม · ลบ DB ทิ้งเมื่อจบ</td></tr>
+            <tr><td>ค่าใช้จ่ายค้าง</td><td>ทุก resource ขึ้นต้นด้วย <code>lt-</code> · ลบทั้งชุดด้วย terraform destroy · ตรวจ billing หลังลบ</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>การสร้างหรือลบ resource บน cloud ทุกครั้งจะขอยืนยันก่อน และไม่มีการ deploy อะไรเข้า prod ในงานนี้</p>
+    </section>
+
+    <section id="fidelity">
+      <h2>ผลที่ได้ใช้แทน prod ได้แค่ไหน</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>เรื่อง</th><th>เหมือน prod</th><th>หมายเหตุ</th></tr></thead>
+          <tbody>
+            <tr><td>ประเภทเครื่อง, OS, k3s</td><td><span class="pill ok">เหมือน</span></td><td></td></tr>
+            <tr><td>version, replica, CPU/RAM ที่จอง</td><td><span class="pill ok">เหมือน</span></td><td>คัดลอกจาก config ที่ prod ใช้จริง</td></tr>
+            <tr><td>ขนาด AlloyDB / Redis</td><td><span class="pill ok">เหมือน</span></td><td></td></tr>
+            <tr><td>ปริมาณข้อมูลใน DB</td><td><span class="pill warn">ขึ้นกับ Q1</span></td><td>restore = เหมือน · ข้อมูลทดสอบ = DB เล็กกว่า query เร็วเกินจริง</td></tr>
+            <tr><td>งานพื้นหลังบนเครื่อง</td><td><span class="pill warn">ขึ้นกับ Q3</span></td><td>แนะนำให้จำลองด้วย</td></tr>
+            <tr><td>คนที่ใช้งานอยู่จริงตลอดเวลา</td><td><span class="pill no">ไม่เหมือน</span></td><td>clone เริ่มจาก 0 คน ผลคือ "รับได้กี่คนจากศูนย์" ต้องหักคนจริงออกตอนตีความ</td></tr>
+            <tr><td>เน็ตของผู้ใช้</td><td><span class="pill no">ไม่เหมือน</span></td><td>เครื่องยิงอยู่ใน zone เดียวกัน latency ที่ได้เป็นฝั่ง server เป็นหลัก</td></tr>
+            <tr><td>TURN, การ render ในเบราว์เซอร์</td><td><span class="pill no">ไม่ทำ</span></td><td>นอกขอบเขตรอบนี้</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="outcome">
+      <h2>ผลที่จะได้</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>คำถาม</th><th>ตอนนี้</th><th>หลังยิง</th></tr></thead>
+          <tbody>
+            <tr><td>1 workspace รับได้กี่คนก่อน p95 เกิน 500 ms</td><td>ยังไม่ได้วัด</td><td>lt04 ไล่ 50 → 1,000</td></tr>
+            <tr><td>หน้าเว็บ (Next.js) เริ่มล่มที่โหลดเท่าไร</td><td>ยังไม่ได้วัด</td><td>lt02 / lt04 / lt07 + กราฟ CPU</td></tr>
+            <tr><td>9 โมงเช้าทุกคนเข้าพร้อมกันไหวไหม</td><td>ยังไม่ได้วัด</td><td>lt07</td></tr>
+            <tr><td>ห้องประชุมพร้อมกันได้กี่ห้อง แยกเสียง / กล้อง / แชร์จอ</td><td>วัดบน MacBook เท่านั้น</td><td>lt15 + meeting-media</td></tr>
+            <tr><td>Spotlight มีคนดูได้กี่คน</td><td>วัดแบบย่อ 40 คน</td><td>lt11 ถึง 500 คน</td></tr>
+            <tr><td>เปิดนาน 1–2 ชม. แล้วหน่วยความจำรั่วไหม</td><td>ยังไม่ได้วัด</td><td>lt08 soak</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>ทุกตัวเลขจะมาพร้อมกราฟ CPU/RAM ของแต่ละ service ในช่วงเวลาเดียวกัน เพื่อบอกได้ว่าส่วนไหนพังก่อน และใช้ประกอบการตัดสินใจขยายเครื่อง</p>
+    </section>
+
+    <section id="decide">
+      <h2>เรื่องที่ต้องตัดสิน</h2>
+      <div class="qs">
+        <div class="q"><span class="id">Q1</span><span class="t">ข้อมูลใน DB ของ clone</span><span class="rec">restore แบบ point-in-time จาก backup ของ prod (มีย้อนหลัง 14 วัน) แล้วล้างอีเมล/token → สมจริงที่สุด แต่มีข้อมูลลูกค้าอยู่ใน env ชั่วคราว ต้องให้ผู้ดูแลข้อมูลอนุญาต · หรือ schema + ข้อมูลทดสอบ → ปลอดภัย แต่ผลเรื่อง DB ดีเกินจริง</span></div>
+        <div class="q"><span class="id">Q2</span><span class="t">ใช้ GCP project เดิมหรือ project ใหม่</span><span class="rec">แนะนำ <b>project เดิม</b> แยก network และสิทธิ์ · project ใหม่แยกขาดกว่าแต่ต้องตั้ง network ไป AlloyDB, registry และสิทธิ์ใหม่ทั้งหมด</span></div>
+        <div class="q"><span class="id">Q3</span><span class="t">จำลองงานพื้นหลังบนเครื่องไหม</span><span class="rec">แนะนำ <b>จำลอง</b> (sfu-lite, monitoring, Argo CD, dev/uat) ส่วนนี้กิน CPU ราว 1.7 core ตอนพีค ถ้าไม่มีผลจะดีเกินจริงเกือบครึ่งเครื่อง</span></div>
+        <div class="q"><span class="id">Q4</span><span class="t">รวมระบบวิดีโอในรอบแรกไหม</span><span class="rec">ครบชุด ≈ $1.17/ชม. · เริ่มที่ REST + WebSocket ≈ $0.98/ชม. แล้วค่อยเพิ่มเครื่องวิดีโอ</span></div>
+        <div class="q"><span class="id">Q5</span><span class="t">เครื่องยิงเครื่องเดียวพอไหม</span><span class="rec">เริ่มที่ e2-standard-8 ดูผลรอบแรกของ lt04 ถ้าเครื่องยิงเต็มก่อนค่อยเพิ่ม</span></div>
+        <div class="q"><span class="id">Q6</span><span class="t">วิธี build หน้าเว็บของ clone</span><span class="rec">เพิ่ม environment <code>loadtest</code> ใน CI ของ zyra-app (ทำซ้ำได้) หรือ build มือครั้งเดียว</span></div>
+        <div class="q"><span class="id">Q7</span><span class="t">เปิด clone นานแค่ไหน</span><span class="rec">แนะนำ <b>เปิดเฉพาะวันที่ยิง</b> ≈ $12/วัน · เปิดค้างทั้งสัปดาห์ ≈ $197</span></div>
+        <div class="q"><span class="id">Q8</span><span class="t">ยิงนอกเวลางานไหม</span><span class="rec">clone ไม่กระทบ prod โดยตรง แต่ถ้าใช้ project เดิมจะแชร์ registry และ Cloudflare ร่วมกัน · ยิงในเวลางานได้ถ้าเลือก Q2 แบบแยก network</span></div>
+      </div>
+    </section>
+
+    <section id="findings">
+      <h2>เรื่องที่เจอเพิ่มระหว่างตรวจ</h2>
+      <p>ไม่เกี่ยวกับ clone โดยตรง แต่ควรรู้ และควรตัดสินแยก</p>
+      <ul>
+        <li><b>dev ใช้ Redis ตัวเดียวกับ prod และ db เดียวกัน</b> ข้อมูลตำแหน่ง/สถานะใน virtual office ของ dev กับ prod ปนกันอยู่ (uat แยกไปใช้ db อื่นแล้ว)</li>
+        <li><b>uat ใช้ bucket เดียวกับ prod</b> ไฟล์ที่อัปโหลดตอนทดสอบบน uat ไปอยู่ในที่เก็บของ prod</li>
+        <li><b>config ของ prod ในเครื่องทีมบางเครื่องตามหลังของจริง</b> ตอน clone ต้องคัดลอกจาก branch main ล่าสุด</li>
+        <li><b>ช่วงพีคใน 7 วันมี load สูงถึง 15 และหน่วยความจำ 13.4 GiB</b> ยังไม่รู้ว่าเกิดจากอะไร ควรหาสาเหตุก่อนยิง เพราะถ้าเป็นงานประจำ clone ต้องมีด้วย</li>
+      </ul>
+    </section>
+
+    <footer>
+      รายละเอียดทางเทคนิคเต็ม: <code>zyra-doc/plan/LoadTest/prod-clone-plan.md</code> · spec load test: <code>zyra-doc/plan/LoadTest/spec.md</code> · ตัวเลขทั้งหมดในหน้านี้วัดหรือดึงจากระบบจริงวันที่ 6 ต.ค. 2026
+    </footer>
+  </main>
+</div>
+</body>
+</html>

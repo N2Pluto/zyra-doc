@@ -1,7 +1,26 @@
 # Load Test — Progress / Handoff
 
 > **สถานะรวม:** spec draft · seeder + WS + office journey + form login + lt01–lt09 + Spotlight lt10–lt12 / media ใช้ได้ · verify แบบย่อ (≤41 VU) บน local→dev ครบทุกตัวยกเว้น lt06 (ต้อง seed หลาย workspace) · ยังไม่ได้รันขนาดเต็ม
-> **อัปเดตล่าสุด:** 2026-10-06 · **คนล่าสุด:** rif (ร่วมกับ Claude Code)
+> **อัปเดตล่าสุด:** 2026-10-06 · **คนล่าสุด:** Claude Code
+
+## 2026-10-06 (รอบ 2) · Claude Code — Phase 0 ของ prod-clone-plan (verify ของจริง)
+
+- **ผู้ใช้สั่ง:** "login แล้ว ทำ Phase 0 ต่อเลย"
+- **ทำอะไร (อ่านอย่างเดียว):** `gcloud` list/describe (VM, disk, AlloyDB, Redis, bucket, secret, subnet) · IAP SSH `zyra-k3s` → `kubectl top/get` + Prometheus 7 วัน · อ่าน secret เฉพาะ host/ชื่อ bucket · ราคาจาก Cloud Billing Catalog API → ผลลง [prod-clone-plan §11](prod-clone-plan.md#11-phase-0--ผล-verify-ของจริง-2026-10-06) + แก้ §2 ตามของจริง
+- **ผลหลัก:** machine type ตรง repo · prod รัน `v1.7.3`/`ws v1.7.0` (repo ในเครื่องเก่า 63 commit) · sfu-lite เปิดอยู่บน main node · AlloyDB PITR 14 วัน → restore เข้า cluster ใหม่ได้ · node peak 7 วัน 2.5 core / load1 15 / mem 13.4 GiB · **ws online 75 คนขณะ node CPU 32%** (ตัวเลข saturate 40–60 CCU เดิมเป็นช่วงก่อนย้าย SFU) · ค่าใช้จ่าย clone ครบชุด ≈ $1.17/ชม. (list price) · dev DB = VM `gather-dev` (ACCESS.md ผิด)
+- **เจอนอก scope:** dev ใช้ Redis prod db 0 ร่วมกับ prod · uat ใช้ bucket prod — §11.6
+- **ไม่ได้ทำ:** `terraform plan` ของ prod (ต้อง lock state) · หาต้นเหตุ load1 15 / mem 13.4 GiB ที่พีค
+- **ต่อจากนี้:** ผู้ใช้ตอบ Q1–Q8 + อนุมัติงบ → Phase 1
+
+## 2026-10-06 · Claude Code — แผน load test บน prod clone
+
+- **ผู้ใช้สั่ง:** "อยากให้มันทำงานบน prod … clone prod ออกมาก่อนหนึ่งตัว จะได้ไม่เกี่ยวข้องกัน แต่ใช้ spec เครื่องของ prod · สร้างเป็น plan ไว้"
+- **ทำอะไร:** เขียน [prod-clone-plan.md](prod-clone-plan.md) — env `loadtest` แยกทั้งหมด (VM e2-standard-4 + SFU c2d-highcpu-4 + AlloyDB 2 vCPU + Memorystore 1 GB + bucket + secret + DNS + Argo ของตัวเอง) · terraform root แยก (root prod มี drift ที่จะ replace VM) · 7 phase · safety S-10..S-14 · Q1–Q8
+- **ถึงไหน:** planning only — ไม่ได้สร้าง/แก้อะไรบน cloud
+- **verify:** ข้อมูล infra อ่านจากไฟล์ใน repo เท่านั้น · gcloud login หมดอายุ, ไม่มี kubeconfig, Grafana MCP ต่อไม่ได้ → ยังไม่ได้ยืนยันกับของจริง (Phase 0)
+- **ต่อจากนี้:** ผู้ใช้ตอบ Q1–Q8 · `gcloud auth login` แล้วทำ Phase 0 + ประเมินค่าใช้จ่าย
+- **ติดอะไร:** credential GCP · Q1 (restore ข้อมูลจริงหรือไม่) ต้องให้คนดูแลข้อมูลตัดสิน
+- **พบระหว่างทาง:** spec §3.1 ล้าสมัย (SFU ย้ายไป node แยกแล้ว 2026-09-24) · `ACCESS.md` บอก dev อยู่ AlloyDB `postgres` แต่ spec Q1 บอก `35.247.177.198` — ยังไม่ได้เคลียร์
 
 ## 2026-10-06 · rif (ร่วมกับ Claude Code) — `make run-all` รันทุก scenario ในคำสั่งเดียว
 

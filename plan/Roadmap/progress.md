@@ -1,7 +1,82 @@
 # Roadmap (admin) — Progress / Handoff
 
-> **สถานะรวม:** UI 2 หน้า + API ครบ (feature CRUD, scene, asset library, public read) ต่อกันแล้ว · **ตารางสร้างบน dev แล้ว** (DDL อยู่ใน `internal/database/postgres.go` จึงขึ้นเองตอน service start ทุก env) · ฝั่ง landing ยังไม่ต่อ
-> **อัปเดตล่าสุด:** 2026-10-05 · **คนล่าสุด:** rif (pair กับ Claude Code)
+> **สถานะรวม:** api + admin ขึ้น **prod แล้วที่ `v1.7.4`** · `ROADMAP_ENABLED` / `NEXT_PUBLIC_ROADMAP` เปิดครบ dev/UAT/prod · **zyra-world.com/Feature (section 07) อ่านจาก API ของ prod แล้ว** (2026-10-07, เดิมอ่านจาก UAT) — ฉากและข้อมูลที่โชว์บน landing ต้องจัดใน **admin ของ prod** · prod มีฟีเจอร์ 9 ตัว (ทีมตั้งค่าเอง + ฉากที่ copy จาก UAT) ทั้งหมดเป็น `upcoming` และเปิดแสดง
+> **อัปเดตล่าสุด:** 2026-10-07 · **คนล่าสุด:** N2Pluto (pair กับ Claude Code)
+
+## 2026-10-07 (รอบ 20) · N2Pluto — landing เปลี่ยนไปอ่าน prod · แก้ทับข้อมูลของทีมพลาดแล้วคืนค่าเดิม
+
+- **landing → prod:** secret `API_URL` ของ zyra-landing เปลี่ยนจาก `https://api.uat.zyra.center` เป็น `https://api.zyraworld.co` แล้ว redeploy (`e6f0f0b` เดิม) · ระบบแนบไฟล์ของฟอร์ม Contact ก็ยิงไป prod ด้วย · ข้อมูล roadmap บน UAT ยังคงไว้
+- **incident (แก้แล้ว):** ช่วง 13:43–13:51 ทีม (`admin.zyra@gmail.com`) เปิดแสดงฟีเจอร์บน prod และใส่วันที่จริง แต่ตอน 13:51:44 ผม update 8 ฟีเจอร์เป็น `released` และวันที่ของ UAT (05–06 Oct) ทับไป เพราะใช้สถานะที่อ่านไว้ก่อนหน้า ~40 นาทีโดยไม่เช็คใหม่ → ผู้ใช้เลือกคืนค่าเดิม: status `upcoming` + วันที่ของทีม (Chat 05-11 · Meeting 06-01 · Decorate Room 08-10 · Pet System 09-08 · Environment 09-15 · Tree Animation 09-22 · Mobile App 10-21 · Customer Avatar 10-28) และคำนวณไตรมาสใหม่ · ตอนคืนค่ามี guard ว่าแถวต้องยังเป็นค่าที่ผมเขียนไว้ (ไม่มีใครแก้ต่อ) · Calendar ไม่ถูกแตะ
+  - **อาจกู้ไม่ครบ:** `is_teaser` ถูกตั้งเป็น `false` ระหว่าง update ที่พลาด — ไม่มี audit log ของ roadmap จึงยืนยันไม่ได้ว่าทีมเคยตั้ง teaser ให้ตัวไหน (ตอนอ่านรอบก่อนทุกตัวเป็น false) · ให้ทีมเช็คใน admin
+- **Before/After** (วัด 2026-10-07 +07)
+
+| Metric | Before | After |
+|---|---|---|
+| `API_URL` ใน `config.js` ของ zyra-world.com | `https://api.uat.zyra.center` | `https://api.zyraworld.co` |
+| prod `/api/public/roadmap` `data.items` | 0 (ไม่เปิดแสดง, ก่อนทีมแก้) | 9 (มีฉาก 8 ตัว · Calendar ไม่มีฉาก) |
+| zyra-world.com/Feature section 07 | ข้อมูล UAT (8 การ์ด) | ข้อมูล prod (9 การ์ด · request ไป `api.zyraworld.co` · รูปเสีย 0) |
+
+- **verify ถึงไหน:** หน้าเว็บจริงในเบราว์เซอร์ (การ์ดเรียง Chat → Calendar, ฉากแรก Chat 9 วัตถุ, วันที่ "11 May 2026") · ยังไม่ได้เปิด admin ของ prod
+- **ต่อจากนี้:** ทีมเช็ค `is_teaser` + status ใน admin ของ prod (ตอนนี้ทุกตัว `upcoming` landing จึงไม่ตรึง scroll และไม่มีฝั่ง released) · Calendar เปิดแสดงทั้งที่ยังไม่มีฉาก (ทีมตั้งเอง)
+
+## 2026-10-07 (รอบ 19) · N2Pluto — เติมฉากจาก UAT ใส่ฟีเจอร์บน prod
+
+- **สภาพก่อนทำ:** prod มีฟีเจอร์ 9 ตัวที่สร้างด้วยบัญชี `admin.zyra@gmail.com` ช่วง 12:04–12:20 (มีชื่อ / summary / thumbnail · `upcoming` · ไม่เปิดแสดง) แต่ยังไม่มีฉาก (วัตถุ 0) · ID ไม่ซ้ำกับ UAT
+- **decision (ผู้ใช้เลือก):** คงฟีเจอร์ของ prod ไว้ แล้ว copy ฉากจาก UAT ใส่ตัวที่ชื่อตรงกัน — `Customer Avatar` ← `Customize Avatar`, `Mobile App` ← `Mobile` · Calendar ไม่แตะ (UAT ก็ไม่มีฉาก) · ไม่เปลี่ยน status / วันที่ / `is_visible` ของ prod
+- **ทำอะไร (DB `postgres` ผ่าน IAP tunnel ทาง `zyra-k3s`, transaction เดียว):** asset 48 (ปกติ 42 + soft-deleted ที่ฉาก Chat ยังอ้าง 6) ใช้ ID และ URL เดิม (UAT กับ prod ใช้ bucket `zyra-prod-gather-dev-458614` เดียวกัน จึงไม่ต้อง copy ไฟล์) · วัตถุในฉาก 55 ชิ้นผูกกับ ID ฟีเจอร์ของ prod · preset (`quarter_sign` / `summary_box`) เปลี่ยนให้ชี้ไปที่ของ prod · guard ใน SQL: ต้อง map ได้ 1:1 ครบ 8 คู่ / ฟีเจอร์ปลายทางต้องยังไม่มีฉาก / ID ไม่ชน
+- **Before/After** (วัด 2026-10-07 +07)
+
+| Metric | Before | After |
+|---|---|---|
+| prod `tb_roadmap_scene_object` | 0 | 55 |
+| prod `tb_roadmap_asset` (ใช้งาน / ลบแล้ว) | 2 / 0 | 44 / 6 |
+| เทียบฉาก prod กับ UAT ทีละวัตถุ (ตำแหน่ง ขนาด เลเยอร์ flag รูป) | — | ตรงกันทั้ง 55 ชิ้น (`diff` ว่าง) |
+| ฟีเจอร์ของ prod ที่ถูกแก้ (`updated_at`) | — | 0 |
+
+- **verify ถึงไหน:** เทียบใน DB แล้ว · `/api/health` ของ prod `ok` v1.7.4 · `/api/public/roadmap` ของ prod ยังว่าง เพราะทุกฟีเจอร์ยัง `is_visible = false` (ตั้งใจไม่แตะ) · ยังไม่ได้เปิด admin ของ prod ดูฉากด้วยตา
+- **ต่อจากนี้:** ทีมเช็คฉากใน admin ของ prod แล้วค่อยตั้ง status / วันที่ / เปิดแสดงเอง · landing ยังอ่านจาก UAT
+
+## 2026-10-07 (รอบ 18) · N2Pluto — ย้ายข้อมูล roadmap จาก dev → UAT + เปิด flag ของ landing
+
+- **landing:** zyra-landing#7 ถูก merge โดยคนเขียน (12:43) และมี kill switch ของตัวเองคือ `ZYRA_CONFIG.ROADMAP_ENABLED` → ตั้ง secret `ROADMAP_ENABLED=true` ใน zyra-landing แล้ว redeploy (`workflow_dispatch`, commit `e6f0f0b` เดิม)
+- **ย้ายข้อมูล dev → UAT (`zyra_uat`):** อ่านจาก DB ของ dev แล้วเขียนใน transaction เดียว ใช้ UUID เดิม
+  - ฟีเจอร์ 9 (`is_visible` 8) · asset 48 (ปกติ 42 + ที่ถูก soft-delete แต่วัตถุในฉาก "Chat" ยังอ้างอยู่ 6 — API ใช้ `LEFT JOIN` ไม่กรอง `is_deleted` ฉากจึงยังแสดงรูปพวกนี้ เลยย้ายไปด้วยและคง `is_deleted` ไว้) · วัตถุในฉาก 55
+  - รูป 57 ไฟล์ copy จาก R2 `zgather-dev` → GCS `zyra-prod-gather-dev-458614` ใช้ key เดิม (`static/roadmap/{asset,feature}/…`) และเปลี่ยน URL ใน DB ให้ชี้ไปที่ GCS (ใน DB ไม่เหลือ URL `r2.dev`)
+  - วัตถุที่อ้าง preset asset ของ dev (`quarter_sign` / `summary_box`) ถูกเปลี่ยนให้ชี้ไปที่ preset ของ UAT · `created_by` / `updated_by` เป็น NULL (user ของ dev ไม่มีใน UAT)
+  - ต่อ DB ผ่าน IAP tunnel ทาง **`zyra-k3s`** — `zyra-sfu` เป็น TERMINATED แล้ว (`zyra-service/prod-db.sh` กับ `guides/prod-db-access.md` ยังเขียนว่าใช้ `zyra-sfu`)
+- **Before/After** (วัด 2026-10-07 +07)
+
+| Metric | Before | After |
+|---|---|---|
+| UAT `/api/public/roadmap` `data.total` | 0 | 8 (วัตถุ 55) |
+| เทียบ response UAT กับ dev (ไม่นับ host ของ URL / preset asset) | — | ตรงกันทั้งหมด (`diff` ว่าง) |
+| zyra-world.com/Feature `#spotlight` | `hidden` | แสดง · การ์ด 8 ใบ · รูปเสีย 0 |
+
+- **verify ถึงไหน:** API ของ UAT + หน้า landing จริงในเบราว์เซอร์ (section ขึ้น, ฉาก Customize Avatar วัตถุ 11 ชิ้น) · ยังไม่ได้ login admin ของ UAT ดู
+- **ต่อจากนี้:** ฉากที่แก้ใน admin ของ dev จะ**ไม่** sync ไป UAT เอง — จัดใน admin ของ UAT ต่อ (landing อ่านจาก UAT) · prod ยังไม่มีข้อมูล
+
+## 2026-10-07 (รอบ 17) · N2Pluto — เปิด flag ครบ 3 env + release v1.7.4 (prod)
+
+- **ทำอะไร:**
+  - zyra-api `ROADMAP_ENABLED=true`: เพิ่มใน `zyra-api-uat-env-json` (v4→v5) และ `zyra-api-prod-env-json` (v3→v4) โดยไม่แตะ key อื่น (เช็คจาก hash) ส่วน dev เปิดอยู่แล้ว (v8) · roll pod ผ่าน `zyra.center/env-secret-version` ([infra#48](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/48)) แต่ prod ต้อง roll ซ้ำ ([infra#49](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/49)) เพราะรอบแรก pod boot ก่อน ESO refresh (5m) จะ sync secret v4 ลง k8s Secret
+  - zyra-app `NEXT_PUBLIC_ROADMAP=true` ใน GitHub Environment `dev` / `uat` / `production` · rebuild dev (`dev-752f98b-r581`) และ UAT (`uat-1496518-r582`) ด้วย `workflow_dispatch`
+  - develop → main: [api#159](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/159) (#156 preset assets + `is_mystery`, #157 GIF size limit) · [app#501](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/501) (#497 #498 admin) — ทั้งสอง repo มีแต่งาน roadmap ใน develop และ main เท่ากับ v1.7.3 อยู่แล้ว จึงไม่ต้อง cherry-pick
+  - tag `v1.7.4` บน main ของ zyra-api (`be35e11`) และ zyra-app (`0ff4a0e`) → deploy prod สำเร็จ · migration 108/109 เป็นแบบ additive และรันเองตอน start
+- **Before/After** (ยิง curl จริงวันที่ 2026-10-07 · before = 11:17 ก่อน roll pod · after = 11:25 สำหรับ flag และ 11:54 สำหรับ v1.7.4 (+07))
+
+| Metric | Before | After | Δ |
+|---|---|---|---|
+| `GET /api/public/roadmap` — UAT | 404 | 200 | route เปิด |
+| `GET /api/public/roadmap` — prod | 404 | 200 | route เปิด |
+| `GET /api/admin/roadmap` ไม่มี token — UAT / prod | 404 / 404 | 401 / 401 | route ลงทะเบียนแล้ว (ต้อง login) |
+| `preset_assets` ใน response — UAT / prod | ไม่มี (UAT วัดตอน 11:25 · prod: ใน v1.7.3 ไม่มี field นี้ในโค้ด) | `quarter_sign`, `summary_box` | ได้หลัง v1.7.4 / main |
+| `/api/health` version — prod | v1.7.3 | v1.7.4 (`status: ok`, database/storage `ok`) | — |
+| จำนวนฟีเจอร์ (`data.total`) — UAT / prod | — | 0 / 0 | ยังไม่มีข้อมูล |
+
+**วัดยังไง:** `curl -s -o /dev/null -w '%{http_code}'` ไปที่ `https://api.uat.zyra.center` และ `https://api.zyraworld.co` บวก `jq` ดู `.data.preset_assets` / `.version`
+- **verify ถึงไหน:** ฝั่ง API ยืนยันด้วย response จริงตามตาราง · ฝั่ง app ยืนยันแค่ว่า build/deploy เขียวและ zyra-infra ใช้ tag ใหม่ (dev `dev-752f98b-r581`, UAT `uat-0ff4a0e`, prod `v1.7.4`) **ยังไม่ได้ login admin ดูว่าเมนู/หน้า Roadmap ขึ้นจริง** · `email: not_configured` บน prod health เป็นอาการเดิมตั้งแต่ v1.7.3
+- **ต่อจากนี้:** สร้างฟีเจอร์ + จัดฉากใน admin ของ **UAT** (ข้อมูลที่ landing จะเห็น) · zyra-landing#7 แก้ตามรีวิว (scroll-jacking, การ์ดกระโดด, description ไม่ตรงกับโค้ด, bump `V.app`) แล้วค่อย merge (merge = ขึ้น zyra-world.com ทันที)
+- **ติดอะไร:** ต้องตัดสินใจว่า landing จะชี้ API ของ UAT ต่อ หรือเปลี่ยน `API_URL` ไปที่ prod — ถ้าเปลี่ยน ต้องจัดฉากใน admin ของ prod แทน
 
 ## 2026-10-07 (รอบ 18) · rif — แก้ตาม review PR zyra-landing (feat/roadmap-spotlight)
 
