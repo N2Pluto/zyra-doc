@@ -380,6 +380,8 @@ API ด้านบนรองรับทั้งสองแบบ (PUT idem
 
 ### 8.4 Entry point
 
+> **อัปเดต 2026-10-24 (implement แล้ว):** lobby → หน้า `/workspace/[id]/avatar?from=lobby` · VO → overlay ในหน้าเดิม สถานะใน URL `?customize=1` (refresh เปิดค้าง, back ของ browser ปิด) — ดู progress.md รอบ 8
+
 ตาม Figma (sticky `7648:255732`): เมนู "Change Avatar" → เปลี่ยนเป็น **"Customise avatar"** + ชื่อ workspace ใต้ปุ่มย้อนกลับ · จุดเปิด: `Before enter space` (lobby — แทนปุ่มเปลี่ยนตัวละครเดิมใน `hero-workspace-enter.tsx`) และ `Availability Status - Set status` (VO profile panel — แทน `vo-profile-panel.tsx:515` "Change avatar") — รายละเอียดใน ux-ui.md · Profile page (`profile-form.tsx`) อยู่นอก workspace → ไม่เปิดหน้านี้ (spec Q-7)
 
 ---
@@ -440,9 +442,9 @@ API ด้านบนรองรับทั้งสองแบบ (PUT idem
 
 | # | เรื่อง | ผลถ้าไม่ตอบ | ใคร |
 |---|---|---|---|
-| **D-M1** | บันทึกอัตโนมัติ (Figma) vs ปุ่มบันทึก/ยกเลิก + confirm (ClickUp HP-05) — รวมพฤติกรรม EP-01 (กลับชุดเดิม vs คง selection) | UI + ภาระ bake | PM + Designer |
-| **D-M2** | ✅ บางส่วน: 5 เฉดจาก Figma = Fair `#F6D5B3` · Light Beige `#E0B491` · Tan `#C58F69` · Brown `#9C694E` · Dark Brown `#684B3D` · เหลือ: เฉดไหน Default (สมมติ Fair) + ramp 4 ขั้นต่อเฉด (ใช้ `rampOf` หรือ designer ให้) | `SkinTones` | Designer |
-| **D-M3** | Slot = preset หลายชุด (Figma sticky `7726:222732`) อยู่ใน scope ไหม — ถ้าทำต้องเพิ่ม `preset_index` ใน PK หรือเก็บ `presets[]` + `active` ใน JSON | schema + UI | PM |
+| ~~D-M1~~ ✅ | **บันทึกอัตโนมัติ** (มติ 2026-10-22) — client debounce 600 ms + ยกเลิก request เก่า · error 5xx/network → กลับชุดที่บันทึกล่าสุด + toast "Unable to update avatar" · 4xx PART_NOT_* → reload catalog + toast "Item no longer available" | — | rif |
+| ~~D-M2~~ ✅ | 5 เฉดจาก Figma · **Default = Fair** = สีไฟล์ base body · เฉดอื่น = คูณอัตราส่วน (tone / Fair) กับ pixel ผิวของ base และ ramp ผิวของชิ้นส่วน (implement แล้ว — แทน `rampOf` ที่ §4.3 เสนอ) | — | rif |
+| ~~D-M3~~ ✅ | **ยังไม่ทำ SLOT preset** — แสดง SLOT 1 อย่างเดียว (มติ 2026-10-22) | — | rif |
 | D-M4 | มีหมวดบังคับไหม (นอกจาก skin) เช่น eyes / top | validate + reset job ของ Admin | PM + Ten |
 | D-M5 | ขนาด thumbnail ของชุด (`thumb.png`) | bake | Designer (ux-ui.md) |
 | D-M6 | ชื่อ event `outfit_updated` (spec Q-13) | ws contract | Ten |

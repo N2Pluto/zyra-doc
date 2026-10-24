@@ -1,6 +1,6 @@
 # SC-AV-02 — Avatar Customization (Client)
 
-> **สถานะ: Draft spec (รอบ 5) — ยังไม่ implement · มติแล้ว: paper-doll (Q-1), ต่อ workspace (C-14), Skin = Default ไม่อัปโหลด (C-13), 18 หมวด (Q-5) — §8.3 · skin 5 เฉด (Q-4b) · ยังติด Q-4c (ค่าสี) · ฝั่ง Admin ทำตามมติ C-14 แล้ว (zyra-api#185 + zyra-ws#87 — `tb_user_outfit` PK `(user_id, workspace_id)`)**
+> **สถานะ: Implementing (รอบ 7) — โค้ดอยู่บน `feat/avatar-customize` ทั้ง 3 repo ยังไม่ commit · ดู [progress.md](progress.md) · มติแล้ว: paper-doll (Q-1), ต่อ workspace (C-14), Skin = Default ไม่อัปโหลด (C-13), 18 หมวด (Q-5) — §8.3 · skin 5 เฉด (Q-4b) · ยังติด Q-4c (ค่าสี) · ฝั่ง Admin ทำตามมติ C-14 แล้ว (zyra-api#185 + zyra-ws#87 — `tb_user_outfit` PK `(user_id, workspace_id)`)**
 > วันที่: 2026-10-22 · ผู้เขียน: rif (ผ่าน Claude Code)
 > ClickUp: [[Module] Avatar Customization (Client)](https://app.clickup.com/t/86d43pc9w) — status `in progress`, priority High, due 2026-10-19 (เลยกำหนดแล้ว), tag `client`, Desktop ✓, assignee: P A, rif fullstack
 > โมดูลคู่ฝั่ง Admin: [[Module] · Avatar & Accessories Management (Admin)](https://app.clickup.com/t/86d43pbbj) (SC-AV-01) — `in progress`
@@ -640,6 +640,9 @@ C-5, C-7, C-8, C-10, C-12 ของรอบแรก (per-workspace vs global, 
 | 2026-10-22 (รอบ 4) | Q-5 | **18 หมวด** ตาม Figma / Admin TD §2 (= D4 ของ Admin) | rif | data contract ฝั่ง member ต้องขยายจาก 11 slot |
 | 2026-10-22 (รอบ 4) | Q-6b | ถูกลบออกจากสมาชิก workspace แล้วถูกเชิญกลับ → **เก็บชุดเดิมไว้** (ไม่ลบแถว) | rif | §9.2 · ลบแถวเฉพาะตอน user/workspace ถูกลบ |
 | 2026-10-22 (รอบ 5) | Q-4b | **มี skin เริ่มต้น 5 เฉดให้ user เลือก** (ของระบบ ไม่ใช่ admin อัปโหลด) · ชีท body ตัวเดียว + palette swap · ค่าสียังไม่ยืนยัน (Q-4c) | rif | §9.3 · AC-HP02 ใช้ได้ |
+| 2026-10-22 (รอบ 7) | D-M1 | **บันทึกอัตโนมัติตาม Figma** (ไม่มีปุ่มบันทึก/ยกเลิก) · error → กลับชุดที่บันทึกล่าสุด + toast ตาม Figma — แทน AC-HP05-5/6, AC-EP01-2/3/5 ของ ClickUp | rif | technical-design-member §8.2 |
+| 2026-10-22 (รอบ 7) | D-M3 | **SLOT preset ยังไม่ทำ** — แสดง SLOT 1 อย่างเดียว · เก็บชุดเดียวต่อ workspace ตาม schema ปัจจุบัน | rif | ทำ SLOT ทีหลังได้โดยไม่ต้องรื้อ |
+| 2026-10-22 (รอบ 7) | Default skin | **Fair** (`#F6D5B3`) = สีจากไฟล์ base body · เฉดอื่น = คูณอัตราส่วนเทียบ Fair | rif | Q-4c ✅ |
 
 > มติ C-14 (ต่อ workspace) — **ทีม Admin อัปเดตเอกสารตามแล้ว 2026-10-22** (technical-design §4.1, §4.2, §8.2–8.3, §9 · data contract: path `/api/user/workspaces/:id/avatar/outfit` + ข้อความ "ใช้ชุดนี้ใน {workspace}") · ข้อความเดิมของย่อหน้านี้: เอกสาร Admin ยังขัดกับมติ ต้องให้เจ้าของ (Ten) อัปเดตตาม · มติ Q-1 / C-13 / Q-5 ตรงกับทิศทางของทีม Admin อยู่แล้ว · ClickUp SC-AV-02 ต้องแก้ให้ตรงกับมติทั้งหมด (ดู §11)
 
@@ -784,7 +787,7 @@ CREATE TABLE IF NOT EXISTS tb_user_outfit (
 | Q-3 | เอกสาร `AvatarCustomization/spec.md` + `technical-design.md` ต้นฉบับ (มติ 2026-10-05) — โฟลเดอร์ `zyra/custom avatar/` ที่ได้มา **เป็นไฟล์ sprite 72 ไฟล์ ไม่ใช่เอกสาร** (ตรงกับ "demo file/custom avatar" ที่ Admin TD §3 อ้าง) → เอกสารต้นฉบับยังไม่มี · ถ้าไม่มีแล้วจริง ให้ถือไฟล์นี้เป็นฉบับหลัก · **อัปเดต 2026-10-22:** `technical-design.md` ต้นฉบับ (ร่าง 2026-10-05) ขึ้น git แล้วพร้อมหัวเอกสารบอกส่วนที่ถูกแทน · `spec.md` ต้นฉบับ (ร่าง 2026-10-08) ยังไม่ขึ้น git — มีสำเนาในเครื่อง Ten (`zyra-doc-local-backup-2026-10-22/`) ถ้าต้องใช้ให้บอก | rif / ผู้เขียนเดิม | ความครบของ spec |
 | ~~Q-4~~ ✅ | ~~ชิ้น skin เก็บอะไร~~ → **ชีท body ตัวเต็ม + ดูดสีผิว 4 เฉดอัตโนมัติ** (§9.3) | rif | — |
 | ~~Q-4b~~ ✅ | ~~เลือกเฉดสีผิวได้ไหม~~ → **มี skin เริ่มต้น 5 เฉดให้เลือก** (ของระบบ ไม่อัปโหลด) (§9.3) | rif | — |
-| Q-4c | 🟡 ค่าสี 5 เฉด **ได้จาก Figma แล้ว** (`7615:207397`, ux-ui.md §5.7): Fair `#F6D5B3` · Light Beige `#E0B491` · Tan `#C58F69` · Brown `#9C694E` · Dark Brown `#684B3D` — data contract เดิม 6 ค่าไม่ใช้ · **เหลือ:** เฉดไหนเป็น Default (Figma แสดง "Used" ที่ Fair) + ramp 4 ขั้นต่อเฉด | Designer | ค่า Default |
+| ~~Q-4c~~ ✅ | ~~ค่าสี 5 เฉด + Default~~ → Fair `#F6D5B3` · Light Beige `#E0B491` · Tan `#C58F69` · Brown `#9C694E` · Dark Brown `#684B3D` · **Default = Fair** (มติรอบ 7) | rif | — |
 | ~~Q-5~~ ✅ | ~~รายชื่อ slot~~ → **18 หมวด** ตาม Figma / Admin TD §2 · เหลือ: Wings → `back`, Outfit → top/outer/dress/bottoms (ตาม TD) · โฟลเดอร์ asset มี "บลัชออน" ซึ่งไม่อยู่ใน 18 หมวด (น่าจะเป็น `face`?) | rif · Ten ยืนยัน mapping | — |
 | Q-6 | (C-15) Bag อยู่หลังตัวตาม ClickUp หรือ layer 6 ตาม TD? z-order เปลี่ยนตามทิศไหม (หันหลังแล้ว `back` อยู่หน้า)? | Designer + Ten | layer |
 | ~~Q-6b~~ ✅ | ~~ลบออกจากสมาชิกแล้วกลับมา~~ → **เก็บชุดเดิม** (§9.2) | rif | — |
@@ -853,3 +856,4 @@ CREATE TABLE IF NOT EXISTS tb_user_outfit (
 | 2026-10-22 (รอบ 5) | Q-4b: skin เริ่มต้น 5 เฉด (ของระบบ) → แก้ §9.3, §9.1, §8.3, AC ที่ใช้ได้ (AC-HP02 กลับมาใช้) · เพิ่ม Q-4c (ค่าสี 5 เฉด vs 6 ค่าใน data contract) |
 | 2026-10-22 (รอบ 6) | ฝั่ง Admin (Ten ผ่าน Claude Code) อัปเดตตามมติ C-14: §5.6 สถานะ PR (merge แล้ว + #185 / ws#87) · §9.2 DB ทำแล้วด้วย migration 119 (แทนการแก้ 118 เพราะ #179 merge ก่อน spec ขึ้น main) · ผลต่อ Admin ทำแล้ว · M-0 / Q-2 / §11 / §13 อัปเดต · ต้นฉบับ `technical-design.md` (ร่าง 2026-10-05) ขึ้น git |
 | 2026-10-22 (รอบ 6) | ถอด Figma `pQlFqPDRdEsTAVnfOrcO5h` canvas `7454:438285` ลง [ux-ui.md](ux-ui.md) (ขัดกับ ClickUp ~18 ข้อ — ux-ui §8: บันทึกอัตโนมัติ, EP-01 กลับชุดเดิม, หน้าเต็มจอ, SLOT 1–5, Undo/Redo, double-click ถอด ฯลฯ) · เพิ่ม [technical-design-member.md](technical-design-member.md) (ฝั่ง member บน develop — ไม่ทับ technical-design.md ต้นฉบับ) · Q-4c ได้ค่าสี 5 เฉด |
+| 2026-10-22 (รอบ 7) | มติ D-M1 บันทึกอัตโนมัติ · D-M3 SLOT 1 อย่างเดียว · Default = Fair · เริ่ม implement (ดู progress.md) |
