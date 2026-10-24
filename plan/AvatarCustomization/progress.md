@@ -1,7 +1,16 @@
 # Avatar Customization (SC-AV-02, member) — Progress / Handoff
 
 > **สถานะรวม:** Implement รอบแรกครบทั้ง 3 repo บน branch `feat/avatar-customize` (แตกจาก `origin/develop` 2026-10-22) — **ยังไม่ commit / ยังไม่ push** · flag `NEXT_PUBLIC_AVATAR_CUSTOMIZE` (default ปิด) · ยังไม่ได้ทดสอบกับ API / R2 จริง
-> **อัปเดตล่าสุด:** 2026-10-22 · **คนล่าสุด:** rif (ผ่าน Claude Code)
+> **อัปเดตล่าสุด:** 2026-10-24 · **คนล่าสุด:** rif (ผ่าน Claude Code)
+
+## 2026-10-24 (รอบ 9 · SLOT preset 1–5) · rif (ผ่าน Claude Code)
+
+- **ทำอะไร (D-M3 เปลี่ยนเป็นทำ — technical-design-member §4.1b):**
+  - **zyra-api:** migration `121_user_outfit_slots.sql` (+ down + embedded DDL ใน `postgres.go`) — คอลัมน์ `slot` / `is_active`, PK (user, workspace, slot), CHECK 1–5, unique index ชุดที่ active · store/service อ่าน-เขียนตาม slot ที่ active · `PUT /api/user/workspaces/:id/avatar/active-slot` (`SetActiveSlot`, error `INVALID_OUTFIT_SLOT`) ส่ง `outfit_updated` · response มี `active_slot`
+  - **แก้โค้ด Ten 1 จุด:** `avatar_part_delete.go` ResetBatch — `picked` เลือก `slot` และ join `o.slot = picked.slot` (ไม่งั้นนับ progress เกินแล้วจบงานก่อนเวลาเมื่อมีหลาย slot) — **ควรแจ้ง Ten**
+  - **zyra-app:** แถบ SLOT 1–5 ตาม Figma `7496:35299` (active = gradient + ตัวอักษร `#58D68D`, ไม่ active = `#232427` + `#8C99A6`) · กด slot → บันทึกชุดที่ค้างของ slot เดิมก่อน → สลับ → undo/redo เริ่มใหม่ → VO เปลี่ยนตัวละคร (`selectSlot` ใน `use-outfit-editor.ts`, `putActiveSlot` ใน `lib/api/avatar-outfit.ts`)
+- **verify:** `go test ./...` ผ่าน (เพิ่ม `TestSetActiveSlot*`, `TestAvatarOutfitHandler_PutActiveSlot`) · migration 121 รันบน Postgres 16 จริง (container ชั่วคราว): up 2 รอบ (idempotent), active ซ้ำ/slot 6 ถูกปฏิเสธ, SQL ของ store + ResetBatch ได้ผลถูก, down คืน PK เดิม · app: eslint ผ่าน, tsc ไม่มี error ใหม่, test outfit 24 ตัวผ่าน · browser (harness + mock API, ลบแล้ว): เปลี่ยนสีผิวแล้วกด SLOT 3 ทันที → ชุดที่ค้างบันทึกลง SLOT 1 ก่อน, SLOT 3 = default, กลับ SLOT 1 ได้สีเดิม
+- **ยังไม่ได้:** ทดสอบกับ API/R2 จริงหลัง login · ยังไม่ได้แจ้ง Ten เรื่อง ResetBatch · Agent เลือกเอง (Figma/ClickUp ไม่ระบุ): slot ว่าง = default, Clear ล้างเฉพาะ slot ที่อยู่
 
 ## 2026-10-24 (รอบ 8 · ห้องแต่งตัวมี URL ของตัวเอง) · rif (ผ่าน Claude Code)
 

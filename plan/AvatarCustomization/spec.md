@@ -642,6 +642,7 @@ C-5, C-7, C-8, C-10, C-12 ของรอบแรก (per-workspace vs global, 
 | 2026-10-22 (รอบ 5) | Q-4b | **มี skin เริ่มต้น 5 เฉดให้ user เลือก** (ของระบบ ไม่ใช่ admin อัปโหลด) · ชีท body ตัวเดียว + palette swap · ค่าสียังไม่ยืนยัน (Q-4c) | rif | §9.3 · AC-HP02 ใช้ได้ |
 | 2026-10-22 (รอบ 7) | D-M1 | **บันทึกอัตโนมัติตาม Figma** (ไม่มีปุ่มบันทึก/ยกเลิก) · error → กลับชุดที่บันทึกล่าสุด + toast ตาม Figma — แทน AC-HP05-5/6, AC-EP01-2/3/5 ของ ClickUp | rif | technical-design-member §8.2 |
 | 2026-10-22 (รอบ 7) | D-M3 | **SLOT preset ยังไม่ทำ** — แสดง SLOT 1 อย่างเดียว · เก็บชุดเดียวต่อ workspace ตาม schema ปัจจุบัน | rif | ทำ SLOT ทีหลังได้โดยไม่ต้องรื้อ |
+| 2026-10-24 (รอบ 8) | D-M3 | **ทำ SLOT preset 1–5** (แทนมติรอบ 7) — 5 ชุดต่อ user ต่อ workspace · ใส่ได้ทีละ slot · slot ว่าง = ชุด default · เลือก slot = ใส่ทันที (VO เปลี่ยนตาม) · Clear ล้างเฉพาะ slot ที่อยู่ | rif | technical-design-member §4.1b · migration 121 · ตอบ Q-8 |
 | 2026-10-22 (รอบ 7) | Default skin | **Fair** (`#F6D5B3`) = สีจากไฟล์ base body · เฉดอื่น = คูณอัตราส่วนเทียบ Fair | rif | Q-4c ✅ |
 
 > มติ C-14 (ต่อ workspace) — **ทีม Admin อัปเดตเอกสารตามแล้ว 2026-10-22** (technical-design §4.1, §4.2, §8.2–8.3, §9 · data contract: path `/api/user/workspaces/:id/avatar/outfit` + ข้อความ "ใช้ชุดนี้ใน {workspace}") · ข้อความเดิมของย่อหน้านี้: เอกสาร Admin ยังขัดกับมติ ต้องให้เจ้าของ (Ten) อัปเดตตาม · มติ Q-1 / C-13 / Q-5 ตรงกับทิศทางของทีม Admin อยู่แล้ว · ClickUp SC-AV-02 ต้องแก้ให้ตรงกับมติทั้งหมด (ดู §11)
@@ -792,7 +793,7 @@ CREATE TABLE IF NOT EXISTS tb_user_outfit (
 | Q-6 | (C-15) Bag อยู่หลังตัวตาม ClickUp หรือ layer 6 ตาม TD? z-order เปลี่ยนตามทิศไหม (หันหลังแล้ว `back` อยู่หน้า)? | Designer + Ten | layer |
 | ~~Q-6b~~ ✅ | ~~ลบออกจากสมาชิกแล้วกลับมา~~ → **เก็บชุดเดิม** (§9.2) | rif | — |
 | Q-7 | (C-18) หน้าแต่งตัวเป็น modal/side panel (ClickUp), หน้าเต็ม "Dressing room" (Figma) หรือ route เดี่ยว (frontend-guide)? เปิดจากไหน: sidebar / HUD / Settings / lobby / Profile? — หลังมติ C-14 ถ้าเปิดจาก Profile (นอก workspace) ต้องให้เลือก workspace ด้วย | PM + Designer | UI |
-| Q-8 | Figma "Slot" = preset หลายชุด — อยู่ใน scope ไหม? (ClickUp ไม่มี, data contract ไม่มี) | PM | data model |
+| ~~Q-8~~ ✅ | Figma "Slot" = preset หลายชุด — อยู่ใน scope ไหม? → **ทำ SLOT 1–5** (D-M3 รอบ 8, 2026-10-24) | rif | data model |
 | Q-9 | "ถอดทั้งหมด" (optional) ทำไหม? ในระบบใหม่ slot required ถอดไม่ได้ → หมายถึงถอดเฉพาะ optional? มี "ชุดเริ่มต้น" แทนพอไหม? | PM | UI |
 | Q-10 | Auto-retry เฉพาะ 5xx/network ใช่ไหม? ระหว่างรอ 3s ปุ่มแสดงอะไร? (bake อาจใช้เวลา — timeout เท่าไร) | PM + Ten | UX |
 | Q-11 | Tab ที่มี draft ค้างแล้วได้ event — ทับ draft หรือแค่อัปเดตชุดที่บันทึก? | PM | UX |
@@ -857,3 +858,4 @@ CREATE TABLE IF NOT EXISTS tb_user_outfit (
 | 2026-10-22 (รอบ 6) | ฝั่ง Admin (Ten ผ่าน Claude Code) อัปเดตตามมติ C-14: §5.6 สถานะ PR (merge แล้ว + #185 / ws#87) · §9.2 DB ทำแล้วด้วย migration 119 (แทนการแก้ 118 เพราะ #179 merge ก่อน spec ขึ้น main) · ผลต่อ Admin ทำแล้ว · M-0 / Q-2 / §11 / §13 อัปเดต · ต้นฉบับ `technical-design.md` (ร่าง 2026-10-05) ขึ้น git |
 | 2026-10-22 (รอบ 6) | ถอด Figma `pQlFqPDRdEsTAVnfOrcO5h` canvas `7454:438285` ลง [ux-ui.md](ux-ui.md) (ขัดกับ ClickUp ~18 ข้อ — ux-ui §8: บันทึกอัตโนมัติ, EP-01 กลับชุดเดิม, หน้าเต็มจอ, SLOT 1–5, Undo/Redo, double-click ถอด ฯลฯ) · เพิ่ม [technical-design-member.md](technical-design-member.md) (ฝั่ง member บน develop — ไม่ทับ technical-design.md ต้นฉบับ) · Q-4c ได้ค่าสี 5 เฉด |
 | 2026-10-22 (รอบ 7) | มติ D-M1 บันทึกอัตโนมัติ · D-M3 SLOT 1 อย่างเดียว · Default = Fair · เริ่ม implement (ดู progress.md) |
+| 2026-10-24 (รอบ 8) | D-M3 เปลี่ยน → ทำ SLOT 1–5 (§8.3) |

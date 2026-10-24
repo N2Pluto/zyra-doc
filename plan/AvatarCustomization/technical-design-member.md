@@ -13,7 +13,7 @@
 | เรื่อง | ออกแบบ |
 |---|---|
 | เก็บชุด | `tb_user_outfit` (มีแล้ว) **ต่อ (user, workspace)** — 1 แถว = outfit JSON + URL ที่ bake แล้ว |
-| API member | `GET /api/user/avatar/catalog` · `GET /api/user/avatar/outfit/default` · `GET`/`PUT /api/user/workspaces/:id/avatar/outfit` |
+| API member | `GET /api/user/avatar/catalog` · `GET /api/user/avatar/outfit/default` · `GET`/`PUT /api/user/workspaces/:id/avatar/outfit` · `PUT /api/user/workspaces/:id/avatar/active-slot` (SLOT §4.5) |
 | แต่งตัว / preview | client render เองด้วย `lib/avatar-part/render.ts` (มีแล้ว — ใช้กับหน้า Admin) |
 | บันทึก | server validate → normalize → **bake** เป็นชีท `walk` + `sit` 192×192 (4×4 เฟรม 48 px — layout เดียวกับ VO) + `thumb` → R2 → upsert |
 | VO | ยังเป็น "URL เดียวต่อคน" — ใช้ `walk_url` / `sit_url` ที่ bake แล้วแทน `walking_spritesheet_url` ของ `tb_avatar` · คนอื่นเห็นผ่าน `moved.avatar_url` เดิม |
@@ -111,6 +111,22 @@ ALTER TABLE tb_user_outfit ADD COLUMN IF NOT EXISTS outfit_version INT NOT NULL 
 - `outfit_version` = เลข schema ของ JSON (§4.2) เผื่อเปลี่ยนรูปแบบภายหลัง — ถ้าทีมเห็นว่าใส่ใน JSON (`"v": 1`) พอ ก็ไม่ต้อง migrate (เลือกอย่างใดอย่างหนึ่ง)
 - ไม่มีแถว = ยังไม่เคยแต่งใน workspace นี้ → ได้ชุด default (AC-HP06-4) · **ไม่ insert ตอนอ่าน**
 - ลบแถวเฉพาะ cascade ตอน user / workspace ถูกลบ · ออกจาก VO / ถูก remove member แล้วกลับมา → แถวยังอยู่ (AC-HP06-5, มติ Q-6b) — **ตรวจว่า `RemoveMember` / `LeaveWorkspace` ไม่ลบ `tb_user_outfit`** (ตอนนี้ไม่มีโค้ดแตะ — ห้ามเพิ่ม)
+
+### 4.1b SLOT preset 1–5 (migration 121 — implement 2026-10-24, D-M3 เปลี่ยนมติ)
+
+```sql
+ALTER TABLE tb_user_outfit ADD COLUMN slot SMALLINT NOT NULL DEFAULT 1;       -- แถวเดิม = SLOT 1
+ALTER TABLE tb_user_outfit ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE; -- ชุดที่ใส่อยู่
+-- PK (user_id, workspace_id) → (user_id, workspace_id, slot) · CHECK slot BETWEEN 1 AND 5
+CREATE UNIQUE INDEX ux_tb_user_outfit_active ON tb_user_outfit (user_id, workspace_id) WHERE is_active;
+-- down: ลบแถวที่ไม่ active แล้วคืน PK เดิม
+```
+
+- 1 user มีได้ 5 ชุดต่อ workspace · ใส่อยู่ได้ทีละ slot (`is_active`) · slot ที่ยังไม่มีแถว = ชุด default (สร้างแถวตอนเลือก slot นั้น)
+- `GET`/`PUT …/avatar/outfit` = ชุดของ **slot ที่ active** · response เพิ่ม `active_slot` · ไม่มีแถวเลย = default + `active_slot: 1`
+- `PUT …/avatar/active-slot {"slot": n}` → ใส่ชุดของ slot n (ว่าง = default) · ส่ง `outfit_updated` ให้ VO เปลี่ยนตัวละคร · error `INVALID_OUTFIT_SLOT` (400) ถ้า n ไม่อยู่ใน 1–5
+- **กระทบงาน Admin (Ten):** reset job (`avatar_part_delete.go` ResetBatch) เลือก/ join ด้วย `slot` ด้วย — ไม่งั้น 1 แถวที่ pick จะ update ทุก slot แล้วนับ progress เกิน · `UserCounts` ใช้ `count(DISTINCT user_id)` อยู่แล้ว ไม่ต้องแก้
+- Client: กด slot → บันทึกชุดที่ค้างของ slot เดิมก่อน → `active-slot` → undo/redo เริ่มใหม่ (history เป็นของ slot เดียว) → VO hot-swap ผ่าน `onSaved`
 
 ### 4.2 Outfit JSON (v1)
 
@@ -260,6 +276,7 @@ user.GET("/avatar/outfit/default", avatarOutfitHandler.DefaultOutfit)
 // group userWS (/user/workspaces)
 userWS.GET("/:id/avatar/outfit", avatarOutfitHandler.GetMyOutfit)
 userWS.PUT("/:id/avatar/outfit", avatarOutfitHandler.PutMyOutfit)
+userWS.PUT("/:id/avatar/active-slot", avatarOutfitHandler.PutActiveSlot) // SLOT §4.1b
 ```
 
 ตั้งชื่อ path ตาม spec §9.2 (ตอบ C-17: ใช้ `/api/user/avatar/*` สำหรับของที่ไม่ผูก workspace และ `/api/user/workspaces/:id/avatar/outfit` สำหรับชุด — แทน `/api/user/me/outfit` ใน Admin TD §9)
@@ -444,7 +461,7 @@ API ด้านบนรองรับทั้งสองแบบ (PUT idem
 |---|---|---|---|
 | ~~D-M1~~ ✅ | **บันทึกอัตโนมัติ** (มติ 2026-10-22) — client debounce 600 ms + ยกเลิก request เก่า · error 5xx/network → กลับชุดที่บันทึกล่าสุด + toast "Unable to update avatar" · 4xx PART_NOT_* → reload catalog + toast "Item no longer available" | — | rif |
 | ~~D-M2~~ ✅ | 5 เฉดจาก Figma · **Default = Fair** = สีไฟล์ base body · เฉดอื่น = คูณอัตราส่วน (tone / Fair) กับ pixel ผิวของ base และ ramp ผิวของชิ้นส่วน (implement แล้ว — แทน `rampOf` ที่ §4.3 เสนอ) | — | rif |
-| ~~D-M3~~ ✅ | **ยังไม่ทำ SLOT preset** — แสดง SLOT 1 อย่างเดียว (มติ 2026-10-22) | — | rif |
+| ~~D-M3~~ ✅ | ~~ยังไม่ทำ SLOT preset (มติ 2026-10-22)~~ → **ทำ SLOT 1–5** (rif สั่ง 2026-10-24) — §4.1b · slot ว่าง = ชุด default · เลือก slot = ใส่ทันที · Clear ล้างเฉพาะ slot ที่อยู่ (ค่าเหล่านี้ Figma/ClickUp ไม่ระบุ — Agent เลือก) | — | rif |
 | D-M4 | มีหมวดบังคับไหม (นอกจาก skin) เช่น eyes / top | validate + reset job ของ Admin | PM + Ten |
 | D-M5 | ขนาด thumbnail ของชุด (`thumb.png`) | bake | Designer (ux-ui.md) |
 | D-M6 | ชื่อ event `outfit_updated` (spec Q-13) | ws contract | Ten |
@@ -463,4 +480,5 @@ API ด้านบนรองรับทั้งสองแบบ (PUT idem
 
 | วันที่ | อะไร |
 |---|---|
+| 2026-10-24 | SLOT preset 1–5: §4.1b, route `active-slot`, D-M3 |
 | 2026-10-22 | v0.1 — ร่างแรก ต่อจาก develop หลัง merge Admin (api#179–#185, ws `outfit_reset` per workspace, app `lib/avatar-part/*`) + มติ spec §8.3 · ต่อยอดจาก [technical-design.md](technical-design.md) ต้นฉบับ (คง StoredAvatar shape, จุดดึง outfit ก่อนต่อ ws, prefix `outfits/`, สูตร hash) · แยกเป็นไฟล์ใหม่เพื่อไม่ทับต้นฉบับ |
