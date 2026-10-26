@@ -1,7 +1,31 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** **ขึ้น dev + TestFlight แล้ว (2026-10-08)** — app "Zyra World Dev" (`co.zyraworld.app.develop`) build 1–3 บน TestFlight กลุ่ม Zyra Team 5 คน · login Apple/Google ในแอปแก้แล้ว (entitlement + `APPLE_CLIENT_IDS` dev v9 + iOS OAuth client) **รอ Ten ลอง build 2+** · asset store A1+A2 merge แล้ว เปิดบน dev (`NEXT_PUBLIC_MOBILE_ASSET_STORE=true`) **ยังไม่ได้วัด Before/After** ([asset-store.md](asset-store.md)) · ถัดไป B0/B1 (วัด + observability) · Android: Google native ยังไม่มี OAuth client (SHA-1) · doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48)
-> **อัปเดตล่าสุด:** 2026-10-21 (รอบ 69 — ส่ง review ทั้ง App Store และ Google Play (prod 1.0.0)) · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **อัปเดตล่าสุด:** 2026-10-26 (รอบ 70 — Play: เปิด R8 obfuscation + edge-to-edge) · **คนล่าสุด:** Ten (ten_dev) + Claude
+
+## 2026-10-26 (รอบ 70) · Ten + Claude — Play: เปิด R8 (obfuscation) + edge-to-edge
+
+- **ทำอะไร:** Google Play เตือน 1.0.0 (5) ของ `co.zyraworld.app` — "DEX code optimization is below our threshold — Obfuscation (2%)" (โค้ดยังไม่ถูก obfuscate · ต้องแก้ก่อน Feb 2027 ไม่งั้นอาจถูกจำกัดการมองเห็น/publish) + คำแนะนำ 2 ข้อ "Edge-to-edge may not display for all users" (edge-to-edge อาจแสดงไม่ครบทุกเครื่อง) และ "uses deprecated APIs for edge-to-edge" (ใช้ API edge-to-edge ที่ deprecated)
+  - zyra-mobile [#27](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/27) → `develop`: release `minifyEnabled true` + `shrinkResources true` (`proguard-android-optimize.txt`) · `proguard-rules.pro` keep plugin ของแอป (MeetingService, ZyraAssetPack), `@JavascriptInterface`, annotation, line number · plugin npm มี consumer rules ของตัวเอง
+  - Store Release: step เช็ก `mapping.txt` + ชื่อคลาส plugin ไม่ถูกเปลี่ยน · เก็บ `mapping.txt` เป็น artifact `zyra-<flavor>-mapping-<run>` 90 วัน · lane `release` อัปโหลด mapping ขึ้น Play พร้อม AAB · upload มือ (`android_signed_aab`) ต้องอัปโหลด mapping.txt เองใน App bundle explorer
+  - edge-to-edge: ลบ `@capacitor/status-bar` (zyra-app ไม่ได้เรียก · config ตอนเปิดแอปเรียก `Window.setStatusBarColor` / `systemUiVisibility` ที่ deprecated) — `SystemBars` ของ Capacitor 8 ทำแทน · `MainActivity` เรียก `EdgeToEdge.enable` ให้ Android < 15 เป็น edge-to-edge เหมือน 15+ (Play อาจยังเตือน API ภายใน androidx / splash-screen — เป็นแค่คำแนะนำ ไม่มี deadline)
+  - ไม่ได้ bump `version.json` · ไม่ได้อัปโหลดอะไรขึ้น Play
+- **ถึงไหน:** PR เปิดแล้ว รอ review + เทสบนเครื่อง
+- **verify ถึงไหน:**
+  - **build:** Store Release dry run prod android ([run 40356924453](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/actions/runs/40356924453)) เขียว — `minifyProdReleaseWithR8` รัน · คลาสใน mapping 4,194 ถูกเปลี่ยนชื่อ 2,729 (65%) · plugin คงชื่อ · ไม่มี com.facebook / AD_ID · dry run uat ของ PR (android + iOS) เขียว
+  - **ยังไม่ได้วัด** ค่า Obfuscation ใน Play — เหตุผล: ยังไม่ได้อัปโหลด build ใหม่ (ต้องดูใน Play Console หลัง build ถัดไป)
+  - **live-test:** ยังไม่ได้เทสบนเครื่องจริง (AAB ที่มี R8 ยังไม่เคยติดตั้ง)
+- **ต่อจากนี้ — เทสบนเครื่องจริง** (Store Release: flavor `prod`, platform `android`, upload off, `android_signed_aab` on → ติดตั้งด้วย bundletool หรือ Play internal testing · เทสทั้งเครื่อง Android 15/16 และ ≤ 14):
+  1. เปิดแอป cold start ไม่ crash · แถบ status / gesture bar สีเข้ม icon สีขาว ไม่มีอะไรจมใต้แถบ (top bar, bottom nav, ช่องพิมพ์แชท)
+  2. login email / Google / Apple + logout
+  3. เข้าประชุม: ขอสิทธิ์กล้อง/ไมค์ เห็น-ได้ยินคนอื่น
+  4. ล็อกจอ / ออกหน้าโฮมระหว่างประชุม: เสียงยังอยู่ · notification ประชุมขึ้น · ปุ่ม Mute / Leave ใช้ได้
+  5. push: ได้ข้อความตอนแอปอยู่ background · กดแล้วเปิดหน้าถูก
+  6. บันทึกรูปแชท (Filesystem) + แชร์ (Share sheet)
+  7. ลิงก์เชิญ `https://app.zyraworld.co/join/...` เปิดเข้าแอป
+  8. โหลด workspace (asset pack) · haptics · keep-awake · "Open settings" (native-settings) · หมุนจอ · คีย์บอร์ดขึ้นแล้ว inset ถูก
+  - ผ่านแล้ว → merge → bump `version.json` ใน PR แยก → อัปโหลด AAB + mapping.txt → เช็กว่าคำเตือน Obfuscation หายใน Play Console
+- **ติดอะไร:** ไม่มี Android SDK ในเครื่อง Mac นี้ — build ได้แค่บน CI
 
 ## 2026-10-21 (รอบ 69) · Ten + Claude — ส่ง review ทั้ง App Store และ Google Play (prod 1.0.0)
 
