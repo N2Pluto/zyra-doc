@@ -1,7 +1,32 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** **ขึ้น dev + TestFlight แล้ว (2026-10-08)** — app "Zyra World Dev" (`co.zyraworld.app.develop`) build 1–3 บน TestFlight กลุ่ม Zyra Team 5 คน · login Apple/Google ในแอปแก้แล้ว (entitlement + `APPLE_CLIENT_IDS` dev v9 + iOS OAuth client) **รอ Ten ลอง build 2+** · asset store A1+A2 merge แล้ว เปิดบน dev (`NEXT_PUBLIC_MOBILE_ASSET_STORE=true`) **ยังไม่ได้วัด Before/After** ([asset-store.md](asset-store.md)) · ถัดไป B0/B1 (วัด + observability) · Android: Google native ยังไม่มี OAuth client (SHA-1) · doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48)
-> **อัปเดตล่าสุด:** 2026-10-21 (รอบ 69 — ส่ง review ทั้ง App Store และ Google Play (prod 1.0.0)) · **คนล่าสุด:** Ten (ten_dev) + Claude
+> **อัปเดตล่าสุด:** 2026-10-26 (rif — Lite: หมุนจอดูแชร์จอ / แชทหลังต่อเน็ตกลับ / ปัดย้อนกลับ / ซูมเต็มจอ · Spatial: Go to) · **คนล่าสุด:** rif + Claude
+
+## 2026-10-26 (รอบ 2) · rif + Claude — Lite: หมุนจอ / แชท / ปัดย้อนกลับ / ซูม · Spatial: Go to
+
+- **ทำ (zyra-app → `develop`, squash merge หลัง CI ผ่านทุกตัว):**
+  - [#654](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/654) `c2da688` — เปิดวิดีโอแชร์จอเต็มจอแล้วหมุนเครื่องเอง ไม่โดนหน้า "Rotate your phone to use Lite Mode" บังแล้ว: `useRotateRequired` คืน false ระหว่างที่มีการค้างแนวนอนไว้ (`orientationHeld()`) · สาเหตุที่ iOS หมุนเองไม่สำเร็จยังไม่ได้หา (ฝั่ง native)
+  - [#655](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/655) `1e7a22d` — แชท Lite หลัง WS ต่อกลับ: `use-lite-chat-resync.ts` (subscribe ห้องแชทใหม่เหมือน Spatial + `reloadChatState` + ดึงหน้าล่าสุดของห้องที่เปิดอยู่)
+  - [#656](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/656) `ac17394` — ปัดย้อนกลับ / ปุ่ม Back ปิดชั้นบนสุดก่อน แทนการหลุดออกจาก workspace: `lib/back-layers.ts` + `hooks/use-back-layer.ts` (ใส่ history entry สำรองหนึ่งอันที่ URL เดิม) · เปิดเฉพาะใน Lite (`play-mode-gate`) · ลงทะเบียนอัตโนมัติใน `MobileSubPage`, `BottomSheet` · ChatSurface (mobile) ลงทะเบียนห้องแชทกับ thread · Lite shell ลงทะเบียน Workspace Lists, Notifications, วิดีโอเต็มจอ · `lib/native/swipe-back.ts` เปิดท่าปัด iOS ตอนอยู่ใน Lite
+  - [#657](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/657) `cce55bc` — ซูมวิดีโอเต็มจอ: `use-pinch-zoom.ts` (pinch 1–4×, ลากเลื่อนดูได้, แตะสองครั้งสลับพอดีจอ ↔ 2×, แตะครั้งเดียวยังซ่อน/แสดงปุ่ม, ภาพที่หมุน 90° ก็ใช้ได้)
+  - [#658](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/658) `31031fc` — Spatial: ปุ่ม Go to ในการ์ดโปรไฟล์ไปหาคนที่นั่งที่โต๊ะไกล ๆ ได้แล้ว (เดิมสั่งเดินไปช่องเก้าอี้ของเขาตรง ๆ หาเส้นทางไม่เจอเลยไม่ทำอะไร) → ใช้ `walkToPeerTile` แบบเดียวกับ Go to จาก wave
+- **zyra-mobile [#26](https://github.com/Maximumsoft-Co-LTD/zyra-mobile/pull/26) (ยังไม่ merge):** `SwipeBackPlugin` ใน `MainViewController.swift` สลับ `allowsBackForwardNavigationGestures` · ปิดเป็นค่าเริ่มต้น (กันลากจากขอบซ้ายตอนใช้ joystick ใน Spatial แล้วหลุด) · `xcodebuild` simulator ผ่าน · repo นี้ไม่มี CI สำหรับ PR ที่แก้ `ios/` · ต้อง merge แล้ว build TestFlight ใหม่ ปัดย้อนกลับใน Lite บน iOS ถึงจะใช้ได้
+- **verify:** vitest ของแต่ละ PR + suite ที่เกี่ยวข้อง (รอบ #656 รัน 53 suite / 512 test) ผ่าน · tsc / eslint ผ่าน · **ยังไม่ได้ลองบนเครื่องจริงเลยสักตัว**
+- **ค้าง / รอตัดสิน:** joystick บน Mac ย่อจอ — ตอนนี้ใช้เมาส์ + หน้าตาแบบมือถือ = บังคับเป็น Lite (ux-ui-plan §24) · ตัวเลือก: (1) Mac เลือก Spatial และมี joystick ได้ (2) ตัดสินจากอุปกรณ์อย่างเดียว ไม่ดูขนาดหน้าต่าง (3) คงเดิม แค่กัน joystick โผล่ตอนย่อหน้าต่างระหว่างใช้ Spatial · rif สั่งพักไว้ก่อน
+
+## 2026-10-26 · rif + Claude — Lite: Private zones กด Claim / Go / Unclaim ได้
+
+- **คำขอ rif:** ใน Lite แผ่น Private zones (1) โต๊ะว่างและเรายังไม่ได้ claim ให้มีทั้ง Claim และ Go to (2) ถ้า claim โต๊ะอื่นไปแล้ว ให้กด Go to ได้ (3) โต๊ะตัวเองมีปุ่ม Unclaim และกดแล้วเข้า flow unclaim เดิม
+- **ทำ (zyra-app branch `feat/lite-private-zone-actions` ยังไม่ commit):**
+  - `lite-home-sheets.tsx` `LiteZonesSheet`: เพิ่ม prop `onUnclaim` และ `selfUserId` · โต๊ะของตัวเองแสดงปุ่ม Unclaim (แดง `#F03A3A`) แทน Go · Spatial ไม่ได้ส่ง `onUnclaim` จึงทำงานเหมือนเดิม
+  - `lite-shell.tsx`: ส่ง `onClaim` (เฉพาะตอนเรายังไม่มีโต๊ะ ใช้ API และ toast ชุดเดียวกับ `handleClaimZone` ของ Spatial) · `onUnclaim` เปิด `PZUnclaimModal` (Cancel / Unclaim → `unclaimZone`) · `onGo` เปิด Keep This Setting? (today / always) แล้วสลับไป Spatial ผ่าน `/loading?goto_zone=<id>`
+  - `hero-workspace-loading.tsx`: รับ `goto_zone` แล้วหา floor ของ zone แบบเดียวกับ `zone_id` จากนั้นส่งต่อไป `/play?goto_zone=` · **ไม่ใช้ `zone_id`** เพราะ `zone_id` ถือเป็นคำเชิญ (ข้าม knock ห้องล็อก)
+  - `hero-virtual-office.tsx`: `?goto_zone` → `walkToZoneCenter` (เหมือนปุ่ม Go ใน sheet ของ Spatial) แล้วลบ param ออกจาก URL
+  - `pz-unclaim-modal.tsx`: `mobile` ใช้ `useSheetLandscape(true)` → Lite เป็น bottom sheet แนวตั้ง · Spatial ยังเป็น modal แนวนอนเหมือนเดิม
+  - i18n `LiteHomeSheets.unclaim` (EN "Unclaim" / TH "ยกเลิกการจอง")
+- **verify:** vitest `lite-home-sheets` (+2 case ใหม่) / `lite-bundle-boundary` / `spatial-phone-panels` / `mobile-parity` ผ่าน · tsc ไม่มี error ในไฟล์ที่แก้ (error ที่มีอยู่เดิมอยู่ใน `__tests__` อื่น) · **ยังไม่ได้ลองบนเครื่องจริง**
+- **ไม่ได้ทำ / ต้องตัดสิน:** ไม่มี Figma ของปุ่มใน Lite จึงใช้ปุ่มแบบเดียวกับ Spatial · ข้อความใต้หัวข้อ Lite ("Switch to Spatial Mode to go to one.") ยังเหมือนเดิม
 
 ## 2026-10-21 (รอบ 69) · Ten + Claude — ส่ง review ทั้ง App Store และ Google Play (prod 1.0.0)
 
