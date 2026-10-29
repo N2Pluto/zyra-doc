@@ -1,6 +1,8 @@
 # รายงาน: Apple login บนเว็บ · บัญชี Apple กับ Gmail อีเมลเดียวกัน · การกดปุ่มและภาพเคลื่อนไหวบนมือถือ
 
-> **สถานะ:** แก้ครบแล้ว — ข้อ 1 (#573) · ข้อ 2 ช่องโหว่บัญชี (zyra-api#166) · ข้อ 3.4 ข้อ 1–5 (#574 #575 #576) merged เข้า develop · **วันที่:** 2026-10-14 · **repo ที่เกี่ยวข้อง:** zyra-app, zyra-api
+> **สถานะ:** โค้ดครบบน develop (dev) — ยังไม่ขึ้น uat/prod · Apple บนเว็บเปิดแล้วบน **dev** (Services ID `co.zyraworld.web`) · uat/prod ยังไม่ตั้ง (ดู [รอบที่ 2](#รอบที่-2--2026-10-15)) · desktop press feedback รอ merge · **อัปเดต:** 2026-10-15 · **repo ที่เกี่ยวข้อง:** zyra-app, zyra-api
+>
+> สรุปล่าสุดอยู่ที่ **รอบที่ 2** ด้านล่าง — รอบที่ 1 คือรายงานแรก (บางข้อถูกแก้ไปแล้ว)
 
 ---
 
@@ -177,3 +179,114 @@
 1. ให้รวมโค้ดการเข้าสู่ระบบด้วย Apple บนเว็บ (#573) เข้าสายพัฒนาเลยไหม
 2. ให้แก้ช่องโหว่ความปลอดภัยของบัญชี Apple กับ Gmail ที่เซิร์ฟเวอร์ไหม
 3. ให้ทำข้อไหนในหัวข้อ 3.4 บ้าง เสนอให้เริ่มที่ข้อ 1 และข้อ 2 ก่อน เพราะผู้ใช้จะรู้สึกได้ชัดที่สุด
+
+---
+
+## รอบที่ 2 — 2026-10-15
+
+Ten สั่ง: "เช็ค apple กับ gmail ว่าเมลเดียวกันเก็บยังไง ทำเป็นเอกสาร · เพิ่ม apple id login บน web · ดู transition / loading ของทุกปุ่มทั้ง app"
+
+### A. Apple กับ Gmail อีเมลเดียวกัน — เก็บยังไง (โค้ดปัจจุบันบน develop หลัง zyra-api#166)
+
+**โครงสร้าง:** ไม่มีตาราง identity แยก — 1 บัญชี = 1 แถวใน `tb_user` · ไม่มี column provider id · ตัวผูก provider คือ **`tb_user.id` เอง**
+
+| Provider | `tb_user.id` | `authentype` | `is_verifyed` ตอนสร้าง |
+|---|---|---|---|
+| Google | Google `sub` ตรง ๆ | `GOOGLE` | `Y` ถ้า Google บอก `email_verified` · ไม่งั้น `N` |
+| Apple | UUIDv5 ของ `"apple:" + sub` (`appleUserID()` ใน `apple_auth.go`) | `APPLE` | `Y` |
+| อีเมล + รหัสผ่าน | UUID | `EMAIL` | `N` จนยืนยัน OTP |
+
+`tb_user.email` **ไม่ unique** — อีเมลเดียวกันมีได้หลายแถว
+
+**ตอน login ด้วย Google / Apple** (`resolveOAuthAccount` ใน `internal/service/oauth_link.go` ใช้ร่วมกัน):
+1. หาแถวที่ `id` = id ของ provider นี้ → เจอ = คนเดิม
+2. ไม่เจอ → หาด้วยอีเมล **เฉพาะเมื่อ** อีเมลไม่ว่าง และ provider ยืนยันอีเมลแล้ว · ถ้าอีเมลซ้ำหลายแถว เลือกแถวที่ยืนยันแล้วก่อน → เก่าสุด
+3. เจอแถวที่ **ยืนยันอีเมลแล้ว** (`is_verifyed='Y'`) → ใช้บัญชีนั้น (ผูกด้วยอีเมล) · เติมชื่อเฉพาะช่องที่ว่าง ไม่เขียนทับ · `authentype` และอีเมลของแถวเดิมไม่เปลี่ยน
+4. ไม่งั้น → สร้างบัญชีใหม่ของ provider นั้น
+
+**การผูกไม่ถูกบันทึก** — ผูกด้วยอีเมลแล้ว ครั้งหน้าก็หาด้วยอีเมลใหม่ทุกครั้ง (ข้อ 1 ไม่เจอเพราะ id ของแถวเป็นของ provider แรก)
+
+**ผลแต่ละกรณี (คนเดียวกัน อีเมลเดียวกัน):**
+
+| กรณี | ผล |
+|---|---|
+| Google ก่อน → Apple (แชร์อีเมลจริง) | **บัญชีเดียวกัน** — Apple ผูกเข้าแถว Google ด้วยอีเมลทุกครั้ง |
+| Apple ก่อน → Google | **บัญชีเดียวกัน** — Google ผูกเข้าแถว Apple ด้วยอีเมล · ชื่อที่ผู้ใช้แก้ไว้ไม่โดนทับแล้ว |
+| Apple แบบ Hide My Email (`…@privaterelay.appleid.com`) | **คนละบัญชี** — อีเมล relay ไม่ตรงกับแถวไหน → สร้างแถว APPLE ใหม่ · ยังไม่มีวิธีรวมบัญชีทีหลัง |
+| มีบัญชีอีเมล+รหัสผ่านที่ **ยืนยันแล้ว** → login Google / Apple | **บัญชีเดียวกัน** — รหัสผ่านเดิมยังใช้ได้ |
+| มีบัญชีอีเมล+รหัสผ่านที่ **ยังไม่ยืนยัน** → login Google / Apple | **คนละบัญชี** — กันคนเอาอีเมลคนอื่นไปสมัครดักไว้ (pre-account-hijack) · แถวเดิมไม่ถูกแตะ |
+| Google ส่งอีเมลที่ยังไม่ยืนยัน / อีเมลว่าง | ไม่หาด้วยอีเมล → บัญชีใหม่ `is_verifyed='N'` |
+| เปลี่ยนอีเมลฝั่ง Google หรือ Apple ทีหลัง (หลังผูกด้วยอีเมล) | provider ที่ผูกด้วยอีเมลจะหาไม่เจอ → ได้บัญชีใหม่โดยไม่มีอะไรเตือน |
+
+**ข้อมูลจริงบน prod** (query read-only ผ่าน `zyra-service/prod-db.sh` · 2026-10-15 13:26 น.):
+
+| `authentype` | users | ยืนยันแล้ว | ไม่มีอีเมล | อีเมล Apple relay |
+|---|---|---|---|---|
+| GOOGLE | 186 | 186 | 0 | 0 |
+| EMAIL | 15 | 15 | 0 | 0 |
+| APPLE | 0 | – | – | – |
+
+อีเมลที่มีมากกว่า 1 แถว: **0** · prod ยังไม่มีผู้ใช้ Apple เลย (Apple เปิดแค่แอป iOS บน dev)
+
+**ข้อควรรู้:**
+- zyra-api#166 (กฎ "ผูกเฉพาะแถวที่ยืนยันแล้ว") อยู่บน **develop เท่านั้น** — uat/prod ยังเป็นโค้ดเก่าที่มีช่องโหว่ยึดบัญชี (รอบที่ 1 ข้อ 2) จนกว่าจะ merge develop → main → tag
+- ถ้าอยากให้ Hide My Email รวมกับบัญชี Google ได้ หรือให้เปลี่ยนอีเมลแล้วไม่หลุด ต้องมีตาราง identity แยก (`provider`, `subject`, `user_id`) + หน้า "เชื่อมบัญชี" — เป็นงานใหม่ มี migration ยังไม่ได้ทำ
+
+### B. Apple ID login บนเว็บ
+
+**โค้ดเสร็จแล้ว** (zyra-app#573 บน develop) — ปุ่ม Apple บนหน้า login เปิด popup ของ Apple (Sign in with Apple JS) แล้วส่ง identity token ไป `POST /api/authen/login_apple` ตัวเดียวกับแอป iOS · ปิด popup เอง = ไม่มี error
+
+**ทำไมยังไม่เห็นปุ่ม:** ปุ่มโชว์เฉพาะเมื่อ build มี `NEXT_PUBLIC_APPLE_SERVICES_ID` — ตอนนี้ยังไม่มีสักที่
+
+| ที่ | dev | uat | prod |
+|---|---|---|---|
+| zyra-app GitHub Environment secret `NEXT_PUBLIC_APPLE_SERVICES_ID` | ❌ ไม่มี | ❌ | ❌ |
+| zyra-api `APPLE_CLIENT_IDS` (ใน `zyra-api-<env>-env-json`) | `co.zyraworld.app.develop` (iOS อย่างเดียว) | ❌ ไม่มี | ❌ ไม่มี |
+| โค้ด #573 | ✅ develop | ❌ | ❌ |
+
+**ขั้นตอนเปิดใช้ (ต้องมีคนที่เข้า Apple Developer account ได้):**
+1. Apple Developer → Certificates, IDs & Profiles → Identifiers → **+** → **Services IDs** → ตั้ง identifier เช่น `co.zyraworld.web` → เปิด **Sign in with Apple** → Configure → Primary App ID = App ID ของแอป iOS
+2. ใส่ Domains และ Return URLs (`https://<โดเมน>/login`) ของทุก env:
+   - dev `app.dev.zyra.center` · uat `app.uat.zyra.center` · prod `app.zyraworld.co`, `app.zyra-world.com`
+   - Apple ไม่รับ `localhost` — ทดสอบบนเครื่องตัวเองไม่ได้ ต้องลองบน dev
+3. zyra-api: เพิ่ม Services ID ต่อท้าย `APPLE_CLIENT_IDS` (คั่นด้วย comma) ใน secret ของแต่ละ env → รอ ESO ≥ 5 นาที → restart pod api
+4. zyra-app: เพิ่ม secret `NEXT_PUBLIC_APPLE_SERVICES_ID` ใน GitHub Environment `dev` / `uat` / `production` → build ใหม่ (push develop / main / tag) เพราะเป็นค่าที่ bake ตอน build
+5. ทดสอบบน dev: ปุ่มขึ้น → login ด้วย Apple ID ที่อีเมลตรงกับบัญชี Google ที่มีอยู่ → ต้องเข้าบัญชีเดิม (กรณีตารางข้อ A)
+
+**verify ถึงไหน:** โค้ด + test ผ่านตั้งแต่ #573 · ตรวจว่าบน local ไม่มีปุ่ม Apple เพราะไม่มี Services ID ✅ · **ยังไม่ได้ลองกับ Apple จริง** — รอขั้นตอน 1
+
+**อัปเดต 2026-10-15 (บ่าย) — เปิดบน dev แล้ว:**
+
+| ทำอะไร | ผล |
+|---|---|
+| Apple Developer (team MAXIMUM SOFT `Z8TW83PNG3`): สร้าง Services ID `co.zyraworld.web` ชื่อ "Zyra World" · เปิด Sign in with Apple · primary App ID `co.zyraworld.app` | ✅ · domains + return URL `/login` ใส่ครบ 4 โดเมน (dev, uat, prod ×2) ไว้แล้ว |
+| zyra-api `zyra-api-dev-env-json` v11: `APPLE_CLIENT_IDS=co.zyraworld.app.develop,co.zyraworld.web` → roll pod ([zyra-infra#56](https://github.com/Maximumsoft-Co-LTD/zyra-infra/pull/56), `env-secret-version` 11) | ✅ `printenv` ใน pod dev ได้ค่าใหม่ |
+| zyra-app GitHub Environment `dev`: `NEXT_PUBLIC_APPLE_SERVICES_ID=co.zyraworld.web` → build dev ใหม่ | ✅ ปุ่ม "ดำเนินการต่อด้วย Apple" ขึ้นบน app.dev.zyra.center/login |
+| `appleid.apple.com/auth/authorize` ด้วย client_id ของเรา | ✅ ได้หน้า sign-in จริง (ID ปลอมได้ `invalid_client`) |
+| login จริงด้วย Apple ID จนเข้าแอป | ✅ Ten ลองบน dev แล้วใช้ได้ (2026-10-15) |
+
+- ปุ่ม Apple อยู่หน้า "Welcome to Zyra World" (default) เท่านั้น — หน้า "Welcome back" (มีบัญชี Google ที่จำไว้) มีแค่ Google กับ Mail ตามโค้ดเดิม
+- ไม่ต้องสร้าง Key — api ตรวจ identity token กับ public key ของ Apple ไม่ได้แลก code
+- uat / prod: ต้องเพิ่ม `co.zyraworld.web` ใน `APPLE_CLIENT_IDS` (ยังไม่มี key นี้เลย ต้องใส่ bundle id ของแอปด้วย) + secret `NEXT_PUBLIC_APPLE_SERVICES_ID` ใน Environment `uat` / `production` ตอนจะขึ้น
+
+### C. กดปุ่มแล้วรู้สึกว่ากด + loading ทั้งแอป
+
+**สถานะก่อนรอบนี้:** #574 #575 #576 #582 (merged develop 2026-10-14) ทำเฉพาะ **จอ touch / มือถือ** — desktop กดด้วยเมาส์แล้วไม่มีอะไรเปลี่ยน และปุ่มฝั่ง desktop / admin หลายจุดยังไม่มี loading
+
+| PR | ทำอะไร |
+|---|---|
+| [zyra-app#593](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/593) | `globals.css`: กดค้างด้วยเมาส์ → จาง 0.8 + หด 0.97 (touch คงเดิม 0.6 + 0.97) · สีพื้น / ขอบ / ตัวอักษรเปลี่ยนแบบนุ่ม 0.15s ทุกปุ่มที่ไม่มี transition ของตัวเอง · ข้ามของที่ลากได้ (`draggable`) · เคารพ reduce motion |
+| [zyra-app#594](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/594) | spinner + disabled + กันกดซ้ำ 19 จุดฝั่ง desktop / admin: เมนู ⋮ ของ Members (resend / cancel invite, role, transfer, remove), Roadmap (ลบ / อัปโหลด / แก้ asset), Unsuspend / Unban, เข้า workspace ใน admin, Disable workspace, Allow ของ knock, Claim zone, สถานะ ticket support, ลบข้อความแชท, ลิงก์ Forgot password ตอนบัญชีโดนล็อก |
+
+**verify ถึงไหน:**
+- #593: เปิดหน้า login บน localhost (desktop) — rule อยู่ใน CSS ที่ build แล้ว และ media query ของเมาส์ตรง ✅ · ยังไม่ได้ลองกดบน dev
+- #594: `tsc` ไม่มี error ใหม่ · eslint 0 error · vitest 361 ไฟล์ / 4,379 test ผ่าน ✅ · **ยังไม่ได้กดจริง** (ต้อง login admin / อยู่ใน workspace) — ลองบน dev หลัง merge
+- ทั้งคู่เป็น UI tweak — ไม่บังคับวัด before/after ตามกฎ 18
+
+**ยังไม่ได้ทำ (นอกขอบเขต):** confirm step ก่อน Remove member / Transfer ownership (ตอนนี้กดจากเมนูแล้วทำทันที)
+
+### ต่อจากนี้
+
+1. merge #593 #594 เข้า develop → ลองกดบน dev
+2. ~~ลอง login ด้วย Apple ID จริงบน dev~~ ✅ ใช้ได้
+3. ขึ้น uat / prod: ต้อง merge develop → main → tag (รวม zyra-api#166 ที่ปิดช่องโหว่ยึดบัญชีด้วย)
