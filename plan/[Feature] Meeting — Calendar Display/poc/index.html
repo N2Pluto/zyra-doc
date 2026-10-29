@@ -1,0 +1,1902 @@
+<meta charset="utf-8">
+<title>Zyra Meeting Calendar POC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<script src="https://unpkg.com/lucide@0.441.0/dist/umd/lucide.min.js"></script>
+<style>
+/* Layout: control bar → app frame (Figma 1440×1024, scaled to fit) → notes. Single dark theme = the Zyra app itself. */
+:root {
+  color-scheme: dark;
+  --page: #1B2026;
+  --surface: #242B32;       /* Theme colour/Primary */
+  --surface-2: #2B3540;     /* Theme colour/Secondary */
+  --surface-3: #344354;     /* Theme colour/Teritery */
+  --mint: #58D68D;          /* Primary/500 */
+  --grey: #8C99A6;          /* Grey/500 */
+  --grey-7: #636D76;        /* Grey/700 */
+  --blue: #2DB6FF;          /* Blue/500 */
+  --red: #F03A3A;           /* Red/500 */
+  --badge: #D41818;
+  --orange: #FF8000;
+  --shade: #1A1B1E;         /* Shade Black/500 */
+  --text: #FFFFFF;
+  --line-20: rgba(255,255,255,0.2);
+  --line-08: rgba(255,255,255,0.08);
+  --line-05: rgba(255,255,255,0.05);
+  --line-03: rgba(255,255,255,0.03);
+  --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--page); color: var(--text); font-family: var(--font); font-size: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 40px;
+}
+button { font-family: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+.lucide { width: 16px; height: 16px; stroke-width: 2; flex: none; }
+.i12 { width: 12px; height: 12px; } .i14 { width: 14px; height: 14px; } .i24 { width: 24px; height: 24px; }
+
+/* ---------- control bar ---------- */
+.poc-head { max-width: 1440px; margin: 0 auto 12px; display: flex; flex-direction: column; gap: 12px; }
+.poc-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+.poc-title h1 { margin: 0; font-size: 20px; line-height: 25px; font-weight: 700; text-wrap: balance; }
+.poc-title p { margin: 0; color: var(--grey); font-size: 13px; line-height: 18px; }
+.ctrls { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+.ctrl { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ctrl > span { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--grey); }
+.seg { display: inline-flex; border: 1px solid var(--line-20); border-radius: 8px; padding: 3px; gap: 2px; background: var(--surface); flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; height: 30px; padding: 0 10px; border-radius: 6px; font-size: 13px; }
+.seg button[aria-pressed="true"] { background: rgba(88,214,141,0.2); }
+.fire { display: flex; flex-wrap: wrap; gap: 6px; }
+.fire button { height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--line-20); background: var(--line-05); font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.fire button:hover, .seg button:hover { background: rgba(255,255,255,0.1); }
+.fire .dot { width: 8px; height: 8px; border-radius: 50%; }
+.chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--grey); height: 36px; }
+.log { max-width: 1440px; margin: 0 auto 12px; background: var(--surface); border: 1px solid var(--line-05); border-radius: 8px; padding: 8px 12px; font-size: 12px; line-height: 18px; color: var(--grey); min-height: 36px; font-variant-numeric: tabular-nums; }
+.log b { color: var(--text); font-weight: 500; }
+
+/* ---------- stage ---------- */
+.stage-wrap { max-width: 1440px; margin: 0 auto; position: relative; overflow: hidden; border-radius: 12px; }
+.stage { width: 1440px; height: 1024px; position: absolute; left: 0; top: 0; transform-origin: 0 0; background: var(--surface); overflow: hidden; }
+.stage * { font-family: var(--font); }
+
+/* sidebar */
+.sb { position: absolute; left: 0; top: 0; width: 72px; height: 1024px; background: var(--surface); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; align-items: center; }
+.sb-menu { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+.logo { width: 40px; height: 40px; border-radius: 10px; background: var(--mint); display: grid; place-items: center; font-weight: 700; color: var(--surface); font-size: 18px; }
+.sbi { position: relative; width: 40px; height: 40px; padding: 8px; border-radius: 8px; border: 0; background: transparent; display: grid; place-items: center; color: var(--text); }
+.sbi .lucide { width: 24px; height: 24px; }
+.sbi.on { background: rgba(88,214,141,0.1); color: var(--mint); }
+.sbi:hover:not(.on) { background: var(--line-05); }
+.cnt { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 16px; padding: 1px 4px; border-radius: 90px; background: var(--badge); color: #fff; font-size: 10px; line-height: 14px; font-weight: 500; text-align: center; }
+.av { border-radius: 50%; display: grid; place-items: center; font-weight: 600; color: var(--surface); flex: none; }
+
+/* VO map placeholder */
+.map { position: absolute; top: 16px; height: 992px; border-radius: 16px; overflow: hidden;
+  background-color: #3B4A3E;
+  background-image: linear-gradient(rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.12) 1px, transparent 1px);
+  background-size: 32px 32px; }
+.room { position: absolute; border: 2px solid rgba(255,255,255,0.35); border-radius: 8px; background: rgba(36,43,50,0.45); display: flex; align-items: flex-start; padding: 8px; font-size: 12px; font-weight: 500; }
+.map-tag { position: absolute; left: 16px; bottom: 16px; background: rgba(26,27,30,0.8); border-radius: 8px; padding: 6px 10px; font-size: 12px; color: var(--grey); }
+.me { position: absolute; width: 36px; height: 36px; border: 3px solid var(--mint); font-size: 12px; background: #FFA8A8; }
+.me.walk { animation: walk 2.4s ease-in-out forwards; }
+@keyframes walk { from { left: var(--fx); top: var(--fy); } to { left: var(--tx); top: var(--ty); } }
+@media (prefers-reduced-motion: reduce) { .me.walk { animation-duration: 0.01s; } }
+.walk-note { position: absolute; left: 50%; top: 24px; transform: translateX(-50%); background: var(--shade); border-radius: 8px; padding: 8px 14px; font-size: 14px; display: flex; gap: 8px; align-items: center; }
+
+/* left panel */
+.lp { position: absolute; left: 72px; top: 16px; width: 320px; height: 992px; background: var(--surface-2); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; }
+.lp-title { display: flex; justify-content: space-between; align-items: center; height: 32px; flex: none; }
+.lp-title h2 { margin: 0; font-size: 20px; line-height: 25px; font-weight: 700; }
+.btn32 { width: 32px; height: 32px; border-radius: 6px; padding: 8px; border: 1px solid var(--line-20); background: var(--line-05); display: grid; place-items: center; }
+.btn32.mint { background: var(--mint); border-color: var(--mint); }
+.search { height: 42px; flex: none; display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line-20); border-radius: 8px; padding: 8px 12px; color: var(--grey-7); }
+.search input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--text); font-size: 14px; outline: none; }
+.search input::placeholder { color: var(--grey-7); }
+.lp-scroll { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; flex: 1; min-height: 0; scrollbar-width: thin; }
+.sec { display: flex; flex-direction: column; gap: 8px; }
+.sec-h { display: flex; justify-content: space-between; align-items: center; color: var(--grey); font-size: 14px; line-height: 18px; }
+.banner { position: relative; flex: none; background: rgba(88,214,141,0.1); border: 1px solid rgba(88,214,141,0.2); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 16px; overflow: hidden; }
+.banner b { font-weight: 500; font-size: 14px; line-height: 18px; padding-right: 24px; }
+.banner p { margin: 0; color: var(--grey); font-size: 14px; line-height: 18px; padding-right: 64px; }
+.banner .go { align-self: flex-start; height: 32px; padding: 0 16px; border: 0; border-radius: 6px; background: var(--mint); font-size: 14px; }
+.banner .x { position: absolute; top: 8px; right: 8px; border: 0; background: transparent; padding: 0; color: var(--text); }
+.banner .mascot { position: absolute; right: -6px; bottom: -22px; width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #8FE8B5, #58D68D 60%, #3FAE6F); opacity: 0.85; }
+.mini { background: var(--surface); border-radius: 16px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.mini-h { display: flex; justify-content: space-between; align-items: center; padding: 4px; font-size: 14px; }
+.mini-h div { display: flex; gap: 8px; }
+.mini-h button { border: 0; background: transparent; padding: 0; color: var(--text); }
+.mini-g { display: grid; grid-template-columns: repeat(7, 1fr); }
+.mini-g span { height: 24px; display: grid; place-items: center; color: var(--grey); font-size: 12px; font-weight: 600; letter-spacing: -0.0516px; }
+.mini-g button { height: 32px; border: 0; background: transparent; border-radius: 90px; font-size: 14px; }
+.mini-g button.out { color: var(--grey-7); }
+.mini-g button.today { background: var(--mint); }
+.up { display: flex; flex-direction: column; gap: 8px; }
+.upc { background: var(--surface); border: 1px solid var(--line-05); border-radius: 16px; padding: 12px; display: flex; gap: 8px; text-align: left; width: 100%; }
+.upc.past { opacity: 0.6; }
+.upc .ib { width: 32px; height: 32px; border-radius: 6px; padding: 8px; border: 1px solid var(--line-20); background: var(--line-05); display: grid; place-items: center; flex: none; }
+.upc-t { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.upc-t b { font-weight: 500; font-size: 14px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meta { display: flex; gap: 4px; align-items: center; color: var(--grey); font-size: 12px; line-height: 15px; letter-spacing: -0.0516px; min-width: 0; }
+.meta span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nowline { position: relative; height: 8px; display: flex; align-items: center; }
+.nowline::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+.nowline::after { content: ""; flex: 1; height: 2px; background: var(--red); }
+.cl { display: flex; flex-direction: column; gap: 16px; }
+.cl label { display: flex; gap: 8px; align-items: center; font-size: 14px; line-height: 18px; cursor: pointer; }
+.cbx { width: 16px; height: 16px; border-radius: 4px; border: 1px solid #D1D1D6; display: grid; place-items: center; flex: none; }
+.cbx .lucide { width: 12px; height: 12px; color: #fff; stroke-width: 3; }
+.empty-up { color: var(--grey); font-size: 13px; padding: 4px 0; }
+
+/* calendar view */
+.cv { position: absolute; left: 408px; top: 16px; width: 1014px; height: 991px; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; background: var(--surface-3); }
+.cvh { background: var(--surface-2); display: flex; flex-direction: column; gap: 16px; flex: none; }
+.tr { height: 74px; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+.tr-l, .tr-r { display: flex; gap: 8px; align-items: center; }
+.btn42 { height: 42px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line-20); background: var(--line-05); font-size: 16px; line-height: 22px; display: inline-flex; align-items: center; gap: 8px; }
+.lbl { font-size: 20px; line-height: 25px; font-weight: 500; margin: 0 4px; }
+.chev { border: 0; background: transparent; padding: 0; display: grid; place-items: center; color: var(--text); }
+.tabs { width: 259px; height: 42px; border: 1px solid var(--line-20); border-radius: 8px; padding: 4px; display: flex; }
+.tabs button { flex: 1; height: 32px; border: 0; background: transparent; border-radius: 8px; font-size: 14px; }
+.tabs button.on { background: rgba(88,214,141,0.2); }
+.wdr { display: grid; grid-template-columns: repeat(7, 1fr); height: 50px; }
+.wdr span { display: flex; align-items: flex-end; justify-content: center; padding: 16px; font-size: 14px; line-height: 18px; }
+.mg { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(6, 1fr); border-top: 1px solid var(--line-20); min-height: 0; }
+.mc { border: 1px solid var(--line-05); padding: 8px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; overflow: hidden; }
+.dn { width: 23px; height: 23px; border-radius: 90px; border: 0; background: transparent; font-size: 12px; line-height: 15px; display: grid; place-items: center; padding: 0; letter-spacing: -0.0516px; }
+.dn.out { color: var(--grey); }
+.dn.today { background: var(--mint); }
+.chips { display: flex; flex-direction: column; gap: 3px; width: 100%; }
+.chip { height: 16px; width: 100%; border-radius: 4px; padding: 2px; display: flex; align-items: center; gap: 2px; border: 1px solid transparent; font-size: 10px; line-height: 13px; letter-spacing: -0.043px; text-align: left; overflow: hidden; }
+.chip .bar { width: 2px; height: 8px; border-radius: 90px; flex: none; }
+.chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip.cancelled span { text-decoration: line-through; text-decoration-color: #F03A3A; }
+.tagc { display: inline-flex; align-items: center; height: 18px; padding: 0 8px; border-radius: 90px; background: rgba(255,255,255,0.2); color: #fff; font-size: 11px; font-weight: 500; flex: none; }
+.more { align-self: flex-start; height: 16px; border: 0; border-radius: 4px; padding: 2px 4px; font-size: 10px; line-height: 13px; }
+.more.f { background: rgba(88,214,141,0.2); color: var(--mint); }
+.more.c { background: transparent; color: var(--grey); text-decoration: underline; }
+
+/* week / day */
+.dh { display: flex; height: 88px; }
+.tzc { width: 64px; flex: none; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px; color: var(--grey); font-size: 10px; line-height: 13px; letter-spacing: -0.043px; }
+.dhc { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; padding: 16px; min-width: 0; }
+.dhc button { border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0; }
+.dhc .wd { font-size: 14px; line-height: 18px; }
+.dhc .dc { width: 30px; height: 30px; border-radius: 90px; display: grid; place-items: center; font-size: 16px; line-height: 22px; }
+.dhc .dc.today { background: var(--mint); }
+.adr { display: flex; height: 32px; border-top: 1px solid var(--line-08); }
+.adr .tzc { padding: 0; align-items: center; }
+.adc { flex: 1; border-left: 1px solid var(--line-08); padding: 5px 4px; display: flex; gap: 4px; align-items: center; min-width: 0; }
+.adc .chip { height: 22px; }
+.adc .dash { color: var(--grey); font-size: 12px; line-height: 15px; }
+.tg { flex: 1; overflow-y: auto; position: relative; min-height: 0; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) rgba(255,255,255,0.02); }
+.tgi { position: relative; height: 1728px; }
+.hr { position: absolute; left: 0; right: 0; display: flex; height: 20px; }
+.hr span { width: 56px; text-align: center; color: var(--grey); font-size: 10px; line-height: 13px; letter-spacing: -0.043px; margin-top: 2px; }
+.hr i { flex: 1; height: 1px; background: var(--line-08); }
+.hh { position: absolute; left: 64px; right: 0; height: 1px; background: var(--line-03); }
+.vd { position: absolute; top: 0; width: 1px; height: 1728px; background: var(--line-08); }
+.tshade { position: absolute; top: 0; height: 1728px; background: rgba(88,214,141,0.03); }
+.blk { position: absolute; border-radius: 4px; padding: 4px; display: flex; flex-direction: column; gap: 2px; overflow: hidden; border: 1px solid transparent; text-align: left; font-size: 10px; line-height: 13px; letter-spacing: -0.043px; }
+.blk .tt { display: flex; align-items: center; gap: 2px; padding: 2px; min-width: 0; }
+.blk .tt .bar { width: 2px; height: 8px; border-radius: 90px; flex: none; }
+.blk .tt span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.blk .tm { padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.blk .lc { padding: 0 2px; color: #CAD0D6; font-size: 12px; line-height: 15px; letter-spacing: -0.0516px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.blk.row { flex-direction: row; align-items: center; gap: 8px; padding: 2px; }
+.blk.cancelled { border-color: transparent !important; }
+.blk.cancelled .bar { background: #8C99A6 !important; }
+.blk.cancelled .tt span, .blk.cancelled .tm { text-decoration: line-through; text-decoration-color: #F03A3A; }
+.upc.cancelled { opacity: 0.6; }
+.upc.cancelled b { text-decoration: line-through; }
+.cont { color: var(--grey); font-size: 9px; padding: 0 2px; }
+.nl { position: absolute; height: 2px; background: var(--red); }
+.nd { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--red); }
+.nlab { position: absolute; left: 6px; width: 50px; height: 18px; border-radius: 4px; background: var(--red); font-size: 10px; line-height: 18px; font-weight: 500; text-align: center; letter-spacing: -0.043px; }
+.legend { flex: none; display: flex; gap: 16px; padding: 10px 16px; background: var(--surface-2); border-top: 1px solid var(--line-08); font-size: 12px; color: var(--grey); }
+.legend span { display: inline-flex; gap: 6px; align-items: center; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; }
+
+/* overlays */
+.pop { position: absolute; z-index: 30; background: var(--surface); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 16px rgba(255,255,255,0.08); }
+.more-pop { width: 167px; align-items: center; }
+.more-pop .x { position: absolute; top: 8px; right: 8px; border: 0; background: transparent; padding: 0; color: var(--text); }
+.more-pop .hd { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.more-pop .chips { gap: 4px; width: 135px; }
+.dp { width: 340px; overflow: hidden; }
+.dp-h { display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 14px; line-height: 18px; }
+.dp-h div { display: flex; gap: 16px; }
+.dp-h button { border: 0; background: transparent; padding: 0; color: var(--text); }
+.dp-t { display: flex; gap: 8px; align-items: flex-start; font-weight: 500; font-size: 14px; line-height: 18px; }
+.dp-t .sw { width: 12px; height: 12px; border-radius: 4px; flex: none; margin-top: 3px; }
+.dp-t span.trunc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srcb { align-self: flex-start; font-size: 12px; line-height: 15px; border-radius: 90px; padding: 3px 10px; font-weight: 500; }
+.hrz { height: 1px; background: var(--line-08); flex: none; }
+.dp-r { display: flex; gap: 16px; align-items: flex-end; }
+.dp-rows { flex: 1; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.dp-row { display: flex; gap: 16px; align-items: center; color: var(--grey); font-size: 14px; line-height: 18px; min-width: 0; }
+.dp-row span { min-width: 0; }
+.dp-row .one { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.join { height: 24px; padding: 6px 8px; border-radius: 4px; border: 0; background: var(--mint); display: inline-flex; gap: 4px; align-items: center; font-size: 14px; line-height: 18px; flex: none; }
+.join.ghost { background: transparent; color: var(--grey); font-size: 12px; padding: 0; height: auto; cursor: default; text-align: right; max-width: 120px; line-height: 15px; }
+.guests { display: flex; flex-direction: column; }
+.guest { display: flex; gap: 8px; align-items: center; padding: 8px; border-radius: 8px; }
+.guest .avw { position: relative; }
+.guest .av { width: 32px; height: 32px; font-size: 12px; border: 1px solid var(--line-20); }
+.guest .rs { position: absolute; right: -2px; bottom: -2px; width: 12px; height: 12px; border-radius: 90px; border: 1px solid var(--surface); display: grid; place-items: center; font-size: 8px; color: var(--grey); }
+.guest .rs .lucide { width: 8px; height: 8px; color: #fff; stroke-width: 3; }
+.guest b { font-weight: 500; font-size: 14px; line-height: 18px; display: block; }
+.guest small { color: var(--grey); font-size: 12px; line-height: 15px; }
+.link { color: var(--blue); text-decoration: underline; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+.cpy { width: 24px; height: 24px; padding: 4px; border-radius: 4px; border: 1px solid var(--line-20); background: var(--line-05); display: grid; place-items: center; flex: none; }
+.desc { color: var(--grey); font-size: 14px; line-height: 20px; }
+.rsvp { margin: 0 -16px -16px; background: var(--surface-2); padding: 16px; display: flex; gap: 8px; align-items: center; }
+.rsvp span { flex: 1; }
+.rsvp button { height: 24px; padding: 0 8px; border-radius: 4px; border: 1px solid var(--line-20); background: var(--line-05); font-size: 14px; }
+.ext { color: var(--blue); font-size: 14px; display: inline-flex; gap: 6px; align-items: center; text-decoration: none; }
+.warn { color: #FFB27A; font-size: 13px; }
+
+/* click-to-create + selected day */
+.mc { cursor: pointer; }
+.mc:hover { background: rgba(255,255,255,0.025); }
+.mc:hover .addhint { opacity: 1; }
+.addhint { opacity: 0; margin-top: auto; align-self: flex-end; color: var(--grey); font-size: 10px; display: inline-flex; gap: 2px; align-items: center; transition: opacity 0.15s; }
+.addhint .lucide { width: 10px; height: 10px; }
+.dn.sel:not(.today), .mini-g button.sel:not(.today) { box-shadow: inset 0 0 0 1px var(--mint); }
+.tgi { cursor: cell; }
+.blk, .chip { cursor: pointer; }
+/* Hover: no border — the event's own colour deepens (--bg → --bg-h) and it comes to the front.
+   The event whose popup is open stays in the deeper colour. */
+.chip, .blk { background: var(--bg); transition: background-color 0.12s; }
+.blk { z-index: 1; }
+.chip:hover, .blk:hover, .chip.open, .blk.open { background: var(--bg-h); }
+.chip:hover, .blk:hover { z-index: 5; }
+.chip.open, .blk.open { z-index: 4; }
+.chip:focus-visible, .blk:focus-visible { outline: 2px solid var(--mint); outline-offset: 1px; z-index: 6; }
+.upc { transition: border-color 0.12s, background 0.12s; }
+.upc:hover { border-color: rgba(255,255,255,0.3); background: #283039; }
+@media (prefers-reduced-motion: reduce) { .chip, .blk, .upc { transition: none; } }
+.draft { border: 1px dashed var(--mint) !important; background: rgba(88,214,141,0.12) !important; }
+
+/* schedule event (Figma CAL-01 3586:257415) */
+.cp { width: 340px; max-height: 992px; overflow-y: auto; scrollbar-width: thin; }
+
+/* guest picker — same as calendar-schedule-event.tsx (FIELD / SUBMENU / MENU_ITEM / PersonRow) */
+.gfield { position: relative; }
+.gin { display: flex; align-items: center; gap: 8px; height: 42px; width: 100%; border: 1px solid var(--line-20); border-radius: 8px; background: var(--surface); padding: 8px 12px; cursor: text; }
+.gin:focus-within { border-color: rgba(255,255,255,0.4); }
+.gin input { flex: 1; min-width: 0; border: 0; background: transparent; color: #fff; font-size: 14px; line-height: 18px; font-family: var(--font); outline: none; }
+.gin input::placeholder { color: var(--grey-7); }
+.gmenu { position: absolute; left: 0; top: 50px; z-index: 20; width: 100%; max-height: 321px; overflow-y: auto; border-radius: 16px; background: var(--surface); padding: 8px; box-shadow: 0 4px 16px rgba(255,255,255,0.08); display: flex; flex-direction: column; scrollbar-width: thin; }
+.gopt { display: flex; gap: 8px; align-items: center; width: 100%; flex: none; border: 0; background: transparent; border-radius: 8px; padding: 12px; text-align: left; color: #fff; }
+.gopt:hover, .gopt.hl { background: rgba(255,255,255,0.1); }
+.prow { display: flex; gap: 8px; align-items: center; min-width: 0; flex: 1; }
+.prow .av { width: 32px; height: 32px; font-size: 12px; }
+.prow > span:last-child { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.prow b { font-weight: 500; font-size: 14px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prow small { font-size: 12px; line-height: 15px; letter-spacing: -0.0516px; color: var(--grey); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prow mark { background: transparent; color: var(--mint); }
+.glist { display: flex; flex-direction: column; }
+.grow { display: flex; align-items: center; gap: 8px; height: 53px; padding: 8px; border-radius: 8px; }
+.grow:hover { background: rgba(255,255,255,0.05); }
+.grow .rm { border: 0; background: transparent; color: #fff; opacity: 0; padding: 0; display: grid; }
+.grow:hover .rm, .grow .rm:focus-visible { opacity: 1; }
+.permt { display: flex; justify-content: space-between; align-items: center; width: 100%; border: 0; background: transparent; color: #fff; font-size: 14px; line-height: 18px; padding: 0; }
+.permbox { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; border-radius: 8px; background: var(--surface-2); padding: 8px; }
+.permbox button { display: flex; gap: 8px; align-items: center; border: 0; background: transparent; color: #fff; font-size: 14px; line-height: 18px; padding: 0; }
+
+/* date / time fields — same as AnnouncementDateField / AnnouncementTimeField (announcement-date-time.tsx) */
+.pk { position: relative; min-width: 0; flex: 1; }
+.pk-btn { height: 42px; width: 100%; display: flex; align-items: center; justify-content: space-between; border-radius: 8px; border: 1px solid var(--line-20); background: var(--surface); padding: 0 12px; font-size: 14px; line-height: 18px; color: var(--text); }
+.pk-btn:hover { border-color: rgba(255,255,255,0.4); }
+.pk-btn.bad { border-color: var(--red); }
+.pk-btn .lucide { color: rgba(255,255,255,0.6); }
+.pk-btn > span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pk-val { display: flex; gap: 8px; align-items: center; }
+.pk-val .lucide { color: #fff; }
+.pk-val span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.pk-cal { position: absolute; left: 0; top: 46px; z-index: 30; width: 311px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: var(--surface); padding: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+.pk-cal-h { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 14px; line-height: 18px; }
+.pk-cal-h div { display: flex; gap: 4px; }
+.pk-cal-h button { width: 24px; height: 24px; border-radius: 4px; border: 0; background: transparent; display: grid; place-items: center; color: #fff; padding: 0; }
+.pk-cal-h button:hover { background: rgba(255,255,255,0.08); }
+.pk-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 4px; }
+.pk-grid span { height: 28px; display: grid; place-items: center; font-size: 12px; line-height: 15px; color: var(--grey-7); }
+.pk-grid button { height: 28px; border: 0; background: transparent; border-radius: 999px; font-size: 14px; line-height: 18px; color: #fff; padding: 0; }
+.pk-grid button:hover { background: rgba(255,255,255,0.08); }
+.pk-grid button.out { color: var(--grey-7); }
+.pk-grid button.on { background: var(--mint); color: var(--shade); font-weight: 500; }
+.pk-list { position: absolute; left: 0; top: 46px; z-index: 30; width: 100%; max-height: 226px; overflow-y: auto; overscroll-behavior: contain; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: var(--surface); padding: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); scrollbar-width: thin; }
+.pk-list button { display: flex; align-items: center; width: 100%; height: 34px; border: 0; border-radius: 8px; padding: 0 12px; background: transparent; color: #fff; font-size: 14px; line-height: 18px; text-align: left; }
+.pk-list button:hover { background: rgba(255,255,255,0.05); }
+.pk-list button.on { background: rgba(255,255,255,0.08); }
+.pk-err { color: var(--red); font-size: 12px; line-height: 15px; }
+.cp-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.cp-h h3 { margin: 0; font-size: 20px; line-height: 25px; font-weight: 700; }
+.cp-h p { margin: 4px 0 0; color: var(--grey); font-size: 14px; line-height: 18px; }
+.cp-h button { border: 0; background: transparent; padding: 0; color: var(--text); }
+.fld { display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 18px; }
+.inp { height: 42px; width: 100%; background: var(--surface); border: 1px solid var(--line-20); border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 14px; font-family: var(--font); color-scheme: dark; }
+.inp::placeholder { color: var(--grey-7); }
+.inp:focus { outline: none; border-color: rgba(255,255,255,0.4); }
+textarea.inp { height: 100px; resize: none; }
+.row2 { display: flex; gap: 8px; align-items: center; }
+.row2 > * { min-width: 0; }
+.allday { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+.allday input { accent-color: var(--mint); width: 16px; height: 16px; margin: 0; }
+.gchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.gchip { height: 28px; padding: 0 10px; border-radius: 90px; border: 1px solid var(--line-20); background: transparent; font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+.gchip.on { background: rgba(88,214,141,0.2); border-color: transparent; cursor: default; }
+/* X sits inside the pill, after the name, and only opens up on hover / keyboard focus. */
+.gx { width: 0; height: 14px; margin-left: -6px; padding: 0; border: 0; border-radius: 90px; background: transparent; color: #fff; opacity: 0; overflow: hidden; display: grid; place-items: center; transition: width 0.15s, margin 0.15s, opacity 0.15s; }
+.gx .lucide { width: 12px; height: 12px; flex: none; }
+.gchip:hover .gx, .gx:focus-visible { width: 14px; margin-left: 0; opacity: 1; }
+.gx:hover { background: rgba(255,255,255,0.2); }
+@media (hover: none) { .gx { width: 14px; margin-left: 0; opacity: 1; } }
+.cp-btns { display: flex; justify-content: flex-end; gap: 16px; }
+.cp-btns button { height: 42px; padding: 0 16px; border-radius: 8px; font-size: 16px; line-height: 22px; border: 1px solid transparent; }
+.cp-btns .cancel { background: #fff; color: var(--shade); }
+.cp-btns .create { background: var(--mint); }
+.cp-btns .create:disabled { background: #DBDFE3; border-color: #B2BBC3; color: #A3ADB8; cursor: not-allowed; }
+
+.locked { opacity: 0.45; pointer-events: none; }
+.pick { top: 200px; gap: 16px; }
+.pick p { margin: 0; color: var(--grey); font-size: 14px; line-height: 18px; }
+.pklist { display: flex; flex-direction: column; max-height: 320px; overflow-y: auto; scrollbar-width: thin; margin: -8px 0; }
+.pkrow { display: flex; gap: 8px; align-items: center; width: 100%; min-height: 42px; padding: 12px; border: 0; border-radius: 8px; background: transparent; text-align: left; font-size: 14px; line-height: 18px; color: #fff; }
+.pkrow:hover { background: rgba(255,255,255,0.05); }
+.pkname { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pkname mark { background: transparent; color: var(--mint); }
+.pkprim { font-size: 11px; line-height: 15px; color: var(--grey); border: 1px solid var(--line-20); border-radius: 90px; padding: 1px 8px; }
+.pkcount { color: var(--grey); font-size: 12px; }
+.calpk { align-self: flex-start; border: 0; background: transparent; padding: 0; color: var(--mint); font-size: 12px; line-height: 15px; display: inline-flex; gap: 6px; align-items: center; }
+.rolechip { align-self: flex-start; font-size: 11px; line-height: 15px; color: var(--grey); border: 1px dashed rgba(255,255,255,0.25); border-radius: 6px; padding: 3px 8px; }
+.dp-h a.extl { color: #fff; display: grid; text-decoration: none; }
+.cases { display: flex; flex-wrap: wrap; gap: 6px; }
+.cases button { height: 30px; padding: 0 10px; border-radius: 6px; border: 1px dashed rgba(255,255,255,0.3); background: transparent; font-size: 12px; }
+.cases button:hover { background: rgba(255,255,255,0.08); }
+.ovl { position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; }
+.cfm { position: absolute; z-index: 41; left: 491px; top: 409px; width: 458px; background: var(--surface); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+.cfm h3 { margin: 0; font-size: 20px; line-height: 25px; font-weight: 700; }
+.cfm p { margin: 0; color: var(--grey); font-size: 14px; line-height: 20px; }
+.cp-btns .danger { background: rgba(240,58,58,0.05); color: var(--red); border-color: rgba(240,58,58,0.2); }
+
+/* ---- CAL-01: settings / integrations / dialogs (Figma 3225:480433) ---- */
+.tip { position: relative; }
+.tip[data-tipx="end"]:hover::after, .tip[data-tipx="end"]:focus-visible::after { left: auto; right: 0; transform: none; }
+.tip[data-tipx="start"]:hover::after, .tip[data-tipx="start"]:focus-visible::after { left: 0; transform: none; }
+.tip[data-tipy="up"]:hover::after, .tip[data-tipy="up"]:focus-visible::after { top: auto; bottom: calc(100% + 8px); }
+.tip:hover::after, .tip:focus-visible::after { content: attr(data-tip); position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #1A1B1E; color: #fff; font-size: 12px; line-height: 15px; letter-spacing: -0.0516px; font-weight: 400; padding: 8px; border-radius: 8px; white-space: nowrap; box-shadow: 0 4px 8px rgba(255,255,255,0.08); z-index: 20; pointer-events: none; text-decoration: none; }
+.dp { overflow: visible; }
+.rsvp { border-radius: 0 0 16px 16px; }
+.dp-h button:disabled { opacity: 0.35; cursor: not-allowed; }
+.dp-act { display: flex; gap: 8px; }
+.sbtn, .dbtn { flex: 1; height: 32px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 14px; border: 1px solid var(--line-20); background: var(--line-05); }
+.dbtn { background: rgba(240,58,58,0.05); border-color: rgba(240,58,58,0.2); color: var(--red); }
+.sbtn:disabled, .dbtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.resb { display: inline-flex; gap: 6px; align-items: center; align-self: flex-start; font-size: 12px; line-height: 15px; color: #FFB27A; background: rgba(255,128,0,0.1); border-radius: 90px; padding: 3px 10px; }
+.creason { display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 18px; }
+.creason span { color: var(--grey); }
+.cm { position: absolute; z-index: 41; width: 455px; background: var(--surface); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+.cm-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 16px; line-height: 22px; font-weight: 500; }
+.cm-h button { border: 0; background: transparent; padding: 0; color: #fff; display: grid; }
+.cm-q { margin: 0; font-size: 14px; line-height: 18px; }
+.cm-rows { display: flex; flex-direction: column; gap: 16px; }
+.cm-row { display: flex; gap: 16px; align-items: flex-start; font-size: 14px; line-height: 18px; }
+.cm-row > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.cm-row span { color: var(--grey); }
+.cnt2 { align-self: flex-end; font-size: 12px; line-height: 15px; letter-spacing: -0.0516px; color: var(--grey); }
+.cnt2 b { color: #fff; font-weight: 500; }
+.cp-btns .redbtn { background: var(--red); color: #fff; }
+.cp-btns .redbtn:disabled, .cp-btns .create:disabled { opacity: 0.5; cursor: not-allowed; }
+.cp-btns .sm { height: 32px; border-radius: 6px; font-size: 14px; line-height: 18px; }
+.warnline { display: flex; gap: 6px; align-items: center; color: #ECC819; font-size: 12px; line-height: 15px; }
+.setm { position: absolute; z-index: 41; left: 253px; top: 112px; width: 934px; height: 800px; border-radius: 16px; overflow: hidden; display: flex; }
+.sm-l { width: 238px; background: var(--surface); padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.sm-l h2 { margin: 0 0 8px; font-size: 20px; line-height: 25px; font-weight: 700; }
+.sm-i { display: flex; gap: 8px; align-items: center; min-height: 42px; padding: 12px; border-radius: 8px; font-size: 14px; line-height: 18px; }
+.sm-i.on { background: rgba(88,214,141,0.1); color: var(--mint); }
+.sm-r { flex: 1; background: var(--surface-2); padding: 16px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; min-width: 0; }
+.sm-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.sm-h h2 { margin: 0; font-size: 20px; line-height: 25px; font-weight: 700; }
+.sm-h p { margin: 8px 0 0; color: var(--grey); font-size: 14px; line-height: 18px; }
+.sm-h button { border: 0; background: transparent; padding: 0; color: #fff; display: grid; }
+.irow { display: flex; gap: 24px; align-items: center; }
+.irow-l { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.irow-top { display: flex; gap: 8px; align-items: center; }
+.irow-l > b { font-weight: 500; font-size: 14px; line-height: 18px; display: flex; gap: 8px; align-items: center; }
+.irow-l p { margin: 0; color: var(--grey); font-size: 14px; line-height: 18px; max-width: 470px; }
+.irow-r { display: flex; gap: 8px; align-items: center; }
+.lg { width: 56px; height: 56px; border-radius: 8px; background: #fff; display: grid; place-items: center; font-weight: 700; font-size: 26px; flex: none; }
+.lg.google { color: #4285F4; } .lg.outlook { color: #0078D4; }
+.acard { display: flex; gap: 8px; align-items: center; padding: 8px; border-radius: 8px; background: rgba(26,27,30,0.5); border: 1px solid var(--line-20); }
+.acard .av { width: 40px; height: 40px; font-size: 14px; }
+.acard > span:last-child { display: flex; flex-direction: column; gap: 4px; }
+.acard b { font-weight: 700; font-size: 14px; line-height: 18px; }
+.acard small { font-size: 12px; line-height: 15px; color: var(--grey); letter-spacing: -0.0516px; }
+.cbtn, .dbtn2, .rbtn { height: 32px; padding: 0 16px; border-radius: 6px; font-size: 14px; line-height: 18px; border: 1px solid transparent; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.cbtn { background: var(--mint); }
+.dbtn2 { background: rgba(240,58,58,0.05); border-color: rgba(240,58,58,0.2); color: var(--red); }
+.rbtn { background: var(--line-05); border-color: var(--line-20); }
+.info { display: grid; color: var(--grey); cursor: help; }
+.stb { font-size: 11px; font-weight: 500; border-radius: 90px; padding: 1px 8px; }
+.stb.on { background: rgba(88,214,141,0.2); color: var(--mint); }
+.stb.off { background: var(--line-08); color: var(--grey); }
+.stb.expired { background: rgba(236,200,25,0.15); color: #ECC819; }
+.oa { position: absolute; z-index: 45; left: 550px; top: 200px; width: 340px; background: #F4F5F7; color: #1A1B1E; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.oa-tag { font-size: 11px; line-height: 15px; color: #4A5460; background: #E3E6EA; border-radius: 6px; padding: 6px 8px; }
+.oa-b { display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 18px; }
+.oa-b b { font-size: 17px; line-height: 23px; }
+.oa-b span { color: #4A5460; }
+.oa-b ul { margin: 0; padding-left: 18px; color: #3A4450; font-size: 13px; }
+.oa-btn { display: flex; justify-content: flex-end; gap: 8px; }
+.oa-btn button { height: 36px; padding: 0 16px; border-radius: 8px; border: 1px solid #C9CED4; background: #fff; color: #1A1B1E; font-size: 14px; }
+.oa-btn .p { background: #3B4046; border-color: #3B4046; color: #fff; }
+.ab { display: flex; gap: 8px; align-items: flex-start; padding: 8px; border-radius: 8px; background: rgba(236,200,25,0.1); border: 1px solid rgba(236,200,25,0.2); color: #ECC819; font-size: 14px; line-height: 18px; flex: none; }
+.ab .lucide { margin-top: 1px; }
+.ab button { border: 0; background: transparent; color: #ECC819; padding: 0; font-weight: 500; text-decoration: underline; font-size: 14px; line-height: 18px; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.rpill { margin-left: auto; font-size: 10px; line-height: 14px; font-weight: 500; border-radius: 90px; padding: 1px 6px; color: #fff; }
+.rpill.ok { background: #58D68D; } .rpill.no { background: #D41818; }
+.errb .x2 { margin-left: 0; background: transparent; padding: 0; height: auto; color: #fff; display: grid; }
+
+/* skeleton / empty / error */
+.sk { background: var(--line-05); border-radius: 4px; }
+.empty { position: absolute; inset: 226px 0 0 0; display: flex; flex-direction: column; gap: 12px; align-items: center; justify-content: center; pointer-events: none; }
+.empty > * { pointer-events: auto; }
+.empty p { margin: 0; color: var(--grey); font-size: 16px; }
+.pbtn { height: 42px; padding: 0 16px; border: 0; border-radius: 8px; background: var(--mint); font-size: 14px; display: inline-flex; gap: 8px; align-items: center; }
+.errb { flex: none; margin: 0 16px 12px; border-radius: 8px; padding: 10px 12px; background: rgba(240,58,58,0.12); border: 1px solid rgba(240,58,58,0.35); display: flex; gap: 10px; align-items: center; font-size: 14px; }
+.errb button { margin-left: auto; height: 30px; padding: 0 12px; border-radius: 6px; border: 0; background: var(--mint); font-size: 13px; }
+
+/* notification panel */
+.np-h { display: flex; justify-content: space-between; align-items: center; }
+.np-h h2 { margin: 0; font-size: 20px; line-height: 25px; font-weight: 700; }
+.markr { border: 0; background: transparent; display: inline-flex; gap: 8px; align-items: center; color: var(--grey); font-size: 12px; line-height: 15px; padding: 0; }
+.markr.c { color: var(--mint); font-size: 13px; }
+.ntabs { display: flex; border: 1px solid var(--line-20); border-radius: 8px; padding: 4px; flex: none; }
+.ntabs button { flex: 1; height: 32px; border: 0; border-radius: 8px; background: transparent; font-size: 14px; }
+.ntabs button.on { background: rgba(88,214,141,0.2); }
+.ngrp { display: flex; flex-direction: column; gap: 16px; }
+.ngrp > h3 { margin: 0; font-size: 12px; line-height: 15px; font-weight: 400; letter-spacing: -0.0516px; }
+.nlist { display: flex; flex-direction: column; gap: 8px; }
+.ncard { padding: 8px; border-radius: 8px; display: flex; gap: 8px; align-items: flex-start; width: 100%; border: 0; background: transparent; text-align: left; }
+.ncard.unread { background: var(--line-05); }
+.ncard.past { opacity: 0.5; }
+.nic { width: 32px; height: 32px; border-radius: 90px; display: grid; place-items: center; flex: none; }
+.nic .lucide { width: 19px; height: 19px; color: #fff; }
+.nbody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.ntop { display: flex; gap: 8px; width: 100%; align-items: flex-start; }
+.ntop b { flex: 1; min-width: 0; font-weight: 500; font-size: 14px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ntop small { color: var(--grey); font-size: 12px; line-height: 16px; white-space: nowrap; }
+.ntext { width: 100%; color: var(--grey); font-size: 14px; line-height: 18px; white-space: pre-line; }
+.stat { align-self: flex-start; font-size: 11px; border-radius: 90px; padding: 1px 8px; background: var(--line-08); color: var(--grey); }
+
+/* toasts */
+.toasts { position: absolute; top: 24px; right: 24px; width: 336px; display: flex; flex-direction: column; gap: 8px; z-index: 50; }
+.toast { background: var(--shade); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 8px rgba(255,255,255,0.08); animation: tin 0.25s ease-out; }
+@keyframes tin { from { opacity: 0; transform: translateY(-8px); } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+.trow { display: flex; gap: 16px; align-items: flex-start; }
+.tib { width: 40px; height: 40px; padding: 8px; border-radius: 8px; display: grid; place-items: center; flex: none; }
+.tib .lucide { width: 24px; height: 24px; }
+.ttx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 18px; }
+.ttx b { font-weight: 700; }
+.ttx span { white-space: pre-line; }
+.tx { border: 0; background: transparent; padding: 0; color: #fff; }
+.tbtns { display: flex; justify-content: flex-end; gap: 8px; }
+.tbtns button { height: 32px; padding: 8px 16px; border-radius: 6px; border: 0; font-size: 14px; line-height: 16px; }
+.tbtns .p { background: var(--mint); }
+.tbtns .s { background: #fff; color: var(--shade); }
+.tleft { color: var(--grey); font-size: 11px; margin-right: auto; align-self: center; font-variant-numeric: tabular-nums; }
+
+/* notes */
+.notes { max-width: 1440px; margin: 24px auto 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.note { background: var(--surface); border: 1px solid var(--line-05); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.note h2 { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; }
+.note ul { margin: 0; padding-left: 18px; color: var(--grey); font-size: 13px; line-height: 20px; display: flex; flex-direction: column; gap: 4px; }
+.note ul b { color: var(--text); font-weight: 500; }
+.note code { font-size: 12px; background: var(--line-08); border-radius: 4px; padding: 1px 4px; }
+</style>
+
+<header class="poc-head">
+  <div class="poc-title">
+    <h1>Zyra Meeting Calendar POC</h1>
+    <p>Calendar Display (SC-MTG-CAL-02) + Meeting Alert (SC-MTG-CAL-03) · ภาพจำลองเพื่อคุยกับ PM/Design ยังไม่ใช่โค้ดจริง · เวลาจำลอง Mon 20 July 2026</p>
+  </div>
+  <div class="ctrls">
+    <div class="ctrl"><span>ยึดตาม (ขัดกัน = ใช้ Figma)</span>
+      <div class="seg" id="c-spec"><button data-v="figma">Figma (ใช้จริง)</button><button data-v="clickup">ClickUp (เทียบดูเท่านั้น)</button></div></div>
+    <div class="ctrl"><span>สถานะข้อมูล (EP-01)</span>
+      <div class="seg" id="c-data"><button data-v="normal">ปกติ</button><button data-v="loading">กำลังโหลด</button><button data-v="error">โหลดล้มเหลว</button><button data-v="empty">ไม่มี event</button></div></div>
+    <div class="ctrl"><span>Google Calendar</span>
+      <div class="seg" id="c-google"><button data-v="on">เชื่อมแล้ว</button><button data-v="expired">หมดอายุ (EP-02)</button><button data-v="off">ยังไม่เชื่อม</button></div></div>
+    <div class="ctrl"><span>Outlook</span>
+      <div class="seg" id="c-outlook"><button data-v="on">เชื่อมแล้ว</button><button data-v="off">ยังไม่เชื่อม</button></div></div>
+    <div class="ctrl"><span>Settings › Integrations</span>
+      <div class="seg" id="c-set"><button data-v="open">เปิด (เชื่อม / Disconnect / เลือกปฏิทิน)</button></div></div>
+    <div class="ctrl"><span>สิทธิ์ของฉัน</span>
+      <div class="seg" id="c-role"><button data-v="member">Member</button><button data-v="admin">Workspace Admin</button></div></div>
+    <div class="ctrl"><span>ส่ง Meeting Alert</span>
+      <div class="fire">
+        <button data-fire="reminder"><i class="dot" style="background:var(--blue)"></i>5 นาทีก่อน (HP-01)</button>
+        <button data-fire="started"><i class="dot" style="background:var(--mint)"></i>เริ่มแล้ว (HP-02)</button>
+        <button data-fire="missed"><i class="dot" style="background:var(--blue)"></i>กลับมา online — พลาด 3 (EP-01)</button>
+        <button data-fire="cancelled"><i class="dot" style="background:var(--grey)"></i>ยกเลิก (EP-02)</button>
+        <button data-fire="rescheduled"><i class="dot" style="background:var(--orange)"></i>เลื่อนเวลา (EP-02)</button>
+        <button data-fire="syncfail"><i class="dot" style="background:#ECC819"></i>Sync ล้มเหลว 3 ครั้ง (CLDI-EP-03)</button>
+        <button data-fire="reset"><i data-lucide="rotate-ccw" class="i14"></i>เริ่มใหม่</button>
+      </div></div>
+    <div class="ctrl" style="flex-basis:100%"><span>เปิดกรณีสิทธิ์ (ดูว่าแต่ละบทบาทกดอะไรได้)</span>
+      <div class="cases"><button data-case="dsync">Organiser</button><button data-case="opsstand">Organiser · กำลังประชุม</button><button data-case="budget">Guest · ไม่มีสิทธิ์</button><button data-case="standup-21">Guest · Modify event</button><button data-case="onboard">Guest · Invite others</button><button data-case="mkt">Guest · Modify + Invite</button><button data-case="hr">Guest · ซ่อนรายชื่อ</button><button data-case="catchup">Guest · ยังไม่ตอบ RSVP</button><button data-case="partner">Google · Organiser</button><button data-case="consult">Google · Guest</button><button data-case="vendor">ยกเลิกแล้ว · Guest</button></div></div>
+    <label class="chk"><input type="checkbox" id="c-syncfail"> จำลอง push ไป Google ล้มเหลว (HP-03 / HP-05 EP-B / HP-06 EP-C)</label>
+    <label class="chk"><input type="checkbox" id="c-fast"> ย่อเวลา toast เหลือ 10 วิ (ปกติ 3 นาที)</label>
+  </div>
+</header>
+<div class="log" id="log" aria-live="polite"></div>
+
+<div class="stage-wrap" id="wrap">
+  <div class="stage" id="stage">
+    <div id="app"></div>
+    <div class="toasts" id="toasts"></div>
+  </div>
+</div>
+
+<section class="notes">
+  <div class="note">
+    <h2>ลองกดอะไรได้บ้าง</h2>
+    <ul>
+      <li>สลับ <b>Day / Week / Month</b> · ‹ › · Today · คลิก<b>เลขวัน</b>ใน Month หรือหัวคอลัมน์ใน Week = ไป Day view · คลิกวันใน Mini calendar = เลือกวัน (มีกรอบเขียว)</li>
+      <li><b>สร้าง meeting:</b> คลิกช่องว่างในวันไหนก็ได้ (Month) หรือช่องเวลา (Week / Day, ตัดทุก 30 นาที) หรือปุ่ม <b>+</b> → ฟอร์ม Schedule event + chip "No title" ตรงช่องนั้น → Create</li>
+      <li><b>Guest:</b> พิมพ์ชื่อหรืออีเมลเพื่อค้นหาสมาชิก workspace (↑ ↓ Enter ได้) → คนที่เลือกขึ้นเป็นวง (pill) · hover ที่วงแล้วมี X ท้ายชื่อให้กดเอาออก + Permission 3 ข้อ · ช่องค้นหาแบบเดียวกับ <code>calendar-schedule-event.tsx</code> ของจริง (ของจริงแสดงเป็นรายชื่อแถว — POC เปลี่ยนเป็นวงตามที่ขอ)</li>
+      <li>กด <b>"3 More"</b> ในวันที่ 20 → popup รายการทั้งหมด (AC-HP02-3)</li>
+      <li>กด event ใดก็ได้ (รวม Google / Outlook) → Event detail · ถ้า event อยู่ล่าง popup จะเปิดขึ้นด้านบน · ปิดด้วย X, Esc หรือคลิกข้างนอก</li>
+      <li>ใน Event detail ของ meeting ที่เราเป็นผู้จัด: <b>✏️ Edit</b> → ฟอร์มเดิมกรอกค่าไว้ → Save · <b>📅✕ Cancel meeting</b> → dialog ใส่เหตุผล (0/200) → Confirm (HP-05) · โหมด ClickUp มีปุ่ม <b>"เลื่อน Meeting"</b> (HP-06) และ attendee มี "ปฏิเสธเข้าร่วม" · ผู้จัด: Design sync 08:30, Quarterly planning 22 ก.ค., Sprint retro 31 ก.ค. หรือที่สร้างเอง</li>
+      <li><b>Calendar Integration (CAL-01):</b> ไอคอน ⚙ ใน sidebar หรือปุ่ม "Go to setting" → Setting → Integrations · Connect → หน้าขออนุญาต (ภาพจำลอง) → Continue = เชื่อมสำเร็จ → push Zyra meeting ที่เราจัดไปปฏิทินนั้น → เปิดหน้า <b>Choose calendars to sync</b> (เลือกปฏิทิน · ค้นหาได้เมื่อมีเกิน 10 · ค่าเริ่มต้น = Primary) → Save · แก้ทีหลังได้ที่ลิงก์ "Syncing N calendars · Change" · Cancel = EP-01 · Disconnect → ยืนยัน → events ของ provider นั้นหายทันที · เชื่อม Google + Outlook พร้อมกันได้ · เปิด Setting ได้จากปุ่ม "Settings › Integrations" ในแถบควบคุมด้วย</li>
+      <li>สลับ <b>สิทธิ์ของฉัน</b> เป็น Workspace Admin = ยกเลิก/เลื่อน meeting ของคนอื่นได้ · Daily standup วันอังคาร = guest ที่ได้สิทธิ์ Modify (แก้ได้ ยกเลิกไม่ได้) · event จาก Google ที่เราเป็นผู้จัด (Design review 14 ก.ค.) มี 🗑/✏️ ที่พาไปแก้ที่ต้นทาง</li>
+      <li><b>EP-02:</b> Google Calendar = "หมดอายุ" → banner เหลืองใน panel + ปุ่ม Reconnect ใน Setting · <b>EP-03:</b> ปุ่ม "Sync ล้มเหลว 3 ครั้ง" → banner → Sync now · ติ๊ก "จำลอง push ไป Google ล้มเหลว" เพื่อดู toast ตอนสร้าง/ยกเลิก/เลื่อน</li>
+      <li>ไอคอน <b>Calendar</b> / <b>กระดิ่ง</b> ใน sidebar · ปุ่มขยาย/ย่อ ใน panel</li>
+      <li>ปุ่ม <b>ส่ง Meeting Alert</b> ด้านบน → toast + badge + การ์ดใน Notification panel · กดซ้ำ = ถูก dedupe</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h2>Figma กับ ClickUp ต่างกันตรงไหน (สลับดูได้)</h2>
+    <ul>
+      <li><b>สี source:</b> Figma ทุกอย่างเขียว <code>#58D68D</code> ไม่มี Google/Outlook · ClickUp Zyra <code>#79DEA5</code> / Google <code>#4285F4</code> / Outlook <code>#0078D4</code> + legend ใต้ calendar</li>
+      <li><b>Popup:</b> ClickUp เพิ่ม source badge, description, ลิงก์เปิดใน Google/Outlook, timezone ต้นทาง, "Join Now" เฉพาะตอนกำลังประชุม · Figma มี Trash/Edit + RSVP Yes/No/Maybe</li>
+      <li><b>Toast:</b> Figma ข้อความอังกฤษ icon กล้อง + ปุ่ม Later · ClickUp ข้อความไทย 🔔/🎙/🔄 + "มี N คนรออยู่" + Join Now</li>
+      <li><b>EP-01:</b> Figma error = toast, ไม่มี empty message · ClickUp error = banner ใน calendar, empty = ข้อความ + ปุ่มสร้าง</li>
+      <li><b>History:</b> ClickUp การ์ดที่ผ่านไปแล้ว greyed + "Mark all as read" · Figma ไม่ greyed, "Mark as read"</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h2>สิ่งที่ POC นี้ตัดสินใจเอง (รอ PM/Design)</h2>
+    <ul>
+      <li>Badge ขึ้น +1 ทันทีที่ alert มา และเป็น 0 เมื่อเปิด panel (ClickUp) — Figma ไม่ได้วาดช่วงนี้</li>
+      <li>"Join Now" active = เวลาปัจจุบันอยู่ระหว่าง start–end และไม่ถูกยกเลิก</li>
+      <li>เลื่อนเวลาแล้ว alert ตามเวลาใหม่ส่งได้อีก (dedupe key รวม <code>start_at</code>)</li>
+      <li>หลังยกเลิก ปุ่ม Join บนการ์ดเก่าพาไป Calendar แทนห้อง (EP-02) · ปุ่ม Later = ปิด toast</li>
+      <li>Toast ซ้อนกันแนวตั้งมุมขวาบน ใบใหม่อยู่บน · ไม่มี hover/animation ใน Figma — ใช้แบบเรียบ</li>
+      <li><b>CAL-01 (ผู้ใช้ตัดสิน 2026-10-29 — ขัดกันให้ยึด Figma):</b> สถานะ Connected / ไม่ได้เชื่อม / Expired ตาม Figma ไม่มี badge (ทั้งสองโหมด) · Disconnect ใช้ข้อความ Figma · EP-01 = toast แดง "Connection canceled" ไม่มีปุ่มลองใหม่ (ทั้งสองโหมด) · หน้าเลือกปฏิทิน + Save และการ push meeting เดิม (AC-HP01-5) มีแค่ใน ClickUp ไม่มีแบบใน Figma → POC ทำแบบ General modal ของ Zyra (รอ designer) · EP-02/03 = banner เหลืองใน panel ไม่ใช่บน header · หน้าขออนุญาตของ Google/Microsoft เป็นกล่องจำลอง ไม่ใช่หน้าจริง</li>
+      <li><b>HP-05 ยกเลิก</b> ตาม Figma <code>7802:237620</code>: ไอคอน 📅✕ เฉพาะผู้จัด (+ Workspace Admin ตาม ClickUp) · dialog 455px · toast "Event cancelled successfully" · sync ล้มเหลว = toast เหลือง Try again → Open Google Calendar · token หมดอายุ = "Expired token" + Go to setting</li>
+      <li><b>HP-06 เลื่อน meeting ไม่มีใน Figma</b> — dialog ทำตาม ClickUp (เวลาเดิม, เวลาใหม่, เตือนเวลาชน, ห้องชน = บล็อก, เหตุผล, แจ้ง attendees) · โหมด Figma ใช้ ✏️ Edit แทน</li>
+      <li><b>กติกาลบ / ยกเลิก (ผู้ใช้กำหนด 2026-10-29):</b> meeting หรือการจองที่สร้างใน Zyra → ลบ/ยกเลิกแล้ว<b>ยังอยู่ในปฏิทินของทุกคน</b> เป็นพื้นเทา 10% + แถบ <code>#8C99A6</code> + ขีดฆ่าแดง + "Reason for cancellation" · event จาก Google/Outlook → <b>ลบใน Zyra ไม่ได้</b> มีไอคอนถังขยะพร้อม tooltip กดแล้วเปิด Google/Outlook ไปลบที่นั่น แล้ว sync กลับมาหายจาก Zyra (ใน POC กด "จำลอง: ลบที่ต้นทางแล้ว sync") · ต่างจาก Figma HP-05 แถว 1 ที่ event หายจากจอผู้ยกเลิก และ ClickUp HP-05 ที่ให้หายจาก calendar ทุกคน</li>
+      <li>ปิดฟอร์มที่กรอกแล้ว (X / Esc / คลิกข้างนอก) → ถามก่อนทิ้ง · ข้อความ toast "Meeting scheduled / updated / cancelled" ตั้งเอง</li>
+      <li><b>ช่องวันที่ / เวลา</b> ใช้แบบเดียวกับ Announcement (<code>AnnouncementDateField</code> / <code>AnnouncementTimeField</code> ใน <code>announcement-date-time.tsx</code>) — วันที่ DD/MM/YYYY + ปฏิทิน 311px, เวลาทีละ 15 นาที · ของจริงใน CAL-01 ใช้ <code>CalendarMiniMonth</code> แยกอีกตัว ควรเปลี่ยนมาใช้ตัวเดียวกัน</li>
+    </ul>
+  </div>
+</section>
+
+<script>
+(() => {
+  const W = 1440, H = 1024, HOUR = 72;
+  const $ = (s, r = document) => r.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const p2 = (n) => String(n).padStart(2, "0");
+  const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const d = (day, h = 0, m = 0) => new Date(2026, 6, day, h, m);
+  const hm = (t) => `${p2(t.getHours())}:${p2(t.getMinutes())}`;
+  const dLabel = (t) => `${t.getDate()} ${MONTHS[t.getMonth()]}, ${t.getFullYear()}`;
+  const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  const startOfDay = (t) => new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  const addDays = (t, n) => new Date(t.getFullYear(), t.getMonth(), t.getDate() + n, t.getHours(), t.getMinutes());
+  const weekStart = (t) => addDays(startOfDay(t), -t.getDay());
+  const hexA = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+  const icon = (name, cls = "") => `<i data-lucide="${name}" class="${cls}"></i>`;
+
+  const people = {
+    dech: { name: "Dechawat Phondechaphiphat", email: "dechawat@example.com", color: "#FFA8A8", ini: "DP" },
+    conan: { name: "Conan Grey", email: "conan.grey@example.com", color: "#A8C8FF", ini: "CG" },
+    taylor: { name: "Taylor Swift", email: "taylor.swift@example.com", color: "#FFD6A8", ini: "TS" },
+    sabrina: { name: "Sabrina Carpenter", email: "sabrina.c@example.com", color: "#E3B8FF", ini: "SC" },
+    dua: { name: "Dua Lipa", email: "dua.lipa@example.com", color: "#FFB8D9", ini: "DL" },
+    fujii: { name: "Fujii Kaze", email: "fujii.kaze@example.com", color: "#B8E8FF", ini: "FK" },
+    ethan: { name: "Ethan Winter", email: "ethan.w@example.com", color: "#D6F0A8", ini: "EW" },
+    me: { name: "Ten (you)", email: "ten@example.com", color: "#B8F0CF", ini: "T" },
+  };
+  // Workspace members a guest can be picked from (status != pending, not me).
+  const MEMBERS = ["dech", "conan", "taylor", "sabrina", "dua", "fujii", "ethan"];
+  const g = (id, role, rsvp) => ({ id, role, rsvp });
+
+  const BASE_EVENTS = () => [
+    { id: "checkin", title: "Morning check-in", src: "zyra", start: d(20, 8, 0), end: d(20, 8, 30), loc: "Design Room", room: "design", guests: [g("dech", "Organiser", "yes"), g("me", "Guest", "yes")], link: "Zyraworld.com" },
+    { id: "dsync", title: "Design sync", src: "zyra", start: d(20, 8, 30), end: d(20, 9, 0), loc: "Design Room", room: "design", guests: [g("me", "Organiser", "yes"), g("dech", "Guest", "yes"), g("conan", "Guest", "awaiting")], link: "Zyraworld.com" },
+    ...[20, 21, 22, 23].map((day) => ({ perm: day === 21 ? { modify: true, invite: false, see: true } : undefined, id: `standup-${day}`, title: "Daily standup meeting", src: "zyra", start: d(day, 9), end: d(day, 10), loc: "Marketing room", room: "marketing", guests: [g("dech", "Organiser", "yes"), g("conan", "Guest", "yes"), g("taylor", "Guest", "awaiting"), g("me", "Guest", "yes")], link: "Zyraworld.com", desc: "อัปเดตงานเมื่อวาน · งานวันนี้ · สิ่งที่ติด" })),
+    { id: "catchup", title: "Catch up Zyra project", src: "zyra", start: d(20, 10, 15), end: d(20, 10, 45), loc: "Product Zyra room", room: "product", inRoom: 3, guests: [g("dech", "Organiser", "yes"), g("conan", "Guest", "awaiting"), g("taylor", "Guest", "awaiting"), g("me", "Guest", "awaiting")], link: "Zyraworld.com", desc: "ทบทวน scope ของ Calendar + Meeting Alert ก่อนแบ่งงาน" },
+    { id: "consult", title: "Product consult", src: "google", start: d(20, 10, 20), end: d(20, 10, 40), loc: "Google Meet", external: true, rsvpMe: "needsAction", guests: [g("taylor", "Organiser", "yes"), g("me", "Guest", "awaiting")], link: "meet.google.com/xqe-pzsr-kab", desc: "คุยกับลูกค้าเรื่อง roadmap Q4" },
+    { id: "oneonone", title: "1-on-1 (1st)", src: "zyra", start: d(20, 13), end: d(20, 14), loc: "Secrete room", room: "secret", guests: [g("dech", "Organiser", "yes"), g("me", "Guest", "yes")], link: "Zyraworld.com" },
+    { id: "newprod", title: "New product : roadmap review", src: "outlook", start: d(20, 15), end: d(20, 16), loc: "Microsoft Teams", external: true, guests: [g("conan", "Organiser", "yes"), g("me", "Guest", "yes")], link: "teams.microsoft.com/l/meetup-join/19%3a", desc: "รีวิว roadmap ของ product ใหม่กับทีม sales" },
+    { id: "tz", title: "Sync with San Francisco team", src: "google", start: d(21, 7), end: d(21, 8), loc: "Google Meet", external: true, tz: "Pacific Time", tzText: "17:00 - 18:00 (20 July)", guests: [g("conan", "Organiser", "yes"), g("me", "Guest", "yes")], link: "meet.google.com/abc-defg-hij" },
+    { id: "workshop", title: "Quarterly planning workshop with design, product, engineering and customer success teams (Q3 2026)", src: "zyra", start: d(22, 13), end: d(22, 15), loc: "Meeting hall 01", room: "hall", guests: [g("me", "Organiser", "yes"), g("dech", "Guest", "yes"), g("conan", "Guest", "yes"), g("taylor", "Guest", "maybe")], link: "Zyraworld.com", desc: "วางแผนไตรมาส 3 — ชื่อ event ยาวเพื่อทดสอบ EC-05 (truncate บน chip, ชื่อเต็มใน popup)" },
+    { id: "maint", title: "Server maintenance window", src: "google", start: d(23, 23), end: d(24, 1), loc: "On-call", external: true, guests: [g("me", "Organiser", "yes")], link: "meet.google.com/oncall-room", desc: "Event ข้ามคืน (EC-03)" },
+    { id: "hol24", title: "Holiday", src: "holiday", allDay: true, start: d(24), end: d(25) },
+    // One meeting per role / permission case (control row "เปิดกรณีสิทธิ์").
+    { id: "opsstand", title: "Ops stand-up", src: "zyra", start: d(20, 10), end: d(20, 10, 30), loc: "Pantry", room: "pantry", guests: [g("me", "Organiser", "yes"), g("ethan", "Guest", "yes"), g("fujii", "Guest", "yes")], link: "Zyraworld.com", desc: "กำลังประชุมอยู่ (10:00–10:30) — ยกเลิก/เลื่อน/แก้ไม่ได้" },
+    { id: "budget", title: "Budget review", src: "zyra", start: d(23, 13), end: d(23, 14), loc: "Secrete room", room: "secret", perm: { modify: false, invite: false, see: true }, guests: [g("dech", "Organiser", "yes"), g("me", "Guest", "yes"), g("sabrina", "Guest", "awaiting")], link: "Zyraworld.com", desc: "Guest ไม่มีสิทธิ์อะไรเลย — ดูอย่างเดียว" },
+    { id: "onboard", title: "Client onboarding", src: "zyra", start: d(23, 15), end: d(23, 16), loc: "Product Zyra room", room: "product", perm: { modify: false, invite: true, see: true }, guests: [g("taylor", "Organiser", "yes"), g("me", "Guest", "yes"), g("dua", "Guest", "yes")], link: "Zyraworld.com", desc: "Guest ได้สิทธิ์ Invite others อย่างเดียว (ค่าเริ่มต้นของ Figma)" },
+    { id: "mkt", title: "Marketing plan", src: "zyra", start: d(24, 10), end: d(24, 11), loc: "Marketing room", room: "marketing", perm: { modify: true, invite: true, see: true }, guests: [g("conan", "Organiser", "yes"), g("me", "Guest", "yes"), g("sabrina", "Guest", "maybe")], link: "Zyraworld.com", desc: "Guest ได้ทั้ง Modify event + Invite others" },
+    { id: "hr", title: "HR check-in round", src: "zyra", start: d(24, 14), end: d(24, 15), loc: "Design Room", room: "design", perm: { modify: false, invite: false, see: false }, guests: [g("dech", "Organiser", "yes"), g("me", "Guest", "yes"), g("conan", "Guest", "yes"), g("taylor", "Guest", "awaiting"), g("dua", "Guest", "no")], link: "Zyraworld.com", desc: "ผู้จัดปิด See guest list — guest ไม่เห็นรายชื่อ" },
+    { id: "partner", title: "Partner call", src: "google", start: d(22, 10), end: d(22, 11), loc: "Google Meet", external: true, guests: [g("me", "Organiser", "yes"), g("ethan", "Guest", "yes")], link: "meet.google.com/ptr-call-xyz", desc: "Event ที่เราสร้างใน Google — แก้/ลบที่ต้นทาง" },
+    { id: "vendor", title: "Vendor demo", src: "zyra", start: d(21, 15), end: d(21, 16), loc: "Meeting hall 01", room: "hall", cancelled: true, cancelReason: "ผู้ขายขอเลื่อนไปเดือนหน้า ขออภัยในความไม่สะดวก", guests: [g("dech", "Organiser", "yes"), g("me", "Guest", "yes")], link: "Zyraworld.com" },
+    { id: "hol28", title: "H.M. King's Birthday", src: "holiday", allDay: true, start: d(28), end: d(29) },
+    { id: "offsite", title: "Company offsite", src: "zyra", allDay: true, start: d(15), end: d(16), loc: "Hua Hin", guests: [g("dech", "Organiser", "yes"), g("me", "Guest", "yes")], link: "Zyraworld.com" },
+    { id: "lunch", title: "Team lunch", src: "zyra", start: d(8, 12), end: d(8, 13), loc: "Pantry", room: "pantry", guests: [g("dech", "Organiser", "yes"), g("me", "Guest", "yes")], link: "Zyraworld.com" },
+    { id: "review14", title: "Design review", src: "google", start: d(14, 14), end: d(14, 15), loc: "Google Meet", external: true, guests: [g("me", "Organiser", "yes"), g("taylor", "Guest", "yes")], link: "meet.google.com/dr-1407" },
+    { id: "sprint", title: "Sprint planning", src: "outlook", start: d(29, 10), end: d(29, 11, 30), loc: "Microsoft Teams", external: true, guests: [g("conan", "Organiser", "yes"), g("me", "Guest", "yes")], link: "teams.microsoft.com/l/sprint" },
+    { id: "retro", title: "Sprint retro", src: "zyra", start: d(31, 16), end: d(31, 17), loc: "Meeting hall 01", room: "hall", guests: [g("me", "Organiser", "yes"), g("dech", "Guest", "yes")], link: "Zyraworld.com" },
+  ];
+
+  const BASE_NOTIFS = () => [
+    { id: "n1", kind: "social", who: "dech", at: d(20, 9, 40), unread: true, text: "Dechawat Phondechaphiphat waved at you! Let's chat." },
+    { id: "n2", kind: "social", who: "dech", at: d(20, 9, 40), unread: false, text: "Dechawat Phondechaphiphat mentioned you in Threads, let's join the conversation!" },
+    { id: "n3", kind: "update", at: d(19, 10, 10), unread: false, title: "New update", text: "Our new chat feature is here! Now it's even easier to connect with your teammates." },
+  ];
+
+  let S;
+  const init = () => {
+    S = {
+      spec: "figma", data: "normal", google: true, left: "calendar", view: "full", mode: "month",
+      date: d(20), now: d(20, 10, 10), events: BASE_EVENTS(), notifs: BASE_NOTIFS(), badge: 1,
+      detail: null, more: null, bannerOff: false, notifTab: "all", search: "", miniMonth: d(1),
+      cals: {}, calSel: { google: new Set(["g-primary", "g-thai"]), outlook: new Set(["o-primary"]) },
+      sent: new Set(), toasts: [], log: [], walk: null, copied: null, scroll: { week: 540, day: 540 }, fast: false, create: null, confirm: null, conn: { google: "on", outlook: "on" }, admin: false, settings: null, dialog: null, syncFail: false,
+    };
+  };
+  init();
+
+  const isClickup = () => S.spec === "clickup";
+  // Calendars inside each connected account. Only the sample ids below carry events.
+  const PCALS = {
+    google: [["g-primary", "ten@example.com", true], ["g-thai", "Thai Holidays"], ["g-christian", "Christian Holidays"], ["g-design", "Design team"], ["g-roadmap", "Product roadmap"], ["g-mkt", "Marketing"], ["g-calls", "Customer calls"], ["g-birth", "Birthdays"], ["g-sales", "Sales pipeline"], ["g-hiring", "Hiring"], ["g-oncall", "Engineering on-call"], ["g-company", "Company events"]],
+    outlook: [["o-primary", "Calendar", true], ["o-team", "Team Zyra"], ["o-uk", "United Kingdom holidays"]],
+  };
+  const CAL_TINT = ["#A78BFA", "#F59E0B", "#F472B6", "#22D3EE", "#A3E635", "#FB923C"];
+  const calOf = (e) => ({ zyra: "zyra", google: "g-primary", holiday: "g-thai", outlook: "o-primary" }[e.src]);
+  const calInfo = (id) => { for (const pv of ["google", "outlook"]) { const i = PCALS[pv].findIndex((c) => c[0] === id); if (i !== -1) return { pv, name: PCALS[pv][i][1], primary: !!PCALS[pv][i][2], i }; } return null; };
+  const calColor = (id) => {
+    if (id === "zyra") return srcColor("zyra");
+    if (id === "g-thai" || id === "g-christian") return "#2DB6FF";
+    if (id === "g-primary") return srcColor("google");
+    if (id === "o-primary") return srcColor("outlook");
+    const c = calInfo(id); return CAL_TINT[(c ? c.i : 0) % CAL_TINT.length];
+  };
+  const calVisible = (id) => S.cals[id] !== false;
+  const ev = (id) => S.events.find((e) => e.id === id);
+  const srcColor = (src) => {
+    if (src === "holiday") return "#2DB6FF";
+    if (!isClickup()) return "#58D68D";
+    return { zyra: "#79DEA5", google: "#4285F4", outlook: "#0078D4" }[src];
+  };
+  const srcName = (src) => ({ zyra: "Zyra Meeting", google: "Google Calendar", outlook: "Outlook", holiday: "Thai Holidays" }[src]);
+  const isActive = (e) => !e.cancelled && S.now >= e.start && S.now < e.end;
+  const log = (html) => { S.log.unshift(`<b>${hm(S.now)}</b> ${html}`); S.log = S.log.slice(0, 4); renderLog(); };
+
+  const visible = () => {
+    if (S.data === "loading") return [];
+    return S.events.filter((e) => {
+      if (S.data === "empty" && !e.created) return false;
+      if (S.create && S.create.editId === e.id) return false;
+      if ((e.src === "google" || e.src === "holiday") && S.conn.google === "off") return false;
+      if (e.src === "outlook" && S.conn.outlook === "off") return false;
+      if (e.src !== "zyra" && !S.calSel[e.src === "outlook" ? "outlook" : "google"].has(calOf(e))) return false;
+      if (!calVisible(calOf(e))) return false;
+      if (S.search && !e.title.toLowerCase().includes(S.search.toLowerCase())) return false;
+      return true;
+    });
+  };
+  const onDay = (list, day) => {
+    const s = startOfDay(day), e = addDays(s, 1);
+    return list.filter((x) => x.start < e && x.end > s).sort((a, b) => (b.allDay | 0) - (a.allDay | 0) || a.start - b.start);
+  };
+
+  /* ---------- layout of timed events in a day column ---------- */
+  const layoutDay = (list, day, minMinutes) => {
+    const s0 = startOfDay(day), s1 = addDays(s0, 1);
+    const segs = list.filter((x) => !x.allDay && x.start < s1 && x.end > s0).map((x) => {
+      const s = Math.max(0, (x.start - s0) / 60000), e = Math.min(1440, (x.end - s0) / 60000);
+      return { ev: x, s, e, eff: Math.max(e, s + minMinutes), contFrom: x.start < s0, contTo: x.end > s1 };
+    }).sort((a, b) => a.s - b.s || b.e - a.e);
+    const out = []; let cluster = [], ends = [], clusterEnd = -1;
+    const flush = () => { cluster.forEach((c) => (c.n = ends.length)); out.push(...cluster); cluster = []; ends = []; };
+    for (const sg of segs) {
+      if (sg.s >= clusterEnd && cluster.length) flush();
+      let lane = ends.findIndex((t) => t <= sg.s);
+      if (lane === -1) { lane = ends.length; ends.push(sg.eff); } else ends[lane] = sg.eff;
+      sg.lane = lane; cluster.push(sg); clusterEnd = Math.max(clusterEnd, sg.eff);
+    }
+    if (cluster.length) flush();
+    return out;
+  };
+
+  /* ---------- pieces ---------- */
+  // Cancelled = the hidden "Timed meeting" variant in Figma 7771:198060 (bg white 20%, bar #8C99A6).
+  const CANCEL_BG = "rgba(255,255,255,0.1)", CANCEL_BAR = "#8C99A6";
+  // --bg = resting colour, --bg-h = the deeper colour shown on hover / while its popup is open.
+  const chipStyle = (e) => {
+    const c = srcColor(e.src);
+    if (e.cancelled) return `--bg:${CANCEL_BG};--bg-h:rgba(255,255,255,0.2)`;
+    if (e.src === "holiday") return `--bg:${c};--bg-h:#1793D6`;
+    if (e.rsvpMe === "needsAction" && !isClickup()) return `--bg:transparent;--bg-h:rgba(255,255,255,0.14);border-color:rgba(255,255,255,0.2)`;
+    return `--bg:${hexA(c, 0.2)};--bg-h:${hexA(c, 0.45)}`;
+  };
+  const barColor = (e) => (e.cancelled ? CANCEL_BAR : e.src === "holiday" ? "transparent" : e.rsvpMe === "needsAction" && !isClickup() ? "#fff" : srcColor(e.src));
+  const draftChip = (extra = "") => `<span class="chip draft" data-draft ${extra}><i class="bar" style="background:var(--mint)"></i><span>${esc(S.create.title || "No title")}</span></span>`;
+  const chip = (e, extra = "") => `<button class="chip ${e.cancelled ? "cancelled" : ""} ${S.detail && S.detail.id === e.id ? "open" : ""}" style="${chipStyle(e)}" data-act="ev" data-id="${e.id}" ${extra} title="${esc(e.title)}"><i class="bar" style="background:${barColor(e)}"></i><span>${esc(e.title)}</span></button>`;
+
+  const sidebar = () => {
+    const item = (key, ic, on, badge) => `<button class="sbi ${on ? "on" : ""}" data-act="sb" data-k="${key}" aria-label="${key}">${icon(ic)}${badge ? `<span class="cnt">${badge}</span>` : ""}</button>`;
+    return `<nav class="sb"><div class="sb-menu"><div class="logo">Z</div>
+      ${item("map", "map", !S.left)}${item("members", "users", false)}${item("chat", "message-circle", false)}
+      ${item("calendar", "calendar", S.left === "calendar")}${item("bell", "bell", S.left === "notif", S.left === "notif" ? 0 : S.badge)}
+      ${item("announce", "megaphone", false)}</div>
+      <div class="sb-menu">${icon("circle-help", "i24")}<button class="sbi" data-act="sb" data-k="settings" aria-label="Settings">${icon("settings")}</button><div class="av" style="width:40px;height:40px;background:${people.me.color}">T</div></div></nav>`;
+  };
+
+  const ROOMS = { design: [120, 140, 300, 220, "Design Room"], marketing: [480, 140, 300, 220, "Marketing room"], product: [840, 140, 320, 220, "Product Zyra room"], secret: [120, 520, 260, 200, "Secrete room"], hall: [480, 520, 420, 300, "Meeting hall 01"], pantry: [960, 560, 240, 200, "Pantry"] };
+  const map = (left) => {
+    const w = 1424 - left;
+    const rooms = Object.entries(ROOMS).filter(([, r]) => r[0] + r[2] < w - 20).map(([k, r]) => `<div class="room" style="left:${r[0]}px;top:${r[1]}px;width:${r[2]}px;height:${r[3]}px">${r[4]}</div>`).join("");
+    let me = `<div class="av me" style="left:${Math.min(w - 80, 700)}px;top:880px">T</div>`, note = "";
+    if (S.walk) {
+      const r = ROOMS[S.walk.room] || ROOMS.hall;
+      const tx = r[0] + r[2] / 2 - 18, ty = r[1] + r[3] / 2 - 18;
+      me = `<div class="av me ${S.walk.phase === "walk" ? "walk" : ""}" style="--fx:${Math.min(w - 80, 700)}px;--fy:880px;--tx:${tx}px;--ty:${ty}px;left:${S.walk.phase === "walk" ? Math.min(w - 80, 700) : tx}px;top:${S.walk.phase === "walk" ? 880 : ty}px">T</div>`;
+      note = `<div class="walk-note">${icon("video", "")}${S.walk.phase === "walk" ? `กำลังเดินไป ${esc(r[4])}…` : `อยู่ใน ${esc(r[4])} แล้ว — เข้า meeting`}</div>`;
+    }
+    return `<div class="map" style="left:${left}px;width:${w}px">${rooms}${me}${note}<div class="map-tag">Virtual Office (ภาพจำลอง)</div></div>`;
+  };
+
+  const calPanel = () => {
+    if (S.data === "loading" || (S.data === "error" && !isClickup())) return skeletonPanel();
+    const m = S.miniMonth, gs = weekStart(m);
+    let cells = WD.map((w) => `<span>${w[0]}</span>`).join("");
+    for (let i = 0; i < 42; i++) {
+      const day = addDays(gs, i);
+      cells += `<button class="${day.getMonth() !== m.getMonth() ? "out" : ""} ${sameDay(day, S.now) ? "today" : ""} ${sameDay(day, S.date) ? "sel" : ""}" data-act="mini" data-t="${+day}">${day.getDate()}</button>`;
+    }
+    const today = onDay(visible(), S.now).filter((e) => !e.allDay);
+    let up = "", placed = false;
+    today.forEach((e) => {
+      const past = e.end <= S.now;
+      if (!past && !placed) { up += `<div class="nowline"></div>`; placed = true; }
+      up += `<button class="upc ${past ? "past" : ""} ${e.cancelled ? "cancelled" : ""}" data-act="ev" data-id="${e.id}"><span class="ib">${icon("video")}</span><span class="upc-t"><span style="display:flex;gap:6px;align-items:center;min-width:0"><b>${esc(e.title)}</b>${e.cancelled ? `<span class="tagc">Cancelled</span>` : ""}</span>
+        <span class="meta">${icon("clock", "i14")}<span>${hm(e.start)} - ${hm(e.end)}</span></span>
+        <span class="meta">${icon("map-pin", "i14")}<span>${esc(e.loc || "")}</span></span></span></button>`;
+    });
+    if (!today.length) up = `<div class="empty-up">No meetings today</div>`;
+    // Calendar list = My calendar + the calendars picked for each connected account.
+    const list = [["zyra", isClickup() ? "Zyra Meeting" : "My calendar"], ...["google", "outlook"].filter((pv) => S.conn[pv] !== "off").flatMap((pv) => PCALS[pv].filter(([id]) => S.calSel[pv].has(id)).map(([id, name]) => [id, pv === "outlook" && id === "o-primary" ? "ten@example.org" : name]))];
+    const cl = list.map(([k, label]) => {
+      const c = calColor(k);
+      const on = calVisible(k);
+      return `<label><span class="cbx" style="${on ? `background:${c};border-color:${c}` : ""}">${on ? icon("check") : ""}</span><input type="checkbox" hidden data-act="cal" data-k="${k}" ${on ? "checked" : ""}>${esc(label)}</label>`;
+    }).join("");
+    const banner = S.conn.google === "off" && S.conn.outlook === "off" && !S.bannerOff
+      ? `<div class="banner"><span class="mascot"></span><button class="x" data-act="banner-x" aria-label="Close">${icon("x")}</button>
+         ${isClickup() ? `<b>เชื่อมต่อ Google / Outlook เพื่อดู events ทั้งหมด</b><p>ตอนนี้แสดงเฉพาะ Zyra meeting</p>` : `<b>Connect your calendar</b><p>Bring your Google or Outlook events into Zyra to manage your schedule in one place.</p>`}
+         <button class="go" data-act="connect">${isClickup() ? "ไปที่การตั้งค่า" : "Go to setting"}</button></div>` : "";
+    return `<aside class="lp"><div class="lp-title"><h2>Calendar</h2><div style="display:flex;gap:8px">
+        <button class="btn32" data-act="expand" aria-label="${S.view === "full" ? "Collapse" : "Expand"}">${icon(S.view === "full" ? "minimize-2" : "maximize-2")}</button>
+        <button class="btn32 mint" data-act="create" aria-label="Schedule event">${icon("plus")}</button></div></div>
+      ${alertBanner()}
+      <label class="search">${icon("search")}<input id="q" placeholder="Search for meeting" value="${esc(S.search)}"></label>
+      ${banner}
+      <div class="lp-scroll">
+        <div class="sec"><div class="sec-h">Mini calendar ${icon("chevron-up", "i14")}</div>
+          <div class="mini"><div class="mini-h"><span>${MONTHS[m.getMonth()]}, ${m.getFullYear()}</span><div><button data-act="mini-nav" data-n="-1" aria-label="Previous month">${icon("chevron-left", "i14")}</button><button data-act="mini-nav" data-n="1" aria-label="Next month">${icon("chevron-right", "i14")}</button></div></div><div class="mini-g">${cells}</div></div></div>
+        <div class="sec"><div class="sec-h">Upcoming meeting ${icon("chevron-down", "i14")}</div><div class="up">${up}</div></div>
+        <div class="sec"><div class="sec-h">Calendar list ${icon("chevron-up", "i14")}</div><div class="cl">${cl}</div></div>
+      </div></aside>`;
+  };
+
+  const skeletonPanel = () => {
+    const sk = (w, h, r = 4) => `<div class="sk" style="width:${w}px;height:${h}px;border-radius:${r}px"></div>`;
+    return `<aside class="lp"><div class="lp-title"><h2>Calendar</h2><div style="display:flex;gap:8px"><span class="btn32" style="border:0"></span><span class="btn32" style="border:0"></span></div></div>
+      ${sk(288, 42, 8)}<div class="lp-scroll" style="gap:16px">${sk(119, 18)}${sk(288, 266, 8)}${sk(119, 18)}${sk(288, 90, 16)}${sk(288, 90, 16)}${sk(288, 90, 16)}${sk(119, 18)}${sk(119, 18)}${sk(119, 18)}${sk(119, 18)}</div></aside>`;
+  };
+
+  const toolbar = () => {
+    const tab = (k, l) => `<button class="${S.mode === k ? "on" : ""}" data-act="mode" data-k="${k}">${l}</button>`;
+    const label = S.mode === "day" ? `${S.date.getDate()} ${MONTHS[S.date.getMonth()]}, ${S.date.getFullYear()}` : `${MONTHS[S.date.getMonth()]}, ${S.date.getFullYear()}`;
+    return `<div class="tr"><div class="tr-l"><button class="btn42" data-act="today">Today</button><span class="lbl">${label}</span>
+      <button class="chev" data-act="nav" data-n="-1" aria-label="Previous">${icon("chevron-left")}</button><button class="chev" data-act="nav" data-n="1" aria-label="Next">${icon("chevron-right")}</button></div>
+      <div class="tr-r"><div class="tabs">${tab("day", "Day")}${tab("week", "Week")}${tab("month", "Month")}</div><button class="btn42" data-act="sync" ${S.syncing ? "disabled" : ""}>${S.syncing ? `${icon("loader-circle", "spin")}Syncing` : `${icon("refresh-cw")}Sync now`}</button></div></div>`;
+  };
+
+  const calView = () => {
+    const loading = S.data === "loading" || (S.data === "error" && !isClickup());
+    let head = toolbar(), body = "";
+    const errBanner = S.data === "error" && isClickup() ? `<div class="errb">${icon("circle-alert")}ไม่สามารถโหลด events ได้<button data-act="retry">ลองใหม่</button></div>` : "";
+    if (S.mode === "month") {
+      head += `<div class="wdr">${WD.map((w) => `<span>${w}</span>`).join("")}</div>`;
+      body = monthGrid(loading);
+    } else {
+      const days = S.mode === "week" ? [...Array(7)].map((_, i) => addDays(weekStart(S.date), i)) : [startOfDay(S.date)];
+      head += dayHeader(days, loading);
+      body = timeGrid(days, loading);
+    }
+    const legend = isClickup() && !loading ? `<div class="legend">${["zyra", "google", "outlook"].map((k) => `<span><i style="background:${srcColor(k)}"></i>${srcName(k)}</span>`).join("")}<span><i style="background:#2DB6FF"></i>Holiday</span><span><i style="background:${CANCEL_BG};border-left:2px solid ${CANCEL_BAR}"></i>Cancelled</span></div>` : "";
+    const empty = S.data === "empty" && isClickup() ? `<div class="empty" ${S.mode === "month" ? 'style="inset:140px 0 0 0"' : ""}>${icon("calendar-x", "i24")}<p>ไม่มี events ในช่วงนี้</p><button class="pbtn" data-act="create">${icon("plus")}สร้าง Meeting ใหม่</button></div>` : "";
+    return `<section class="cv"><div class="cvh">${head}</div>${errBanner}${body}${legend}${empty}</section>`;
+  };
+
+  const monthGrid = (loading) => {
+    const m = S.date, gs = weekStart(new Date(m.getFullYear(), m.getMonth(), 1));
+    const list = visible();
+    let html = "";
+    for (let i = 0; i < 42; i++) {
+      const day = addDays(gs, i);
+      const evs = loading ? [] : onDay(list, day);
+      const shown = evs.slice(0, 3), hidden = evs.length - shown.length;
+      const more = hidden > 0 ? (isClickup() ? `<button class="more c" data-act="more" data-t="${+day}">+${hidden} more</button>` : `<button class="more f" data-act="more" data-t="${+day}">${hidden} More</button>`) : "";
+      const draft = S.create && sameDay(S.create.start, day) ? draftChip() : "";
+      html += `<div class="mc" data-day="${+day}" data-act="cell" data-t="${+day}"><button class="dn ${day.getMonth() !== m.getMonth() ? "out" : ""} ${sameDay(day, S.now) ? "today" : ""} ${sameDay(day, S.date) ? "sel" : ""}" data-act="toDay" data-t="${+day}" title="ไป Day view">${day.getDate()}</button>
+        <div class="chips">${loading ? `<div class="sk" style="height:16px;width:80%"></div>` : shown.map((e) => chip(e)).join("")}${more}${draft}</div>${loading ? "" : `<span class="addhint">${icon("plus")}New</span>`}</div>`;
+    }
+    return `<div class="mg">${html}</div>`;
+  };
+
+  const dayHeader = (days, loading) => {
+    const cells = days.map((day) => loading
+      ? `<div class="dhc"><div class="sk" style="width:40px;height:16px"></div><div class="sk" style="width:40px;height:30px"></div></div>`
+      : `<div class="dhc"><button data-act="toDay" data-t="${+day}"><span class="wd">${WD[day.getDay()]}</span><span class="dc ${sameDay(day, S.now) ? "today" : ""}">${day.getDate()}</span></button></div>`).join("");
+    const list = loading ? [] : visible();
+    const ad = days.map((day) => {
+      const a = onDay(list, day).filter((e) => e.allDay);
+      const draft = S.create && S.create.allDay && sameDay(S.create.start, day) ? draftChip('style="flex:1;height:22px"') : "";
+      return `<div class="adc">${a.length || draft ? a.map((e) => chip(e, 'style="flex:1"')).join("") + draft : days.length === 1 && !loading ? `<span class="dash">—</span>` : ""}</div>`;
+    }).join("");
+    return `<div class="dh"><div class="tzc">${loading ? `<div class="sk" style="width:40px;height:16px"></div>` : "GMT+7"}</div>${cells}</div>
+      <div class="adr"><div class="tzc">${loading ? `<div class="sk" style="width:40px;height:16px"></div>` : "All-day"}</div>${ad}</div>`;
+  };
+
+  const timeGrid = (days, loading) => {
+    const colW = (1014 - 64) / days.length;
+    let html = "";
+    for (let h = 0; h < 24; h++) {
+      html += `<div class="hr" style="top:${h * HOUR}px"><span>${loading ? `<span class="sk" style="display:block;width:40px;height:16px;margin:0 auto"></span>` : `${p2(h)}:00`}</span><i></i></div>`;
+      html += `<div class="hh" style="top:${h * HOUR + HOUR / 2}px"></div>`;
+    }
+    days.forEach((day, i) => {
+      const left = 64 + i * colW;
+      html += `<div class="vd" style="left:${left}px"></div>`;
+      if (sameDay(day, S.now) && days.length > 1) html += `<div class="tshade" style="left:${left}px;width:${colW}px"></div>`;
+    });
+    if (!loading) {
+      const list = visible();
+      const single = days.length === 1;
+      days.forEach((day, i) => {
+        const colLeft = 64 + i * colW;
+        layoutDay(list, day, single ? 20 : 40).forEach((sg) => {
+          const e = sg.ev, dur = sg.e - sg.s;
+          const w = (colW - 8 - 4 * (sg.n - 1)) / sg.n;
+          const left = colLeft + 4 + sg.lane * (w + 4);
+          const top = (sg.s / 60) * HOUR + 1;
+          // Day view draws true heights (≤30 min = one line) so back-to-back meetings never overlap;
+          // Week keeps the Figma 48px minimum, and layoutDay already gives those blocks their own lane.
+          const shortRow = single && dur <= 30;
+          const height = single ? Math.max((dur / 60) * HOUR - 2, 24) : Math.max((dur / 60) * HOUR - 2, 48);
+          const isOpen = S.detail && S.detail.id === e.id ? "open" : "";
+          const c = srcColor(e.src);
+          const outline = e.rsvpMe === "needsAction" && !isClickup();
+          const style = `left:${left}px;top:${top}px;width:${w}px;height:${height}px;${chipStyle(e)}`;
+          const bar = `<i class="bar" style="background:${outline ? "#fff" : c}"></i>`;
+          const range = single ? `${hm(e.start)} - ${hm(e.end)}` : `${hm(e.start)}–${hm(e.end)}`;
+          const cont = sg.contFrom ? `<span class="cont">↳ ต่อจากเมื่อวาน</span>` : sg.contTo ? `<span class="cont">ต่อวันถัดไป ↴</span>` : "";
+          html += shortRow
+            ? `<button class="blk row ${e.cancelled ? "cancelled" : ""} ${isOpen}" style="${style}" data-act="ev" data-id="${e.id}" data-ev="${e.id}"><span class="tt">${bar}<span>${esc(e.title)}</span></span><span class="tm">${range}</span></button>`
+            : `<button class="blk ${e.cancelled ? "cancelled" : ""} ${isOpen}" style="${style}" data-act="ev" data-id="${e.id}" data-ev="${e.id}"><span class="tt">${bar}<span>${esc(e.title)}</span></span><span class="tm" ${dur < 30 && !single ? 'style="font-size:9px"' : ""}>${range}</span>${single && e.loc && height >= 60 ? `<span class="lc">${esc(e.loc)}</span>` : ""}${cont}</button>`;
+        });
+      });
+      const ci = S.create && !S.create.allDay ? days.findIndex((x) => sameDay(x, S.create.start)) : -1;
+      if (ci !== -1) {
+        const c = S.create, sMin = (c.start - startOfDay(c.start)) / 60000, dur = Math.max(15, (c.end - c.start) / 60000);
+        html += `<div class="blk draft" data-draft style="left:${64 + ci * colW + 4}px;top:${(sMin / 60) * HOUR + 1}px;width:${colW - 8}px;height:${Math.max(24, (dur / 60) * HOUR - 2)}px"><span class="tt"><i class="bar" style="background:var(--mint)"></i><span>${esc(c.title || "No title")}</span></span><span class="tm">${hm(c.start)} - ${hm(c.end)}</span></div>`;
+      }
+      const ti = days.findIndex((x) => sameDay(x, S.now));
+      if (ti !== -1) {
+        const y = ((S.now - startOfDay(S.now)) / 60000 / 60) * HOUR;
+        const l = single ? 64 : 64 + ti * colW, w = single ? 950 : colW;
+        html += `<div class="nl" style="left:${l}px;width:${w}px;top:${y - 1}px"></div><div class="nd" style="left:${l - 4}px;top:${y - 4}px"></div><div class="nlab" style="top:${y - 9}px">${hm(S.now)}</div>`;
+      }
+    }
+    return `<div class="tg" id="tg"><div class="tgi" data-act="slot" data-cols="${days.length}" data-d0="${+days[0]}">${html}</div></div>`;
+  };
+
+  /* ---------- popups ---------- */
+  const morePop = () => {
+    if (!S.more) return "";
+    const day = new Date(S.more.t);
+    const evs = onDay(visible(), day);
+    return `<div class="pop more-pop" id="more-pop"><button class="x" data-act="close-more" aria-label="Close">${icon("x")}</button>
+      <div class="hd"><span>${WD[day.getDay()]}</span><span class="dn ${sameDay(day, S.now) ? "today" : ""}" style="width:30px;height:30px;font-size:16px">${day.getDate()}</span></div>
+      <div class="chips">${evs.map((e) => chip(e)).join("")}</div></div>`;
+  };
+
+  /* ---------- permissions (Figma B1 + Module overview R2) ---------- */
+  // Guest permissions are set by the organiser per meeting; Figma default = Modify ✗ · Invite ✓ · See guest list ✓.
+  const permOf = (e) => e.perm || { modify: false, invite: true, see: true };
+  const roleOf = (e) => {
+    const me = (e.guests || []).find((x) => x.id === "me"), p = permOf(e);
+    return { org: !!me && me.role === "Organiser", guest: !!me && me.role !== "Organiser", modify: p.modify, invite: p.invite, see: p.see };
+  };
+  const roleLabel = (e) => {
+    if (e.src === "holiday") return "";
+    const r = roleOf(e), ext = e.src !== "zyra";
+    const who = r.org ? "Organiser" : r.guest ? "Guest" : "ไม่ได้อยู่ใน meeting";
+    let rights;
+    if (e.cancelled) rights = "ดูอย่างเดียว";
+    else if (ext) rights = r.org ? "แก้/ลบที่ต้นทาง (redirect)" : "ดูอย่างเดียว";
+    else if (r.org || S.admin) rights = "แก้ไข · ยกเลิก · เลื่อน · ตั้งสิทธิ์ guest";
+    else rights = [r.modify && "แก้รายละเอียดได้", r.invite && "เชิญคนเพิ่มได้"].filter(Boolean).join(" · ") || "ดูอย่างเดียว";
+    if (!ext && r.guest && !r.see) rights += " · ไม่เห็นรายชื่อ guest";
+    return `POC · คุณเป็น ${who}${S.admin && !r.org && !ext ? " + Workspace Admin" : ""} — ${rights}${ext ? ` · event จาก ${srcName(e.src)}` : ""}${e.cancelled ? " · ยกเลิกแล้ว" : isActive(e) ? " · กำลังประชุม" : ""}`;
+  };
+  const canManage = (e) => e.src === "zyra" && !e.cancelled && (roleOf(e).org || S.admin);
+  const headerActions = (e) => {
+    const r = roleOf(e), live = isActive(e), close = `<button data-act="close-detail" aria-label="Close">${icon("x")}</button>`;
+    if (e.cancelled || e.src === "holiday") return close;
+    if (e.src !== "zyra") {
+      const url = e.src === "google" ? "https://calendar.google.com/calendar/r" : "https://outlook.office.com/calendar/view/week", pn = srcName(e.src);
+      const del = `<a class="tip extl" href="${url}" target="_blank" rel="noopener" data-act="ext" data-k="delete" data-id="${e.id}" data-tip="ลบได้ที่ ${pn} เท่านั้น — กดเพื่อเปิด" aria-label="Delete in ${pn}">${icon("trash-2")}</a>`;
+      const edit = r.org ? `<a class="tip extl" href="${url}" target="_blank" rel="noopener" data-act="ext" data-k="edit" data-id="${e.id}" data-tip="แก้ไขได้ที่ ${pn} เท่านั้น — กดเพื่อเปิด" aria-label="Edit in ${pn}">${icon("pencil")}</a>` : "";
+      return del + edit + close;
+    }
+    const cancel = canManage(e) ? `<button class="tip" data-tip="${live ? "Meeting in progress" : "Cancel meeting"}" data-act="cancel-m" data-id="${e.id}" ${live ? "disabled" : ""} aria-label="Cancel meeting">${icon("calendar-x")}</button>` : "";
+    const edit = canManage(e) || (r.guest && (r.modify || r.invite)) ? `<button class="tip" data-tip="${live ? "Meeting in progress" : "Edit"}" data-act="edit" data-id="${e.id}" ${live ? "disabled" : ""} aria-label="Edit meeting">${icon("pencil")}</button>` : "";
+    return cancel + edit + close;
+  };
+  // ClickUp HP-05/06 put text buttons in the popup; attendees get "ปฏิเสธเข้าร่วม" (EP-A).
+  const cuActions = (e) => {
+    if (!isClickup() || e.src !== "zyra" || e.cancelled || e.allDay) return "";
+    const live = isActive(e), dis = live ? `disabled title="Meeting กำลังดำเนินอยู่ — เลื่อน/ยกเลิกไม่ได้"` : "";
+    if (canManage(e)) return `<div class="dp-act"><button class="sbtn" data-act="resched" data-id="${e.id}" ${dis}>${icon("calendar-clock", "i14")}เลื่อน Meeting</button><button class="dbtn" data-act="cancel-m" data-id="${e.id}" ${dis}>${icon("calendar-x", "i14")}ยกเลิก Meeting</button></div>`;
+    const me = (e.guests || []).find((x) => x.id === "me");
+    if (me && me.rsvp !== "no") return `<div class="dp-act"><button class="sbtn" data-act="decline" data-id="${e.id}">${icon("x", "i14")}ปฏิเสธเข้าร่วม</button></div>`;
+    return "";
+  };
+  const roomBooked = (k, c) => S.events.some((x) => x.src === "zyra" && !x.cancelled && x.room === k && x.id !== c.editId && x.id !== c.id && x.start < c.end && x.end > c.start);
+  const alertBanner = () => {
+    const cu = isClickup();
+    if (S.conn.google === "expired") return cu
+      ? `<div class="ab" role="alert">${icon("triangle-alert")}<span>การเชื่อมต่อ Google Calendar หมดอายุ กรุณาเชื่อมต่อใหม่ <button data-act="connect">เชื่อมต่อใหม่</button></span></div>`
+      : `<div class="ab" role="alert">${icon("triangle-alert")}<span>Calendar connection expired. Please reconnect your calendar to continue syncing. Go to <button data-act="connect">Setting</button></span></div>`;
+    if (S.syncWarn) return cu
+      ? `<div class="ab" role="alert">${icon("triangle-alert")}<span>Events อาจไม่อัปเดต — <button data-act="sync">ลองใหม่</button></span></div>`
+      : `<div class="ab" role="alert">${icon("triangle-alert")}<span>We couldn't sync your calendar after multiple attempts. Please sync again.</span></div>`;
+    return "";
+  };
+
+  /* ---------- settings → integrations (HP-01/02/04, EP-01/02) ---------- */
+  const settingsPop = () => {
+    const st = S.settings;
+    if (!st) return "";
+    const cu = isClickup();
+    const menu = [["user", "Profile"], ["settings", "General"], ["volume-2", "Audio"], ["users", "Manage member"], ["link", "Integrations"], ["sun", "Environment"]]
+      .map(([i, l]) => `<div class="sm-i ${l === "Integrations" ? "on" : ""}">${icon(i)}<span>${l}</span></div>`).join("");
+    const row = (pv) => {
+      const g = pv === "google", state = S.conn[pv], pn = g ? "Google Calendar" : "Microsoft Outlook";
+      let right = state === "off"
+        ? `<button class="cbtn" data-act="oauth" data-p="${pv}">Connect</button>`
+        : `<button class="dbtn2" data-act="disc" data-p="${pv}">Disconnect</button>`;
+      if (state === "expired") right = `<span class="info tip" tabindex="0" data-tip="Calendar connection expired. Please reconnect your calendar to continue syncing">${icon("info")}</span><button class="rbtn" data-act="oauth" data-p="${pv}" data-re="1">${icon("refresh-cw", "i14")}Reconnect</button>`;
+      const badge = "";  // Figma has no status badge — the account card / buttons carry the state
+      const nSel = S.calSel[pv].size;
+      const pickLink = state !== "off" ? `<button class="calpk" data-act="cal-pick" data-p="${pv}">${icon("calendar-check", "i14")}Syncing ${nSel} calendar${nSel === 1 ? "" : "s"} · Change</button>` : "";
+      const card = state !== "off" ? `${icon(state === "expired" ? "unlink" : "link", "i24")}<span class="acard"><span class="av" style="background:${people.me.color}">T</span><span><b>Ten</b><small>${g ? "ten@example.com" : "ten@example.org"}</small></span></span>` : "";
+      return `<div class="irow"><div class="irow-l"><div class="irow-top"><span class="lg ${pv}" aria-hidden="true">${g ? "G" : "O"}</span>${card}</div><b>${g ? "Google calendar" : "Outlook calendar"}${badge}</b><p>Connect your ${g ? "Google" : "Outlook"} Calendar to view and manage your schedule without leaving Zyra.</p>${pickLink}</div><div class="irow-r">${right}</div></div>`;
+    };
+    const err = false && st.err ? `<div class="errb" style="margin:0" role="alert">${icon("circle-alert")}การเชื่อมต่อถูกยกเลิก — กรุณาอนุมัติสิทธิ์เพื่อ sync calendar<button data-act="oauth" data-p="${st.err}">ลองใหม่</button><button class="x2" data-act="err-x" aria-label="Close">${icon("x")}</button></div>` : "";
+    return `<div class="ovl" data-act="set-close"></div><div class="setm" role="dialog" aria-label="Setting"><nav class="sm-l"><h2>Setting</h2>${menu}</nav>
+      <section class="sm-r"><div class="sm-h"><div><h2>Integrations</h2><p>Manage integrations with third-party services to keep your workspace and tools in sync.</p></div><button data-act="set-close" aria-label="Close">${icon("x", "i24")}</button></div>
+      <div class="hrz"></div>${err}${row("google")}<div class="hrz"></div>${row("outlook")}</section></div>${st.oauth ? oauthPop(st.oauth) : ""}${pickPop()}`;
+  };
+  const pickRows = (pk) => {
+    const q = pk.q.trim().toLowerCase();
+    const rows = PCALS[pk.p].filter(([, name]) => !q || name.toLowerCase().includes(q));
+    return rows.length ? rows.map(([id, name, primary]) => `<button class="pkrow" data-act="pick-t" data-cal="${id}" role="checkbox" aria-checked="${pk.sel.has(id)}"><span class="cbx" style="${pk.sel.has(id) ? `background:${calColor(id)};border-color:${calColor(id)}` : ""}">${pk.sel.has(id) ? icon("check") : ""}</span><span class="pkname">${hl(name, pk.q.trim())}</span>${primary ? `<span class="pkprim">Primary</span>` : ""}</button>`).join("") : `<div class="empty-up" style="padding:8px">No calendars match "${esc(pk.q)}"</div>`;
+  };
+  const pickPop = () => {
+    const pk = S.settings && S.settings.pick;
+    if (!pk) return "";
+    const pn = pk.p === "google" ? "Google Calendar" : "Outlook", many = PCALS[pk.p].length > 10;
+    return `<div class="ovl" style="z-index:46"></div><div class="cfm pick" style="z-index:47" role="dialog" aria-label="Choose calendars to sync">
+      <div class="cm-h"><span>Choose calendars to sync</span><button data-act="pick-cancel" aria-label="Close">${icon("x", "i24")}</button></div><div class="hrz" style="margin-top:-8px"></div>
+      <p>Select the ${pn} calendars you want to see in Zyra. (เลือกปฏิทินของ ${pn} ที่จะแสดงใน Zyra)</p>
+      ${many ? `<label class="search" style="margin-top:-8px">${icon("search")}<input id="pick-q" placeholder="Search calendars" value="${esc(pk.q)}" autocomplete="off"></label>` : ""}
+      <div class="pklist" id="pick-list">${pickRows(pk)}</div>
+      <div class="cp-btns" style="justify-content:space-between;align-items:center"><span class="pkcount" id="pick-count">${pk.sel.size} selected</span><span style="display:flex;gap:8px"><button class="cancel" data-act="pick-cancel">Cancel</button><button class="create" data-act="pick-save" ${pk.sel.size ? "" : "disabled"}>Save</button></span></div></div>`;
+  };
+  // Stand-in for the provider's own consent window — deliberately plain, not a copy of Google/Microsoft UI.
+  const oauthPop = (o) => {
+    const g = o.p === "google";
+    return `<div class="ovl" style="z-index:44"></div><div class="oa" role="dialog" aria-label="OAuth consent (simulated)"><div class="oa-tag">ภาพจำลอง: หน้าขออนุญาตของ ${g ? "Google" : "Microsoft"} — ของจริงเปิดเป็น popup window แยก ไม่ redirect หน้า Zyra</div>
+      <div class="oa-b"><b>Zyra ขอสิทธิ์เข้าถึงปฏิทิน</b><span>${g ? "ten@example.com" : "ten@example.org"}${o.re ? " · reconnect ไม่ต้องกรอกอีเมลใหม่" : ""}</span><ul>${g ? "<li>calendar.readonly</li><li>calendar.events</li>" : "<li>Calendars.ReadWrite</li>"}</ul></div>
+      <div class="oa-btn"><button data-act="oa-deny">Cancel</button><button class="p" data-act="oa-allow">${g ? "Continue" : "Accept"}</button></div></div>`;
+  };
+
+  /* ---------- cancel (HP-05, Figma 7841:498103) / reschedule (HP-06, ClickUp only) ---------- */
+  const reschedCheck = (d, e) => {
+    const errors = [], warns = [];
+    const badRange = d.end <= d.start;
+    if (d.start < S.now) errors.push("เลือกเวลาในอดีตไม่ได้ (Cannot pick a time in the past)");
+    if (badRange) errors.push("เวลาจบต้องหลังเวลาเริ่ม (End time must be after the start time)");
+    const overlap = (x) => x.id !== e.id && !x.cancelled && !x.allDay && x.start < d.end && x.end > d.start;
+    if (e.room) { const r = S.events.find((x) => overlap(x) && x.src === "zyra" && x.room === e.room); if (r) errors.push(`ห้องนี้ถูกใช้งานเวลานี้ — ${esc(ROOMS[e.room][4])} (${esc(r.title)})`); }
+    visible().filter(overlap).filter((x) => (x.guests || []).some((gg) => gg.id === "me")).slice(0, 2).forEach((x) => warns.push(`คุณมี ${esc(x.title)} เวลาเดียวกัน`));
+    return { errors, warns, badRange, changed: +d.start !== +e.start || +d.end !== +e.end };
+  };
+  const dialogPop = () => {
+    const d = S.dialog;
+    if (!d) return "";
+    const e = ev(d.id), cu = isClickup(), n = (e.guests || []).filter((x) => x.id !== "me").length;
+    const reason = (ph) => `<label class="fld">${cu ? "เหตุผล" : "Reason"} <span style="color:var(--grey)">(Optional)</span><textarea class="inp" id="dlg-reason" maxlength="200" placeholder="${ph}">${esc(d.reason)}</textarea><span class="cnt2"><b id="dlg-cnt">${d.reason.length}</b>/200</span></label>`;
+    if (d.kind === "cancel") return `<div class="ovl" data-act="dlg-close"></div><div class="cm" id="dlg" role="dialog" aria-label="Cancel meeting">
+      <div class="cm-h"><span>${cu ? `ยกเลิก ${esc(e.title)}?` : "Cancel meeting"}</span><button data-act="dlg-close" aria-label="Close">${icon("x", "i24")}</button></div><div class="hrz"></div>
+      ${cu ? "" : `<p class="cm-q">Are you sure you want to cancel this meeting?</p>`}
+      <div class="cm-rows"><div class="cm-row">${icon("type")}<div>${cu ? "Meeting" : "Event"}<span>${esc(e.title)}</span></div></div>
+        <div class="cm-row">${icon("calendar")}<div>${cu ? "วัน / เวลา" : "Date &amp; time"}<span>${dLabel(e.start)} • ${hm(e.start)} - ${hm(e.end)}</span></div></div>
+        <div class="cm-row">${icon("users")}<div>${cu ? "ผู้ที่จะได้รับแจ้ง" : "Attendees to be notified"}<span>${cu ? `attendees ${n} คน` : `${n} attendee${n === 1 ? "" : "s"} will be notified of this cancellation.`}</span></div></div></div>
+      ${reason(cu ? "เหตุผลที่ยกเลิก (จะแสดงใน notification ถึง attendees)" : "Reason to cancel the event.")}
+      ${cu ? `<label class="allday"><input type="checkbox" id="dlg-notify" ${d.notify ? "checked" : ""}>แจ้ง attendees ทาง notification</label>` : ""}
+      <div class="cp-btns"><button class="cancel" data-act="dlg-close">${cu ? "ไม่ยกเลิก" : "Cancel"}</button><button class="redbtn" data-act="dlg-ok" ${d.busy ? "disabled" : ""}>${cu ? "ยืนยันยกเลิก" : "Confirm"}</button></div></div>`;
+    const v = reschedCheck(d, e);
+    return `<div class="ovl" data-act="dlg-close"></div><div class="cm" id="dlg" role="dialog" aria-label="Reschedule meeting">
+      <div class="cm-h"><span>เลื่อน Meeting · ${esc(e.title)}</span><button data-act="dlg-close" aria-label="Close">${icon("x", "i24")}</button></div><div class="hrz"></div>
+      <div class="cm-row">${icon("history")}<div>เวลาเดิม<span>${dLabel(e.start)} • ${hm(e.start)} - ${hm(e.end)}</span></div></div>
+      <div class="fld">วันที่และเวลาใหม่ (GMT+7)${dateField(d)}<div class="row2">${timeField(d, "from", hm(d.start), false)}<span style="color:var(--grey)">–</span>${timeField(d, "to", hm(d.end), v.badRange)}</div>
+        ${v.errors.map((x) => `<span class="pk-err">${x}</span>`).join("")}${v.warns.map((x) => `<span class="warnline">${icon("triangle-alert", "i14")}${x} (เตือนอย่างเดียว)</span>`).join("")}</div>
+      ${reason("เหตุผลที่เลื่อน")}
+      <label class="allday"><input type="checkbox" id="dlg-notify" ${d.notify ? "checked" : ""}>แจ้ง attendees ทาง notification</label>
+      <div class="cp-btns"><button class="cancel" data-act="dlg-close">ยกเลิก</button><button class="create" data-act="dlg-ok" ${v.errors.length || d.busy || !v.changed ? "disabled" : ""}>ยืนยันเลื่อน</button></div></div>`;
+  };
+  const pkT = () => (S.dialog && S.dialog.kind === "resched" ? S.dialog : S.create);
+  const openSettings = () => { S.settings = {}; S.detail = null; S.more = null; render(); };
+  const openCancel = (id) => { const e = ev(id); if (!e || isActive(e)) return; S.dialog = { kind: "cancel", id, reason: "", notify: true }; S.detail = null; render(); };
+  const openResched = (id) => { const e = ev(id); if (!e || isActive(e)) return; S.dialog = { kind: "resched", id, start: new Date(e.start), end: new Date(e.end), reason: "", notify: true, picker: null }; S.detail = null; render(); };
+  const warnToast = (title, body, buttons) => toast({ duration: 30, icon: "triangle-alert", color: "#ECC819", box: "rgba(236,200,25,0.1)", title, body, buttons });
+  // What happens to the copy in Google after a cancel / reschedule (HP-05 EP-B, HP-06 EP-C).
+  const syncResult = (kind, e) => {
+    if (S.conn.google === "off") return;
+    if (S.conn.google === "expired") { warnToast("Expired token", "Google Calendar disconnected. Reconnect to continue.", [{ kind: "p", label: "Go to setting", run: openSettings }]); return; }
+    if (!S.syncFail) { log(`${kind === "cancel" ? "ยกเลิก" : "อัปเดต"} event เดิมใน Google Calendar สำเร็จ (sendUpdates=all · ใช้ external_event_id เดิม)`); return; }
+    const cu = isClickup();
+    const body = kind === "cancel" ? (cu ? "ยกเลิกใน Zyra แล้ว แต่ลบจาก Google Calendar ไม่สำเร็จ" : "Event cancelled in Zyra, but not removed from Google Calendar.") : (cu ? "เลื่อนใน Zyra แล้ว แต่อัปเดต Google Calendar ไม่สำเร็จ" : "Event rescheduled in Zyra, but not updated in Google Calendar.");
+    warnToast("Something went wrong", body, [{ kind: "p", label: cu ? "ลองใหม่" : "Try again", run: () => { log("retry 30s → 2m → 5m ยังไม่สำเร็จ → ให้ Organizer แก้เองพร้อมลิงก์"); warnToast("Something went wrong", kind === "cancel" ? "Couldn't remove from Google Calendar. Please delete it manually." : "Couldn't update Google Calendar. Please edit it manually.", [{ kind: "p", label: "Open Google Calendar", run: () => log("เปิด event ใน Google Calendar (ลิงก์)") }]); } }]);
+  };
+  const doCancel = (d) => {
+    if (d.busy) return;
+    d.busy = true;
+    const e = ev(d.id), n = (e.guests || []).filter((x) => x.id !== "me").length, cu = isClickup();
+    Object.assign(e, { cancelled: true, cancelReason: d.reason.trim(), cancelledByMe: true });
+    S.dialog = null;
+    toast({ duration: 6, icon: "check", color: "#58D68D", box: "rgba(88,214,141,0.2)", title: "", body: cu ? `ยกเลิก ${e.title} แล้ว` : "Event cancelled successfully", buttons: [] });
+    log(`ยกเลิก <b>${esc(e.title)}</b> (soft cancel: status = cancelled) · ${d.notify ? `แจ้ง ${n} คน "❌ ${esc(e.title)} ถูกยกเลิกโดย Ten"${e.cancelReason ? " + เหตุผล" : ""}` : "ไม่แจ้ง attendees"} · ลบ alert ที่ยังไม่ส่ง · ยังอยู่ใน calendar ของทุกคนเป็นสีเทา + ขีดฆ่า (กติกาที่ผู้ใช้กำหนด 2026-10-29)`);
+    render();
+    setTimeout(() => syncResult("cancel", e), 700);
+  };
+  const doResched = (d) => {
+    const e = ev(d.id), v = reschedCheck(d, e);
+    if (v.errors.length || d.busy || !v.changed) return;
+    d.busy = true;
+    const n = (e.guests || []).filter((x) => x.id !== "me").length;
+    Object.assign(e, { prevStart: new Date(e.start), prevEnd: new Date(e.end), start: new Date(d.start), end: new Date(d.end), moved: true });
+    S.dialog = null; S.date = startOfDay(e.start);
+    toast({ duration: 6, icon: "check", color: "#58D68D", box: "rgba(88,214,141,0.2)", title: "", body: `เลื่อน ${e.title} เป็น ${dLabel(e.start)} ${hm(e.start)} แล้ว`, buttons: [] });
+    log(`เลื่อน <b>${esc(e.title)}</b> → ${dLabel(e.start)} ${hm(e.start)}-${hm(e.end)} · เก็บ previous_start_at · ${d.notify ? `แจ้ง ${n} คน "🔄 ถูกเลื่อนเป็น…"` : "ไม่แจ้ง"} · ลบ alert เดิม ตั้ง alert ใหม่ตามเวลาใหม่`);
+    render();
+    setTimeout(() => syncResult("resched", e), 700);
+  };
+  const doDisconnect = (pv) => {
+    const cu = isClickup(), pn = pv === "google" ? "Google Calendar" : "Outlook Calendar";
+    S.conn[pv] = "off"; S.confirm = null;
+    toast({ duration: 6, icon: "check", color: "#58D68D", box: "rgba(88,214,141,0.2)", title: "Disconnected successfully", body: `${pn} has been disconnected.`, buttons: [] });
+    log(`Disconnect ${pn} → revoke token · events จาก ${pv === "google" ? "Google" : "Outlook"} หายจาก calendar ทันที · Zyra meeting ที่เคย push ไปยังอยู่ใน ${pv === "google" ? "Google" : "Outlook"}`);
+    render();
+  };
+  const finishOauth = (allow) => {
+    const st = S.settings, pv = st.oauth.p, cu = isClickup(), pn = pv === "google" ? "Google Calendar" : "Outlook Calendar";
+    st.oauth = null;
+    if (allow) {
+      const fresh = S.conn[pv] === "off";
+      S.conn[pv] = "on"; st.err = null; S.bannerOff = false;
+      if (fresh) S.calSel[pv] = new Set(PCALS[pv].filter((c) => c[2]).map((c) => c[0]));  // EC-02: default = Primary only
+      toast({ duration: 6, icon: "check", color: "#58D68D", box: "rgba(88,214,141,0.2)", title: `${pn} connected`, body: "Your account is now synced with Zyra.", buttons: [] });
+      // AC-HP01-5: Zyra meetings I organise that haven't started yet are created in the new calendar.
+      if (fresh) {
+        const mine = S.events.filter((e) => e.src === "zyra" && !e.cancelled && !e.allDay && e.end > S.now && roleOf(e).org);
+        mine.forEach((e) => { e.pushed = { ...(e.pushed || {}), [pv]: true }; });
+        log(`เชื่อม ${pn} สำเร็จ (เชื่อมพร้อมกันได้ทั้ง Google + Outlook) · token เก็บฝั่ง server แบบเข้ารหัส · push Zyra meeting ที่เราจัดและยังไม่จบ ${mine.length} รายการไป ${pn} (AC-HP01-5) · เปิดหน้าเลือกปฏิทิน (default = Primary)`);
+        st.pick = { p: pv, sel: new Set(S.calSel[pv]), q: "" };
+      } else log(`Reconnect ${pn} สำเร็จ · token ใหม่ · ปฏิทินที่เลือกไว้เดิมยัง sync ต่อ ไม่ push ซ้ำ`);
+    } else {
+      toast({ duration: 6, icon: "x", color: "#F03A3A", box: "rgba(240,58,58,0.2)", title: "Connection canceled", body: "Your calendar wasn't connected.", buttons: [] });
+      log("ผู้ใช้กด Cancel ใน OAuth → ไม่มี token · EP-01 ตาม Figma = toast แดง ไม่มีปุ่มลองใหม่ (กด Connect ใหม่เอง)");
+    }
+    render();
+  };
+  const setConn = (pv, v) => { S.conn[pv] = v; S.bannerOff = false; S.detail = null; S.more = null; if (v === "expired") log("Google token หมดอายุ (401 จาก refresh) → status = expired · events เดิมยังแสดง (stale) · banner เหลืองใน panel"); render(); };
+
+  const detailPop = () => {
+    if (!S.detail) return "";
+    const e = ev(S.detail.id);
+    if (!e) return "";
+    const cu = isClickup(), c = srcColor(e.src);
+    const date = e.allDay ? `${dLabel(e.start)} • All day`
+      : sameDay(e.start, e.end) || (e.end - startOfDay(e.start)) / 3600000 <= 24 && e.end.getHours() === 0 && e.end.getMinutes() === 0 && sameDay(addDays(e.start, 1), e.end)
+        ? `${dLabel(e.start)} • ${hm(e.start)} - ${hm(e.end)}` : `${dLabel(e.start)} ${hm(e.start)} – ${dLabel(e.end)} ${hm(e.end)}`;
+    const guests = (e.guests || []).map((x) => ({ ...people[x.id], ...x }));
+    const yes = guests.filter((x) => x.rsvp === "yes").length, wait = guests.filter((x) => x.rsvp === "awaiting").length;
+    const badge = (r) => r === "yes" ? `<span class="rs" style="background:var(--mint)">${icon("check")}</span>` : r === "no" ? `<span class="rs" style="background:var(--red)">${icon("x")}</span>` : r === "maybe" ? `<span class="rs" style="background:#3B4046">?</span>` : "";
+    let join = "";
+    if (e.src === "zyra" && !e.allDay) {
+      if (e.cancelled) join = "";
+      else if (!cu) join = `<button class="join" data-act="join" data-id="${e.id}">${icon("video")}Join</button>`;
+      else join = isActive(e) ? `<button class="join" data-act="join" data-id="${e.id}">${icon("video")}Join Now</button>`
+        : `<span class="join ghost">${S.now >= e.end ? "Meeting จบแล้ว" : `Join Now จะแสดงเมื่อเริ่ม ${hm(e.start)}`}</span>`;
+    }
+    const me = (e.guests || []).find((x) => x.id === "me");
+    const rr = roleOf(e), hideList = e.src === "zyra" && rr.guest && !rr.see && !S.admin;
+    const rsvp = !cu && me && me.rsvp === "awaiting" && e.src === "zyra" && !e.cancelled
+      ? `<div class="rsvp"><span>Join?</span>${["yes", "no", "maybe"].map((r) => `<button data-act="rsvp" data-r="${r}">${r[0].toUpperCase() + r.slice(1)}</button>`).join("")}</div>` : "";
+    return `<div class="pop dp" id="detail-pop" role="dialog" aria-label="Event detail">
+      <div class="dp-h"><span>Event detail</span><div>${headerActions(e)}</div></div>
+      <div class="dp-t"><span class="sw" style="background:${e.cancelled ? CANCEL_BAR : c}"></span><span class="${cu ? "" : "trunc"}">${esc(e.title)}</span>${e.cancelled && cu ? `<span class="tagc">ยกเลิกแล้ว</span>` : ""}</div>
+      ${roleLabel(e) ? `<span class="rolechip">${roleLabel(e)}</span>` : ""}
+      ${e.prevStart && !e.cancelled ? `<span class="resb">${icon("history", "i14")}${cu ? "เลื่อนแล้ว · เดิม" : "Rescheduled · was"} ${dLabel(e.prevStart)} ${hm(e.prevStart)} - ${hm(e.prevEnd)}</span>` : ""}
+      ${cu ? `<span class="srcb" style="color:${c};background:${hexA(c, 0.15)}">${srcName(e.src)}</span>` : ""}
+      <div class="hrz"></div>
+      <div class="dp-r"><div class="dp-rows">
+        <div class="dp-row">${icon("calendar")}<span>${date}</span></div>
+        ${cu && e.tz ? `<div class="dp-row">${icon("globe")}<span>เวลาต้นทาง ${esc(e.tzText)} · ${esc(e.tz)}</span></div>` : ""}
+        ${e.loc && !(e.external && !cu) ? `<div class="dp-row">${icon("map-pin")}<span class="one">${esc(e.loc)}</span></div>` : ""}
+      </div>${join}</div>
+      ${guests.length && hideList ? `<div class="hrz"></div><div class="dp-row">${icon("users")}<span>${guests.length} participants · ผู้จัดซ่อนรายชื่อ guest (See guest list ปิด)</span></div>` : ""}
+      ${guests.length && !hideList ? `<div class="hrz"></div><div class="dp-row">${icon("users")}<span>${guests.length} participants (${yes} yes and ${wait} awaiting)</span></div>
+        <div class="guests">${guests.map((x) => `<div class="guest"><span class="avw"><span class="av" style="background:${x.color}">${x.ini}</span>${badge(x.rsvp)}</span><span><b>${esc(x.name)}</b><small>${x.role}</small></span></div>`).join("")}</div>` : ""}
+      ${e.desc && !e.cancelled ? `<div class="hrz"></div><div class="dp-row" style="align-items:flex-start">${icon("text")}<span class="desc">${esc(e.desc)}</span></div>` : ""}
+      ${e.cancelled ? `<div class="hrz"></div><div class="creason"><span style="color:#fff">${cu ? "เหตุผลที่ยกเลิก" : "Reason for cancellation"}</span><span>${esc(e.cancelReason || "—")}</span></div>` : ""}
+      ${e.link && !e.cancelled ? `<div class="hrz"></div><div class="dp-row">${icon("link")}<span class="link">${esc(e.link)}</span><button class="cpy" data-act="copy" aria-label="Copy link">${icon(S.copied === e.id ? "check" : "copy", "i14")}</button></div>` : ""}
+      ${e.pushed && !e.cancelled ? `<div class="dp-row" style="color:var(--grey);font-size:12px">${icon("calendar-check", "i14")}<span>Also in ${Object.keys(e.pushed).map((k) => (k === "google" ? "Google Calendar" : "Outlook Calendar")).join(" · ")} (sync ไปปฏิทินภายนอกแล้ว — AC-HP01-5)</span></div>` : ""}
+      ${cu && (e.src === "google" || e.src === "outlook") ? `<a class="ext" href="https://${e.src === "google" ? "calendar.google.com" : "outlook.office.com/calendar"}" target="_blank" rel="noopener">${icon("external-link", "i14")}เปิดใน ${e.src === "google" ? "Google Calendar" : "Outlook"}</a>` : ""}
+      ${cuActions(e)}
+      ${rsvp}</div>`;
+  };
+
+  /* ---------- schedule event (create) ---------- */
+  // TIME_OPTIONS in announcement-date-time.tsx: 15-minute steps (10:00, 10:15, …).
+  const TIMES = [...Array(96)].map((_, i) => `${p2(Math.floor(i / 4))}:${p2((i % 4) * 15)}`);
+  const TIME_ROW = 34;
+  // AnnouncementDateField: trigger shows DD/MM/YYYY, popover = 311px month grid, picked day = mint pill.
+  const dateField = (c) => {
+    const open = c.picker === "date", cur = c.cursor || new Date(c.start.getFullYear(), c.start.getMonth(), 1);
+    let grid = "";
+    if (open) {
+      const gs = weekStart(cur);
+      grid = ["S", "M", "T", "W", "T", "F", "S"].map((w) => `<span>${w}</span>`).join("") + [...Array(42)].map((_, i) => {
+        const day = addDays(gs, i);
+        return `<button data-act="pk-day" data-t="${+day}" class="${day.getMonth() !== cur.getMonth() ? "out" : ""} ${sameDay(day, c.start) ? "on" : ""}" aria-label="${dLabel(day)}">${day.getDate()}</button>`;
+      }).join("");
+    }
+    return `<div class="pk"><button class="pk-btn" data-act="pk-open" data-k="date" aria-haspopup="dialog" aria-expanded="${open}"><span>${p2(c.start.getDate())}/${p2(c.start.getMonth() + 1)}/${c.start.getFullYear()}</span>${icon("chevron-down")}</button>
+      ${open ? `<div class="pk-cal" role="dialog" aria-label="Date"><div class="pk-cal-h"><span>${MONTHS[cur.getMonth()]}, ${cur.getFullYear()}</span><div><button data-act="pk-mon" data-n="-1" aria-label="Previous month">${icon("chevron-left", "i14")}</button><button data-act="pk-mon" data-n="1" aria-label="Next month">${icon("chevron-right", "i14")}</button></div></div><div class="pk-grid">${grid}</div></div>` : ""}</div>`;
+  };
+  // AnnouncementTimeField: trigger + 226px list of 34px rows, opens scrolled to the picked time.
+  const timeField = (c, k, value, bad) => {
+    const open = c.picker === k;
+    return `<div class="pk"><button class="pk-btn ${bad ? "bad" : ""}" data-act="pk-open" data-k="${k}" aria-haspopup="listbox" aria-expanded="${open}" aria-label="${k === "from" ? "Start time" : "End time"}"><span>${value}</span>${icon("chevron-down")}</button>
+      ${open ? `<div class="pk-list" role="listbox" data-sel="${Math.max(0, TIMES.indexOf(value))}">${TIMES.map((t) => `<button role="option" aria-selected="${t === value}" class="${t === value ? "on" : ""}" data-act="pk-time" data-k="${k}" data-v="${t}">${t}</button>`).join("")}</div>` : ""}</div>`;
+  };
+  const canCreate = () => S.create && S.create.title.trim() && (S.create.allDay || S.create.end > S.create.start);
+  const createPop = () => {
+    if (!S.create) return "";
+    const c = S.create, cu = isClickup();
+    const opt = (v, cur) => `<option value="${v}" ${v === cur ? "selected" : ""}>${v}</option>`;
+    const rooms = [["any", "Any available meeting room"], ...Object.entries(ROOMS).map(([k, r]) => [k, r[4]])];
+    const bad = !c.allDay && c.end <= c.start;
+    const editing = !!c.editId;
+    const can = c.can || { details: true, guests: true, perms: true }, lk = can.details ? "" : "locked";
+    return `<div class="pop cp" id="create-pop" role="dialog" aria-label="${editing ? "Edit event" : "Schedule event"}">
+      <div class="cp-h"><div><h3>${editing ? "Edit event" : "Schedule event"}</h3><p>${editing ? "Update the meeting details. Guests will be notified." : "Create and schedule meetings."}</p></div><button data-act="cp-close" aria-label="Close">${icon("x", "i24")}</button></div>
+      ${c.roleNote ? `<span class="rolechip">${c.roleNote}</span>` : ""}
+      <div class="hrz"></div>
+      <label class="fld ${lk}">Event<input class="inp" id="cp-title" data-cf="title" placeholder="Please input event" value="${esc(c.title)}" autocomplete="off"></label>
+      <div class="fld ${lk}">Date &amp; Time
+        ${dateField(c)}
+        ${c.allDay ? "" : `<div class="row2">${timeField(c, "from", hm(c.start), false)}<span style="color:var(--grey)">–</span>${timeField(c, "to", hm(c.end), bad)}</div>`}
+        ${bad ? `<span class="pk-err">End time must be after the start time.${cu ? " (เวลาจบต้องหลังเวลาเริ่ม)" : ""}</span>` : ""}
+        <label class="allday"><input type="checkbox" id="cp-allday" data-cc="allday" ${c.allDay ? "checked" : ""}>All day</label></div>
+      <div class="fld ${lk}">Location
+        <div class="pk"><button class="pk-btn" data-act="pk-open" data-k="room" aria-haspopup="listbox" aria-expanded="${c.picker === "room"}"><span class="pk-val">${icon("map-pin")}<span>${esc(rooms.find(([k]) => k === c.room)[1])}</span></span>${icon("chevron-down")}</button>
+          ${c.picker === "room" ? `<div class="pk-list" role="listbox" data-sel="${Math.max(0, rooms.findIndex(([k]) => k === c.room))}">${rooms.map(([k, l]) => `<button role="option" aria-selected="${k === c.room}" class="${k === c.room ? "on" : ""}" data-act="pk-room" data-v="${k}">${esc(l)}${k === "any" ? "" : roomBooked(k, c) ? `<span class="rpill no">Booked</span>` : `<span class="rpill ok">Available</span>`}</button>`).join("")}</div>` : ""}</div></div>
+      <div class="fld ${can.guests ? "" : "locked"}">Guest
+        <div class="gfield"><label class="gin">${icon("users")}<input id="cp-guest" placeholder="Please add guest" autocomplete="off" value="${esc(c.gq || "")}" aria-label="Add guest" aria-controls="gmenu"></label>
+          <div class="gmenu" id="gmenu" role="listbox" ${c.gopen && guestOptions(c).length ? "" : "hidden"}>${guestMenu(c)}</div></div>
+        ${c.guests.size ? `<div class="gchips">${[...c.guests].map((id) => `<span class="gchip on" title="${esc(people[id].name)} · ${esc(people[id].email)}"><span class="av" style="width:18px;height:18px;font-size:8px;background:${people[id].color}">${people[id].ini}</span>${esc(people[id].name.split(" ")[0])}${c.fixedGuests && c.fixedGuests.has(id) ? "" : `<button class="gx" data-act="grem" data-g="${id}" aria-label="Remove ${esc(people[id].name)}">${icon("x")}</button>`}</span>`).join("")}</div>
+          ${can.perms ? `<button class="permt" data-act="perm-t" aria-expanded="${!!c.permOpen}">Permission${icon(c.permOpen ? "chevron-up" : "chevron-down", "i14")}</button>
+          ${c.permOpen ? `<div class="permbox">${[["modify", "Modify event"], ["invite", "Invite others"], ["see", "See guest list"]].map(([k, l]) => `<button data-act="perm" data-k="${k}" role="checkbox" aria-checked="${c.perm[k]}"><span class="cbx" style="${c.perm[k] ? "background:var(--mint);border-color:var(--mint)" : ""}">${c.perm[k] ? icon("check") : ""}</span>${l}</button>`).join("")}</div>` : ""}` : ""}` : ""}
+      </div>
+      <label class="fld ${lk}">Description<textarea class="inp" id="cp-desc" data-cf="desc" placeholder="Add description">${esc(c.desc)}</textarea></label>
+      <div class="cp-btns"><button class="cancel" data-act="cp-close">Cancel</button><button class="create" id="cp-create" data-act="cp-create" ${canCreate() ? "" : "disabled"}>${editing ? "Save" : "Create"}</button></div></div>`;
+  };
+  // PersonRow: avatar 32 + name (14/18 medium) + one grey line (12/15).
+  const hl = (text, q) => {
+    if (!q) return esc(text);
+    const i = text.toLowerCase().indexOf(q.toLowerCase());
+    return i < 0 ? esc(text) : `${esc(text.slice(0, i))}<mark>${esc(text.slice(i, i + q.length))}</mark>${esc(text.slice(i + q.length))}`;
+  };
+  const personRow = (id, sub, q = "") => `<span class="prow"><span class="av" style="background:${people[id].color}">${people[id].ini}</span><span><b>${hl(people[id].name, q)}</b><small>${hl(sub, q)}</small></span></span>`;
+  const guestOptions = (c) => {
+    const q = (c.gq || "").trim().toLowerCase();
+    return MEMBERS.filter((id) => !c.guests.has(id) && (!q || people[id].name.toLowerCase().includes(q) || people[id].email.toLowerCase().includes(q)));
+  };
+  const guestMenu = (c) => guestOptions(c).map((id, i) => `<button class="gopt ${i === (c.ghl || 0) ? "hl" : ""}" role="option" data-act="gadd" data-g="${id}">${personRow(id, people[id].email, (c.gq || "").trim())}</button>`).join("");
+  // Typing only refreshes the dropdown, so the input keeps focus.
+  const updateGuestMenu = () => {
+    const m = $("#gmenu"), c = S.create;
+    if (!m || !c) return;
+    m.innerHTML = guestMenu(c);
+    m.hidden = !(c.gopen && guestOptions(c).length);
+    if (!m.hidden) fitDrop(m);
+  };
+  const addGuest = (id) => {
+    const c = S.create;
+    c.guests.add(id); c.gq = ""; c.gopen = false; c.ghl = 0;
+    render();
+  };
+  const defaultStart = (day) => {
+    const base = startOfDay(day);
+    if (sameDay(day, S.now)) { const m = S.now.getHours() * 60 + S.now.getMinutes(); return new Date(+base + Math.ceil((m + 1) / 30) * 30 * 60000); }
+    return new Date(+base + 10 * 3600000);
+  };
+  const openCreate = (start, opts = {}) => {
+    S.detail = null; S.more = null; S.walk = null;
+    const st = new Date(start);
+    S.create = { start: st, end: new Date(+st + 30 * 60000), allDay: !!opts.allDay, title: "", room: "any", guests: new Set(), desc: "", fixed: !!opts.fixed, gq: "", perm: { modify: false, invite: true, see: true } };
+    S.date = startOfDay(st);
+    render();
+    const ti = $("#cp-title"); if (ti) ti.focus({ preventScroll: true });
+  };
+  const openEdit = (id) => {
+    const e = ev(id);
+    S.detail = null; S.more = null;
+    S.create = { editId: id, start: new Date(e.allDay ? +startOfDay(e.start) + 10 * 3600000 : +e.start), end: new Date(e.allDay ? +startOfDay(e.start) + 10.5 * 3600000 : +e.end), allDay: !!e.allDay,
+      title: e.title, room: e.room || "any", guests: new Set((e.guests || []).filter((x) => x.role === "Guest" && x.id !== "me").map((x) => x.id)), desc: e.desc || "", fixed: false, gq: "", perm: { ...permOf(e) } };
+    const r = roleOf(e), full = r.org || S.admin;
+    // Modify event = change details · Invite others = add guests (removing needs Modify too) · permissions/cancel = organiser or admin only.
+    S.create.can = { details: full || r.modify, guests: full || r.invite, perms: full };
+    S.create.fixedGuests = full || r.modify ? null : new Set(S.create.guests);
+    const gtxt = full ? "" : r.invite ? (r.modify ? "เพิ่ม/เอา guest ออกได้" : "เพิ่ม guest ได้อย่างเดียว") : "เพิ่ม guest ไม่ได้";
+    S.create.roleNote = full ? "" : `POC · คุณเป็น Guest — ${r.modify ? "แก้รายละเอียดได้" : "แก้รายละเอียดไม่ได้"} · ${gtxt} · ตั้งสิทธิ์ไม่ได้ · ยกเลิกไม่ได้`;
+    S.create.orig = JSON.stringify([S.create.title, +S.create.start, +S.create.end, S.create.allDay, S.create.room, [...S.create.guests].sort(), S.create.desc]);
+    S.date = startOfDay(S.create.start);
+    if (S.mode !== "month") S.scroll[S.mode] = Math.max(0, (S.create.start.getHours() - 1) * HOUR);
+    render();
+  };
+  const dirty = () => {
+    const c = S.create;
+    if (!c) return false;
+    const now = JSON.stringify([c.title, +c.start, +c.end, c.allDay, c.room, [...c.guests].sort(), c.desc]);
+    return c.orig ? now !== c.orig : !!(c.title.trim() || c.desc.trim() || c.guests.size);
+  };
+  const closeCreate = (force) => {
+    if (!S.create) return;
+    if (!force && dirty()) { S.confirm = { kind: "discard" }; render(); return; }
+    S.create = null; S.confirm = null; render();
+  };
+  const confirmPop = () => {
+    if (!S.confirm) return "";
+    const cu = isClickup();
+    let title, body, ok, no, cls = "redbtn";
+    if (S.confirm.kind === "discard") {
+      title = S.create && S.create.editId ? "Discard changes?" : "Discard this event?";
+      body = cu ? "ข้อมูลที่กรอกไว้จะหายไป" : "Anything you entered will be lost.";
+      ok = "Discard"; no = "Keep editing"; cls = "danger";
+    } else {
+      const pv = S.confirm.p, pn = pv === "google" ? "Google Calendar" : "Outlook Calendar";
+      title = "Disconnect calendar integration";
+      body = "Zyra will stop syncing events from your connected calendar. Existing Zyra meetings will remain available and won't be affected.";
+      ok = "Disconnect"; no = "Cancel";
+    }
+    return `<div class="ovl" data-act="cf-no" style="z-index:46"></div><div class="cfm" style="z-index:47" role="alertdialog" aria-label="${esc(title)}">
+      <div class="cm-h"><span>${esc(title)}</span><button data-act="cf-no" aria-label="Close">${icon("x", "i24")}</button></div><div class="hrz" style="margin-top:-8px"></div>
+      <p>${esc(body)}</p><div class="cp-btns"><button class="cancel sm" data-act="cf-no">${no}</button><button class="${cls} sm" data-act="cf-ok">${ok}</button></div></div>`;
+  };
+  let cseq = 0;
+  const submitCreate = () => {
+    if (!canCreate()) return;
+    const c = S.create, room = c.room === "any" ? null : c.room;
+    const start = c.allDay ? startOfDay(c.start) : c.start, end = c.allDay ? addDays(startOfDay(c.start), 1) : c.end;
+    if (c.editId) {
+      const e = ev(c.editId), can = c.can || { details: true, guests: true, perms: true };
+      const moved = can.details && (+e.start !== +start || +e.end !== +end || !!e.allDay !== c.allDay);
+      const added = [...c.guests].filter((id) => !e.guests.some((x) => x.id === id));
+      if (can.details) Object.assign(e, { title: c.title.trim(), start, end, allDay: c.allDay, room, loc: room ? ROOMS[room][4] : "Any available meeting room", desc: c.desc.trim() });
+      if (can.guests) e.guests = [...e.guests.filter((x) => x.role !== "Guest" || x.id === "me"), ...[...c.guests].map((id) => (e.guests.find((x) => x.id === id) || g(id, "Guest", "awaiting")))];
+      if (can.perms) e.perm = { ...c.perm };
+      if (!can.details && added.length) log(`Guest เชิญเพิ่ม ${added.map((id) => esc(people[id].name)).join(", ")} (สิทธิ์ Invite others) — รายละเอียดอื่นแก้ไม่ได้`);
+      S.create = null; S.confirm = null; S.date = startOfDay(start);
+      const n = e.guests.filter((x) => x.id !== "me").length;
+      toast({ duration: 6, icon: "check", color: "#58D68D", box: "rgba(88,214,141,0.2)", title: isClickup() ? "อัปเดต Meeting แล้ว" : "Meeting updated", body: `${e.title}\n${dLabel(start)} · ${e.allDay ? "All day" : `${hm(start)} - ${hm(end)}`}`, buttons: [] });
+      log(`แก้ไข <b>${esc(e.title)}</b>${moved ? ` · เวลาเปลี่ยน → guest ${n} คนได้ alert "Meeting rescheduled" (EP-02) · alert 5 นาที/เริ่ม ส่งใหม่ตามเวลาใหม่` : " · เวลาเดิม → ไม่ส่ง alert"}`);
+      render();
+      return;
+    }
+    const e = { id: `new${++cseq}`, title: c.title.trim(), src: "zyra", start, end, allDay: c.allDay, loc: room ? ROOMS[room][4] : "Any available meeting room", room, created: true,
+      guests: [g("me", "Organiser", "yes"), ...[...c.guests].map((id) => g(id, "Guest", "awaiting"))], link: "Zyraworld.com", desc: c.desc.trim(), perm: { ...c.perm } };
+    S.events.push(e);
+    S.create = null; S.date = startOfDay(start);
+    toast({ duration: 6, icon: "check", color: "#58D68D", box: "rgba(88,214,141,0.2)", title: isClickup() ? "สร้าง Meeting แล้ว" : "Event scheduled", body: isClickup() ? `${e.title}\n${dLabel(start)} · ${e.allDay ? "All day" : `${hm(start)} - ${hm(end)}`}` : "Your event has been created.", buttons: [] });
+    if (S.syncFail && S.conn.google !== "off") setTimeout(() => warnToast("Calendar sync failed", "Your meeting wasn't synced to your calendar. Please sync again.", []), 700);
+    log(`สร้าง meeting <b>${esc(e.title)}</b> (${e.allDay ? "ทั้งวัน" : `${hm(start)}-${hm(end)}`}) · แขก ${c.guests.size} คน — ใน CAL-01 จะ push ไป Google ด้วย`);
+    render();
+  };
+
+  /* ---------- notification panel ---------- */
+  const rel = (at) => {
+    const m = Math.max(0, Math.round((S.now - at) / 60000));
+    if (m < 1) return "Just now";
+    if (m < 60) return `${m} ${m === 1 ? "min" : "mins"} ago`;
+    const h = Math.round(m / 60);
+    if (h < 24) return `${h} ${h === 1 ? "hour" : "hours"} ago`;
+    const dd = Math.round(h / 24);
+    return `${dd} ${dd === 1 ? "day" : "days"} ago`;
+  };
+  const NTYPE = {
+    reminder: { color: "#2DB6FF", icF: "video", icC: "bell" },
+    started: { color: "#58D68D", icF: "video", icC: "mic" },
+    cancelled: { color: "#8C99A6", icF: "video", icC: "refresh-cw" },
+    rescheduled: { color: "#FF8000", icF: "video", icC: "refresh-cw" },
+  };
+  const range = (a, b) => `${hm(a)}-${hm(b)}`;
+  const cardCopy = (n) => {
+    const e = ev(n.mid), cu = isClickup(), t = e.title;
+    if (n.type === "reminder") return [cu ? `🔔 ${t} เริ่มในอีก 5 นาที` : "Meeting starts in 5 minutes", `${t}\n${range(n.s, n.e)} · ${e.loc}`];
+    if (n.type === "started") return [cu ? `🎙 ${t} เริ่มแล้ว!` : "Meeting has started", `${t}\n${range(n.s, n.e)} · ${e.loc}`];
+    if (n.type === "cancelled") return [cu ? `🔄 ${t} ถูกยกเลิกแล้ว` : "Meeting cancelled", cu ? `เดิม ${dLabel(n.s)} ${hm(n.s)} - ${hm(n.e)}` : `${t}\nPreviously scheduled for ${dLabel(n.s)} at ${hm(n.s)} - ${hm(n.e)}`];
+    return [cu ? `🔄 ${t} ถูกเลื่อนแล้ว` : "Meeting rescheduled", cu ? `เวลาใหม่ ${dLabel(n.s)} ${hm(n.s)} - ${hm(n.e)}` : `${t}\nNew time: ${dLabel(n.s)} at ${hm(n.s)} – ${hm(n.e)}`];
+  };
+  const notifPanel = () => {
+    const cu = isClickup();
+    const list = S.notifs.filter((n) => S.notifTab === "all" || n.unread).sort((a, b) => b.at - a.at || (b.seq || 0) - (a.seq || 0));
+    const groups = { Today: [], Yesterday: [] };
+    list.forEach((n) => (sameDay(n.at, S.now) ? groups.Today : groups.Yesterday).push(n));
+    const card = (n) => {
+      if (n.kind === "social") return `<div class="ncard ${n.unread ? "unread" : ""}"><span class="av" style="width:32px;height:32px;background:${people[n.who].color};font-size:12px">${people[n.who].ini}</span><div class="nbody"><div class="ntop"><b>${esc(people[n.who].name)}</b><small>${rel(n.at)}</small></div><div class="ntext">${esc(n.text)}</div></div></div>`;
+      if (n.kind === "update") return `<div class="ncard ${n.unread ? "unread" : ""}"><span class="nic" style="background:#7EA2FC">${icon("bell")}</span><div class="nbody"><div class="ntop"><b>${n.title}</b><small>${rel(n.at)}</small></div><div class="ntext">${esc(n.text)}</div></div></div>`;
+      const e = ev(n.mid), meta = NTYPE[n.type], [title, body] = cardCopy(n);
+      const ended = S.now >= e.end, canJoin = n.type === "started" && !ended;
+      const past = cu && (ended || e.cancelled) && n.type !== "cancelled" && n.type !== "rescheduled";
+      const status = cu && (n.type === "reminder" || n.type === "started") ? `<span class="stat">${e.cancelled ? "ยกเลิกแล้ว" : ended ? "ผ่านไปแล้ว" : isActive(e) ? "กำลังประชุม" : "ยังไม่เริ่ม"}</span>` : "";
+      return `<div role="button" tabindex="0" class="ncard ${n.unread ? "unread" : ""} ${past ? "past" : ""}" data-act="ncard" data-id="${n.id}">
+        <span class="nic" style="background:${meta.color}">${icon(cu ? meta.icC : meta.icF)}</span>
+        <div class="nbody"><div class="ntop"><b>${esc(title)}</b><small>${rel(n.at)}</small></div><div class="ntext">${esc(body)}</div>${status}
+        ${canJoin ? `<button class="join" data-act="ncard-join" data-id="${n.id}">${cu ? "Join Now" : "Join"}</button>` : ""}</div></div>`;
+    };
+    const grp = (k) => groups[k].length ? `<div class="ngrp"><h3>${k}</h3><div class="nlist">${groups[k].map(card).join("")}</div></div>` : "";
+    return `<aside class="lp"><div class="np-h"><h2>Notification</h2><button class="markr ${cu ? "c" : ""}" data-act="markread">${icon("check-check", "i12")}${cu ? "Mark all as read" : "Mark as read"}</button></div>
+      <div class="ntabs"><button class="${S.notifTab === "all" ? "on" : ""}" data-act="ntab" data-k="all">View all</button><button class="${S.notifTab === "unread" ? "on" : ""}" data-act="ntab" data-k="unread">Unread</button></div>
+      <div class="lp-scroll">${grp("Today")}${grp("Yesterday")}${list.length ? "" : `<div class="empty-up">No notifications</div>`}</div></aside>`;
+  };
+
+  /* ---------- render ---------- */
+  document.addEventListener("scroll", (evt) => { if (evt.target.id === "tg") S.scroll[S.mode] = evt.target.scrollTop; }, true);
+  const render = () => {
+    let html = sidebar();
+    const fullCal = S.left === "calendar" && S.view === "full";
+    if (S.left === "calendar") html += calPanel();
+    if (S.left === "notif") html += notifPanel();
+    html += fullCal ? calView() : map(S.left ? 408 : 72);
+    if (fullCal) html += morePop() + detailPop() + createPop();
+    else if (S.left === "calendar") html += detailPop() + createPop();
+    html += settingsPop() + dialogPop() + confirmPop();
+    $("#app").innerHTML = html;
+    const ntg = $("#tg");
+    if (ntg) ntg.scrollTop = S.scroll[S.mode] ?? 540;
+    paint();
+    positionPops();
+    syncControls();
+  };
+  const paint = () => { if (window.lucide) window.lucide.createIcons({ attrs: { "stroke-width": 2 } }); };
+
+  const stageRect = (el) => {
+    const sr = $("#stage").getBoundingClientRect(), r = el.getBoundingClientRect(), k = S.scale || 1;
+    return { left: (r.left - sr.left) / k, top: (r.top - sr.top) / k, right: (r.right - sr.left) / k, bottom: (r.bottom - sr.top) / k, width: r.width / k };
+  };
+  // Visible part of the stage inside the browser window, in stage px.
+  const viewBox = () => {
+    const sr = $("#stage").getBoundingClientRect(), k = S.scale || 1;
+    return { top: Math.max(16, -sr.top / k + 8), bottom: Math.min(H - 16, (window.innerHeight - sr.top) / k - 8) };
+  };
+  // Beside the anchor; if it would run past the bottom (of the stage or the window), open upward so it ends at the anchor's bottom.
+  const place = (pop, anchor, w) => {
+    if (!pop) return;
+    const h = pop.offsetHeight, vb = viewBox();
+    let left = anchor.right + 8;
+    if (left + w > W - 16) left = anchor.left - 8 - w;
+    if (left < 80) left = Math.min(W - w - 16, anchor.right + 8);
+    const limit = Math.max(vb.bottom, vb.top + h);
+    let top = anchor.top;
+    if (top + h > limit) top = (anchor.bottom ?? anchor.top) - h;
+    if (top + h > limit) top = limit - h;
+    top = Math.min(Math.max(16, top), H - 16 - h);
+    pop.style.left = `${Math.max(16, left)}px`;
+    pop.style.top = `${Math.max(16, top)}px`;
+    const r = pop.getBoundingClientRect();
+    if (r.top < 0 || r.bottom > window.innerHeight) pop.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  };
+  // The area a floating piece can use: the nearest clipping ancestor (scrolling form, settings modal, stage)
+  // cut down to what the browser window shows. Stage px.
+  const boundsOf = (el) => {
+    let p = el.parentElement;
+    while (p && p.id !== "stage") { const cs = getComputedStyle(p); if (cs.overflowX !== "visible" || cs.overflowY !== "visible") break; p = p.parentElement; }
+    const b = p ? stageRect(p) : { left: 0, top: 0, right: W, bottom: H }, vb = viewBox();
+    return { left: Math.max(b.left, 8), right: Math.min(b.right, W - 8), top: Math.max(b.top, vb.top), bottom: Math.min(b.bottom, vb.bottom) };
+  };
+  // Dropdown under a 42px field: open downward if it fits, otherwise upward when there is more room above,
+  // and cap its height to the room it got (it scrolls inside). Never let the edge cut it.
+  const fitDrop = (el) => {
+    el.style.top = ""; el.style.bottom = ""; el.style.maxHeight = "";
+    const field = stageRect(el.parentElement), bd = boundsOf(el.parentElement);
+    const want = el.offsetHeight, gap = 4;
+    const below = bd.bottom - field.bottom - gap, above = field.top - bd.top - gap;
+    if (want <= below) return;
+    const up = above > below;
+    if (up) { el.style.top = "auto"; el.style.bottom = `calc(100% + ${gap}px)`; }
+    const cssMax = parseFloat(getComputedStyle(el).maxHeight) || want;
+    el.style.maxHeight = `${Math.max(120, Math.floor(Math.min(cssMax, up ? above : below)))}px`;
+    el.dataset.flip = up ? "up" : "down";
+  };
+  // CSS tooltips (::after) sit centred under their icon; flip them so they stay inside the clipping area.
+  const tipProbe = document.createElement("span");
+  tipProbe.style.cssText = "position:fixed;visibility:hidden;font-size:12px;line-height:15px;padding:8px;white-space:nowrap;letter-spacing:-0.0516px;left:-9999px;top:0";
+  const fitTips = () => {
+    if (!tipProbe.isConnected) document.body.appendChild(tipProbe);
+    document.querySelectorAll("#stage .tip").forEach((t) => {
+      tipProbe.textContent = t.dataset.tip || "";
+      const w = tipProbe.offsetWidth, h = tipProbe.offsetHeight, r = stageRect(t), bd = boundsOf(t);
+      const mid = (r.left + r.right) / 2;
+      t.dataset.tipx = mid + w / 2 > bd.right ? "end" : mid - w / 2 < bd.left ? "start" : "";
+      t.dataset.tipy = r.bottom + 8 + h > bd.bottom && r.top - 8 - h >= bd.top ? "up" : "";
+    });
+  };
+  const positionPops = () => {
+    const mp = $("#more-pop");
+    if (mp && S.more) {
+      const cell = $(`.mc[data-day="${S.more.t}"]`);
+      if (cell) {
+        const r = stageRect(cell), h = mp.offsetHeight, vb = viewBox();
+        mp.style.left = `${r.left + (r.width - 167) / 2}px`;
+        let top = r.top + 8;
+        if (top + h > Math.max(vb.bottom, vb.top + h)) top = r.bottom - 8 - h;
+        mp.style.top = `${Math.max(16, Math.min(top, H - 16 - h))}px`;
+      }
+    }
+    const dp = $("#detail-pop");
+    if (dp && S.detail) {
+      let anchor = S.detail.rect;
+      if (!anchor) {
+        const el = (mp && mp.querySelector(`[data-id="${S.detail.id}"]`)) || $(`[data-ev="${S.detail.id}"]`) || $(`.cv [data-id="${S.detail.id}"]`) || $(`.lp [data-id="${S.detail.id}"]`);
+        anchor = el ? stageRect(el) : { left: 560, right: 560, top: 200 };
+        S.detail.rect = anchor;
+      }
+      place(dp, anchor, 340);
+    }
+    const dl = $("#dlg");
+    if (dl) { dl.style.left = `${(W - dl.offsetWidth) / 2}px`; dl.style.top = `${Math.max(16, (H - dl.offsetHeight) / 2)}px`; }
+    document.querySelectorAll("#stage .pk-cal, #stage .pk-list, #stage .gmenu:not([hidden])").forEach(fitDrop);
+    const pl = $(".pk-list");
+    if (pl) pl.scrollTop = Math.max(0, +pl.dataset.sel * TIME_ROW - 68);
+    const cp = $("#create-pop");
+    // Scroll inside the form only when it is taller than the stage; otherwise let dropdowns hang outside it.
+    if (cp) { cp.style.overflowY = "visible"; if (cp.offsetHeight >= 992) cp.style.overflowY = "auto"; }
+    if (cp && S.create) {
+      const draft = $("[data-draft]");
+      if (S.create.fixed || !draft) { cp.style.left = "416px"; cp.style.top = `${Math.max(16, Math.min(24, H - 16 - cp.offsetHeight))}px`; }
+      else place(cp, stageRect(draft), 340);
+      // the form moved — its dropdowns have to be measured again
+      cp.querySelectorAll(".pk-cal, .pk-list, .gmenu:not([hidden])").forEach(fitDrop);
+    }
+    fitTips();
+  };
+
+  const renderToasts = () => {
+    const now = Date.now();
+    $("#toasts").innerHTML = S.toasts.map((t) => {
+      const left = t.sticky ? "" : `<span class="tleft">หายเองใน ${Math.max(0, Math.ceil((t.until - now) / 1000))} วิ</span>`;
+      return `<div class="toast" data-tid="${t.id}"><div class="trow"><div class="tib" style="background:${t.box}"><span style="color:${t.color};display:grid">${icon(t.icon)}</span></div>
+        <div class="ttx">${t.title ? `<b>${esc(t.title)}</b>` : ""}<span>${esc(t.body)}</span></div><button class="tx" data-act="tclose" data-tid="${t.id}" aria-label="Close">${icon("x")}</button></div>
+        <div class="tbtns">${left}${t.buttons.map((b, i) => `<button class="${b.kind}" data-act="tbtn" data-tid="${t.id}" data-i="${i}">${esc(b.label)}</button>`).join("")}</div></div>`;
+    }).join("");
+    paint();
+  };
+  const renderLog = () => { $("#log").innerHTML = S.log.length ? S.log.join(" &nbsp;·&nbsp; ") : "กดปุ่ม <b>ส่ง Meeting Alert</b> หรือคลิกใน calendar ได้เลย — ทุกอย่างในกรอบด้านล่างกดได้"; };
+  const syncControls = () => {
+    const set = (id, v) => document.querySelectorAll(`#${id} button`).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === v)));
+    set("c-spec", S.spec); set("c-data", S.data); set("c-google", S.conn.google); set("c-outlook", S.conn.outlook); set("c-role", S.admin ? "admin" : "member");
+  };
+
+  let tseq = 0;
+  const toast = (t) => {
+    const dur = t.sticky ? 0 : (S.fast ? 10 : t.duration || 180) * 1000;
+    S.toasts.unshift({ ...t, id: ++tseq, until: Date.now() + dur });
+    S.toasts = S.toasts.slice(0, 4);
+    renderToasts();
+  };
+  const closeToast = (id) => { S.toasts = S.toasts.filter((t) => t.id !== id); renderToasts(); };
+  setInterval(() => {
+    const now = Date.now(), before = S.toasts.length;
+    S.toasts = S.toasts.filter((t) => t.sticky || t.until > now);
+    if (S.toasts.length !== before) { renderToasts(); return; }
+    S.toasts.forEach((t) => {
+      const el = document.querySelector(`.toast[data-tid="${t.id}"] .tleft`);
+      if (el) el.textContent = `หายเองใน ${Math.max(0, Math.ceil((t.until - now) / 1000))} วิ`;
+    });
+  }, 1000);
+
+  /* ---------- actions ---------- */
+  const openMeeting = (id, mode = "week") => {
+    const e = ev(id);
+    if (!e) return;
+    S.left = "calendar"; S.view = "full"; S.mode = mode; S.date = startOfDay(e.start); S.more = null; S.walk = null;
+    if (S.data !== "normal") S.data = "normal";
+    S.scroll[mode] = Math.max(0, (e.start.getHours() - 1) * HOUR);
+    S.detail = { id, rect: null };
+    render();
+  };
+  const joinRoom = (id) => {
+    const e = ev(id);
+    if (e.cancelled) { log(`Join บนการ์ดของ meeting ที่ถูกยกเลิก → พาไป Calendar แทน (EP-02)`); openMeeting(id); return; }
+    S.left = null; S.detail = null; S.more = null; S.walk = { room: e.room || "hall", phase: "walk" };
+    render();
+    log(`Join <b>${esc(e.title)}</b> → เดิน avatar ไป ${esc(e.loc)} (reuse <code>openMeetingLink</code>)`);
+    setTimeout(() => { if (S.walk) { S.walk.phase = "in"; render(); } }, 2500);
+  };
+  let nseq = 0;
+  const addNotif = (type, mid, extra = {}) => {
+    const e = ev(mid);
+    S.notifs.push({ id: `a${++nseq}`, seq: nseq, kind: "meeting", type, mid, at: new Date(S.now), unread: true, s: new Date(e.start), e: new Date(e.end), ...extra });
+    if (S.left !== "notif") S.badge += 1;
+  };
+  const meetingToast = (type, mid, count) => {
+    const e = ev(mid), cu = isClickup(), meta = NTYPE[type];
+    const boxes = { reminder: "rgba(45,182,255,0.2)", started: "rgba(88,214,141,0.2)", cancelled: "rgba(255,255,255,0.1)", rescheduled: "rgba(255,128,0,0.1)" };
+    const base = { icon: cu ? meta.icC : meta.icF, color: meta.color, box: boxes[type] };
+    if (type === "reminder") toast({ ...base, title: cu ? `🔔 ${e.title} เริ่มในอีก 5 นาที` : "Meeting starts in 5 minutes", body: cu ? `เริ่ม ${hm(e.start)} · ${e.loc}` : `${e.title}\n${hm(e.start)} · ${e.loc}`, buttons: [{ kind: "p", label: cu ? "เปิด Calendar" : "Open Calendar", run: () => openMeeting(mid) }] });
+    if (type === "started") toast({ ...base, title: cu ? `🎙 ${e.title} เริ่มแล้ว!` : "Meeting has started", body: cu ? `${e.loc} · มี ${e.inRoom || 0} คนรออยู่` : `${e.title}\n${hm(e.start)} · ${e.loc}`, buttons: cu ? [{ kind: "p", label: "Join Now", run: () => joinRoom(mid) }] : [{ kind: "s", label: "Later", run: () => {} }, { kind: "p", label: "Join meeting", run: () => joinRoom(mid) }] });
+    if (type === "cancelled") toast({ ...base, duration: 30, title: cu ? `🔄 ${e.title} ถูกยกเลิกแล้ว` : `${e.title} has been cancelled`, body: cu ? `เดิม ${dLabel(e.start)} ${hm(e.start)} - ${hm(e.end)}` : `Previously scheduled for ${dLabel(e.start)} at ${hm(e.start)} - ${hm(e.end)}`, buttons: [{ kind: "p", label: cu ? "เปิด Calendar" : "View Calendar", run: () => openMeeting(mid) }] });
+    if (type === "rescheduled") toast({ ...base, duration: 30, title: cu ? `🔄 ${e.title} ถูกเลื่อนแล้ว` : `${e.title} has been rescheduled`, body: cu ? `เวลาใหม่ ${dLabel(e.start)} ${hm(e.start)} - ${hm(e.end)}` : `New time: ${dLabel(e.start)} at ${hm(e.start)} – ${hm(e.end)}`, buttons: [{ kind: "p", label: cu ? "เปิด Calendar" : "View Calendar", run: () => openMeeting(mid) }] });
+    if (type === "missed") toast({ icon: cu ? "bell" : "video", color: "#2DB6FF", box: "rgba(45,182,255,0.2)", title: cu ? `คุณมี ${count} meeting alerts ที่พลาดไป` : `You missed ${count} meetings`, body: cu ? "ระหว่างที่คุณ offline มี meeting เริ่มไปแล้ว" : "You were offline when these meetings took place.", buttons: [{ kind: "p", label: cu ? "เปิด Calendar" : "View Calendar", run: () => openMeeting("standup-20") }] });
+  };
+  const recipients = (e) => (e.guests || []).length;
+  const fire = (kind) => {
+    if (kind === "syncfail") { S.syncWarn = true; S.left = "calendar"; log("API 429/500 → retry 30s → 2m → 5m ครบ 3 ครั้ง → banner เหลืองใน panel · events เดิมยังใช้ได้ · กด Sync now (full view) เพื่อลองใหม่"); render(); return; }
+    if (kind === "reset") { init(); S.toasts = []; render(); renderToasts(); renderLog(); return; }
+    if (kind === "reminder" || kind === "started") {
+      const e = ev("catchup");
+      const key = `${kind}:catchup:${+e.start}`;
+      S.now = new Date(+e.start - (kind === "reminder" ? 5 * 60000 : 0));
+      if (e.cancelled) { log(`ไม่ส่ง — meeting ถูกยกเลิกแล้ว`); render(); return; }
+      if (S.sent.has(key)) { log(`ข้าม: alert นี้ส่งไปแล้ว (dedupe <code>meeting_id, user_id, alert_type, start_at</code> · EP-03)`); render(); return; }
+      S.sent.add(key);
+      addNotif(kind, "catchup");
+      meetingToast(kind, "catchup");
+      log(`ส่ง ${kind === "reminder" ? "alert 5 นาทีก่อน" : "alert meeting เริ่ม"} <b>${esc(e.title)}</b> → ${recipients(e)} คน · badge +1`);
+      render(); return;
+    }
+    if (kind === "missed") {
+      if (S.sent.has("missed")) { log("ข้าม: alert ที่พลาดถูกส่งครบแล้ว (dedupe)"); return; }
+      S.sent.add("missed"); S.now = d(20, 10, 10);
+      ["checkin", "dsync", "standup-20"].forEach((id) => { S.notifs.push({ id: `a${++nseq}`, seq: nseq, kind: "meeting", type: "started", mid: id, at: new Date(ev(id).start), unread: true, s: ev(id).start, e: ev(id).end }); S.badge += 1; });
+      meetingToast("missed", null, 3);
+      log("กลับมา online — มี alert ค้าง 3 อัน (pending) → toast รวม 1 ใบ · panel ยังแยก 3 การ์ด · badge +3");
+      render(); return;
+    }
+    if (kind === "cancelled") {
+      const e = ev("oneonone");
+      if (e.cancelled) { log("ข้าม: ยกเลิกไปแล้ว"); return; }
+      addNotif("cancelled", "oneonone");
+      e.cancelled = true;
+      meetingToast("cancelled", "oneonone");
+      log(`ยกเลิก <b>${esc(e.title)}</b> → แจ้ง ${recipients(e)} คน · block เป็นสีเทา · Join ถูกซ่อน`);
+      render(); return;
+    }
+    if (kind === "rescheduled") {
+      const e = ev("workshop");
+      if (e.moved) { log("ข้าม: เลื่อนไปแล้ว"); return; }
+      e.start = d(23, 10); e.end = d(23, 12); e.moved = true;
+      addNotif("rescheduled", "workshop");
+      meetingToast("rescheduled", "workshop");
+      log(`เลื่อน <b>${esc(e.title.slice(0, 28))}…</b> → 23 July 10:00 · key ใหม่รวม start_at จึงส่ง alert ตามเวลาใหม่ได้`);
+      render();
+    }
+  };
+
+  const setData = (v) => {
+    S.data = v; S.detail = null; S.more = null;
+    S.toasts = S.toasts.filter((t) => !t.err);
+    if (v === "error" && !isClickup()) toast({ err: true, sticky: true, icon: "info", color: "#2DB6FF", box: "rgba(45,182,255,0.2)", title: "Couldn't load calendar events", body: "Please try again.", buttons: [{ kind: "p", label: "Try again", run: retry }] });
+    if (v === "empty" && S.mode === "month") S.mode = "week";
+    S.left = "calendar"; S.view = "full";
+    render();
+  };
+  const retry = () => {
+    S.toasts = S.toasts.filter((t) => !t.err); renderToasts();
+    S.data = "loading"; render();
+    setTimeout(() => { S.data = "normal"; render(); log("โหลดใหม่สำเร็จ"); }, 900);
+  };
+
+  /* ---------- events ---------- */
+  document.addEventListener("click", (evt) => {
+    const t = evt.target.closest("[data-act],[data-fire],.seg button");
+    const inStage = evt.target.closest("#stage");
+    if (evt.target.closest(".seg button")) {
+      const b = evt.target.closest(".seg button"), grp = b.parentElement.id;
+      if (grp === "c-spec") { S.spec = b.dataset.v; S.detail = null; S.more = null; render(); renderToasts(); }
+      if (grp === "c-data") setData(b.dataset.v);
+      if (grp === "c-google" || grp === "c-outlook") { setConn(grp === "c-google" ? "google" : "outlook", b.dataset.v); }
+      if (grp === "c-role") { S.admin = b.dataset.v === "admin"; render(); }
+      if (grp === "c-set") { S.dialog = null; S.create = null; openSettings(); }
+      return;
+    }
+    const cs = evt.target.closest("[data-case]");
+    if (cs) { const e = ev(cs.dataset.case); if (e) { S.settings = null; S.dialog = null; S.create = null; openMeeting(e.id); const st = $("#stage").getBoundingClientRect(); if (st.top < 0 || st.top > window.innerHeight * 0.6) $("#wrap").scrollIntoView({ behavior: "smooth", block: "start" }); } return; }
+    if (t && t.dataset.fire) { fire(t.dataset.fire); return; }
+    if (!inStage) return;
+    if (S.create && S.create.gopen && !evt.target.closest(".gfield")) { S.create.gopen = false; updateGuestMenu(); }
+    if (S.create && evt.target.closest(".gin")) { S.create.gopen = true; updateGuestMenu(); return; }
+    if (!t) {
+      const pt = pkT();
+      if (pt && pt.picker && !evt.target.closest(".pk")) { pt.picker = null; render(); return; }
+      if (evt.target.closest(".pop, .cm, .setm, .oa, .cfm") || S.confirm || S.dialog || S.settings) return;
+      if (S.create) { closeCreate(); return; }
+      if (S.detail || S.more) { S.detail = null; S.more = null; render(); }
+      return;
+    }
+    const a = t.dataset.act, id = t.dataset.id;
+    const popupOpen = () => {
+      if (S.create) { closeCreate(); return true; }
+      if (S.detail || S.more) { S.detail = null; S.more = null; render(); return true; }
+      return false;
+    };
+    switch (a) {
+      case "cell": if (!popupOpen()) openCreate(defaultStart(new Date(+t.dataset.t))); break;
+      case "slot": {
+        if (popupOpen()) break;
+        const r = t.getBoundingClientRect(), k = S.scale || 1;
+        const x = (evt.clientX - r.left) / k, y = (evt.clientY - r.top) / k;
+        if (x < 64) break;
+        const cols = +t.dataset.cols, colW = (1014 - 64) / cols;
+        const day = addDays(new Date(+t.dataset.d0), Math.min(cols - 1, Math.floor((x - 64) / colW)));
+        openCreate(new Date(+startOfDay(day) + Math.floor(y / (HOUR / 2)) * 30 * 60000));
+        break;
+      }
+      case "pk-open": {
+        const k = t.dataset.k, c = pkT();
+        c.picker = c.picker === k ? null : k;
+        if (c.picker === "date") c.cursor = new Date(c.start.getFullYear(), c.start.getMonth(), 1);
+        render(); break;
+      }
+      case "pk-mon": { const c = pkT(); c.cursor = new Date(c.cursor.getFullYear(), c.cursor.getMonth() + +t.dataset.n, 1); render(); break; }
+      case "pk-day": {
+        const c = pkT(), day = new Date(+t.dataset.t), len = c.end - c.start;
+        c.start = new Date(+startOfDay(day) + (c.start.getHours() * 60 + c.start.getMinutes()) * 60000);
+        c.end = new Date(+c.start + len); c.picker = null; if (c === S.create) S.date = startOfDay(day);
+        render(); break;
+      }
+      case "pk-room": S.create.room = t.dataset.v; S.create.picker = null; render(); break;
+      case "pk-time": {
+        const c = pkT(), v = t.dataset.v, at = new Date(+startOfDay(c.start) + (+v.slice(0, 2) * 60 + +v.slice(3)) * 60000);
+        if (t.dataset.k === "from") { const len = c.end - c.start; c.start = at; c.end = new Date(+at + Math.max(len, 15 * 60000)); }
+        else c.end = at;
+        c.picker = null; render(); break;
+      }
+      case "gadd": addGuest(t.dataset.g); break;
+      case "grem": if (!(S.create.fixedGuests && S.create.fixedGuests.has(t.dataset.g))) S.create.guests.delete(t.dataset.g); render(); break;
+      case "perm-t": S.create.permOpen = !S.create.permOpen; render(); break;
+      case "perm": S.create.perm[t.dataset.k] = !S.create.perm[t.dataset.k]; render(); break;
+      case "cp-close": closeCreate(); break;
+      case "cp-create": submitCreate(); break;
+      case "edit": openEdit(id); break;
+      case "del": case "cancel-m": openCancel(id); break;
+      case "resched": openResched(id); break;
+      case "dlg-close": S.dialog = null; render(); break;
+      case "dlg-ok": if (S.dialog.kind === "cancel") doCancel(S.dialog); else doResched(S.dialog); break;
+      case "decline": { const e = ev(id), me = e.guests.find((x) => x.id === "me"); me.rsvp = "no"; log(`ปฏิเสธเข้าร่วม <b>${esc(e.title)}</b> (EP-A) — ต้องมี RSVP ฝั่ง Zyra`); render(); break; }
+      case "ext": {
+        // The link itself opens the provider in a new tab; this toast only lets the demo play the sync-back.
+        const e = ev(id), pn = srcName(e.src), del = t.dataset.k === "delete";
+        toast({ duration: 30, icon: "external-link", color: "#2DB6FF", box: "rgba(45,182,255,0.2)", title: `เปิด ${pn} แล้ว`, body: del ? `ลบ "${e.title}" ใน ${pn} แล้ว Zyra จะ sync ตาม (Zyra ลบเองไม่ได้)` : `แก้ "${e.title}" ใน ${pn} แล้ว Zyra จะ sync ตาม`, buttons: del ? [{ kind: "p", label: "จำลอง: ลบที่ต้นทางแล้ว sync", run: () => {
+          S.events = S.events.filter((x) => x.id !== e.id); S.detail = null;
+          toast({ duration: 6, icon: "video-off", color: "#F03A3A", box: "rgba(240,58,58,0.2)", title: "Event deleted", body: `${e.title} has been deleted from your calendar.`, buttons: [] });
+          log(`ลบ <b>${esc(e.title)}</b> ที่ ${pn} → sync กลับมา → หายจาก calendar ใน Zyra (Figma sticky "ถ้า Delete จากข้างนอก = Calendar view ใน Zyra จะไม่โชว์")`);
+          render();
+        } }] : [] });
+        break;
+      }
+      case "set-close": S.settings = null; render(); break;
+      case "oauth": S.settings.oauth = { p: t.dataset.p, re: !!t.dataset.re }; S.settings.err = null; render(); break;
+      case "oa-allow": finishOauth(true); break;
+      case "oa-deny": finishOauth(false); break;
+      case "err-x": S.settings.err = null; render(); break;
+      case "disc": S.confirm = { kind: "disconnect", p: t.dataset.p }; render(); break;
+      case "cal-pick": S.settings.pick = { p: t.dataset.p, sel: new Set(S.calSel[t.dataset.p]), q: "" }; render(); break;
+      case "pick-t": { const pk = S.settings.pick, id = t.dataset.cal; if (pk.sel.has(id)) pk.sel.delete(id); else pk.sel.add(id); $("#pick-list").innerHTML = pickRows(pk); $("#pick-count").textContent = `${pk.sel.size} selected`; $('[data-act="pick-save"]').disabled = !pk.sel.size; paint(); break; }
+      case "pick-cancel": S.settings.pick = null; render(); break;
+      case "pick-save": {
+        const pk = S.settings.pick; S.calSel[pk.p] = new Set(pk.sel); S.settings.pick = null;
+        const names = PCALS[pk.p].filter(([id]) => pk.sel.has(id)).map((c) => c[1]);
+        toast({ duration: 6, icon: "check", color: "#58D68D", box: "rgba(88,214,141,0.2)", title: "Calendars saved", body: `Syncing ${names.length} calendar${names.length === 1 ? "" : "s"}: ${names.join(", ")}`, buttons: [] });
+        log(`บันทึกปฏิทินที่ sync (${pk.p === "google" ? "Google" : "Outlook"}): ${names.map(esc).join(", ")} — events ของปฏิทินที่ไม่ได้เลือกไม่แสดง`);
+        render(); break;
+      }
+      case "cf-no": S.confirm = null; render(); break;
+      case "cf-ok": if (S.confirm.kind === "discard") closeCreate(true); else doDisconnect(S.confirm.p); break;
+      case "sb": {
+        const k = t.dataset.k;
+        S.detail = null; S.more = null;
+        if (k === "calendar") { if (S.left === "calendar") S.left = null; else { S.left = "calendar"; S.view = "half"; S.walk = null; } }
+        else if (k === "bell") { if (S.left === "notif") S.left = null; else { S.left = "notif"; S.badge = 0; } }
+        else if (k === "map") S.left = null;
+        else if (k === "settings") { S.settings = {}; }
+        else log("เมนูนี้ไม่อยู่ใน POC");
+        render(); break;
+      }
+      case "expand": S.view = S.view === "full" ? "half" : "full"; S.detail = null; render(); break;
+      case "create": if (S.left !== "calendar") { S.left = "calendar"; S.view = "full"; } openCreate(defaultStart(S.date), { fixed: true }); break;
+      case "connect": openSettings(); break;
+      case "banner-x": S.bannerOff = true; log(isClickup() ? "ปิด banner" : "ปิด banner — ตาม Figma จะโผล่เตือนใหม่วันละครั้งถ้ายังไม่เชื่อม"); render(); break;
+      case "mini": S.date = new Date(+t.dataset.t); render(); break;
+      case "mini-nav": S.miniMonth = new Date(S.miniMonth.getFullYear(), S.miniMonth.getMonth() + +t.dataset.n, 1); render(); break;
+      case "cal": break;
+      case "mode": S.mode = t.dataset.k; S.detail = null; S.more = null; render(); break;
+      case "today": S.date = startOfDay(S.now); S.miniMonth = new Date(S.now.getFullYear(), S.now.getMonth(), 1); S.detail = null; S.more = null; render(); break;
+      case "nav": {
+        const n = +t.dataset.n;
+        S.date = S.mode === "month" ? new Date(S.date.getFullYear(), S.date.getMonth() + n, 1) : addDays(S.date, n * (S.mode === "week" ? 7 : 1));
+        S.detail = null; S.more = null; render(); break;
+      }
+      case "sync": {
+        if (S.syncing) break;
+        S.syncing = true; S.detail = null; render();
+        setTimeout(() => {
+          S.syncing = false;
+          const had = S.syncWarn;
+          if (S.conn.google !== "expired") S.syncWarn = false;
+          if (S.data === "loading") S.data = "normal";
+          render();
+          log(S.conn.google === "expired" ? "Sync now — token หมดอายุ ต้องเชื่อมต่อใหม่ก่อน" : had ? "Sync now สำเร็จ → banner หายเอง ไม่มี toast (Figma EP-03)" : "Sync now — อ่านใหม่ทั้งหมด");
+        }, 1200);
+        break;
+      }
+      case "retry": retry(); break;
+      case "toDay": S.date = new Date(+t.dataset.t); S.mode = "day"; S.detail = null; S.more = null; render(); break;
+      case "more": S.more = { t: +t.dataset.t }; S.detail = null; render(); break;
+      case "close-more": S.more = null; S.detail = null; render(); break;
+      case "ev": S.detail = { id, rect: stageRect(t) }; if (!t.closest("#more-pop")) S.more = null; render(); break;
+      case "close-detail": S.detail = null; render(); break;
+      case "join": joinRoom(id); break;
+      case "rsvp": {
+        const e = ev(S.detail.id), me = e.guests.find((x) => x.id === "me");
+        me.rsvp = t.dataset.r; log(`ตอบ RSVP: ${t.dataset.r} (Figma มี · ClickUp ไม่ได้พูดถึง)`); render(); break;
+      }
+      case "copy": {
+        const e = ev(S.detail.id);
+        try { navigator.clipboard.writeText(`https://${e.link}`).catch(() => {}); } catch (_) { /* clipboard blocked */ }
+        S.copied = e.id; render(); setTimeout(() => { S.copied = null; if (S.detail) render(); }, 1200); break;
+      }
+      case "ntab": S.notifTab = t.dataset.k; render(); break;
+      case "markread": S.notifs.forEach((n) => (n.unread = false)); render(); break;
+      case "ncard-join": { evt.stopPropagation(); const n = S.notifs.find((x) => x.id === id); n.unread = false; joinRoom(n.mid); break; }
+      case "ncard": { const n = S.notifs.find((x) => x.id === id); n.unread = false; openMeeting(n.mid); log("คลิกการ์ด → Calendar (Week) วันของ meeting + Event detail"); break; }
+      case "tclose": closeToast(+t.dataset.tid); break;
+      case "tbtn": {
+        const tt = S.toasts.find((x) => x.id === +t.dataset.tid);
+        if (tt) { const b = tt.buttons[+t.dataset.i]; closeToast(tt.id); b.run(); }
+        break;
+      }
+    }
+  });
+  document.addEventListener("change", (evt) => {
+    const cc = evt.target.dataset && evt.target.dataset.cc;
+    if (cc && S.create) {
+      const c = S.create, v = evt.target.value;
+      const at = (day, t) => new Date(+startOfDay(day) + (+t.slice(0, 2) * 60 + +t.slice(3)) * 60000);
+      if (cc === "date" && v) { const [y, mo, dd] = v.split("-").map(Number), day = new Date(y, mo - 1, dd), len = c.end - c.start; c.start = at(day, hm(c.start)); c.end = new Date(+c.start + len); S.date = day; }
+      if (cc === "from") { const len = c.end - c.start; c.start = at(c.start, v); c.end = new Date(+c.start + Math.max(len, 30 * 60000)); }
+      if (cc === "to") c.end = at(c.start, v);
+      if (cc === "allday") c.allDay = evt.target.checked;
+      if (cc === "room") c.room = v;
+      render();
+      return;
+    }
+    const c = evt.target.closest('[data-act="cal"]');
+    if (c) { S.cals[c.dataset.k] = c.checked; render(); }
+    if (evt.target.id === "dlg-notify" && S.dialog) S.dialog.notify = evt.target.checked;
+    if (evt.target.id === "c-syncfail") S.syncFail = evt.target.checked;
+    if (evt.target.id === "c-fast") { S.fast = evt.target.checked; S.toasts.forEach((t) => { if (!t.sticky) t.until = Math.min(t.until, Date.now() + (S.fast ? 10000 : 180000)); }); renderToasts(); }
+  });
+  document.addEventListener("input", (evt) => {
+    if (evt.target.id === "dlg-reason" && S.dialog) { S.dialog.reason = evt.target.value; const c = $("#dlg-cnt"); if (c) c.textContent = S.dialog.reason.length; }
+  });
+  document.addEventListener("focusin", (evt) => {
+    if (evt.target.id === "cp-guest" && S.create) { S.create.gopen = true; S.create.ghl = 0; updateGuestMenu(); }
+  });
+  document.addEventListener("input", (evt) => {
+    if (evt.target.id === "pick-q" && S.settings && S.settings.pick) { S.settings.pick.q = evt.target.value; $("#pick-list").innerHTML = pickRows(S.settings.pick); paint(); return; }
+    if (evt.target.id === "cp-guest" && S.create) { S.create.gq = evt.target.value; S.create.gopen = true; S.create.ghl = 0; updateGuestMenu(); return; }
+    const cf = evt.target.dataset && evt.target.dataset.cf;
+    if (cf && S.create) {
+      S.create[cf] = evt.target.value;
+      const btn = $("#cp-create"); if (btn) btn.disabled = !canCreate();
+      if (cf === "title") document.querySelectorAll("[data-draft] .tt span, span.chip[data-draft] > span").forEach((el) => (el.textContent = S.create.title || "No title"));
+      return;
+    }
+    if (evt.target.id === "q") {
+      S.search = evt.target.value; const pos = evt.target.selectionStart; render();
+      const q = $("#q"); q.focus(); q.setSelectionRange(pos, pos);
+    }
+  });
+  document.addEventListener("keydown", (evt) => {
+    if (evt.target.id === "cp-guest" && S.create && ["ArrowDown", "ArrowUp", "Enter"].includes(evt.key)) {
+      const opts = guestOptions(S.create);
+      evt.preventDefault();
+      if (!opts.length) return;
+      if (evt.key === "Enter") { addGuest(opts[Math.min(S.create.ghl || 0, opts.length - 1)]); const gi = $("#cp-guest"); if (gi) gi.focus({ preventScroll: true }); return; }
+      S.create.gopen = true;
+      S.create.ghl = ((S.create.ghl || 0) + (evt.key === "ArrowDown" ? 1 : -1) + opts.length) % opts.length;
+      updateGuestMenu();
+      const h = $("#gmenu .hl"); if (h) h.scrollIntoView({ block: "nearest" });
+      return;
+    }
+    if (evt.key === "Escape" && S.create && S.create.gopen) { S.create.gopen = false; updateGuestMenu(); return; }
+    if (evt.key === "Escape") {
+      const pt = pkT();
+      if (S.confirm) { S.confirm = null; render(); }
+      else if (pt && pt.picker) { pt.picker = null; render(); }
+      else if (S.dialog) { S.dialog = null; render(); }
+      else if (S.settings) { if (S.settings.pick) { S.settings.pick = null; render(); } else if (S.settings.oauth) finishOauth(false); else { S.settings = null; render(); } }
+      else if (S.create) closeCreate();
+      else if (S.detail || S.more) { if (S.detail) S.detail = null; else S.more = null; render(); }
+    }
+    if (evt.key === "Enter" && evt.target.id === "cp-title") { evt.preventDefault(); submitCreate(); }
+    if ((evt.key === "Enter" || evt.key === " ") && evt.target.matches('[data-act="ncard"]')) { evt.preventDefault(); evt.target.click(); }
+  });
+
+  const fit = () => {
+    const wrap = $("#wrap"), k = Math.min(1, wrap.clientWidth / W);
+    S.scale = k;
+    $("#stage").style.transform = `scale(${k})`;
+    wrap.style.height = `${H * k}px`;
+  };
+  window.addEventListener("resize", () => { fit(); positionPops(); });
+  fit(); render(); renderToasts(); renderLog();
+  window.addEventListener("load", paint);
+})();
+</script>
