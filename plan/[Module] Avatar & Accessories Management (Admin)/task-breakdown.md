@@ -14,7 +14,7 @@
 | D2 | พื้นไม่โปร่งใส = error หรือ warning | API-2, APP-4 | §12 |
 | D3 | สถานะเริ่มต้นตอนสร้าง | API-3, APP-4 | §12 |
 | D4 | 18 หมวด → ขยาย data contract ฝั่ง member | ไม่บล็อก admin · บล็อก member v2 | §2 |
-| D5 | Hair / Facial Hair ต้องมีชีทนั่งไหม | API-2 (`CATEGORY_REQUIRES_SIT`) | §2 |
+| ~~D5~~ ✅ | ~~Hair / Facial Hair ต้องมีชีทนั่งไหม~~ **ตอบแล้ว (Ten 2026-10-22):** บังคับชีทนั่ง `hair`, `facial_hair`, `shoes` เพิ่ม — ตรงกับไฟล์ศิลปิน (ผม 5 · หนวด 3 · รองเท้า 2 มีชีทนั่งครบ) · zyra-api#187 / zyra-app#646 | API-2 (`CATEGORY_REQUIRES_SIT`) | §2 |
 | D6 | สร้าง `tb_avatar_part` ใน PR ไหน (AvatarCustomization A1 หรือ API-1) | API-1 | §4.1 |
 
 งานที่เริ่มได้ทันทีโดยไม่รอ: **APP-1** (ยก renderer จาก POC — ค่าขนาดเป็น constant) และ **APP-2** (หน้า shell + category panel มีโค้ดอยู่แล้วใน branch `feat/accessory-category-panel`)

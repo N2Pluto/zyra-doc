@@ -314,7 +314,7 @@ input border `#F03A3A` · ข้อความ Caption 1 `#F03A3A` ชิดซ
 | U2 | Tag Hidden ใน card — ต้องการ node / ค่าสีจริง | Designer |
 | U3 | ไม่โปร่งใส = toast error (Figma) หรือ warning เหลืองไม่บล็อก (SC EP-01) | PM |
 | U4 | หมวดในดีไซน์มี 18 ตัว แต่ data contract ฝั่ง user ([data/avatar-outfit-data.json](data/avatar-outfit-data.json)) มี 11 slot ตาม prototype — ต้อง map ให้ตรงกัน (เช่น Outer, Dress, Mask, Belt, Bag, Back, Companion ยังไม่มี slot) | PM + Ten |
-| U5 | Hair / Eyes / หมวดอื่นอัปโหลด Walking อย่างเดียว (sticky) แต่ไฟล์จริงใน `demo file/custom avatar` มีชีทนั่งของผมและหนวด — เพิ่มช่อง Sitting ให้หมวดเหล่านี้ไหม | PM + ศิลปิน |
+| ~~U5~~ ✅ | ~~Hair / Eyes / หมวดอื่นอัปโหลด Walking อย่างเดียว — เพิ่มช่อง Sitting ไหม~~ → ฟอร์มขึ้นช่อง Sitting (บังคับ) ให้ Hair, Facial Hair, Shoes ด้วย · Eyes / Face / Hat / Glasses คง Walking อย่างเดียว (Ten 2026-10-22) | Ten |
 | U6 | ตัวเลือก sort มีแค่ "Latest" ใน Figma · SC HP-01 ต้องการ ใหม่สุด / เก่าสุด / ชื่อ A-Z / ใช้มากสุด | Designer |
 | U7 | Overlay หลัง modal ไม่มีค่าสีใน Figma | Designer |
 | U8 | icon Map management ใน Figma ไม่ตรง lucide ตัวไหน | Designer |

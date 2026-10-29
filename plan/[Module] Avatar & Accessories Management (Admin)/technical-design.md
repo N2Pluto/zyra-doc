@@ -37,15 +37,15 @@ Figma มี 18 หมวด · data contract ฝั่ง member มี 11 slot
 
 | กลุ่ม | category (ค่าใน DB) | ชีท | สีเปลี่ยนได้ | วาดทับลำดับ (ต่ำ→สูง) |
 |---|---|---|---|---|
-| Head | `hair` | walk (+sit ตาม U5) | hair | 9 |
+| Head | `hair` | walk + sit | hair | 9 |
 | | `eyes` | walk | eye | 2 |
 | | `face` | walk | — (สีตายตัว) | 3 |
-| | `facial_hair` | walk (+sit ตาม U5) | hair | 7 |
+| | `facial_hair` | walk + sit | hair | 7 |
 | Body | `top` | walk + sit | primary, secondary | 5 |
 | | `outer` | walk + sit | primary, secondary | 6 |
 | | `dress` | walk + sit | primary, secondary | 5 (ทับ top+bottoms) |
 | | `bottoms` | walk + sit | primary, secondary | 4 |
-| | `shoes` | walk | primary, secondary | 4 |
+| | `shoes` | walk + sit | primary, secondary | 4 |
 | | `special_costume` | walk + sit **ต่อ variant** | — (สีตามไฟล์) | 5 (ทับ top+bottoms) |
 | Accessory | `hat` | walk | primary, secondary | 11 |
 | | `glasses` | walk | primary | 10 |
@@ -58,7 +58,7 @@ Figma มี 18 หมวด · data contract ฝั่ง member มี 11 slot
 
 - base (`body`) ไม่อยู่ในหน้า admin — เป็นไฟล์ใน repo ตามมติเดิม (ลำดับ 0)
 - ลำดับวาดเก็บเป็น constant `CATEGORY_LAYER` ตัวเดียว ใช้ทั้ง Go (bake) และ TS (preview) · เทส parity ตาม test-plan §3.2
-- "ต้องมีชีทนั่ง" เก็บเป็น `CATEGORY_REQUIRES_SIT` — ค่าเริ่มต้นตาม sticky Figma (`top`, `outer`, `dress`, `bottoms`, `special_costume`)
+- "ต้องมีชีทนั่ง" เก็บเป็น `CATEGORY_REQUIRES_SIT` (Go `RequiresSit` / TS `requiresSit`) = `hair`, `facial_hair`, `top`, `outer`, `dress`, `bottoms`, `shoes`, `special_costume` — sticky Figma 5 หมวด + 3 หมวดที่ไฟล์ศิลปินมีชีทนั่ง (Ten 2026-10-22 · D5) · หมวดอื่น (eyes, face, hat, glasses, …) walk อย่างเดียว · ชิ้นบนหัวที่ไม่มีชีทนั่งเลื่อนตามหัว (§3)
 - `dress` / `special_costume` มี `occupies = [top, bottoms]` (ใส่แล้วสองช่องนั้นว่าง)
 
 ---
@@ -73,6 +73,15 @@ Figma มี 18 หมวด · data contract ฝั่ง member มี 11 slot
 | alpha | 0 หรือ 255 เท่านั้น — ค่ากลาง = warning | prototype |
 | พื้นโปร่งใส | ต้องมี alpha channel และมี pixel โปร่งอย่างน้อย 1 จุด → ไม่ผ่าน = `NOT_TRANSPARENT` (error ตาม Figma · ux-ui-plan U3) | Figma toast |
 | สี key | scan ตอนอัปโหลด เก็บ `color_channels` | AvatarCustomization §3.3 |
+
+**ท่านั่งของชิ้นบนหัว (2026-10-22 · zyra-app#645):** `hair`, `eyes`, `face`, `facial_hair`, `hat`, `glasses`, `mask` (`followsHead`) **ไม่ต้องมีชีทนั่ง** — ตอนนั่งใช้เฟรมยืน (walk col 1) แล้วเลื่อนตามหัวด้วย `HEAD_SIT_SHIFT[ทิศ][คอลัมน์ sit]` (`lib/avatar-part/constants.ts`) · ค่าวัดจากไฟล์จริง: ชีทนั่งของหนวดที่ศิลปินวาด = เฟรมยืนเลื่อนตามตารางนี้พอดี (ต่างกัน 0 พิกเซล) และหัวของตัว base เลื่อนเท่ากัน · ถ้าชิ้นมีชีทนั่งของตัวเองใช้ชีทนั้นก่อน · ชิ้นส่วนลำตัว (shoes, neck, belt, bag, back, companion) ไม่เลื่อน · **bake ฝั่ง server (AvatarCustomization) ต้องใช้ตารางเดียวกัน**
+
+| ทิศ | sit col 0 | col 1 | col 2 (นั่ง) | col 3 |
+|---|---|---|---|---|
+| down | (1, −1) | (0, 1) | (0, −1) | (0, 1) |
+| left | (0, 2) | (1, 3) | (1, 0) | (1, 3) |
+| right | (−1, 3) | (−1, 0) | (−1, 3) | (0, 2) |
+| up | (2, −1) | (0, 1) | (0, −1) | (0, 1) |
 
 Validator (Go) `internal/service/avatar_part_validate.go` — ต่อยอดของเดิม `readAndValidatePNG` / `avatarPNGMagic` ใน `avatar_service.go` ใช้ `image/png` + `golang.org/x/image` (มีใน go.mod แล้ว)
 
@@ -328,7 +337,7 @@ i18n/messages-scope.ts                             + AdminAccessoryManagement �
 | D2 | พื้นไม่โปร่งใส = error หรือ warning | ข้อความ + test AC-U-10 | PM (U3) |
 | D3 | สถานะเริ่มต้น Active หรือ Hidden | default ของฟอร์ม + API | PM |
 | D4 | 18 หมวด → ขยาย data contract ฝั่ง member | member เลือกชิ้นหมวดใหม่ไม่ได้ | PM + Ten (U4) |
-| D5 | Hair / Facial Hair ต้องมีชีทนั่งไหม | `CATEGORY_REQUIRES_SIT` | PM + ศิลปิน (U5) |
+| ~~D5~~ ✅ | ~~Hair / Facial Hair ต้องมีชีทนั่งไหม~~ **ตอบแล้ว (Ten 2026-10-22):** บังคับชีทนั่ง `hair`, `facial_hair`, `shoes` เพิ่ม — ตรงกับไฟล์ศิลปิน (ผม 5 · หนวด 3 · รองเท้า 2 มีชีทนั่งครบ) · zyra-api#187 / zyra-app#646 | `CATEGORY_REQUIRES_SIT` | Ten |
 | D6 | AvatarCustomization A1 (สร้าง tb_avatar_part) ทำก่อนหรือรวมกับ migration 118 | ลำดับ PR | Ten |
 | R1 | bake ต่อคนใน reset job — 892 คนอาจช้า | admin รอ progress นาน | วัดตอน API-5 · dedupe ด้วย bake_hash ช่วยได้มาก |
 | R2 | `PREVIEW_CHAIR_OBJECT_ID` ต่างกันแต่ละ env | preview ไม่มีเก้าอี้ | ใส่ใน env build (`NEXT_PUBLIC_PREVIEW_CHAIR_ID`) หรือ fallback ไม่วาดเก้าอี้ |
