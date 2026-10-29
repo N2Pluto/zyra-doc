@@ -1,5 +1,6 @@
 # SC-MTG-CAL-03 · Meeting Alert — UX/UI Plan (from Figma)
 
+> **⚠️ 2026-10-29 — copy ใหม่:** ภาพหน้าจอล่าสุดที่ผู้ใช้วางไว้ใน `zyra/ux-ui/` เปลี่ยน "Meeting" → **"Event"** ทุกจุด + toast แสดงช่วงเวลา (`10:00 - 10:30 · Design Room`) + cancel body "Scheduled : …" — โค้ดยึดภาพใหม่ (ดู [progress.md](progress.md)) · §2.4 / §4.6 ด้านล่างยังเป็นค่าเดิม ยังไม่ได้ดึง Figma ซ้ำ
 > **สถานะ (2026-10-27):** ดึงจาก Figma ครบ 6 section (MA-EP-03 ไม่มี Figma) · ยังไม่ implement · ยังไม่ได้ review กับ Design/PM
 > **ขอบจอบัง / กดแล้วหาย:** toast ซ้อนหลายใบ + Notification panel อยู่ใน checklist [Calendar Display ux-ui-plan §12](<../[Feature] Meeting — Calendar Display/ux-ui-plan.md#12-ขอบจอบัง--กดแล้วหาย--checklist-ตอนทำจริง-2026-10-29>)
 > **Figma file:** [Zyra design (More Organised ver.)](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-) (`Map8gX0L2hk7HnkaFRfhtj`) · ดึงผ่าน Figma MCP · ไม่ได้ download asset

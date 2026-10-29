@@ -1,6 +1,6 @@
 # Meeting Alert — อ่านตรงไหนก่อน (สำหรับ dev ที่รับงานนี้)
 
-> **สถานะ (2026-10-29):** Ten แยก SC-MTG-CAL-03 Meeting Alert ให้ทำ**ก่อน** Calendar Integration (CAL-01) / Calendar Display (CAL-02) · ยังไม่ implement
+> **สถานะ (2026-10-29):** Ten แยก SC-MTG-CAL-03 Meeting Alert ให้ทำ**ก่อน** Calendar Integration (CAL-01) / Calendar Display (CAL-02) · **รอบ 1 implement แล้ว ยังไม่ commit / ยังไม่ live-test → [progress.md](progress.md)**
 > **เอกสารนี้:** ลำดับการอ่าน — อ่านส่วนไหน / ข้ามส่วนไหน · เนื้อหาจริงอยู่ในไฟล์ที่ลิงก์ ไม่ได้คัดลอกมา
 > **ClickUp:** [86d3nbdqn](https://app.clickup.com/t/86d3nbdqn) · **Figma:** file `Map8gX0L2hk7HnkaFRfhtj` page "Meeting Alert" (node ต่อ scenario อยู่ใน [spec §2](spec.md))
 

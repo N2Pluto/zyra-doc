@@ -3,6 +3,7 @@
 > **สถานะ (2026-10-29):** Ten แยก Meeting Alert ให้ dev อีกคนทำ**ก่อน** Calendar Integration (CAL-01) / Calendar Display (CAL-02) · เอกสารนี้ = ขอบเขต + ใครเป็นเจ้าของส่วนที่ใช้ร่วมกัน + ลำดับ PR + คำถามที่ยังเปิด · **ยังไม่ implement**
 > **Repo ที่กระทบ:** `zyra-api` · `zyra-app` · (`zyra-ws` / `zyra-notifications` ไม่ต้องแก้)
 > **โค้ดที่อ้าง:** gap ละเอียดอยู่ที่ [code-gap.md](code-gap.md) (ตรวจ 2026-10-27 ที่ app `22fc0d6d` / api `aaf5d7c`) · ตรวจซ้ำ 2026-10-29: origin/develop = app `59a86574` (+21 commit) / api `e083e65` (+2 commit) — **ไม่มี commit แตะไฟล์ของฟีเจอร์นี้** (toast, notification panel, calendar, chat store, notification/calendar service, `postgres.go`) · migration ล่าสุด = `121` → ของใหม่ = **`122`**
+> **2026-10-29 รอบ 1 implement แล้ว (ยังไม่ commit)** → [progress.md](progress.md) · §4 ด้านล่างอัปเดตตามโค้ดจริง (ต่างจากร่าง 3 จุด: `meeting_superseded_at`, `meeting_zone_id` แทน `meeting_join_url`, `alert_type` 4 ค่า)
 > **อ่านคู่กัน:** [spec.md](spec.md) (requirement) · [ux-ui-plan.md](ux-ui-plan.md) (ค่า Figma ทุกจอ) · [POC](<../[Feature] Meeting — Calendar Display/poc/index.html>) ปุ่ม "ส่ง Meeting Alert" · checklist ขอบจอ / กดแล้วหาย → [Calendar Display ux-ui-plan §12](<../[Feature] Meeting — Calendar Display/ux-ui-plan.md#12-ขอบจอบัง--กดแล้วหาย--checklist-ตอนทำจริง-2026-10-29>)
 
 ---
@@ -87,12 +88,12 @@ Figma ไม่ได้วาด หรือเป็นเรื่อง log
 |---|---|---|---|
 | Q1 | toast ค้างกี่นาที (HP-02 เขียนว่านานกว่าแต่ตัวเลขเท่ากัน) | 3 นาทีทั้งคู่ (`duration: 180000`) | spec §6 #1 |
 | Q2 | "Later" ทำอะไร | ปิด toast เหมือน X (notification ยังอยู่ใน panel) | ux A5 |
-| Q3 | เลื่อนเวลาแล้วส่ง 5 นาที / เริ่ม ใหม่ตามเวลาใหม่ไหม | **ส่งใหม่** → ใส่ `meeting_start_at` ใน UNIQUE key (**ต้องตอบก่อน API-1** เพราะเปลี่ยน schema) | spec §6 #3 |
+| Q3 | เลื่อนเวลาแล้วส่ง 5 นาที / เริ่ม ใหม่ตามเวลาใหม่ไหม | ✅ **ตัดสินแล้ว (ผู้ใช้ 2026-10-29): ส่งใหม่** → ใส่ `meeting_start_at` ใน UNIQUE key (**ต้องตอบก่อน API-1** เพราะเปลี่ยน schema) | spec §6 #3 |
 | Q4 | สร้าง meeting กระชั้น (เหลือ 2 นาที) copy ว่าอะไร | "Meeting starts in 2 minutes" (คำนวณนาทีจริง) · เหลือ < 1 นาที → ส่งแบบ "เริ่มแล้ว" | spec §6 #5, EC-01 |
 | Q5 | Google / Outlook event ได้ alert ไหม | ไม่ — Zyra meeting เท่านั้น | spec §6 #7, code-gap C.12 |
 | Q6 | ใครได้รับ | organiser + guest ทุกคน (Zyra ไม่มี RSVP) | spec §6 #8, C.11 |
-| Q7 | เปิด panel แล้ว badge = 0 ไหม (ClickUp) — โค้ดตอนนี้แค่ซ่อน | คงแบบเดิม (badge = unread) เพราะ Figma มี tab Unread ที่ต้องใช้สถานะอ่าน | spec §6 #10, ux A6, C.7 |
-| Q8 | ประวัติ 7 วัน | ไม่ลบข้อมูล · panel เพิ่ม load-more (API รองรับ `before` แล้ว) | spec §6 #15, ux A13 |
+| Q7 | เปิด panel แล้ว badge = 0 ไหม (ClickUp) — โค้ดตอนนี้แค่ซ่อน | ✅ **ทำแล้ว (ผู้ใช้สั่ง 2026-10-29):** badge นับเฉพาะ unread ที่มาหลังเปิด panel ครั้งล่าสุด (seen time ต่อ workspace ในเบราว์เซอร์) · tab Unread ยังใช้ `is_read` | spec §6 #10, ux A6, C.7 |
+| Q8 | ประวัติ 7 วัน | ✅ **ทำแล้ว 2026-10-29:** ไม่ลบข้อมูล · panel โหลดหน้าถัดไปเมื่อเลื่อนถึงท้าย (`before`) | spec §6 #15, ux A13 |
 | Q9 | meeting ทั้งวัน (all-day) ได้ alert ไหม | ไม่ส่ง | code-gap A.9 EC-03 |
 | Q10 | mobile / Lite ไม่มีหน้า Calendar | ส่ง toast ได้ แต่ซ่อนปุ่ม "Open / View Calendar" | X8 |
 | Q11 | meeting ไม่ได้ผูกห้อง ("Any available meeting room") กด Join แล้วไปไหน | ปิด toast + เปิด Calendar ที่ meeting นั้น (ไม่เดินไปไหน) | code-gap A.3 HP02-3 |
@@ -114,12 +115,13 @@ ALTER TABLE tb_notification
   ADD COLUMN meeting_start_at      TIMESTAMPTZ NULL,  -- snapshot ตอนส่ง (meeting อาจถูกลบ / เลื่อนทีหลัง)
   ADD COLUMN meeting_end_at        TIMESTAMPTZ NULL,
   ADD COLUMN meeting_prev_start_at TIMESTAMPTZ NULL,  -- เฉพาะ rescheduled / cancelled: เวลาเดิม
-  ADD COLUMN meeting_prev_end_at   TIMESTAMPTZ NULL;
+  ADD COLUMN meeting_prev_end_at   TIMESTAMPTZ NULL,
+  ADD COLUMN meeting_superseded_at TIMESTAMPTZ NULL;  -- (ของจริง) set บน reminder / started เดิมเมื่อยกเลิก / เลื่อน → การ์ดเลิกแสดง Join
 
 CREATE TABLE IF NOT EXISTS tb_meeting_alert_log (
   meeting_id       UUID        NOT NULL REFERENCES tb_calendar_meeting(id) ON DELETE CASCADE,
   user_id          VARCHAR     NOT NULL REFERENCES tb_user(id) ON DELETE CASCADE,  -- tb_user.id เป็น VARCHAR
-  alert_type       TEXT        NOT NULL,  -- reminder_5m | started
+  alert_type       TEXT        NOT NULL,  -- (ของจริง) reminder | started | cancelled | rescheduled
   meeting_start_at TIMESTAMPTZ NOT NULL,  -- Q3: อยู่ใน key → เลื่อนเวลาแล้วส่งใหม่ได้
   notification_id  UUID        NULL REFERENCES tb_notification(id) ON DELETE SET NULL,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -144,7 +146,8 @@ CREATE INDEX IF NOT EXISTS idx_calendar_meeting_start ON tb_calendar_meeting (st
   "calendar_meeting_id": "…",
   "meeting_start_at": "2026-10-30T03:00:00Z", "meeting_end_at": "2026-10-30T03:30:00Z",
   "meeting_prev_start_at": null, "meeting_prev_end_at": null,
-  "meeting_join_url": "/workspace/{ws}/play?zone_id={zone}"
+  "meeting_zone_id": "…",               // (ของจริง) ห้องปัจจุบันของ meeting — app ประกอบ /workspace/{ws}/play?zone_id= เอง
+  "meeting_superseded_at": null
 }
 ```
 

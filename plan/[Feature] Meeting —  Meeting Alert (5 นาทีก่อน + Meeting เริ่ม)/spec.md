@@ -1,9 +1,10 @@
 # SC-MTG-CAL-03 · Meeting — Meeting Alert (5 นาทีก่อน + Meeting เริ่ม)
 
 > **สถานะ (2026-10-27):** **Spec ถอดจาก ClickUp + ดึง Figma ครบ 6 section แล้ว ([ux-ui-plan.md](ux-ui-plan.md)) — ยังไม่ implement · ยังไม่ได้ตรวจโค้ด** · Figma ขัดกับ ClickUp 20 จุด → [ux-ui-plan §7](ux-ui-plan.md#7-figma-vs-clickup--ข้อขัดแย้งที่ต้องถาม)
-> **ส่งต่อ dev (2026-10-29):** ทำก่อน CAL-01 / CAL-02 — เริ่มที่ [task-breakdown.md](task-breakdown.md)
+> **ส่งต่อ dev (2026-10-29):** ทำก่อน CAL-01 / CAL-02 — เริ่มที่ [task-breakdown.md](task-breakdown.md) · **implement รอบ 1 แล้ว (ยังไม่ commit) → [progress.md](progress.md)**
 > **กติกากลาง 3 ฟีเจอร์ (ผู้ใช้ตัดสิน 2026-10-29):** Figma กับ ClickUp ขัดกัน → **ยึด Figma** ยกเว้นข้อที่ผู้ใช้ตัดสินเป็นอย่างอื่น (ดู [CAL-01 spec §6.1](<../[Feature] Meeting — Calendar Integration/spec.md>)) · ข้อที่มีแค่ฝั่งเดียว (Figma ไม่ได้วาด) ยังเป็นคำถามเปิด จนกว่าจะตัดสิน
-> **วันที่ถอด:** 2026-10-27 · **ClickUp:** [[Feature] Meeting — Meeting Alert (5 นาทีก่อน + Meeting เริ่ม)](https://app.clickup.com/t/86d3nbdqn) (`pending` · priority High · tag `client` · assignee P A, Ponlawat Lueakaew, rif fullstack · creator Moss Pm · สร้าง 2026-07-10 · แก้ล่าสุด 2026-10-27)
+> **วันที่ถอด:** 2026-10-27 · **ClickUp:** [[Feature] Meeting — Meeting Alert (5 นาทีก่อน + Meeting เริ่ม)](https://app.clickup.com/t/86d3nbdqn) (`in progress` · priority High · tag `client` · custom field Desktop ✓ · assignee P A, Ponlawat Lueakaew, rif fullstack · creator Moss Pm · สร้าง 2026-07-10 · due 2026-10-30 · แก้ล่าสุด 2026-10-29)
+> **ตรวจ ClickUp ซ้ำ 2026-10-29:** เนื้อหา parent + 7 subtask **ตรงกับ §1–§5 ทุกคำ** (ไม่มี requirement ใหม่) · เปลี่ยนแค่ metadata: ทุกตัว `pending` → `in progress` · ทุก subtask assign ให้ rif fullstack · parent มี due date · ยังไม่มี comment / attachment / checklist
 > **ฟีเจอร์คู่กัน:** [SC-MTG-CAL-02 Calendar Display](<../[Feature] Meeting — Calendar Display/spec.md>) — กด alert แล้วเปิด Calendar View + event detail popup (CLDD-HP-05) · ทั้งสองพึ่ง [SC-MTG-CAL-01 Calendar Integration](../MeetingCalendarIntegration/spec.md) (scheduled meeting)
 > **CAL-01 (ใช้หน้าจอร่วมกัน):** [Calendar Integration spec](<../[Feature] Meeting — Calendar Integration/spec.md>) · ตารางส่วนที่ 3 ฟีเจอร์ใช้ร่วมกัน + ตารางสิทธิ์ตามบทบาท → [CAL-01 ux-ui-plan §1, §7.2](<../[Feature] Meeting — Calendar Integration/ux-ui-plan.md>)
 > **โครงเอกสาร:** §1–§5 = requirement ต้นทางจาก ClickUp (ถอดตามที่เขียน ไม่แต่งเติม) · §6 = ข้อสังเกต / จุดขัดกันในต้นทาง (ยังไม่ใช่ decision)
@@ -55,16 +56,16 @@ So that I can join immediately with one click
 
 | ID | ชื่อ | ClickUp | Figma node | สถานะ ClickUp |
 |---|---|---|---|---|
-| MA-HP-01 | Alert 5 นาทีก่อน Meeting | [MA-HP-01 · Alert 5 นาทีก่อน Meeting](https://app.clickup.com/t/86d3nf5bq) | [`7764-170718`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7764-170718) | pending |
-| MA-HP-02 | Alert ตอน Meeting เริ่ม | [MA-HP-02 · Alert ตอน Meeting เริ่ม](https://app.clickup.com/t/86d3nf5j5) | [`7766-463132`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7766-463132) | pending |
-| MA-HP-03 | Notification History | [MA-HP-03 · Notification History](https://app.clickup.com/t/86d3nf5qz) | [`7767-466425`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7767-466425) | pending |
-| MA-HP-04 | User ปิด Alert (Dismiss) | [MA-HP-04 · User ปิด Alert (Dismiss)](https://app.clickup.com/t/86d3nf66k) | [`7767-469956`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7767-469956) | pending |
-| MA-EP-01 | User ไม่ Online เมื่อ Alert ถูกส่ง | [MA-EP-01 · User ไม่ Online เมื่อ Alert ถูกส่ง](https://app.clickup.com/t/86d3nf6ay) | [`7771-8157`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7771-8157) | pending |
-| MA-EP-02 | Meeting ถูกยกเลิก / เลื่อนเวลาหลัง Alert ส่งไปแล้ว | [MA-EP-02 · Meeting ถูกยกเลิก / เลื่อนเวลาหลัง Alert ส่งไปแล้ว](https://app.clickup.com/t/86d3nf6g4) | [`7771-198052`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7771-198052) | pending |
-| MA-EP-03 | Notification ส่ง Duplicate (Race Condition) | [MA-EP-03 · Notification ส่ง Duplicate (Race Condition)](https://app.clickup.com/t/86d3nf6my) | — (backend ล้วน ไม่มีลิงก์ Figma) | pending |
+| MA-HP-01 | Alert 5 นาทีก่อน Meeting | [MA-HP-01 · Alert 5 นาทีก่อน Meeting](https://app.clickup.com/t/86d3nf5bq) | [`7764-170718`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7764-170718) | in progress |
+| MA-HP-02 | Alert ตอน Meeting เริ่ม | [MA-HP-02 · Alert ตอน Meeting เริ่ม](https://app.clickup.com/t/86d3nf5j5) | [`7766-463132`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7766-463132) | in progress |
+| MA-HP-03 | Notification History | [MA-HP-03 · Notification History](https://app.clickup.com/t/86d3nf5qz) | [`7767-466425`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7767-466425) | in progress |
+| MA-HP-04 | User ปิด Alert (Dismiss) | [MA-HP-04 · User ปิด Alert (Dismiss)](https://app.clickup.com/t/86d3nf66k) | [`7767-469956`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7767-469956) | in progress |
+| MA-EP-01 | User ไม่ Online เมื่อ Alert ถูกส่ง | [MA-EP-01 · User ไม่ Online เมื่อ Alert ถูกส่ง](https://app.clickup.com/t/86d3nf6ay) | [`7771-8157`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7771-8157) | in progress |
+| MA-EP-02 | Meeting ถูกยกเลิก / เลื่อนเวลาหลัง Alert ส่งไปแล้ว | [MA-EP-02 · Meeting ถูกยกเลิก / เลื่อนเวลาหลัง Alert ส่งไปแล้ว](https://app.clickup.com/t/86d3nf6g4) | [`7771-198052`](https://www.figma.com/design/Map8gX0L2hk7HnkaFRfhtj/Zyra-design--More-Organised-ver.-?node-id=7771-198052) | in progress |
+| MA-EP-03 | Notification ส่ง Duplicate (Race Condition) | [MA-EP-03 · Notification ส่ง Duplicate (Race Condition)](https://app.clickup.com/t/86d3nf6my) | — (backend ล้วน ไม่มีลิงก์ Figma) | in progress |
 | EC-01 ~ EC-05 | Edge cases (อยู่ใน parent) | — | — | — |
 
-ทุก subtask: ไม่มี assignee · ไม่มี priority · ไม่มี due date · สร้าง 2026-07-10 โดย Moss Pm
+ทุก subtask: assignee rif fullstack (ตั้ง 2026-10-29) · ไม่มี priority · ไม่มี due date · สร้าง 2026-07-10 โดย Moss Pm
 
 ---
 
