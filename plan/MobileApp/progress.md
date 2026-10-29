@@ -1,7 +1,13 @@
 # Mobile App — Progress / Handoff
 
 > **สถานะรวม:** **ขึ้น dev + TestFlight แล้ว (2026-10-08)** — app "Zyra World Dev" (`co.zyraworld.app.develop`) build 1–3 บน TestFlight กลุ่ม Zyra Team 5 คน · login Apple/Google ในแอปแก้แล้ว (entitlement + `APPLE_CLIENT_IDS` dev v9 + iOS OAuth client) **รอ Ten ลอง build 2+** · asset store A1+A2 merge แล้ว เปิดบน dev (`NEXT_PUBLIC_MOBILE_ASSET_STORE=true`) **ยังไม่ได้วัด Before/After** ([asset-store.md](asset-store.md)) · ถัดไป B0/B1 (วัด + observability) · Android: Google native ยังไม่มี OAuth client (SHA-1) · doc [#48](https://github.com/N2Pluto/zyra-doc/pull/48)
-> **อัปเดตล่าสุด:** 2026-10-26 (rif — Lite: หมุนจอดูแชร์จอ / แชทหลังต่อเน็ตกลับ / ปัดย้อนกลับ / ซูมเต็มจอ · Spatial: Go to) · **คนล่าสุด:** rif + Claude
+> **อัปเดตล่าสุด:** 2026-10-27 (rif — Spatial: ไม่มี joystick บน PC / Mac) · **คนล่าสุด:** rif + Claude
+
+## 2026-10-27 · rif + Claude — Spatial: ไม่มี joystick บน PC / Mac
+
+- **ทำอะไร:** joystick ขึ้นตาม `mobileSpatial` (หน้าจอแบบมือถือ) ซึ่งคอมที่ย่อหน้าต่างแนวตั้ง/แคบก็ได้ → ย่อหน้าต่าง Mac ระหว่างอยู่ Spatial แล้ว joystick โผล่ · rif ตัดสิน: **แก้แค่ joystick ไม่แตะ play mode** — คอม (`desktopPointer`: ไม่ใช่แอป, ไม่มีจอสัมผัส, เมาส์/trackpad) ไม่มี joystick เพราะเดินด้วย WASD ได้ · มือถือ (แอป + เว็บ) และ iPad ยังมี · zyra-app [#659](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/659) merge แล้ว (`fa71036`) — `useDesktopPointer()` ใน `hooks/use-mobile-ui.ts`, gate ที่ `hero-virtual-office.tsx`
+- **verify:** vitest `use-mobile-ui` + `vo-joystick` 30/30 (เพิ่ม 2 เคส) · eslint ไม่มี error · CI ผ่านทุกตัว (CodeRabbit ข้ามเพราะ rate limit)
+- **ยังไม่ได้:** ลองบนเครื่องจริง · โน้ตบุ๊กจอสัมผัสนับเป็นเครื่องสัมผัส → ย่อหน้าต่างแล้วยังมี joystick (ยังไม่ได้ตัดสิน)
 
 ## 2026-10-26 (รอบ 2) · rif + Claude — Lite: หมุนจอ / แชท / ปัดย้อนกลับ / ซูม · Spatial: Go to
 

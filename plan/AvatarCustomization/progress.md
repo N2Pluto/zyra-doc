@@ -1,7 +1,28 @@
 # Avatar Customization (SC-AV-02, member) — Progress / Handoff
 
 > **สถานะรวม:** Implement รอบแรกครบทั้ง 3 repo บน branch `feat/avatar-customize` (แตกจาก `origin/develop` 2026-10-22) — **ยังไม่ commit / ยังไม่ push** · flag `NEXT_PUBLIC_AVATAR_CUSTOMIZE` (default ปิด) · ยังไม่ได้ทดสอบกับ API / R2 จริง
-> **อัปเดตล่าสุด:** 2026-10-24 · **คนล่าสุด:** rif (ผ่าน Claude Code)
+> **อัปเดตล่าสุด:** 2026-10-28 · **คนล่าสุด:** rif (ผ่าน Claude Code)
+
+## 2026-10-28 (รอบ 12 · Lite เปิดห้องแต่งตัว + double-click การ์ดถอด) · rif (ผ่าน Claude Code)
+
+- **ทำอะไร:** Lite → Edit profile แสดงชุดที่ใส่ข้างรูป ปุ่ม ✎ / "Customise avatar" เปิดห้องแต่งตัวแนวนอน (`lite-dressing-room.tsx`; มือถือ browser แนวตั้งขึ้น "Rotate your phone to customise your avatar.") · **double-click การ์ด item ที่ใส่อยู่ (Used) = ถอด** (rif สั่ง — ตอบ Q-D4 บางส่วน) สีผิวกลับ Default · double-click การ์ดที่ยังไม่ใส่ = ใส่อย่างเดียว ไม่ถอดทันที · zyra-app [#666](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/666) merge เข้า develop แล้ว
+- **verify:** vitest `avatar-items-panel` (ใหม่ 2 เคส) + `lite-dressing-room` + `lite-profile-pages` 24/24 · CI ผ่านทุกตัว
+- **Headbar กดได้ทั้งแถบ:** เดิมกดกลับได้แค่ลูกศร 24 px → ตอนนี้ทั้งแถบ (ตู้ + "Customise avatar" + ชื่อ workspace) เป็นปุ่ม Back ปุ่มเดียว หน้าตาเหมือนเดิม · zyra-app [#668](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/668) merge เข้า develop แล้ว · verify: vitest `avatar-customize-headbar` (ใหม่) + CI ผ่านทุกตัว
+- **Tooltip (rif สั่ง):** เดิมกดแล้ว tooltip ค้าง (ขึ้นตอน focus) และโดนตัดในคอลัมน์หมวด / ตาราง item → เปลี่ยน `customize-tooltip.tsx` ไปใช้ shadcn Tooltip (Radix) วาดใน portal เหนือห้อง (z-[310]) ขยับหลบขอบจอ ขึ้นเฉพาะ hover (และ focus ด้วยคีย์บอร์ด) กด/แตะแล้วไม่ขึ้น · zyra-app [#670](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/670) merge เข้า develop แล้ว · verify: vitest `avatar-customize-tooltip` (ใหม่ 3 เคส) + test ที่เกี่ยวข้อง 10/10
+- **แถบสีกลับเป็นขาว (rif แจ้ง):** แถบสีจำสีที่เลือกไว้แค่ใน state ของหน้า → เปิดห้องใหม่ / เปลี่ยน SLOT / Undo แล้วสีที่ใส่เป็นเฉด (ไม่ใช่ 12 สีหลักพอดี) ไม่ตรงกับปุ่มไหน เลยกลับไปเลือกขาว → เพิ่ม `colourPickOf(hex)` ใน `lib/avatar-part/shade.ts` อ่านสีหลัก + Shade กลับจากสีที่ใส่อยู่ · ใช้สีที่เลือกไว้เฉพาะตอนยังตรงกับสีที่ใส่ · สีที่แถบทำไม่ได้ = ไม่ไฮไลต์ปุ่มไหน · รวมอยู่ใน #670 (merge แล้ว) · CI ผ่านทุกตัว · verify: vitest `avatar-colour-pick` (ใหม่) + ที่เกี่ยวข้อง 76/76
+- **ยังไม่ได้:** ลองบนเครื่องจริง / dev
+
+## 2026-10-27 (รอบ 11 · Setting → Profile ดินสอบน Avatar เปิดห้องแต่งตัว) · rif (ผ่าน Claude Code)
+
+- **ทำอะไร:** flag เปิดแล้ว ดินสอบน Avatar ใน Setting → Profile (VO) ยังเปิด Change Character modal เดิม → ตอนนี้ปิด Setting (และ Profile drawer บนมือถือ) แล้วเปิดห้องแต่งตัวในที่ (`?customize=1`) ผ่าน `openCustomize()` ตัวเดียวกับ Profile panel → Customise avatar · `ProfileForm` มี prop `onCustomizeAvatar` (ส่งผ่าน `VOProfileTab` / `VOSettingModal` ทั้ง desktop + phone drawer) · หน้า `/profile` (ไม่มี workspace) และ flag ปิด ยังเป็น modal เดิม · zyra-app [#660](https://github.com/Maximumsoft-Co-LTD/zyra-app/pull/660) merge แล้ว (`f00d588`)
+- **verify:** vitest `profile-form-customize` (ใหม่ 2 เคส) + `vo-profile-panel` 6/6 · CI ผ่านทุกตัว
+- **ยังไม่ได้:** ลองใน browser/เครื่องจริง · รูปตัวละครในช่อง Avatar ของหน้า Profile ยังเป็นตัวละครแบบเดิม (`loadSelectedAvatar`) ไม่ใช่ชุดที่แต่ง — ยังไม่ได้ถาม/แก้
+
+## 2026-10-27 (รอบ 10 · บันทึกชุดบน dev 500 + ตา default) · rif (ผ่าน Claude Code)
+
+- **บันทึกชุดบน dev ได้ 500 ทุกครั้ง:** log pod `upsert outfit: inconsistent types deduced for parameter $1 (SQLSTATE 42P08)` — `UpsertOutfit` ใช้ `$1` ทั้งเป็นค่าคอลัมน์ varchar และใน `user_id = $1` → แก้เป็น `$1::text` ทั้งสองที่ · zyra-api [#192](https://github.com/Maximumsoft-Co-LTD/zyra-api/pull/192) merge แล้ว (`d8425e5`), deploy dev สำเร็จ · verify: PREPARE query เดิม/ใหม่บน dev DB ใน transaction แล้ว ROLLBACK (เดิม 42P08, ใหม่ผ่าน), `go test ./internal/service/ -run Outfit` ผ่าน · test เดิมใช้ store ปลอมเลยไม่เจอ
+- **ตา default = Eye 1 (rif สั่ง):** แก้ข้อมูลตรงใน DB ของ dev — `tb_avatar_part` id `0b39a338-4420-4f6d-92c6-795e32f78ab1` (Eye 1, `eyes`) `is_default = true` + bump `updated_at` ให้ ETag ของ catalog เปลี่ยน · ไม่แก้โค้ด · มีผลกับคนที่ยังไม่เคยบันทึกชุดใน workspace นั้น (ชุด default) — ชุดที่บันทึกไว้แล้วไม่ถูกเติมตา
+- **ยังเหลือ:** UAT/prod ต้องรัน `UPDATE tb_avatar_part SET is_default = true, updated_at = NOW() WHERE slot = 'eyes' AND name = 'Eye 1' AND NOT is_deleted` ตอนขึ้น (id อาจต่างกัน) · หน้า Admin ยังตั้ง `is_default` ไม่ได้ · ยังไม่ได้ลองบันทึกชุดบน dev หลัง deploy
 
 ## 2026-10-24 (รอบ 9 · SLOT preset 1–5) · rif (ผ่าน Claude Code)
 
